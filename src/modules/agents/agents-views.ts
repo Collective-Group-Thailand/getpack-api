@@ -11,6 +11,7 @@ import {
   type AdminAgentLeadDto,
   type AdminAgentLinkDto,
   type AdminAgentStatementDto,
+  type AdminAgentTotalsDto,
   type AgentApplicationDto,
   type AgentCommissionDto,
   type AgentDto,
@@ -71,8 +72,18 @@ export function agentDto(
   r: AgentRow,
   link: string,
   terms: ReturnType<typeof termsOf>,
-  totals: AgentTotalsDto,
+  all: AdminAgentTotalsDto,
 ): AgentDto {
+  // D-435: the factory count stays with staff (adminAgentDto); an agent never learns about factories.
+  const totals: AgentTotalsDto = {
+    pending: all.pending,
+    held: all.held,
+    earned: all.earned,
+    statemented: all.statemented,
+    paidThisYear: all.paidThisYear,
+    activeLinks: all.activeLinks,
+    openLeads: all.openLeads,
+  };
   return {
     id: r.publicId,
     kind: r.kind,
@@ -92,11 +103,12 @@ export function adminAgentDto(
   r: AgentRow,
   link: string,
   terms: ReturnType<typeof termsOf>,
-  totals: AgentTotalsDto,
+  totals: AdminAgentTotalsDto,
 ): AdminAgentDto {
   const accounts = r.vendor?.bankAccounts ?? [];
   return {
     ...agentDto(r, link, terms, totals),
+    totals,
     user: { id: r.user.publicId, displayName: r.user.displayName },
     phone: r.user.phone,
     juristicType: r.juristicType,
@@ -214,7 +226,6 @@ export function commissionDto(r: CommissionRow, forAgent = true): AgentCommissio
     status: r.status,
     orderCode: r.order?.orderCode ?? null,
     customerName: customerNameOf(r, forAgent),
-    factoryName: r.factoryLink ? (r.factoryLink.factory.tradeName ?? r.factoryLink.factory.legalName) : null,
     isFirstOrder: r.isFirstOrder,
     baseAmount: r.baseAmount.toFixed(2),
     ratePct: r.ratePct === null ? null : D(r.ratePct).toString(),
@@ -232,6 +243,7 @@ export function adminCommissionDto(r: CommissionRow): AdminAgentCommissionDto {
   return {
     ...commissionDto(r, false),
     agent: agentRef(r.agent),
+    factoryName: r.factoryLink ? (r.factoryLink.factory.tradeName ?? r.factoryLink.factory.legalName) : null,
     orderId: r.order?.publicId ?? null,
     marginAmount: r.marginAmount?.toFixed(2) ?? null,
     holdFlags: r.holdFlags,

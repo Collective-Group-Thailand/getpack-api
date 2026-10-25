@@ -203,7 +203,8 @@ describe('order timeline, public tracking and realtime (e2e, B4.4)', () => {
       where: { publicId: fixture.factoryPublicId },
     });
     const text = JSON.stringify(mine);
-    for (const secret of [factory.publicId, factory.code, factory.legalName, internal])
+    // D-435: the in-transit step's location ('บางนา', origin side) never reaches the customer.
+    for (const secret of [factory.publicId, factory.code, factory.legalName, internal, 'บางนา'])
       expect(text).not.toContain(secret);
     await as(ctx, token).get(`/v1/store/orders/${orderId}/timeline?cursor=not-a-cursor`).expect(422);
 

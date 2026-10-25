@@ -604,25 +604,7 @@ describe('claims and reorder (e2e, B4.5)', () => {
     // Effective in 30 days: today's page still shows version 1.
     expect((await request(ctx.server).get('/v1/store/guarantee').expect(200)).body.versionNo).toBe(1);
 
-    // Network statistics (D-201, D-264): below the minimums every figure is null — never a factory.
-    const stats = (await request(ctx.server).get('/v1/store/network/stats').expect(200)).body as {
-      coverage: { productTypeCode: string; available: boolean }[];
-      network: Record<string, unknown>;
-      auditCriteria: unknown[];
-    };
-    expect(stats.network).toMatchObject({
-      published: false,
-      minFactories: 3,
-      minJobs: 30,
-      windowDays: 90,
-      partnerCount: null,
-      onTimePct: null,
-      firstPassPct: null,
-    });
-    expect(stats.coverage.find((c) => c.productTypeCode === 'folding_carton')).toMatchObject({
-      available: true,
-    });
-    expect(stats.auditCriteria).toEqual([]);
-    expect(JSON.stringify(stats)).not.toContain(fixture.factoryPublicId);
+    // D-435: the public network statistics endpoint is gone — no counts, coverage or thresholds.
+    await request(ctx.server).get('/v1/store/network/stats').expect(404);
   });
 });

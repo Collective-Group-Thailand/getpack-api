@@ -899,10 +899,10 @@ export class StoreShipmentItemDto {
 }
 
 export class StoreShipmentEventDto {
-  @ApiProperty({ format: 'date-time', example: '2026-10-20T09:30:00+07:00' })
+  @ApiProperty({ format: 'date-time', example: '2026-10-21T09:30:00+07:00' })
   occurredAt!: string;
 
-  @ApiProperty({ enum: SHIPMENT_STATUSES, enumName: 'ShipmentStatus', example: 'in_transit' })
+  @ApiProperty({ enum: SHIPMENT_STATUSES, enumName: 'ShipmentStatus', example: 'out_for_delivery' })
   status!: ShipmentStatusValue;
 
   @ApiStatusLabelTh('ShipmentStatus')
@@ -911,7 +911,14 @@ export class StoreShipmentEventDto {
   @ApiStatusLabelAdminTh('ShipmentStatus')
   statusLabelAdminTh!: string;
 
-  @ApiProperty({ nullable: true, example: 'ศูนย์กระจายสินค้าบางนา' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'ศูนย์กระจายสินค้าบางนา',
+    description:
+      'Only on destination-side steps (`out_for_delivery`, `delivered`, `failed`); null on every pickup, ' +
+      'line-haul or return step, so the origin is never shown (D-435)',
+  })
   location!: string | null;
 }
 

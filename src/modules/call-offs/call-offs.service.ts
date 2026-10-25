@@ -16,7 +16,11 @@ import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
-import { type CallOffAgreementDto, type CallOffReleaseDto } from './call-offs.dto';
+import {
+  type CallOffAgreementDto,
+  type CallOffReleaseDto,
+  type StoreCallOffAgreementDto,
+} from './call-offs.dto';
 
 const D = (v: { toString(): string } | string | number | null | undefined) =>
   new MoneyDecimal(v === null || v === undefined ? '0' : v.toString());
@@ -71,7 +75,7 @@ export class CallOffsService {
   async request(
     actor: UserActor,
     input: { quoteId: string; quoteOptionId: string; months: number },
-  ): Promise<CallOffAgreementDto> {
+  ): Promise<StoreCallOffAgreementDto> {
     const max = Number((await this.settings.at('calloff.max_months')).value);
     if (input.months > max)
       throw new DomainException('validation.failed', {
@@ -118,32 +122,32 @@ export class CallOffsService {
         include: INCLUDE,
       });
       await this.record(tx, row, 'call_off.requested', { months: input.months }, actor);
-      return dto(row, 'customer');
+      return customerDto(row);
     });
   }
 
-  async mine(actor: UserActor): Promise<CallOffAgreementDto[]> {
+  async mine(actor: UserActor): Promise<StoreCallOffAgreementDto[]> {
     const rows = await this.prisma.callOffAgreement.findMany({
       where: { customerUserId: actor.userId },
       include: INCLUDE,
       orderBy: { id: 'desc' },
     });
-    return rows.map((r) => dto(r, 'customer'));
+    return rows.map((r) => customerDto(r));
   }
 
-  async getMine(actor: UserActor, publicId: string): Promise<CallOffAgreementDto> {
-    return dto(await this.owned(this.prisma, actor, publicId), 'customer');
+  async getMine(actor: UserActor, publicId: string): Promise<StoreCallOffAgreementDto> {
+    return customerDto(await this.owned(this.prisma, actor, publicId));
   }
 
   /** Withdraws a request the factory has not answered. */
-  async cancel(actor: UserActor, publicId: string): Promise<CallOffAgreementDto> {
+  async cancel(actor: UserActor, publicId: string): Promise<StoreCallOffAgreementDto> {
     return this.prisma.withTx(async (tx) => {
       const row = await this.owned(tx, actor, publicId);
       if (row.status !== 'pending_factory')
         throw new DomainException('call_offs.invalid_status', { params: { status: row.status } });
       const updated = await this.transition(tx, row, { status: 'cancelled', endedAt: new Date() });
       await this.record(tx, updated, 'call_off.cancelled', {}, actor);
-      return dto(updated, 'customer');
+      return customerDto(updated);
     });
   }
 
@@ -504,7 +508,7 @@ export class CallOffsService {
   }
 }
 
-type View = 'customer' | 'partner' | 'staff';
+type View = 'partner' | 'staff';
 
 /** The factory's product buy price per unit as locked: the option's buy without its plates and die blocks. */
 function buyUnit(r: AgreementRow): MoneyValue {
@@ -515,7 +519,24 @@ function buyUnit(r: AgreementRow): MoneyValue {
   return D(internal.buyPrice).sub(tooling).div(r.quoteOption.quantity);
 }
 
+/** The factory's and staff's view: the factory, and its own buy price (never getpack's sell side to the factory). */
 function dto(r: AgreementRow, view: View): CallOffAgreementDto {
+  const base = customerDto(r);
+  return {
+    ...base,
+    // D-044: the factory sees its own price, never getpack's sell side.
+    unitPrice: view === 'partner' ? null : base.unitPrice,
+    factory: {
+      id: r.factory.publicId,
+      code: r.factory.code,
+      name: r.factory.tradeName ?? r.factory.legalName,
+    },
+    buyUnitPrice: buyUnit(r).toFixed(6),
+  };
+}
+
+/** The customer's view: no factory field and no buy price at all (D-050, D-435). */
+function customerDto(r: AgreementRow): StoreCallOffAgreementDto {
   const released = r.releases.filter((x) => x.status !== 'lapsed').reduce((a, x) => a + x.quantity, 0);
   return {
     id: r.publicId,
@@ -529,14 +550,8 @@ function dto(r: AgreementRow, view: View): CallOffAgreementDto {
       nameTh: r.productType.nameTh,
       nameEn: r.productType.nameEn,
     },
-    // D-050: customers never see the factory; D-044: the factory sees its own price, never getpack's sell side.
-    factory:
-      view === 'customer'
-        ? null
-        : { id: r.factory.publicId, code: r.factory.code, name: r.factory.tradeName ?? r.factory.legalName },
     unit: r.quoteOption.unit,
-    unitPrice: view === 'partner' ? null : r.quoteOption.unitPrice.toFixed(2),
-    buyUnitPrice: view === 'customer' ? null : buyUnit(r).toFixed(6),
+    unitPrice: r.quoteOption.unitPrice.toFixed(2),
     committedQuantity: r.committedQuantity,
     releasedQuantity: released,
     remainingQuantity: r.status === 'active' ? r.committedQuantity - released : 0,

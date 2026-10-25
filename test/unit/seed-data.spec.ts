@@ -68,8 +68,6 @@ describe('seed data (B1.2 step 3)', () => {
       // D-417 / D-420 sales agent programme figures for the business to confirm.
       'agents.rules': 'proposed',
       'quotes.lever_quantity_multipliers': 'proposed',
-      // U2.5: the audit criteria text is the Partner Manager's (D-264).
-      'trust.audit_criteria': 'pending_business',
       // B4.1: D-070 fixes four severities only; the rest and every threshold are proposed (ADR-0009).
       'artwork.approval_checklist': 'pending_business',
       'artwork.preflight_rules': 'proposed',

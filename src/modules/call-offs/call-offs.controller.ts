@@ -24,6 +24,7 @@ import {
   PENDING_EXAMPLE,
   ReleaseCallOffDto,
   RequestCallOffDto,
+  StoreCallOffAgreementDto,
 } from './call-offs.dto';
 import { CallOffsService } from './call-offs.service';
 
@@ -65,7 +66,7 @@ export class StoreCallOffsController {
     description: `Ask the factory of my saved quotation to lock its option’s unit price. ${HOW}`,
     implements: DECISIONS,
   })
-  @ApiSuccess(201, { description: 'Requested', type: CallOffAgreementDto, example: PENDING_EXAMPLE })
+  @ApiSuccess(201, { description: 'Requested', type: StoreCallOffAgreementDto, example: PENDING_EXAMPLE })
   @ApiStandardErrors(
     'http.bad_request',
     'http.malformed_json',
@@ -85,7 +86,11 @@ export class StoreCallOffsController {
     description: `Newest first, with their releases. ${HOW}`,
     implements: DECISIONS,
   })
-  @ApiSuccess(200, { description: 'Agreements', type: [CallOffAgreementDto], example: [CALL_OFF_EXAMPLE] })
+  @ApiSuccess(200, {
+    description: 'Agreements',
+    type: [StoreCallOffAgreementDto],
+    example: [CALL_OFF_EXAMPLE],
+  })
   @ApiStandardErrors()
   list(@CurrentActor() actor: Actor) {
     return this.callOffs.mine(customer(actor));
@@ -99,7 +104,7 @@ export class StoreCallOffsController {
     description: `The agreement, what is left and its releases (D-290).`,
     implements: DECISIONS,
   })
-  @ApiSuccess(200, { description: 'Agreement', type: CallOffAgreementDto, example: CALL_OFF_EXAMPLE })
+  @ApiSuccess(200, { description: 'Agreement', type: StoreCallOffAgreementDto, example: CALL_OFF_EXAMPLE })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   get(@CurrentActor() actor: Actor, @Param('agreementId', ParseUUIDPipe) id: string) {
     return this.callOffs.getMine(customer(actor), id);
@@ -117,7 +122,7 @@ export class StoreCallOffsController {
   })
   @ApiSuccess(200, {
     description: 'Withdrawn',
-    type: CallOffAgreementDto,
+    type: StoreCallOffAgreementDto,
     example: { ...PENDING_EXAMPLE, status: 'cancelled' },
   })
   @ApiStandardErrors('http.not_found', 'validation.failed', 'call_offs.invalid_status')

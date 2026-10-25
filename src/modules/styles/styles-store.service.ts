@@ -6,7 +6,6 @@ import { type Prisma } from '@generated/prisma/client';
 import { sizeRulesOf } from '@modules/catalog/store/size-rules';
 import { imageUrl } from '@modules/catalog/store/store-catalog.service';
 import { Injectable } from '@nestjs/common';
-import { SettingsService } from '@platform/settings/settings.service';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
 import { StyleAssetsService } from './style-assets.service';
@@ -94,7 +93,7 @@ const PUBLISHED: Prisma.StyleBaseWhereInput = {
 /**
  * The store style library (U3.B2, D-245, D-246): published styles only, faceted, searched (Thai / English with
  * synonyms; `simple` full text + trigram for typos), sorted, cursor-paged; detail with the publishable combinations,
- * size ranges, starting price (D-220), lead time and — only under D-201 — the partners count; favourites and compare.
+ * size ranges, starting price (D-220) and lead time — never anything about who makes it (D-435); favourites and compare.
  * The library holds ~100 bases, so filtering and facets run in memory over one query.
  */
 @Injectable()
@@ -102,7 +101,6 @@ export class StylesStoreService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly makeability: StyleMakeabilityService,
-    private readonly settings: SettingsService,
     private readonly assets: StyleAssetsService,
   ) {}
 
@@ -374,7 +372,10 @@ export class StylesStoreService {
         code: v.code,
         options,
         pricePath: v.pricePath,
-        priceReasons: v.priceReasons as (typeof PRICE_REASONS)[number][],
+        // D-435: whether any factory can make a variant is coverage — the customer sees only the price path.
+        priceReasons: (v.priceReasons as (typeof PRICE_REASONS)[number][]).filter(
+          (r) => r !== 'not_makeable',
+        ),
         configurationPatches: priceOptions(options).flatMap((option) =>
           patches.has(option) ? [{ option, patch: patches.get(option)! }] : [],
         ),
@@ -406,11 +407,6 @@ export class StylesStoreService {
       variants: await this.variantViews(row),
       sizeRanges: sizeRanges(row),
       leadTime,
-      // D-201 / D-264: shown only with the published network minimum of active factories.
-      partnersCount:
-        factories.length >= (await this.settings.at('trust.network_min_factories')).value
-          ? factories.length
-          : null,
       useCases: row.useCases.map((u) => u.code),
       assets: await Promise.all(
         row.assets.map(async (a) => ({

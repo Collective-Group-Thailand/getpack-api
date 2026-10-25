@@ -380,7 +380,7 @@ export const TRACKING_EXAMPLE = {
       trackingUrl: null,
       cartonsCount: 3,
       steps: [
-        { status: 'picked_up', statusLabelTh: 'ออกจากโรงงานแล้ว', occurredAt: '2026-10-19T08:00:00+07:00' },
+        { status: 'picked_up', statusLabelTh: 'จัดส่งออกแล้ว', occurredAt: '2026-10-19T08:00:00+07:00' },
         { status: 'in_transit', statusLabelTh: 'กำลังส่ง', occurredAt: '2026-10-19T12:00:00+07:00' },
       ],
     },

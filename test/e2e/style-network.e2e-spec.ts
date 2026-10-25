@@ -280,13 +280,13 @@ describe('style library network and store (e2e, U3.B2–B3)', () => {
     expect(card.options).not.toContain('hand_holes:none');
   });
 
-  it('details a style: combinations, size ranges, lead time, no partners count below three factories (D-201)', async () => {
+  it('details a style: combinations, size ranges, lead time, nothing about factories (D-435)', async () => {
     const res = await request(ctx.server).get('/v1/store/styles/PK-CS-01').expect(200);
     expect(res.body).toMatchObject({
       code: 'PK-CS-01',
-      partnersCount: null,
       leadTime: { minDays: 5, maxDays: 9 },
     });
+    expect(res.body).not.toHaveProperty('partnersCount');
     expect(res.body.variants).toHaveLength(9);
     expect(res.body.sizeRanges).toEqual([
       {

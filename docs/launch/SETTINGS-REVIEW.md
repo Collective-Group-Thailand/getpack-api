@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**120 settings** — 68 confirmed · 22 proposed · 4 pending the CPA (⚖) · 2 pending the business · 24 defined without a value (not set until their owner sets them).
+**116 settings** — 65 confirmed · 22 proposed · 4 pending the CPA (⚖) · 2 pending the business · 23 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -127,10 +127,6 @@
 | `tax.nature_by_product_type` | `{"default":"hire_of_work","overrides":{"standard_product":"sale_of_goods"}}` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §2 nature of the sale per product type code (⚖): hire of work for made-to-order packaging, sale of goods for standard products; snapshotted on every order |
 | `tax.rounding_mode` | `line` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §1.5 VAT and WHT rounding per line or per document (⚖); a document-level difference is an explicit rounding amount |
 | `tooling.reuse_months` | `12` | confirmed | superadmin | D-205, D-289 | D-205 / D-289 months after its last use that a registered plate set or die block is reused (the reorder waives it) |
-| `trust.audit_criteria` | `— (not set)` | not set | partner_manager | D-201, D-264, D-041 | D-201 / D-264 the factory audit criteria published on the network page (th / en); not seeded — written by the Partner Manager |
-| `trust.network_min_factories` | `3` | confirmed | superadmin | D-201, D-264, D-044 | D-201 / D-264 active factories needed before partner counts and rates are published (also the style library partners count) |
-| `trust.network_min_jobs` | `30` | confirmed | superadmin | D-201, D-264 | D-201 / D-264 production jobs completed in the window needed before rates are published |
-| `trust.network_window_days` | `90` | confirmed | superadmin | D-201, D-264 | D-201 / D-264 rolling window (days) of the published on-time and first-pass rates |
 
 ## Legal entity data (D-092)
 

@@ -198,6 +198,8 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
       code: approved.body.code,
       link: expect.stringContaining(`/a/${approved.body.code}`),
     });
+    // D-435: an agent's totals never count factories (staff keep the count).
+    expect(me.body.totals).not.toHaveProperty('factories');
     expect((await as(ctx, token).get('/v1/store/agent/programme').expect(200)).body.state).toBe('agent');
     agent = {
       token,

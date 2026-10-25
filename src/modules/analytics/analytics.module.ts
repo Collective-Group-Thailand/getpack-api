@@ -4,7 +4,6 @@ import { AnalyticsJobs } from './analytics.jobs';
 import { AnalyticsDashboardsService } from './dashboards.service';
 import { AnalyticsIngestionService } from './ingestion.service';
 import { JourneysService } from './journeys.service';
-import { NetworkStatsService } from './network-stats';
 import { NextStylesService } from './next-styles';
 import { AnalyticsOutboxSubscriber } from './outbox-events.subscriber';
 import { ProspectusService } from './prospectus.service';
@@ -25,7 +24,6 @@ import { StudioFunnelService } from './studio-funnel';
     ProspectusService,
     AnalyticsOutboxSubscriber,
     AnalyticsJobs,
-    NetworkStatsService,
     NextStylesService,
     StudioFunnelService,
     JourneysService,
@@ -35,7 +33,6 @@ import { StudioFunnelService } from './studio-funnel';
     AnalyticsRollupService,
     AnalyticsDashboardsService,
     ProspectusService,
-    NetworkStatsService,
     NextStylesService,
     StudioFunnelService,
     JourneysService,

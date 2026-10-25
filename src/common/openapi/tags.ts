@@ -124,8 +124,6 @@ export const API_TAGS: Record<string, string> = {
     'Dieline downloads of any style variant with an approved recipe, for staff (D-271, D-270).',
   'admin.stylePriceRules':
     'Option price rules of styles (D-266, D-268): which option values a calculator prices and how; a variant prices instantly only when all its options are covered.',
-  'store.network':
-    'getpack’s partner network in numbers (D-201, D-264): audit criteria, coverage by product type, and the partner count and rates above the published minimums — aggregates only.',
   'store.guarantee':
     'getpack’s published guarantee (D-198, D-199, D-260): remedies per claim type and severity, response and decision times, the claim window — the version the claim engine applies.',
   'admin.guaranteePolicies':

@@ -645,8 +645,15 @@ export class AgentTotalsDto {
 
   @ApiProperty({ type: 'integer', example: 3, description: 'Leads still protected' })
   openLeads!: number;
+}
 
-  @ApiProperty({ type: 'integer', example: 1, description: 'Factories brought in' })
+/** Staff only: an agent never sees how many factories are linked to them (D-435, GLOBAL-RULES §1). */
+export class AdminAgentTotalsDto extends AgentTotalsDto {
+  @ApiProperty({
+    type: 'integer',
+    example: 1,
+    description: 'Factories brought in (pending or qualified links)',
+  })
   factories!: number;
 }
 
@@ -686,6 +693,9 @@ export class AgentDto {
 }
 
 export class AdminAgentDto extends AgentDto {
+  @ApiProperty({ type: AdminAgentTotalsDto })
+  declare totals: AdminAgentTotalsDto;
+
   @ApiProperty({ type: UserRefDto, description: 'The customer account the agent signs in with' })
   user!: UserRefDto;
 
@@ -733,7 +743,6 @@ const TOTALS_EXAMPLE: AgentTotalsDto = {
   paidThisYear: '4200.00',
   activeLinks: 6,
   openLeads: 3,
-  factories: 1,
 };
 
 export const AGENT_EXAMPLE: AgentDto = {
@@ -752,6 +761,7 @@ export const AGENT_EXAMPLE: AgentDto = {
 
 export const ADMIN_AGENT_EXAMPLE: AdminAgentDto = {
   ...AGENT_EXAMPLE,
+  totals: { ...TOTALS_EXAMPLE, factories: 1 },
   user: { id: AGENT_IDS.user, displayName: 'สมชาย ขายเก่ง' },
   phone: '+66810005678',
   juristicType: 'individual',
@@ -1246,9 +1256,6 @@ export class AgentCommissionDto {
   })
   customerName!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'The factory (bounty)' })
-  factoryName!: string | null;
-
   @ApiProperty({ example: true })
   isFirstOrder!: boolean;
 
@@ -1289,6 +1296,14 @@ export class AdminAgentCommissionDto extends AgentCommissionDto {
   @ApiProperty({ type: AgentRefDto })
   agent!: AgentRefDto;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'The factory of a bounty — staff only; agents never see factory names (D-435)',
+  })
+  factoryName!: string | null;
+
   @ApiProperty({ type: String, format: 'uuid', nullable: true, example: AGENT_IDS.order })
   orderId!: string | null;
 
@@ -1310,7 +1325,6 @@ export const COMMISSION_EXAMPLE: AgentCommissionDto = {
   status: 'pending',
   orderCode: 'PK-2610-00042',
   customerName: 'ส•••',
-  factoryName: null,
   isFirstOrder: true,
   baseAmount: '12000.00',
   ratePct: '5',
@@ -1327,6 +1341,7 @@ export const ADMIN_COMMISSION_EXAMPLE: AdminAgentCommissionDto = {
   ...COMMISSION_EXAMPLE,
   customerName: 'สมหญิง ทดสอบ',
   agent: { id: AGENT_IDS.agent, code: 'K7QX2MAP', legalName: 'สมชาย ขายเก่ง', kind: 'freelance' },
+  factoryName: null,
   orderId: AGENT_IDS.order,
   marginAmount: '3600.00',
   holdFlags: [],

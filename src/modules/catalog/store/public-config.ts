@@ -109,15 +109,6 @@ export class PublicConfigDto {
   })
   templateCount!: number;
 
-  @ApiProperty({
-    type: 'integer',
-    nullable: true,
-    example: null,
-    description:
-      'Active partner factories, published only from `trust.network_min_factories` (D-264); null below it',
-  })
-  factoryCount!: number | null;
-
   @ApiProperty({ type: ContactDto, description: 'From `storefront.support_channels` (D-221)' })
   contact!: ContactDto;
 }
@@ -130,7 +121,6 @@ export const PUBLIC_CONFIG_EXAMPLE: PublicConfigDto = {
   supportHours: { tz: 'Asia/Bangkok', days: 'mon_fri', open: '09:00', close: '18:00' },
   supportReplyMinutes: null,
   templateCount: 42,
-  factoryCount: null,
   contact: { phone: '0800000000', lineOaId: '@getpack-test', email: 'support@example.invalid' },
 };
 
@@ -143,28 +133,22 @@ export class PublicConfigService {
   ) {}
 
   async get(): Promise<PublicConfigDto> {
-    const [custom, stock, templateCount, factories, minFactories, priceLock, claimWindow] = await Promise.all(
-      [
-        this.prisma.catalogProduct.aggregate({
-          where: { status: 'active', quantityMin: { not: null }, productType: { status: 'active' } },
-          _min: { quantityMin: true },
-        }),
-        this.prisma.stockProduct.aggregate({ where: { status: 'active' }, _min: { minOrderQty: true } }),
-        this.prisma.styleBase.count({
-          where: {
-            status: 'active',
-            hidden: false,
-            variants: { some: { publishable: true, status: 'active' } },
-          },
-        }),
-        this.prisma.factory.count({
-          where: { status: 'active', capabilities: { some: { status: 'active' } } },
-        }),
-        this.settings.at('trust.network_min_factories').then((s) => s.value),
-        this.settings.at('quotes.validity_days').then((s) => s.value),
-        this.settings.at('claims.window_days').then((s) => s.value),
-      ],
-    );
+    const [custom, stock, templateCount, priceLock, claimWindow] = await Promise.all([
+      this.prisma.catalogProduct.aggregate({
+        where: { status: 'active', quantityMin: { not: null }, productType: { status: 'active' } },
+        _min: { quantityMin: true },
+      }),
+      this.prisma.stockProduct.aggregate({ where: { status: 'active' }, _min: { minOrderQty: true } }),
+      this.prisma.styleBase.count({
+        where: {
+          status: 'active',
+          hidden: false,
+          variants: { some: { publishable: true, status: 'active' } },
+        },
+      }),
+      this.settings.at('quotes.validity_days').then((s) => s.value),
+      this.settings.at('claims.window_days').then((s) => s.value),
+    ]);
     const [proofDays, hours, replyMinutes, channels] = await Promise.all([
       this.optional('artwork.first_proof_business_days'),
       this.optional('storefront.support_hours'),
@@ -181,8 +165,6 @@ export class PublicConfigService {
         : null,
       supportReplyMinutes: replyMinutes ?? null,
       templateCount,
-      // D-264: the partner count is public only from the network minimum.
-      factoryCount: factories >= minFactories ? factories : null,
       contact: { phone: channels.phone, lineOaId: channels.lineOaId, email: channels.email },
     };
   }
@@ -216,9 +198,9 @@ export class StorePublicConfigController {
       'a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock ' +
       '(`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof ' +
       'turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template ' +
-      'library size, the partner count (null below `trust.network_min_factories`, D-264) and the contacts ' +
-      '(D-221). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.',
-    implements: ['D-309', 'D-051', 'D-082', 'D-221', 'D-264', 'D-307'],
+      'library size and the contacts (D-221). Nothing about production partners — no count, coverage or ' +
+      'threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.',
+    implements: ['D-309', 'D-051', 'D-082', 'D-221', 'D-307', 'D-435'],
   })
   @ApiSuccess(200, {
     description: 'Storefront figures',

@@ -185,6 +185,17 @@ export function adminShipmentDto(
 }
 
 /** The customer's view of the shipments carrying one of their orders (D-050: no factory, no costs). */
+/**
+ * Shipment steps whose location is on the destination side (the last leg and delivery attempts). Every other step —
+ * ready, pickup, line haul, return to sender — can name where the parcel left from, which is where it was made.
+ */
+export const DESTINATION_SIDE_STATUSES: readonly string[] = ['out_for_delivery', 'delivered', 'failed'];
+
+/** D-435 / GLOBAL-RULES §1: the customer sees a step's location only on the destination side; never pickup/origin. */
+export function customerEventLocation(status: string, location: string | null): string | null {
+  return DESTINATION_SIDE_STATUSES.includes(status) ? location : null;
+}
+
 export function storeShipmentDto(
   row: ShipmentRow,
   orderId: bigint,
@@ -223,7 +234,7 @@ export function storeShipmentDto(
         occurredAt: toBangkokIso(e.occurredAt),
         status: e.status,
         ...statusLabels('ShipmentStatus', e.status),
-        location: e.location,
+        location: customerEventLocation(e.status, e.location),
       })),
     proofOfDelivery: pod
       ? { receiverName: pod.receiverName, capturedAt: toBangkokIso(pod.capturedAt), photoFileIds: podPhotos }

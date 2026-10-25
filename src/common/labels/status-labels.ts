@@ -154,7 +154,8 @@ const MILESTONE: Labels<MilestoneStatus> = {
 const SHIPMENT: Labels<ShipmentStatus> = {
   draft: L('เตรียมจัดส่ง', 'Draft', 'ร่างรอบส่ง'),
   ready: L('พร้อมส่ง', 'Ready'),
-  picked_up: L('ออกจากโรงงานแล้ว', 'Left the factory'),
+  // D-435: the customer's words never name where it left from; staff keep theirs.
+  picked_up: L('จัดส่งออกแล้ว', 'Dispatched', 'ออกจากโรงงานแล้ว'),
   in_transit: L('กำลังส่ง', 'In transit'),
   out_for_delivery: L('กำลังนำส่ง', 'Out for delivery'),
   delivered: L('ส่งถึงแล้ว', 'Delivered'),

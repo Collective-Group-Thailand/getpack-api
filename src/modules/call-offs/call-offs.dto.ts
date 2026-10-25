@@ -54,8 +54,11 @@ export class CallOffReleaseDto {
   createdAt!: string;
 }
 
-/** D-290 a call-off agreement: a quotation option's unit price locked for its quantity, released in parts. */
-export class CallOffAgreementDto {
+/**
+ * D-290 a call-off agreement: a quotation option's unit price locked for its quantity, released in parts — the
+ * customer's view. No factory and no buy price: the field does not exist on the storefront (D-050, D-435).
+ */
+export class StoreCallOffAgreementDto {
   @ApiProperty({ format: 'uuid', example: CALL_OFF_IDS.agreement })
   id!: string;
 
@@ -74,13 +77,6 @@ export class CallOffAgreementDto {
   @ApiProperty({ type: CodeNameRefDto })
   productType!: CodeNameRefDto;
 
-  @ApiProperty({
-    type: CodedRefDto,
-    nullable: true,
-    description: 'The quotation’s factory, which accepts the lock — staff and the factory only (D-050)',
-  })
-  factory!: CodedRefDto | null;
-
   @ApiProperty({ example: 'piece' })
   unit!: string;
 
@@ -92,14 +88,6 @@ export class CallOffAgreementDto {
   })
   unitPrice!: string | null;
 
-  @ApiProperty({
-    type: String,
-    nullable: true,
-    example: null,
-    description: 'The factory’s locked buy price per unit, net — the factory and staff only (D-044, D-141)',
-  })
-  buyUnitPrice!: string | null;
-
   @ApiProperty({ type: 'integer', example: 10000, description: 'The quotation option’s quantity' })
   committedQuantity!: number;
 
@@ -109,7 +97,7 @@ export class CallOffAgreementDto {
   @ApiProperty({ type: 'integer', example: 8000, description: '0 unless active' })
   remainingQuantity!: number;
 
-  @ApiProperty({ type: 'integer', example: 1000, description: 'The factory’s minimum order when asked' })
+  @ApiProperty({ type: 'integer', example: 1000, description: 'The smallest release, fixed when asked' })
   minReleaseQuantity!: number;
 
   @ApiProperty({ type: 'integer', example: 6 })
@@ -139,7 +127,24 @@ export class CallOffAgreementDto {
   createdAt!: string;
 }
 
-export const CALL_OFF_EXAMPLE: CallOffAgreementDto = {
+/** The factory's and staff's view of a call-off agreement: with the factory and its locked buy price (D-044). */
+export class CallOffAgreementDto extends StoreCallOffAgreementDto {
+  @ApiProperty({
+    type: CodedRefDto,
+    description: 'The quotation’s factory, which accepts the lock — staff and the factory only (D-050)',
+  })
+  factory!: CodedRefDto;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'The factory’s locked buy price per unit, net — the factory and staff only (D-044, D-141)',
+  })
+  buyUnitPrice!: string | null;
+}
+
+export const CALL_OFF_EXAMPLE: StoreCallOffAgreementDto = {
   id: CALL_OFF_IDS.agreement,
   status: 'active',
   quoteId: CALL_OFF_IDS.quote,
@@ -151,10 +156,8 @@ export const CALL_OFF_EXAMPLE: CallOffAgreementDto = {
     nameTh: 'กล่องกระดาษพับ',
     nameEn: 'Folding carton',
   },
-  factory: null,
   unit: 'piece',
   unitPrice: '13.38',
-  buyUnitPrice: null,
   committedQuantity: 10000,
   releasedQuantity: 2000,
   remainingQuantity: 8000,
@@ -186,7 +189,7 @@ export const PARTNER_CALL_OFF_EXAMPLE: CallOffAgreementDto = {
   buyUnitPrice: '10.123450',
 };
 
-export const PENDING_EXAMPLE: CallOffAgreementDto = {
+export const PENDING_EXAMPLE: StoreCallOffAgreementDto = {
   ...CALL_OFF_EXAMPLE,
   status: 'pending_factory',
   releasedQuantity: 0,

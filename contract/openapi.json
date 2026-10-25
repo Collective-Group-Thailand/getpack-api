@@ -6937,7 +6937,7 @@
             ]
           },
           "factoryName": {
-            "description": "The factory (bounty)",
+            "description": "The factory of a bounty — staff only; agents never see factory names (D-435)",
             "example": null,
             "type": [
               "string",
@@ -7030,7 +7030,6 @@
           "status",
           "orderCode",
           "customerName",
-          "factoryName",
           "isFirstOrder",
           "baseAmount",
           "ratePct",
@@ -7042,6 +7041,7 @@
           "note",
           "createdAt",
           "agent",
+          "factoryName",
           "orderId",
           "marginAmount",
           "holdFlags"
@@ -7181,7 +7181,7 @@
             "description": "The plan’s terms in force"
           },
           "totals": {
-            "$ref": "#/components/schemas/AgentTotalsDto"
+            "$ref": "#/components/schemas/AdminAgentTotalsDto"
           },
           "user": {
             "allOf": [
@@ -7788,6 +7788,61 @@
           "voidedAt",
           "voidReason",
           "rowVersion"
+        ],
+        "type": "object"
+      },
+      "AdminAgentTotalsDto": {
+        "properties": {
+          "activeLinks": {
+            "description": "Customers and companies linked now",
+            "example": 6,
+            "type": "integer"
+          },
+          "earned": {
+            "description": "Earned, not yet on a statement",
+            "example": "830.50",
+            "type": "string"
+          },
+          "factories": {
+            "description": "Factories brought in (pending or qualified links)",
+            "example": 1,
+            "type": "integer"
+          },
+          "held": {
+            "description": "Held for review",
+            "example": "0.00",
+            "type": "string"
+          },
+          "openLeads": {
+            "description": "Leads still protected",
+            "example": 3,
+            "type": "integer"
+          },
+          "paidThisYear": {
+            "description": "Paid, this calendar year",
+            "example": "4200.00",
+            "type": "string"
+          },
+          "pending": {
+            "description": "Accrued, waiting for the claim window or payment",
+            "example": "1250.00",
+            "type": "string"
+          },
+          "statemented": {
+            "description": "On a statement not yet paid",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pending",
+          "held",
+          "earned",
+          "statemented",
+          "paidThisYear",
+          "activeLinks",
+          "openLeads",
+          "factories"
         ],
         "type": "object"
       },
@@ -14275,14 +14330,6 @@
               "null"
             ]
           },
-          "factoryName": {
-            "description": "The factory (bounty)",
-            "example": null,
-            "type": [
-              "string",
-              "null"
-            ]
-          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6008",
             "format": "uuid",
@@ -14345,7 +14392,6 @@
           "status",
           "orderCode",
           "customerName",
-          "factoryName",
           "isFirstOrder",
           "baseAmount",
           "ratePct",
@@ -15501,11 +15547,6 @@
             "example": "830.50",
             "type": "string"
           },
-          "factories": {
-            "description": "Factories brought in",
-            "example": 1,
-            "type": "integer"
-          },
           "held": {
             "description": "Held for review",
             "example": "0.00",
@@ -15539,8 +15580,7 @@
           "statemented",
           "paidThisYear",
           "activeLinks",
-          "openLeads",
-          "factories"
+          "openLeads"
         ],
         "type": "object"
       },
@@ -20940,12 +20980,9 @@
             ]
           },
           "factory": {
-            "anyOf": [
+            "allOf": [
               {
                 "$ref": "#/components/schemas/CodedRefDto"
-              },
-              {
-                "type": "null"
               }
             ],
             "description": "The quotation’s factory, which accepts the lock — staff and the factory only (D-050)"
@@ -20964,7 +21001,7 @@
             ]
           },
           "minReleaseQuantity": {
-            "description": "The factory’s minimum order when asked",
+            "description": "The smallest release, fixed when asked",
             "example": 1000,
             "type": "integer"
           },
@@ -21044,10 +21081,8 @@
           "quoteOptionId",
           "quoteCode",
           "productType",
-          "factory",
           "unit",
           "unitPrice",
-          "buyUnitPrice",
           "committedQuantity",
           "releasedQuantity",
           "remainingQuantity",
@@ -21058,7 +21093,9 @@
           "declineReason",
           "lapsedQuantity",
           "releases",
-          "createdAt"
+          "createdAt",
+          "factory",
+          "buyUnitPrice"
         ],
         "type": "object"
       },
@@ -28999,34 +29036,6 @@
           "instantCalculations",
           "instantCoveragePct",
           "rfqs"
-        ],
-        "type": "object"
-      },
-      "CoverageDto": {
-        "properties": {
-          "available": {
-            "description": "At least one active partner can make it",
-            "example": true,
-            "type": "boolean"
-          },
-          "nameEn": {
-            "example": "Folding carton",
-            "type": "string"
-          },
-          "nameTh": {
-            "example": "กล่องกระดาษพับ",
-            "type": "string"
-          },
-          "productTypeCode": {
-            "example": "folding_carton",
-            "type": "string"
-          }
-        },
-        "required": [
-          "productTypeCode",
-          "nameTh",
-          "nameEn",
-          "available"
         ],
         "type": "object"
       },
@@ -72469,95 +72478,6 @@
         ],
         "type": "string"
       },
-      "NetworkFiguresDto": {
-        "properties": {
-          "firstPassPct": {
-            "description": "Jobs whose first QC check passed, whole %",
-            "example": null,
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "minFactories": {
-            "example": 3,
-            "type": "number"
-          },
-          "minJobs": {
-            "example": 30,
-            "type": "number"
-          },
-          "onTimePct": {
-            "description": "Jobs picked up by their promised ship date, whole %",
-            "example": null,
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "partnerCount": {
-            "description": "Active partner factories",
-            "example": null,
-            "type": [
-              "number",
-              "null"
-            ]
-          },
-          "published": {
-            "description": "Figures are published only with ≥ `trust.network_min_factories` active factories and ≥ `trust.network_min_jobs` completed jobs in the window (D-201, D-264); otherwise every figure is null",
-            "example": false,
-            "type": "boolean"
-          },
-          "windowDays": {
-            "description": "Rolling window (days)",
-            "example": 90,
-            "type": "number"
-          }
-        },
-        "required": [
-          "published",
-          "minFactories",
-          "minJobs",
-          "windowDays",
-          "partnerCount",
-          "onTimePct",
-          "firstPassPct"
-        ],
-        "type": "object"
-      },
-      "NetworkStatsDto": {
-        "properties": {
-          "auditCriteria": {
-            "description": "How partners are audited (`trust.audit_criteria`)",
-            "items": {
-              "$ref": "#/components/schemas/ArtworkChecklistItemDto"
-            },
-            "type": "array"
-          },
-          "coverage": {
-            "description": "Capability coverage by product type (yes / no)",
-            "items": {
-              "$ref": "#/components/schemas/CoverageDto"
-            },
-            "type": "array"
-          },
-          "generatedAt": {
-            "example": "2026-10-03T10:00:00+07:00",
-            "format": "date-time",
-            "type": "string"
-          },
-          "network": {
-            "$ref": "#/components/schemas/NetworkFiguresDto"
-          }
-        },
-        "required": [
-          "auditCriteria",
-          "coverage",
-          "network",
-          "generatedAt"
-        ],
-        "type": "object"
-      },
       "NextActionDto": {
         "properties": {
           "disabledReason": {
@@ -83956,14 +83876,6 @@
             ],
             "description": "From `storefront.support_channels` (D-221)"
           },
-          "factoryCount": {
-            "description": "Active partner factories, published only from `trust.network_min_factories` (D-264); null below it",
-            "example": null,
-            "type": [
-              "integer",
-              "null"
-            ]
-          },
           "minOrderQty": {
             "$ref": "#/components/schemas/MinOrderQtyDto"
           },
@@ -84013,7 +83925,6 @@
           "supportHours",
           "supportReplyMinutes",
           "templateCount",
-          "factoryCount",
           "contact"
         ],
         "type": "object"
@@ -100349,6 +100260,143 @@
         ],
         "type": "object"
       },
+      "StoreCallOffAgreementDto": {
+        "properties": {
+          "committedQuantity": {
+            "description": "The quotation option’s quantity",
+            "example": 10000,
+            "type": "integer"
+          },
+          "createdAt": {
+            "example": "2026-10-03T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "declineReason": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "example": "2027-04-04T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lapsedQuantity": {
+            "description": "At expiry: the quantity not released, without charge",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "minReleaseQuantity": {
+            "description": "The smallest release, fixed when asked",
+            "example": 1000,
+            "type": "integer"
+          },
+          "months": {
+            "example": 6,
+            "type": "integer"
+          },
+          "productType": {
+            "$ref": "#/components/schemas/CodeNameRefDto"
+          },
+          "quoteCode": {
+            "example": "QT-2610-00012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteOptionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7304",
+            "format": "uuid",
+            "type": "string"
+          },
+          "releasedQuantity": {
+            "description": "Quoted or ordered releases",
+            "example": 2000,
+            "type": "integer"
+          },
+          "releases": {
+            "items": {
+              "$ref": "#/components/schemas/CallOffReleaseDto"
+            },
+            "type": "array"
+          },
+          "remainingQuantity": {
+            "description": "0 unless active",
+            "example": 8000,
+            "type": "integer"
+          },
+          "startsAt": {
+            "example": "2026-10-04T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CallOffStatus"
+              }
+            ],
+            "example": "active"
+          },
+          "unit": {
+            "example": "piece",
+            "type": "string"
+          },
+          "unitPrice": {
+            "description": "The locked unit price, VAT included (product only); null for the factory (D-044)",
+            "example": "13.38",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "quoteId",
+          "quoteOptionId",
+          "quoteCode",
+          "productType",
+          "unit",
+          "unitPrice",
+          "committedQuantity",
+          "releasedQuantity",
+          "remainingQuantity",
+          "minReleaseQuantity",
+          "months",
+          "startsAt",
+          "expiresAt",
+          "declineReason",
+          "lapsedQuantity",
+          "releases",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "StoreCarrier": {
         "enum": [
           "getpack",
@@ -102697,6 +102745,7 @@
       "StoreShipmentEventDto": {
         "properties": {
           "location": {
+            "description": "Only on destination-side steps (`out_for_delivery`, `delivered`, `failed`); null on every pickup, line-haul or return step, so the origin is never shown (D-435)",
             "example": "ศูนย์กระจายสินค้าบางนา",
             "type": [
               "string",
@@ -102704,7 +102753,7 @@
             ]
           },
           "occurredAt": {
-            "example": "2026-10-20T09:30:00+07:00",
+            "example": "2026-10-21T09:30:00+07:00",
             "format": "date-time",
             "type": "string"
           },
@@ -102714,7 +102763,7 @@
                 "$ref": "#/components/schemas/ShipmentStatus"
               }
             ],
-            "example": "in_transit"
+            "example": "out_for_delivery"
           },
           "statusLabelAdminTh": {
             "description": "`status` (ShipmentStatus) in Thai for staff and partner factories (D-313).",
@@ -104827,14 +104876,6 @@
             },
             "type": "array"
           },
-          "partnersCount": {
-            "description": "Partners able to make it — only with ≥ 3 active factories (D-201); never who they are",
-            "example": null,
-            "type": [
-              "integer",
-              "null"
-            ]
-          },
           "photo": {
             "anyOf": [
               {
@@ -104941,7 +104982,6 @@
           "variants",
           "sizeRanges",
           "leadTime",
-          "partnersCount",
           "useCases",
           "assets"
         ],
@@ -105601,6 +105641,7 @@
         "type": "object"
       },
       "StylePriceReason": {
+        "description": "Why the variant is RFQ; never `not_makeable` on the storefront (D-435 — no factory coverage)",
         "enum": [
           "no_calculator",
           "calculator_not_signed",
@@ -106203,6 +106244,7 @@
             "example": "rfq"
           },
           "priceReasons": {
+            "description": "Why the variant is RFQ; never `not_makeable` on the storefront (D-435 — no factory coverage)",
             "example": [
               "option_not_priced"
             ],
@@ -488214,7 +488256,6 @@
                   "totals": {
                     "activeLinks": 6,
                     "earned": "830.50",
-                    "factories": 1,
                     "held": "0.00",
                     "openLeads": 3,
                     "paidThisYear": "4200.00",
@@ -489297,7 +489338,6 @@
                       "createdAt": "2026-10-31T10:00:00+07:00",
                       "customerName": "ส•••",
                       "earnedAt": null,
-                      "factoryName": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6008",
                       "isFirstOrder": true,
                       "kind": "order",
@@ -490907,7 +490947,6 @@
                       "createdAt": "2026-10-31T10:00:00+07:00",
                       "customerName": "ส•••",
                       "earnedAt": null,
-                      "factoryName": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6008",
                       "isFirstOrder": true,
                       "kind": "order",
@@ -492872,12 +492911,10 @@
               "application/json": {
                 "example": [
                   {
-                    "buyUnitPrice": null,
                     "committedQuantity": 10000,
                     "createdAt": "2026-10-03T15:00:00+07:00",
                     "declineReason": null,
                     "expiresAt": "2027-04-04T09:00:00+07:00",
-                    "factory": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
                     "lapsedQuantity": null,
                     "minReleaseQuantity": 1000,
@@ -492916,7 +492953,7 @@
                 ],
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/CallOffAgreementDto"
+                    "$ref": "#/components/schemas/StoreCallOffAgreementDto"
                   },
                   "type": "array"
                 }
@@ -493070,12 +493107,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "buyUnitPrice": null,
                   "committedQuantity": 10000,
                   "createdAt": "2026-10-03T15:00:00+07:00",
                   "declineReason": null,
                   "expiresAt": null,
-                  "factory": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
                   "lapsedQuantity": null,
                   "minReleaseQuantity": 1000,
@@ -493098,7 +493133,7 @@
                   "unitPrice": "13.38"
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/CallOffAgreementDto"
+                  "$ref": "#/components/schemas/StoreCallOffAgreementDto"
                 }
               }
             },
@@ -493340,12 +493375,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "buyUnitPrice": null,
                   "committedQuantity": 10000,
                   "createdAt": "2026-10-03T15:00:00+07:00",
                   "declineReason": null,
                   "expiresAt": "2027-04-04T09:00:00+07:00",
-                  "factory": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
                   "lapsedQuantity": null,
                   "minReleaseQuantity": 1000,
@@ -493382,7 +493415,7 @@
                   "unitPrice": "13.38"
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/CallOffAgreementDto"
+                  "$ref": "#/components/schemas/StoreCallOffAgreementDto"
                 }
               }
             },
@@ -493566,12 +493599,10 @@
             "content": {
               "application/json": {
                 "example": {
-                  "buyUnitPrice": null,
                   "committedQuantity": 10000,
                   "createdAt": "2026-10-03T15:00:00+07:00",
                   "declineReason": null,
                   "expiresAt": null,
-                  "factory": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
                   "lapsedQuantity": null,
                   "minReleaseQuantity": 1000,
@@ -493594,7 +493625,7 @@
                   "unitPrice": "13.38"
                 },
                 "schema": {
-                  "$ref": "#/components/schemas/CallOffAgreementDto"
+                  "$ref": "#/components/schemas/StoreCallOffAgreementDto"
                 }
               }
             },
@@ -529637,181 +529668,6 @@
         ]
       }
     },
-    "/v1/store/network/stats": {
-      "get": {
-        "description": "How partners are audited, which product types the network can make, and — only with at least `trust.network_min_factories` (3) active factories and `trust.network_min_jobs` (30) jobs completed in the last `trust.network_window_days` (90) days — the partner count and the on-time and first-pass rates rounded to whole %. Aggregates only: never a partner or the factory of an order (D-201, D-264, D-044).\n\nImplements: D-201, D-264, D-044.",
-        "operationId": "store.network.getStats",
-        "parameters": [
-          {
-            "$ref": "#/components/parameters/AcceptLanguage"
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "example": {
-                  "auditCriteria": [
-                    {
-                      "key": "site_visit",
-                      "labelEn": "Passed a site visit by the Partner team",
-                      "labelTh": "ผ่านการตรวจเยี่ยมโรงงานโดยทีมพาร์ทเนอร์"
-                    }
-                  ],
-                  "coverage": [
-                    {
-                      "available": true,
-                      "nameEn": "Folding carton",
-                      "nameTh": "กล่องกระดาษพับ",
-                      "productTypeCode": "folding_carton"
-                    }
-                  ],
-                  "generatedAt": "2026-10-03T10:00:00+07:00",
-                  "network": {
-                    "firstPassPct": null,
-                    "minFactories": 3,
-                    "minJobs": 30,
-                    "onTimePct": null,
-                    "partnerCount": null,
-                    "published": false,
-                    "windowDays": 90
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/NetworkStatsDto"
-                }
-              }
-            },
-            "description": "Statistics",
-            "headers": {
-              "X-RateLimit-Limit": {
-                "$ref": "#/components/headers/RateLimitLimit"
-              },
-              "X-RateLimit-Remaining": {
-                "$ref": "#/components/headers/RateLimitRemaining"
-              },
-              "X-RateLimit-Reset": {
-                "$ref": "#/components/headers/RateLimitReset"
-              },
-              "X-Request-Id": {
-                "$ref": "#/components/headers/XRequestId"
-              }
-            }
-          },
-          "401": {
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "auth.unauthenticated": {
-                    "$ref": "#/components/examples/problem.auth.unauthenticated"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            },
-            "description": "Problem: `auth.unauthenticated`",
-            "headers": {
-              "X-Request-Id": {
-                "$ref": "#/components/headers/XRequestId"
-              }
-            }
-          },
-          "403": {
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "auth.forbidden": {
-                    "$ref": "#/components/examples/problem.auth.forbidden"
-                  },
-                  "auth.wrong_audience": {
-                    "$ref": "#/components/examples/problem.auth.wrong_audience"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            },
-            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
-            "headers": {
-              "X-Request-Id": {
-                "$ref": "#/components/headers/XRequestId"
-              }
-            }
-          },
-          "404": {
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "http.not_found": {
-                    "$ref": "#/components/examples/problem.http.not_found"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            },
-            "description": "Problem: `http.not_found`",
-            "headers": {
-              "X-Request-Id": {
-                "$ref": "#/components/headers/XRequestId"
-              }
-            }
-          },
-          "429": {
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "http.too_many_requests": {
-                    "$ref": "#/components/examples/problem.http.too_many_requests"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            },
-            "description": "Problem: `http.too_many_requests`",
-            "headers": {
-              "Retry-After": {
-                "$ref": "#/components/headers/RetryAfter"
-              },
-              "X-Request-Id": {
-                "$ref": "#/components/headers/XRequestId"
-              }
-            }
-          },
-          "500": {
-            "content": {
-              "application/problem+json": {
-                "examples": {
-                  "internal.unexpected": {
-                    "$ref": "#/components/examples/problem.internal.unexpected"
-                  }
-                },
-                "schema": {
-                  "$ref": "#/components/schemas/ProblemDetails"
-                }
-              }
-            },
-            "description": "Problem: `internal.unexpected`",
-            "headers": {
-              "X-Request-Id": {
-                "$ref": "#/components/headers/XRequestId"
-              }
-            }
-          }
-        },
-        "security": [],
-        "summary": "getpack’s partner network in numbers",
-        "tags": [
-          "store.network"
-        ]
-      }
-    },
     "/v1/store/notifications": {
       "get": {
         "description": "Newest first, cursor-paginated, with the count of all my unread items and, per item, the page of this zone it is about. Realtime signals (`notification.created`) tell the client to refetch.\n\nImplements: D-143.",
@@ -537461,7 +537317,7 @@
                         "occurredAt": "2026-10-20T08:00:00+07:00",
                         "status": "picked_up",
                         "statusLabelAdminTh": "ออกจากโรงงานแล้ว",
-                        "statusLabelTh": "ออกจากโรงงานแล้ว"
+                        "statusLabelTh": "จัดส่งออกแล้ว"
                       },
                       {
                         "location": null,
@@ -540828,7 +540684,7 @@
     },
     "/v1/store/public-config": {
       "get": {
-        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size, the partner count (null below `trust.network_min_factories`, D-264) and the contacts (D-221). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-264, D-307.",
+        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size and the contacts (D-221). Nothing about production partners — no count, coverage or threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-307, D-435.",
         "operationId": "store.publicConfig.get",
         "parameters": [
           {
@@ -540846,7 +540702,6 @@
                     "lineOaId": "@getpack-test",
                     "phone": "0800000000"
                   },
-                  "factoryCount": null,
                   "minOrderQty": {
                     "custom": 500,
                     "readyStock": 1
@@ -563892,7 +563747,6 @@
                       "tuck_bottom:crash_lock",
                       "window:front_window"
                     ],
-                    "partnersCount": null,
                     "photo": null,
                     "pricePath": "instant",
                     "productTypeCode": "folding_carton",
@@ -564409,7 +564263,7 @@
     },
     "/v1/store/styles/{code}": {
       "get": {
-        "description": "A published style by its public code (D-184, D-245): construction, the publishable variants and their option combinations, size ranges per material class (the recipe’s solver, else the linked pattern’s rules — `source`), the starting price and the quantity it assumes (D-220, none without a hint), the lead-time band, the number of partners able to make it only with ≥ 3 active factories (D-201), use cases and assets. A verified reference code only (D-211).\n\nImplements: D-245, D-246, D-243, D-050, D-201, D-220, D-211.",
+        "description": "A published style by its public code (D-184, D-245): construction, the publishable variants and their option combinations, size ranges per material class (the recipe’s solver, else the linked pattern’s rules — `source`), the starting price and the quantity it assumes (D-220, none without a hint), the lead-time band, use cases and assets — nothing about who makes it: no partner count and no `not_makeable` reason (D-435). A verified reference code only (D-211).\n\nImplements: D-245, D-246, D-243, D-050, D-435, D-220, D-211.",
         "operationId": "store.styles.get",
         "parameters": [
           {
@@ -564458,7 +564312,6 @@
                     "tuck_bottom:crash_lock",
                     "window:front_window"
                   ],
-                  "partnersCount": null,
                   "photo": null,
                   "pricePath": "instant",
                   "productTypeCode": "folding_carton",
@@ -566460,7 +566313,7 @@
                         {
                           "occurredAt": "2026-10-19T08:00:00+07:00",
                           "status": "picked_up",
-                          "statusLabelTh": "ออกจากโรงงานแล้ว"
+                          "statusLabelTh": "จัดส่งออกแล้ว"
                         },
                         {
                           "occurredAt": "2026-10-19T12:00:00+07:00",
@@ -569385,10 +569238,6 @@
     {
       "description": "The signed-in customer.",
       "name": "store.me"
-    },
-    {
-      "description": "getpack’s partner network in numbers (D-201, D-264): audit criteria, coverage by product type, and the partner count and rates above the published minimums — aggregates only.",
-      "name": "store.network"
     },
     {
       "description": "The signed-in customer's in-app notifications.",

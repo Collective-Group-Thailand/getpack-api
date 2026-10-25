@@ -48,10 +48,6 @@ describe('Phase 4 contract (e2e)', () => {
   it('states each storefront figure from its source and null without one (D-309)', async () => {
     const first = await request(ctx.server).get('/v1/store/public-config').expect(200);
     expect(first.headers['cache-control']).toBe('public, max-age=300');
-    const minFactories = 3;
-    const factories = await ctx.prisma.factory.count({
-      where: { status: 'active', capabilities: { some: { status: 'active' } } },
-    });
     const templates = await ctx.prisma.styleBase.count({
       where: { status: 'active', hidden: false, variants: { some: { publishable: true, status: 'active' } } },
     });
@@ -68,10 +64,10 @@ describe('Phase 4 contract (e2e)', () => {
       supportHours: null,
       supportReplyMinutes: null,
       templateCount: templates,
-      factoryCount: factories >= minFactories ? factories : null,
       contact: { phone: channels['phone'], lineOaId: channels['lineOaId'], email: channels['email'] },
     });
     expect(Object.keys(first.body.minOrderQty).sort()).toEqual(['custom', 'readyStock']);
+    expect(first.body).not.toHaveProperty('factoryCount'); // D-435
 
     await setSetting(ctx, 'artwork.first_proof_business_days', 1);
     await setSetting(ctx, 'storefront.support_hours', { days: 'mon_fri', open: '09:00', close: '18:00' });

@@ -8,6 +8,7 @@ import { type CursorPage } from '@common/pagination/pagination.dto';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type Attachment, type Order, type Prisma } from '@generated/prisma/client';
+import { customerEventLocation } from '@modules/logistics/shipment-views';
 import { hashToken, ShipmentsService } from '@modules/logistics/shipments.service';
 import { mainJobKind } from '@modules/orders/main-job';
 import { estimatedDeliveryDate } from '@modules/orders/order-views';
@@ -395,7 +396,7 @@ export class TimelineService implements OnModuleInit {
           ...words(`shipment.${e.status}`, {}),
           count: 1,
           params: {
-            location: e.location,
+            location: customer ? customerEventLocation(e.status, e.location) : e.location,
             ...(!customer && { source: e.source, note: e.note }),
             ...(delivered && { receiverName: s.proofOfDelivery!.receiverName }),
           },

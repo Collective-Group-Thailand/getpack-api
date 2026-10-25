@@ -112,10 +112,10 @@ export class StoreStylesController {
     description:
       'A published style by its public code (D-184, D-245): construction, the publishable variants and their option ' +
       'combinations, size ranges per material class (the recipe’s solver, else the linked pattern’s rules — `source`), ' +
-      'the starting price and the quantity it assumes (D-220, none without a hint), the lead-time band, the number ' +
-      'of partners able to make it only with ≥ 3 active factories (D-201), use cases and assets. A verified ' +
+      'the starting price and the quantity it assumes (D-220, none without a hint), the lead-time band, use cases ' +
+      'and assets — nothing about who makes it: no partner count and no `not_makeable` reason (D-435). A verified ' +
       'reference code only (D-211).',
-    implements: [...DECISIONS, 'D-201', 'D-220', 'D-211'],
+    implements: [...DECISIONS, 'D-435', 'D-220', 'D-211'],
   })
   @ApiSuccess(200, { description: 'The style', type: StyleDetailDto, example: DETAIL_EXAMPLE })
   @ApiStandardErrors('styles.variant_not_found')

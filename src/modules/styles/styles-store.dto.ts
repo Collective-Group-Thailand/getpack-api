@@ -286,6 +286,8 @@ export class StyleVariantRefDto {
     enumName: 'StylePriceReason',
     isArray: true,
     example: ['option_not_priced'],
+    description:
+      'Why the variant is RFQ; never `not_makeable` on the storefront (D-435 — no factory coverage)',
   })
   priceReasons!: (typeof PRICE_REASONS)[number][];
 
@@ -394,14 +396,6 @@ export class StyleDetailDto extends StyleCardDto {
   @ApiProperty({ type: LeadTimeRangeDto, nullable: true })
   leadTime!: LeadTimeRangeDto | null;
 
-  @ApiProperty({
-    type: 'integer',
-    nullable: true,
-    example: null,
-    description: 'Partners able to make it — only with ≥ 3 active factories (D-201); never who they are',
-  })
-  partnersCount!: number | null;
-
   @ApiProperty({ type: [String], example: ['cosmetics'] })
   useCases!: string[];
 
@@ -484,7 +478,6 @@ export const DETAIL_EXAMPLE: StyleDetailDto = {
     },
   ],
   leadTime: null,
-  partnersCount: null,
   useCases: [],
   assets: [],
 };

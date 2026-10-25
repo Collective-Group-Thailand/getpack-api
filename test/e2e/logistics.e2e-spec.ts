@@ -350,6 +350,12 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     expect(mine.every((s) => s.carrier === 'getpack' && !('factoryId' in s) && !('payoutAmount' in s))).toBe(
       true,
     );
+    // D-435: a pickup or line-haul step never carries its location to the customer.
+    const steps = mine.flatMap(
+      (s) => (s as unknown as { events: { status: string; location: string | null }[] }).events,
+    );
+    expect(steps.find((e) => e.status === 'in_transit')).toMatchObject({ location: null });
+    expect(JSON.stringify(mine)).not.toContain('บางนา');
     const shared = mine[0]!.proofOfDelivery!.photoFileIds[0]!;
     await as(ctx, o.token).get(`/v1/store/files/${shared}/download`).expect(200);
     const { token: otherCustomer } = await customerToken(ctx, 2);
