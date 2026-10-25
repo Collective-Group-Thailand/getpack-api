@@ -100,12 +100,13 @@ export class StorePaymentsController {
       'getpack’s merchant accounts exist (D-176). The amount is the cash after the expected withholding. ' +
       '`bank_transfer_slip` returns the accounts to pay into (`receiverAccounts`). After a 2C2P page the provider ' +
       'sends the customer back to the fixed storefront route `/payments/{paymentId}/return` (no client-supplied ' +
-      'return URL); poll `store.payments.get` there. Requires `Idempotency-Key`.',
-    implements: DECISIONS,
+      'return URL); poll `store.payments.get` there. Past the group’s payment deadline the customer re-quotes ' +
+      'first (`store.orders.requoteGroup`, D-436): `order.requote_required`. Requires `Idempotency-Key`.',
+    implements: [...DECISIONS, 'D-436'],
   })
   @ApiBody({ type: InitiatePaymentDto, examples: { default: { value: { method: 'scb_qr' } } } })
   @ApiSuccess(201, { description: 'Payment started', type: PaymentDto, example: PAYMENT_EXAMPLE })
-  @ApiStandardErrors(...INITIATE_ERRORS)
+  @ApiStandardErrors(...INITIATE_ERRORS, 'order.requote_required')
   async initiate(
     @CurrentActor() actor: Actor,
     @Param('groupId', ParseUUIDPipe) groupId: string,

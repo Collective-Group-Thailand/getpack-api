@@ -6,8 +6,9 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type DesignOption, Prisma } from '@generated/prisma/client';
+import { type DesignOption, Prisma, type QuoteOption } from '@generated/prisma/client';
 import { canonical } from '@modules/catalog/imports/import-engine';
+import { type DraftOrder } from '@modules/checkout/checkout.extensions';
 import { CheckoutService, type PricingItem } from '@modules/checkout/checkout.service';
 import { addTotals, type Totals } from '@modules/checkout/order-pricing';
 import { CustomersService, type TaxProfileSnapshot } from '@modules/customers/customers.service';
@@ -38,6 +39,25 @@ export interface RepriceInput {
   destinations?: { addressId: string; quantity: number }[];
 }
 
+/** The quotation a re-price is priced from (with what `CheckoutService.priceItem` reads). */
+export const REPRICE_QUOTE_INCLUDE = {
+  productType: true,
+  catalogProduct: SUMMARY_INCLUDE.catalogProduct,
+} as const satisfies Prisma.QuoteInclude;
+export type RepriceQuote = Prisma.QuoteGetPayload<{ include: typeof REPRICE_QUOTE_INCLUDE }>;
+
+/** A re-price priced outside the transaction, written by `applyReprice`. */
+export interface RepricePlan {
+  order: OrderRow;
+  groupId: bigint;
+  quote: RepriceQuote;
+  option: QuoteOption;
+  designOption: string;
+  draft: DraftOrder;
+  vatPct: string;
+  taxProfile: TaxProfileSnapshot | null;
+}
+
 export type QueueKey = 'waiting_payment' | 'artwork_review' | 'waiting_production' | 'due_soon' | 'late';
 
 /**
@@ -64,6 +84,44 @@ export class OrderOperationsService {
     const at = new Date();
     const order = await this.orders.order({ publicId: orderPublicId });
     assertIfMatch(ifMatch, orderEtag(order));
+    await this.assertRepriceable(order);
+
+    const quote = await this.prisma.quote.findFirst({
+      where: {
+        publicId: body.quoteId,
+        customerUserId: order.customerUserId,
+        productTypeId: order.productTypeId,
+      },
+      include: REPRICE_QUOTE_INCLUDE,
+    });
+    const option = quote
+      ? await this.prisma.quoteOption.findFirst({
+          where: { publicId: body.quoteOptionId, quoteId: quote.id },
+        })
+      : null;
+    if (!quote || !option) throw new DomainException('http.not_found');
+    if (!['saved', 'shared', 'converted'].includes(quote.status) || quote.validUntil <= at)
+      throw new DomainException('quotes.not_live');
+
+    const plan = await this.planReprice(
+      order,
+      quote,
+      option,
+      body.designOption ?? order.designOption,
+      at,
+      body.destinations,
+    );
+    return this.prisma.withTx(
+      async (tx) => {
+        await this.applyReprice(tx, plan, actor, body.reason, at);
+        return tx.order.findUniqueOrThrow({ where: { id: order.id }, include: ORDER_INCLUDE });
+      },
+      { timeout: 30_000 },
+    );
+  }
+
+  /** Before production, without discounts or add-on charges (they have their own instalments). */
+  async assertRepriceable(order: OrderRow): Promise<void> {
     if (!BEFORE_PRODUCTION.includes(order.status))
       throw new DomainException('order.invalid_transition', {
         params: { from: order.status, fact: 'repriced', reason: 'only before production' },
@@ -77,27 +135,19 @@ export class OrderOperationsService {
       })) > 0
     )
       throw new DomainException('order.reprice_has_add_ons');
+  }
+
+  /** Prices `order` from `quote` / `option` outside any transaction (CS re-price, customer re-quote D-436). */
+  async planReprice(
+    order: OrderRow,
+    quote: RepriceQuote,
+    option: QuoteOption,
+    designOption: string,
+    at: Date,
+    destinationsInput?: RepriceInput['destinations'],
+  ): Promise<RepricePlan> {
     const group = await this.prisma.orderGroup.findUniqueOrThrow({ where: { id: order.orderGroupId } });
-
-    const quote = await this.prisma.quote.findFirst({
-      where: {
-        publicId: body.quoteId,
-        customerUserId: order.customerUserId,
-        productTypeId: order.productTypeId,
-      },
-      include: { productType: true, catalogProduct: SUMMARY_INCLUDE.catalogProduct },
-    });
-    const option = quote
-      ? await this.prisma.quoteOption.findFirst({
-          where: { publicId: body.quoteOptionId, quoteId: quote.id },
-        })
-      : null;
-    if (!quote || !option) throw new DomainException('http.not_found');
-    if (!['saved', 'shared', 'converted'].includes(quote.status) || quote.validUntil <= at)
-      throw new DomainException('quotes.not_live');
-
-    const destinations = await this.destinations(order, option.quantity, body.destinations);
-    const designOption = body.designOption ?? order.designOption;
+    const destinations = await this.destinations(order, option.quantity, destinationsInput);
     const fee = D(((option.result ?? {}) as { designFeeAmount?: string }).designFeeAmount);
     if ((designOption === 'hired_design') !== fee.gt(0) || designOption === 'free_design')
       throw new DomainException('cart.design_option_unavailable');
@@ -120,172 +170,184 @@ export class OrderOperationsService {
     const withholds = !!snapshot && snapshot.withholdsTax && snapshot.taxType !== 'individual';
     const wht = withholds ? await this.checkout.whtRates(at) : null;
     const { order: draft, vatPct } = await this.checkout.priceItem(item, 0, at, nature, wht);
+    return { order, groupId: group.id, quote, option, designOption, draft, vatPct, taxProfile: snapshot };
+  }
 
-    return this.prisma.withTx(
-      async (tx) => {
-        const current = await tx.order.findUniqueOrThrow({ where: { id: order.id } });
-        if (current.rowVersion !== order.rowVersion) throw new DomainException('concurrency.stale');
-        const siblings = await tx.order.findMany({
-          where: { orderGroupId: group.id, id: { not: order.id }, status: { not: 'cancelled' } },
-        });
-        const groupTotals = addTotals([...siblings.map(totalsRow), draft.totals]);
-        const paid = await this.paid(tx, group.id);
-        if (D(groupTotals.grossAmount).lt(paid))
-          throw new DomainException('order.reprice_below_paid', {
-            params: { paid, total: groupTotals.grossAmount },
-          });
+  /**
+   * Writes a planned re-price in `tx`: the previous pricing kept as a revision, lines and destinations
+   * replaced, the group's totals refreshed, `order.repriced` published (the payment schedule re-allocates the
+   * unpaid part, ADR-0008). `promisedShipDate` re-plans the ship date (customer re-quote, D-436).
+   */
+  async applyReprice(
+    tx: Tx,
+    plan: RepricePlan,
+    actor: UserActor,
+    reason: string,
+    at: Date,
+    opts: { promisedShipDate?: Date | null; source?: 'staff' | 'customer_requote' } = {},
+  ): Promise<{ previousGrossAmount: string; newGrossAmount: string }> {
+    const { order, quote, option, draft, vatPct } = plan;
+    const current = await tx.order.findUniqueOrThrow({ where: { id: order.id } });
+    if (current.rowVersion !== order.rowVersion) throw new DomainException('concurrency.stale');
+    const siblings = await tx.order.findMany({
+      where: { orderGroupId: plan.groupId, id: { not: order.id }, status: { not: 'cancelled' } },
+    });
+    const groupTotals = addTotals([...siblings.map(totalsRow), draft.totals]);
+    const paid = await this.paid(tx, plan.groupId);
+    if (D(groupTotals.grossAmount).lt(paid))
+      throw new DomainException('order.reprice_below_paid', {
+        params: { paid, total: groupTotals.grossAmount },
+      });
 
-        const previousLines = await tx.orderLine.findMany({
-          where: { orderId: order.id },
-          orderBy: { lineNo: 'asc' },
-        });
-        await tx.orderPriceRevision.create({
-          data: {
-            orderId: order.id,
-            revision: current.pricingRevision,
-            previousSnapshot: current.pricingSnapshot as Prisma.InputJsonValue,
-            previousLines: previousLines.map((l) => ({
-              lineType: l.lineType,
-              netAmount: l.netAmount.toFixed(2),
-              vatAmount: l.vatAmount.toFixed(2),
-              grossAmount: l.grossAmount.toFixed(2),
-              whtAmount: l.whtAmount.toFixed(2),
-            })),
-            previousGross: current.grossAmount,
-            newGross: draft.totals.grossAmount,
-            reason: body.reason,
-            createdById: actor.userId,
-          },
-        });
-        await tx.orderLine.deleteMany({ where: { orderId: order.id } });
-        await tx.orderDestination.deleteMany({ where: { orderId: order.id } });
-
-        const payable = D(draft.totals.netAmount).sub(draft.totals.discountAmount);
-        const margin = draft.buyCostNet ? payable.sub(draft.buyCostNet) : null;
-        const marginPct = margin && payable.gt(0) ? margin.div(payable).mul(100) : null;
-        const floor = await this.settings.at('pricing.margin_floor_pct', { at });
-        const pricingSnapshot = {
-          schemaVersion: 1,
-          quote: {
-            id: quote.publicId,
-            code: quote.quoteCode,
-            source: quote.source,
-            quantity: option.quantity,
-          },
-          tax: { vatPct, nature: draft.lines[0]!.taxNature, taxProfile: snapshot },
-          shipping: draft.legs.map((l) => ({
-            postcode: l.postcode,
-            quantity: l.quantity,
-            net: formatMoney(l.net),
-          })),
-          lines: draft.lines,
-          totals: draft.totals,
-          repricedFromRevision: current.pricingRevision,
-        };
-        const configRefs = draft.configRefs;
-        await tx.order.update({
-          where: { id: order.id },
-          data: {
-            quoteId: quote.id,
-            quoteOptionId: option.id,
-            quantityOrdered: option.quantity,
-            designOption: designOption as DesignOption,
-            toleranceShortagePct: draft.toleranceShortagePct,
-            toleranceOveragePct: draft.toleranceOveragePct,
-            toleranceDimensionalMm: draft.toleranceDimensionalMm,
-            toleranceColourDeltaE: draft.toleranceColourDeltaE,
-            taxNature: draft.lines[0]!.taxNature,
-            pricingSnapshot: pricingSnapshot as unknown as Prisma.InputJsonValue,
-            configRefs: configRefs as Prisma.InputJsonValue,
-            snapshotSha256: createHash('sha256')
-              .update(JSON.stringify(canonical({ snapshot: pricingSnapshot, configRefs })))
-              .digest(),
-            pricingRevision: current.pricingRevision + 1,
-            ...draft.totals,
-            leadTimeDays: draft.leadTimeDays,
-            selectedFactoryId: draft.selectedFactoryId,
-            buyCostNet: draft.buyCostNet ? formatMoney(draft.buyCostNet) : null,
-            marginAmount: margin ? formatMoney(margin) : null,
-            marginPct: marginPct ? marginPct.toFixed(4) : null,
-            belowMarginFloor: marginPct ? marginPct.lt(String(floor.value)) : false,
-            updatedById: actor.userId,
-            rowVersion: { increment: 1 },
-          },
-        });
-        for (const [i, line] of draft.lines.entries()) {
-          await tx.orderLine.create({
-            data: {
-              orderId: order.id,
-              lineNo: i + 1,
-              lineType: line.lineType,
-              descriptionTh: line.descriptionTh,
-              descriptionEn: line.descriptionEn,
-              quantity: String(line.quantity),
-              unit: line.lineType === 'shipping' ? 'trip' : line.lineType === 'product' ? option.unit : 'job',
-              unitPrice: line.unitPrice,
-              netAmount: line.netAmount,
-              discountAmount: line.discountAmount,
-              vatRatePct: line.vatRatePct,
-              vatAmount: line.vatAmount,
-              grossAmount: line.grossAmount,
-              whtCategory: line.whtCategory,
-              whtRatePct: line.whtRatePct,
-              whtAmount: line.whtAmount,
-              revenueCategory: line.revenueCategory,
-              taxNature: line.taxNature,
-              buyCostNet:
-                line.lineType === 'product' && draft.buyCostNet ? formatMoney(draft.buyCostNet) : null,
-            },
-          });
-        }
-        for (const [i, leg] of draft.legs.entries()) {
-          const s = leg.snapshot as {
-            recipientName: string;
-            phone: string;
-            line1: string;
-            line2: string | null;
-          };
-          await tx.orderDestination.create({
-            data: {
-              orderId: order.id,
-              customerAddressId: leg.customerAddressId,
-              recipientName: s.recipientName,
-              phone: s.phone,
-              line1: s.line1,
-              line2: s.line2,
-              subdistrictId: leg.subdistrictId,
-              postcode: leg.postcode,
-              provinceId: leg.provinceId,
-              quantity: leg.quantity,
-              shippingNetAmount: formatMoney(leg.net),
-              sort: i,
-            },
-          });
-        }
-        await tx.orderGroup.update({
-          where: { id: group.id },
-          data: { ...groupTotals, updatedById: actor.userId, rowVersion: { increment: 1 } },
-        });
-        await this.conversion.markConverted(tx, quote.id);
-        await this.orders.record(
-          tx,
-          'order',
-          order.publicId,
-          'order.repriced',
-          {
-            revision: current.pricingRevision + 1,
-            previousGrossAmount: current.grossAmount.toFixed(2),
-            newGrossAmount: draft.totals.grossAmount,
-            groupGrossAmount: groupTotals.grossAmount,
-            quoteId: quote.publicId,
-            reason: body.reason,
-          },
-          actor,
-        );
-        return tx.order.findUniqueOrThrow({ where: { id: order.id }, include: ORDER_INCLUDE });
+    const previousLines = await tx.orderLine.findMany({
+      where: { orderId: order.id },
+      orderBy: { lineNo: 'asc' },
+    });
+    await tx.orderPriceRevision.create({
+      data: {
+        orderId: order.id,
+        revision: current.pricingRevision,
+        previousSnapshot: current.pricingSnapshot as Prisma.InputJsonValue,
+        previousLines: previousLines.map((l) => ({
+          lineType: l.lineType,
+          netAmount: l.netAmount.toFixed(2),
+          vatAmount: l.vatAmount.toFixed(2),
+          grossAmount: l.grossAmount.toFixed(2),
+          whtAmount: l.whtAmount.toFixed(2),
+        })),
+        previousGross: current.grossAmount,
+        newGross: draft.totals.grossAmount,
+        reason,
+        createdById: actor.userId,
       },
-      { timeout: 30_000 },
+    });
+    await tx.orderLine.deleteMany({ where: { orderId: order.id } });
+    await tx.orderDestination.deleteMany({ where: { orderId: order.id } });
+
+    const payable = D(draft.totals.netAmount).sub(draft.totals.discountAmount);
+    const margin = draft.buyCostNet ? payable.sub(draft.buyCostNet) : null;
+    const marginPct = margin && payable.gt(0) ? margin.div(payable).mul(100) : null;
+    const floor = await this.settings.at('pricing.margin_floor_pct', { at });
+    const pricingSnapshot = {
+      schemaVersion: 1,
+      quote: {
+        id: quote.publicId,
+        code: quote.quoteCode,
+        source: quote.source,
+        quantity: option.quantity,
+      },
+      tax: { vatPct, nature: draft.lines[0]!.taxNature, taxProfile: plan.taxProfile },
+      shipping: draft.legs.map((l) => ({
+        postcode: l.postcode,
+        quantity: l.quantity,
+        net: formatMoney(l.net),
+      })),
+      lines: draft.lines,
+      totals: draft.totals,
+      repricedFromRevision: current.pricingRevision,
+    };
+    const configRefs = draft.configRefs;
+    await tx.order.update({
+      where: { id: order.id },
+      data: {
+        quoteId: quote.id,
+        quoteOptionId: option.id,
+        quantityOrdered: option.quantity,
+        designOption: plan.designOption as DesignOption,
+        toleranceShortagePct: draft.toleranceShortagePct,
+        toleranceOveragePct: draft.toleranceOveragePct,
+        toleranceDimensionalMm: draft.toleranceDimensionalMm,
+        toleranceColourDeltaE: draft.toleranceColourDeltaE,
+        taxNature: draft.lines[0]!.taxNature,
+        pricingSnapshot: pricingSnapshot as unknown as Prisma.InputJsonValue,
+        configRefs: configRefs as Prisma.InputJsonValue,
+        snapshotSha256: createHash('sha256')
+          .update(JSON.stringify(canonical({ snapshot: pricingSnapshot, configRefs })))
+          .digest(),
+        pricingRevision: current.pricingRevision + 1,
+        ...draft.totals,
+        leadTimeDays: draft.leadTimeDays,
+        ...(opts.promisedShipDate !== undefined && { promisedShipDate: opts.promisedShipDate }),
+        selectedFactoryId: draft.selectedFactoryId,
+        buyCostNet: draft.buyCostNet ? formatMoney(draft.buyCostNet) : null,
+        marginAmount: margin ? formatMoney(margin) : null,
+        marginPct: marginPct ? marginPct.toFixed(4) : null,
+        belowMarginFloor: marginPct ? marginPct.lt(String(floor.value)) : false,
+        updatedById: actor.userId,
+        rowVersion: { increment: 1 },
+      },
+    });
+    for (const [i, line] of draft.lines.entries()) {
+      await tx.orderLine.create({
+        data: {
+          orderId: order.id,
+          lineNo: i + 1,
+          lineType: line.lineType,
+          descriptionTh: line.descriptionTh,
+          descriptionEn: line.descriptionEn,
+          quantity: String(line.quantity),
+          unit: line.lineType === 'shipping' ? 'trip' : line.lineType === 'product' ? option.unit : 'job',
+          unitPrice: line.unitPrice,
+          netAmount: line.netAmount,
+          discountAmount: line.discountAmount,
+          vatRatePct: line.vatRatePct,
+          vatAmount: line.vatAmount,
+          grossAmount: line.grossAmount,
+          whtCategory: line.whtCategory,
+          whtRatePct: line.whtRatePct,
+          whtAmount: line.whtAmount,
+          revenueCategory: line.revenueCategory,
+          taxNature: line.taxNature,
+          buyCostNet: line.lineType === 'product' && draft.buyCostNet ? formatMoney(draft.buyCostNet) : null,
+        },
+      });
+    }
+    for (const [i, leg] of draft.legs.entries()) {
+      const s = leg.snapshot as {
+        recipientName: string;
+        phone: string;
+        line1: string;
+        line2: string | null;
+      };
+      await tx.orderDestination.create({
+        data: {
+          orderId: order.id,
+          customerAddressId: leg.customerAddressId,
+          recipientName: s.recipientName,
+          phone: s.phone,
+          line1: s.line1,
+          line2: s.line2,
+          subdistrictId: leg.subdistrictId,
+          postcode: leg.postcode,
+          provinceId: leg.provinceId,
+          quantity: leg.quantity,
+          shippingNetAmount: formatMoney(leg.net),
+          sort: i,
+        },
+      });
+    }
+    await tx.orderGroup.update({
+      where: { id: plan.groupId },
+      data: { ...groupTotals, updatedById: actor.userId, rowVersion: { increment: 1 } },
+    });
+    await this.conversion.markConverted(tx, quote.id);
+    await this.orders.record(
+      tx,
+      'order',
+      order.publicId,
+      'order.repriced',
+      {
+        revision: current.pricingRevision + 1,
+        previousGrossAmount: current.grossAmount.toFixed(2),
+        newGrossAmount: draft.totals.grossAmount,
+        groupGrossAmount: groupTotals.grossAmount,
+        quoteId: quote.publicId,
+        reason,
+        source: opts.source ?? 'staff',
+      },
+      actor,
     );
+    return { previousGrossAmount: current.grossAmount.toFixed(2), newGrossAmount: draft.totals.grossAmount };
   }
 
   // --- change customer --------------------------------------------------------------------------------

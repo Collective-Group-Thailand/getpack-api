@@ -64,6 +64,16 @@ export class LaunchpadDesignDto {
   @ApiProperty({
     type: String,
     nullable: true,
+    example: 'https://files.example.invalid/thumb.png?sig=…',
+    description:
+      'Signed URL of the preview image (5 minutes), ready for an `<img>`; null without a preview (show the ' +
+      'product placeholder)',
+  })
+  thumbnailUrl!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
     example: null,
     description: 'The order the current version is locked by (D-276)',
   })
@@ -130,9 +140,17 @@ export class LaunchpadActionItemDto {
     nullable: true,
     example: null,
     description:
-      '`pay`: when the unpaid group expires (D-060); `confirm_receipt`: auto-completion is not shown here',
+      '`pay`: the payment deadline of the unpaid group (D-060; never an automatic cancellation, D-436); ' +
+      '`confirm_receipt`: auto-completion is not shown here',
   })
   dueAt!: string | null;
+
+  @ApiProperty({
+    example: false,
+    description:
+      '`pay` past its deadline (D-436): show "เลยกำหนดชำระ" and "ตรวจราคาใหม่และชำระ" (`store.orders.requoteGroup`)',
+  })
+  overdue!: boolean;
 
   @ApiProperty({ type: String, nullable: true, example: '12500.00', description: '`pay`: the amount to pay' })
   amount!: string | null;
@@ -184,6 +202,7 @@ export const LAUNCHPAD_EXAMPLE: LaunchpadDto = {
       catalogProductNameTh: 'กล่องพับ',
       catalogProductNameEn: 'Folding carton',
       thumbnailFileId: LAUNCHPAD_IDS.file,
+      thumbnailUrl: 'https://files.example.invalid/thumb.png?sig=…',
       lockedByOrderCode: null,
       updatedAt: '2026-10-03T16:20:00+07:00',
     },
@@ -220,6 +239,7 @@ export const LAUNCHPAD_EXAMPLE: LaunchpadDto = {
       },
       dueAt: null,
       amount: null,
+      overdue: false,
     },
   ],
   nextStep: { kind: 'approve_proof', target: 'order', targetId: LAUNCHPAD_IDS.order },

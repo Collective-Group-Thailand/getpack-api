@@ -20,6 +20,7 @@ import {
   type SlipStatus,
   type SubmissionStatus,
 } from '@generated/prisma/enums';
+import { type CustomerOrderStatus } from '@modules/orders/customer-status';
 
 /**
  * One status value in words (D-313, UX round 2 Phase 4 §A3): `th` for the customer (glossary: "ตรวจแบบก่อนพิมพ์" /
@@ -53,6 +54,19 @@ const ORDER: Labels<OrderStatus> = {
   shipping: L('กำลังจัดส่ง', 'Shipping'),
   completed: L('สำเร็จ', 'Completed'),
   cancelled: L('ยกเลิกแล้ว', 'Cancelled'),
+};
+
+/** D-437: the one customer status of an order (`customer-status.ts`); staff read the same words. */
+const CUSTOMER_ORDER: Labels<CustomerOrderStatus> = {
+  awaiting_payment: L('รอชำระเงิน', 'Awaiting payment'),
+  awaiting_artwork: L('รอไฟล์งาน', 'Awaiting artwork'),
+  awaiting_approval: L('รออนุมัติแบบ', 'Awaiting design approval'),
+  in_production: L('กำลังผลิต', 'In production'),
+  shipping: L('กำลังจัดส่ง', 'Shipping'),
+  received: L('ได้รับแล้ว', 'Received'),
+  claim_in_review: L('ได้รับแล้ว · เคลมกำลังตรวจ', 'Received · claim under review'),
+  completed: L('เสร็จสิ้น', 'Completed'),
+  cancelled: L('ยกเลิก', 'Cancelled'),
 };
 
 const PAYMENT: Labels<PaymentStatus> = {
@@ -97,8 +111,13 @@ const REFUND: Labels<RefundStatus> = {
 };
 
 const ARTWORK: Labels<ArtworkStatus> = {
-  awaiting_template: L('รอแบบไดคัท', 'Awaiting template'),
-  awaiting_upload: L('รอไฟล์งาน', 'Awaiting artwork'),
+  // D-438: "รอแบบไดคัท" split by who acts — the team sends the dieline / the customer sends the file.
+  awaiting_template: L(
+    'รอทีมส่งแบบไดคัทให้',
+    'Awaiting the dieline from our team',
+    'รอทีมส่งแบบไดคัทให้ลูกค้า',
+  ),
+  awaiting_upload: L('รอไฟล์จากคุณ', 'Awaiting your file', 'รอไฟล์จากลูกค้า'),
   uploaded: L('อัปโหลดไฟล์แล้ว', 'Uploaded'),
   in_review: L('กำลังตรวจแบบก่อนพิมพ์', 'In review', 'กำลังตรวจไฟล์'),
   proof_sent: L('แบบตัวอย่างพร้อมให้ตรวจ', 'Proof sent', 'ส่ง Proof ให้ลูกค้าแล้ว'),
@@ -240,6 +259,7 @@ const DESIGN_ROUND: Labels<DesignRoundStatus> = {
 export const STATUS_LABELS = {
   OrderGroupStatus: ORDER_GROUP,
   OrderStatus: ORDER,
+  CustomerOrderStatus: CUSTOMER_ORDER,
   PaymentStatus: PAYMENT,
   InstalmentStatus: INSTALMENT,
   SlipStatus: SLIP,

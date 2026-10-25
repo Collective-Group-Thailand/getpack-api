@@ -19,6 +19,7 @@ import { DocumentNumberingService } from '@platform/numbering/document-numbering
 import { type SettingValues } from '@platform/settings/setting-keys';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { initialArtworkStatus } from '../orders/customer-status';
 import { GROUP_INCLUDE, type OrderGroupRow } from '../orders/order-views';
 import {
   type CheckoutDraft,
@@ -237,7 +238,7 @@ export class CheckoutService {
               designDocumentId: o.designDocumentId,
               designDocumentVersionId: o.designDocumentVersionId,
               reuseArtworkProofId: o.reuseArtworkProofId,
-              artworkStatus: 'awaiting_template',
+              artworkStatus: initialArtworkStatus(o.designOption),
               designOption: o.designOption as DesignOption,
               designNote: o.designNote,
               mockupOption: o.mockupOption as MockupOption,
@@ -597,6 +598,11 @@ export class CheckoutService {
       versionIds[code] = String(version.id);
     }
     return { rates, versionIds };
+  }
+
+  /** The ship date a re-quoted order is promised now (D-436): as at checkout, with today's calendar. */
+  async planShipDate(o: DraftOrder, at: Date): Promise<Date | null> {
+    return this.promisedShipDate(o, at, await this.calendars.calendar());
   }
 
   /** The quotation's earliest ship date when still ahead, else today + lead time in working days. */

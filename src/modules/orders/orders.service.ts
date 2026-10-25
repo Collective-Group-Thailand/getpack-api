@@ -1,10 +1,10 @@
-import { type Actor, systemActor } from '@common/context/actor';
+import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { formatMoney, MoneyDecimal } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Order, type Prisma } from '@generated/prisma/client';
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
@@ -14,13 +14,13 @@ import { GROUP_INCLUDE, ORDER_INCLUDE, type OrderGroupRow, type OrderRow } from 
 export const groupEtag = (g: { publicId: string; rowVersion: number }) => etagOf(g.publicId, g.rowVersion);
 
 /**
- * A module that must keep an unpaid group alive past its expiry (a slip waiting for verification, B3.2)
- * or that needs to know about a cancellation before it happens registers here.
+ * A module that must hold an unpaid group's re-quote (a slip waiting for verification, B3.2, D-436) or that
+ * needs to know about a cancellation before it happens registers here.
  */
 export interface OrderLifecycleHook {
   readonly key: string;
-  /** True when the unpaid group must not be cancelled now (D-060). */
-  blocksExpiry?(tx: Tx, groupId: bigint): Promise<boolean>;
+  /** True when the unpaid group must not be re-priced now — a payment is being verified (D-436). */
+  blocksRequote?(tx: Tx, groupId: bigint): Promise<boolean>;
   /** Amount already paid on the group (refund needed on cancel, B3.2); THB decimal string. */
   paidAmount?(tx: Tx, groupId: bigint): Promise<string>;
   /** True when a delivered order must not complete automatically yet (an open claim, B4.5; D-081). */
@@ -56,13 +56,12 @@ export interface CancelInput {
 /**
  * Orders and order groups (B3.1): reads for the store and the admin zone, the fact-driven status
  * machine (`OrderFactsService` role: B3.2 payments, B4 artwork / production / shipping call `applyFact`
- * inside their own transaction), cancellation with a reason (credit notes are B5) and the per-minute
- * unpaid expiry (D-060). Every change: one transaction, activity rows and domain events.
+ * inside their own transaction) and cancellation with a reason (credit notes are B5). An unpaid group past its
+ * payment deadline is never cancelled for it (D-436, supersedes D-060's job): the customer re-quotes, then pays.
+ * Every change: one transaction, activity rows and domain events.
  */
 @Injectable()
 export class OrdersService {
-  private readonly logger = new Logger(OrdersService.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly hooks: OrderLifecycleHooks,
@@ -280,47 +279,6 @@ export class OrdersService {
   }
 
   // --- unpaid expiry (D-060) --------------------------------------------------------------------------
-
-  /** Scheduled every minute: unpaid groups past `expires_at` are cancelled (`payment_expired`). */
-  async expireUnpaid(now = new Date(), limit = 200): Promise<number> {
-    const due = await this.prisma.orderGroup.findMany({
-      where: { status: 'waiting_payment', expiresAt: { lte: now } },
-      select: { id: true, publicId: true },
-      orderBy: { expiresAt: 'asc' },
-      take: limit,
-    });
-    let cancelled = 0;
-    const actor = systemActor('orders.expire_unpaid');
-    for (const { id, publicId } of due) {
-      try {
-        await this.prisma.withTx(async (tx) => {
-          const group = await tx.orderGroup.findUniqueOrThrow({ where: { id }, include: { orders: true } });
-          if (group.status !== 'waiting_payment' || !group.expiresAt || group.expiresAt > now) return;
-          for (const hook of this.hooks.list()) {
-            if (hook.blocksExpiry && (await hook.blocksExpiry(tx, id))) return;
-          }
-          const reason = await tx.orderCancelReason.findUniqueOrThrow({ where: { code: 'payment_expired' } });
-          for (const order of group.orders.filter((o) => o.status !== 'cancelled')) {
-            await this.cancelOne(tx, order, reason.id, null, actor, now);
-          }
-          await this.record(
-            tx,
-            'order_group',
-            publicId,
-            'order_group.expired',
-            {
-              expiresAt: group.expiresAt.toISOString(),
-            },
-            actor,
-          );
-          cancelled += 1;
-        });
-      } catch (error) {
-        this.logger.error(`unpaid expiry failed for group ${publicId}: ${(error as Error).message}`);
-      }
-    }
-    return cancelled;
-  }
 
   // --- helpers --------------------------------------------------------------------------------------
 

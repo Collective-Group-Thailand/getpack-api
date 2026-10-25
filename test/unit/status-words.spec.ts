@@ -111,6 +111,7 @@ describe('timeline words (B13)', () => {
     'artwork.reused',
     'instalment.reminder',
     'customer_document.voided',
+    'order_group.requoted',
   ];
 
   it('has a sentence of its own for every action a customer sees', () => {
@@ -131,6 +132,10 @@ describe('timeline words (B13)', () => {
     expect(activityMessage('customer_document.issued', { docNumber: 'TR-1' }).th).toBe('ออกเอกสาร TR-1');
     expect(activityMessage('shipment.out_for_delivery', {}).th).toBe('การจัดส่ง: กำลังนำส่ง');
     expect(activityMessage('production.milestone_reached', { labelTh: 'กำลังพิมพ์' }).th).toBe('กำลังพิมพ์');
+    // D-439: rows recorded with the old step words read without the factory.
+    expect(activityMessage('production.milestone_reached', { labelTh: 'โรงงานรับงานแล้ว' }).th).toBe(
+      'รับงานเข้าผลิตแล้ว',
+    );
   });
 
   it('falls back per domain, never to the raw key', () => {

@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+
 import { systemActor } from '@common/context/actor';
 import { OrdersService } from '@modules/orders/orders.service';
 
@@ -15,7 +17,7 @@ import {
   staffToken,
 } from '../support/commerce-e2e';
 
-/** Orders: reads, fact-driven status, cancellation, unpaid expiry (B3.1 slice 5, D-060, D-073). */
+/** Orders: reads, fact-driven status, cancellation, overdue re-quote (B3.1 slice 5, D-060, D-073, D-436). */
 describe('orders (e2e, B3.1)', () => {
   let ctx: CommerceApp;
   let fixture: DevFolding;
@@ -144,27 +146,65 @@ describe('orders (e2e, B3.1)', () => {
     expect(group.body).toMatchObject({ status: 'cancelled', expiresAt: null });
   });
 
-  it('cancels unpaid groups past their expiry every run of the job (D-060)', async () => {
+  it('never cancels an overdue group: the customer re-quotes at today’s price, then pays (D-436)', async () => {
     const { token } = await customerToken(ctx, 5);
-    const group = await placeOrder(ctx, token, fixture, postcode);
-    const paidToo = await placeOrder(ctx, token, fixture, postcode);
-    await fact(paidToo.orders[0]!.id, { kind: 'paid_for_production' });
+    const group = await placeOrder(ctx, token, fixture, postcode, [1000, 2000]);
+    // Not overdue yet: nothing to re-quote.
+    await as(ctx, token)
+      .post(`/v1/store/order-groups/${group.id}/actions/requote`)
+      .expect(409)
+      .expect((res) => expect(res.body.code).toBe('order.requote_not_due'));
+
     const past = new Date(Date.now() - 60_000);
-    await ctx.prisma.orderGroup.updateMany({
-      where: { publicId: { in: [group.id, paidToo.id] } },
-      data: { expiresAt: past },
+    await ctx.prisma.orderGroup.update({ where: { publicId: group.id }, data: { expiresAt: past } });
+    const overdue = await as(ctx, token).get(`/v1/store/order-groups/${group.id}`).expect(200);
+    expect(overdue.body).toMatchObject({ status: 'waiting_payment', paymentOverdue: true });
+    expect(overdue.body.orders[0]).toMatchObject({
+      customerStatus: 'awaiting_payment',
+      deliveryDateBasis: 'after_payment',
+      payment: { groupCode: group.groupCode, groupOrderCount: 2, overdue: true },
     });
-    expect(await orders.expireUnpaid()).toBeGreaterThanOrEqual(1);
-    const row = await ctx.prisma.orderGroup.findUniqueOrThrow({
-      where: { publicId: group.id },
-      include: { cancelReason: true, orders: true },
-    });
-    expect(row).toMatchObject({ status: 'cancelled', cancelReason: { code: 'payment_expired' } });
-    expect(row.orders.every((o) => o.status === 'cancelled')).toBe(true);
+    // Paying the old price is refused; the old job that cancelled it is gone.
+    await as(ctx, token)
+      .post(`/v1/store/order-groups/${group.id}/payments`, { method: 'bank_transfer_slip' })
+      .set('Idempotency-Key', randomUUID())
+      .expect(409)
+      .expect((res) => expect(res.body.code).toBe('order.requote_required'));
+
+    const preview = await as(ctx, token)
+      .post(`/v1/store/order-groups/${group.id}/actions/requote`)
+      .expect(200);
+    expect(preview.body.orders).toHaveLength(2);
+    expect(preview.body.previousGrossAmount).toBe(group.totals.grossAmount);
+    const body = {
+      orders: (preview.body.orders as { orderId: string; quoteId: string; quoteOptionId: string }[]).map(
+        (o) => ({ orderId: o.orderId, quoteId: o.quoteId, quoteOptionId: o.quoteOptionId }),
+      ),
+      expectedGrossAmount: preview.body.newGrossAmount as string,
+    };
+    await as(ctx, token)
+      .post(`/v1/store/order-groups/${group.id}/actions/confirm-requote`, {
+        ...body,
+        expectedGrossAmount: '1.00',
+      })
+      .set('Idempotency-Key', randomUUID())
+      .expect(409)
+      .expect((res) => expect(res.body.code).toBe('order.requote_changed'));
+    const done = await as(ctx, token)
+      .post(`/v1/store/order-groups/${group.id}/actions/confirm-requote`, body)
+      .set('Idempotency-Key', randomUUID())
+      .expect(200);
+    expect(done.body).toMatchObject({ status: 'waiting_payment', paymentOverdue: false });
+    expect(done.body.totals.grossAmount).toBe(preview.body.newGrossAmount);
+    expect(new Date(done.body.expiresAt as string).getTime()).toBeGreaterThan(Date.now());
     expect(
-      await ctx.prisma.domainEvent.count({ where: { type: 'order_group.expired', aggregateId: group.id } }),
+      await ctx.prisma.domainEvent.count({ where: { type: 'order_group.requoted', aggregateId: group.id } }),
     ).toBe(1);
-    const paid = await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: paidToo.id } });
-    expect(paid.status).toBe('in_progress');
+    await as(ctx, token)
+      .post(`/v1/store/order-groups/${group.id}/payments`, { method: 'bank_transfer_slip' })
+      .set('Idempotency-Key', randomUUID())
+      .expect(201);
+    const row = await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: group.id } });
+    expect(row.status).toBe('waiting_payment');
   });
 });

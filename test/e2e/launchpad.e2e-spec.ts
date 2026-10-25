@@ -61,11 +61,11 @@ describe('launchpad, defaults and deep links (e2e, U5.B1)', () => {
     });
   });
 
-  it('lists what waits for me in recommendation order: pay, then upload artwork (D-297)', async () => {
+  it('lists what waits for me in recommendation order: pay, then upload artwork (D-297, D-438)', async () => {
     group = await placeOrder(ctx, a.token, fixture, code);
     let pad = await launchpad(a.token);
     const orderId = group.orders[0]!.id;
-    // An unpaid order already takes its artwork: paying comes first, then the upload.
+    // D-438: an own-file order waits for the team's dieline ("รอทีมส่งแบบไดคัทให้"): paying is all I can do.
     expect(pad.needsAction).toEqual([
       expect.objectContaining({
         action: 'pay',
@@ -73,13 +73,18 @@ describe('launchpad, defaults and deep links (e2e, U5.B1)', () => {
         id: group.id,
         code: group.groupCode,
         amount: group.totals.cashAmount,
+        overdue: false,
       }),
-      expect.objectContaining({ action: 'upload_artwork', subject: 'order', id: orderId }),
     ]);
     expect(pad.nextStep).toEqual({ kind: 'pay', target: 'order_group', targetId: group.id });
 
     await payDue(ctx, a.token, group.id);
     await ctx.pump();
+    // The dieline reached me ("รอไฟล์จากคุณ"): now the upload waits for me.
+    await ctx.prisma.order.update({
+      where: { publicId: orderId },
+      data: { artworkStatus: 'awaiting_upload' },
+    });
     pad = await launchpad(a.token);
     expect(pad.needsAction).toEqual([
       expect.objectContaining({ action: 'upload_artwork', subject: 'order', id: orderId }),

@@ -9,6 +9,7 @@ const item = (action: LaunchpadActionItemDto['action'], id: string): LaunchpadAc
   productType: null,
   dueAt: null,
   amount: null,
+  overdue: false,
 });
 const reorder = (
   due: boolean,

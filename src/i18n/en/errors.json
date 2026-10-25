@@ -633,6 +633,22 @@
     "reprice_has_add_ons": {
       "title": "Order has add-on charges",
       "detail": "This order has add-on charges (design revision / mockup) with their own instalments; it cannot be re-priced"
+    },
+    "requote_required": {
+      "title": "Overdue: re-check the price before paying",
+      "detail": "The payment deadline has passed. Use \"Re-check price and pay\" to price the order at today's price and delivery date first."
+    },
+    "requote_not_due": {
+      "title": "No re-quote needed",
+      "detail": "Only an unpaid order past its payment deadline is re-quoted."
+    },
+    "requote_unavailable": {
+      "title": "Cannot re-quote online",
+      "detail": "This order cannot be re-quoted online; please contact our team for today's price."
+    },
+    "requote_changed": {
+      "title": "The price changed",
+      "detail": "The new price no longer matches the one shown; please re-check the price again."
     }
   },
   "payments": {

@@ -33,7 +33,7 @@ const step = (
 ): RouteStepSeed => ({ key, nameTh, nameEn, ...opts });
 
 const RECEIVED = step('job_received', 'รับงาน', 'Job received', {
-  customerLabelTh: 'โรงงานรับงานแล้ว',
+  customerLabelTh: 'รับงานเข้าผลิตแล้ว',
   customerLabelEn: 'Production scheduled',
 });
 const PREPRESS = step('prepress_ready', 'เตรียมพิมพ์พร้อม', 'Prepress ready');

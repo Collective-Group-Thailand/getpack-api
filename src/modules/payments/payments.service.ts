@@ -23,6 +23,7 @@ import {
   type TwoC2PGateway,
 } from '@integrations/payments/payment-gateways.port';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
+import { paymentOverdue } from '@modules/orders/order-views';
 import { OrderLifecycleHooks } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
 import { PromotionRedemptions } from '@modules/promotions/promotion-redemptions.service';
@@ -108,10 +109,10 @@ export class PaymentsService implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    // An unpaid group is not cancelled while a slip waits for verification (D-060 / D-061).
+    // An unpaid group is not re-priced while a slip waits for verification (D-061, D-436).
     this.hooks.register({
       key: 'payments',
-      blocksExpiry: async (tx, groupId) =>
+      blocksRequote: async (tx, groupId) =>
         (await tx.payment.count({ where: { orderGroupId: groupId, status: 'awaiting_verification' } })) > 0,
     });
   }
@@ -158,6 +159,11 @@ export class PaymentsService implements OnModuleInit {
       throw new DomainException('http.not_found');
     if (!['waiting_payment', 'in_progress'].includes(group.status))
       throw new DomainException('payments.group_not_payable', { params: { status: group.status } });
+    // D-436: past the payment deadline the customer re-quotes at today's price first ("ตรวจราคาใหม่และชำระ").
+    if (customerUserId !== undefined && paymentOverdue(group))
+      throw new DomainException('order.requote_required', {
+        params: { expiresAt: group.expiresAt!.toISOString() },
+      });
     // A promotion that names payment methods holds the group to them (D-053 "payment method").
     const allowed = await this.promotions.requiredPaymentMethods(this.prisma, group.id);
     if (allowed.length > 0 && !allowed.includes(input.method))

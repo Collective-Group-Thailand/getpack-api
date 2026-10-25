@@ -1291,7 +1291,7 @@ export const ROUTE_EXAMPLE: MilestoneRouteDto = {
           nameTh: 'รับงาน',
           nameEn: 'Job received',
           customerVisible: true,
-          customerLabelTh: 'โรงงานรับงานแล้ว',
+          customerLabelTh: 'รับงานเข้าผลิตแล้ว',
           evidence: 'none',
           tracksQuantity: false,
           plannedSharePct: null,
@@ -1305,7 +1305,7 @@ export const ADD_ROUTE_VERSION_EXAMPLE = {
   effectiveFrom: '2026-10-01T00:00:00+07:00',
   reason: 'เพิ่มขั้นตอนเคลือบ UV',
   steps: [
-    { key: 'job_received', nameTh: 'รับงาน', nameEn: 'Job received', customerLabelTh: 'โรงงานรับงานแล้ว' },
+    { key: 'job_received', nameTh: 'รับงาน', nameEn: 'Job received', customerLabelTh: 'รับงานเข้าผลิตแล้ว' },
     { key: 'printing', nameTh: 'พิมพ์', nameEn: 'Printing', evidence: 'photo', tracksQuantity: true },
     { key: 'ready_to_ship', nameTh: 'พร้อมส่ง', nameEn: 'Ready to ship', customerLabelTh: 'พร้อมจัดส่ง' },
   ],

@@ -1,6 +1,6 @@
 import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
-import { type Actor } from '@common/context/actor';
+import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
@@ -21,6 +21,7 @@ import { SettingsService } from '@platform/settings/settings.service';
 import { type Response } from 'express';
 
 import { orderEtag } from './order-operations.service';
+import { OrderRequoteService } from './order-requote.service';
 import {
   adminOrderDto,
   adminOrderGroupDto,
@@ -34,15 +35,18 @@ import {
   AdminOrderDto,
   AdminOrderGroupDto,
   CancelOrderDto,
+  ConfirmRequoteDto,
   ORDER_EXAMPLE,
   ORDER_GROUP_EXAMPLE,
   OrderDto,
   OrderGroupDto,
   OrderGroupListQuery,
+  REQUOTE_PREVIEW_EXAMPLE,
+  RequotePreviewDto,
 } from './orders.dto';
 import { groupEtag, OrdersService } from './orders.service';
 
-const DECISIONS = ['D-060', 'D-073', 'D-142', 'D-050'];
+const DECISIONS = ['D-060', 'D-073', 'D-142', 'D-050', 'D-436', 'D-437', 'D-438', 'D-439'];
 const groupParam = ApiParam({ name: 'groupId', format: 'uuid' });
 const orderParam = ApiParam({ name: 'orderId', format: 'uuid' });
 const CANCEL_EXAMPLE = { reasonCode: 'customer_request', note: 'ลูกค้าเปลี่ยนแบบ' };
@@ -58,6 +62,7 @@ export class StoreOrdersController {
   constructor(
     private readonly orders: OrdersService,
     private readonly settings: SettingsService,
+    private readonly requotes: OrderRequoteService,
   ) {}
 
   private ctx() {
@@ -69,7 +74,8 @@ export class StoreOrdersController {
     id: 'store.orders.listGroups',
     summary: 'List my order groups',
     description:
-      'Newest first; each group holds one order per configuration (D-060 expiry shown while unpaid).',
+      'Newest first; each group holds one order per configuration. The payment deadline is shown while unpaid ' +
+      '(D-060) and an overdue group is re-quoted, never cancelled (`paymentOverdue`, D-436).',
     implements: DECISIONS,
   })
   @ApiPaginated(OrderGroupDto, { example: ORDER_GROUP_EXAMPLE })
@@ -146,6 +152,93 @@ export class StoreOrdersController {
     );
   }
 
+  @Post('order-groups/:groupId/actions/requote')
+  @HttpCode(200)
+  @groupParam
+  @ApiEndpoint({
+    id: 'store.orders.requoteGroup',
+    summary: 'Re-check the price of my overdue order group',
+    description:
+      '"ตรวจราคาใหม่และชำระ" (D-436): for an unpaid group past its payment deadline (`paymentOverdue`) — never ' +
+      'cancelled for it — every order is priced again through the pricing service at today’s price, lead time ' +
+      'and ship date (a new instant quotation of the same configuration, quantity and delivery postcode). ' +
+      'Answers the old and new totals and the difference; nothing on the order changes until ' +
+      '`store.orders.confirmRequote`. Not offered online (`order.requote_unavailable`, the team quotes): an RFQ ' +
+      'or sample quotation, a reorder, discounts or add-on charges, a payment being verified or part-paid.',
+    implements: ['D-436', 'D-051', 'D-060'],
+  })
+  @ApiSuccess(200, {
+    description: 'Today’s price',
+    type: RequotePreviewDto,
+    example: REQUOTE_PREVIEW_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    'order.requote_not_due',
+    'order.requote_unavailable',
+  )
+  async requote(@CurrentActor() actor: Actor, @Param('groupId', ParseUUIDPipe) groupId: string) {
+    return this.requotes.preview(customerId(actor), groupId);
+  }
+
+  @Post('order-groups/:groupId/actions/confirm-requote')
+  @HttpCode(200)
+  @groupParam
+  @Idempotent()
+  @ApiEndpoint({
+    id: 'store.orders.confirmRequote',
+    summary: 'Accept today’s price of my overdue order group',
+    description:
+      'Writes the re-quote shown by `store.orders.requoteGroup` (D-436): every order of the group that is not ' +
+      'cancelled with the quotation of the preview, and `expectedGrossAmount` = the preview’s `newGrossAmount` ' +
+      '(else `order.requote_changed` — re-check again). Each order keeps its previous pricing as a revision and ' +
+      'publishes `order.repriced` (the payment schedule follows, ADR-0008); the group gets a new payment deadline ' +
+      '(`orders.unpaid_expiry_days`) and publishes `order_group.requoted`. Then pay with `store.payments.initiate`. ' +
+      'Requires `Idempotency-Key`; a replay returns the same group.',
+    implements: ['D-436', 'D-051', 'D-060'],
+  })
+  @ApiBody({
+    type: ConfirmRequoteDto,
+    examples: {
+      default: {
+        value: {
+          orders: REQUOTE_PREVIEW_EXAMPLE.orders.map((o) => ({
+            orderId: o.orderId,
+            quoteId: o.quoteId,
+            quoteOptionId: o.quoteOptionId,
+          })),
+          expectedGrossAmount: REQUOTE_PREVIEW_EXAMPLE.newGrossAmount,
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Re-quoted; pay now',
+    type: OrderGroupDto,
+    example: { ...ORDER_GROUP_EXAMPLE, expiresAt: REQUOTE_PREVIEW_EXAMPLE.paymentDueAt },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'order.requote_not_due',
+    'order.requote_unavailable',
+    'order.requote_changed',
+    'order.reprice_below_paid',
+    'concurrency.stale',
+  )
+  async confirmRequote(
+    @CurrentActor() actor: Actor,
+    @Param('groupId', ParseUUIDPipe) groupId: string,
+    @Body() body: ConfirmRequoteDto,
+  ) {
+    customerId(actor);
+    const group = await this.requotes.confirm(actor as UserActor, groupId, body);
+    return orderGroupDto(group, await this.ctx());
+  }
+
   @Get('orders/by-code/:orderCode')
   @ApiParam({ name: 'orderCode', schema: { type: 'string', pattern: '^[A-Z0-9-]{3,40}$' } })
   @ApiEndpoint({
@@ -166,7 +259,9 @@ export class StoreOrdersController {
     id: 'store.orders.get',
     summary: 'Get one of my orders',
     description:
-      'Lines, destinations and the status driven by payment, artwork, production and shipping facts.',
+      'Lines, destinations and the status driven by payment, artwork, production and shipping facts; ' +
+      '`customerStatus` is the one status to show the customer (D-437), with who acts next and the artwork ' +
+      'step owner (D-438), this order’s share of the group payment and the delivery-date basis (D-439).',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Order', type: OrderDto, example: ORDER_EXAMPLE })

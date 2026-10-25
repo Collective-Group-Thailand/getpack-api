@@ -9,6 +9,7 @@ import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsEmail,
   IsIn,
@@ -24,6 +25,7 @@ import {
 } from 'class-validator';
 
 import { AddressSnapshotDto, DestinationInputDto } from '../carts/carts.dto';
+import { ACTION_OWNERS, CUSTOMER_ORDER_STATUSES } from './customer-status';
 
 /** Order groups and orders (schema-design §3.6, B3.1). Money: decimal strings, THB. */
 
@@ -163,6 +165,7 @@ export class OrderDestinationDto {
 }
 
 export const COMPLETION_MODES = ['auto_after_days', 'customer_confirmed'] as const;
+export const DELIVERY_DATE_BASES = ['after_payment', 'planned'] as const;
 export const TOLERANCE_OUTCOMES = [
   'exact',
   'shortage_within',
@@ -177,12 +180,21 @@ export class OrderReceiptDto {
   deliveredAt!: string | null;
 
   @ApiProperty({
+    example: false,
+    description:
+      'Delivered, not completed, and a claim is open: completion waits for the claim (B4.5, D-437) — ' +
+      '`autoCompleteAt` is null meanwhile and receipt is not asked for',
+  })
+  completionHeldByClaim!: boolean;
+
+  @ApiProperty({
     type: String,
     format: 'date-time',
     nullable: true,
     example: '2026-10-27T15:00:00+07:00',
     description:
-      'While delivered and not completed: when the order completes by itself (`orders.auto_complete_days`, D-081)',
+      'While delivered and not completed (and no claim open): when the order completes by itself ' +
+      '(`orders.auto_complete_days`, D-081)',
   })
   autoCompleteAt!: string | null;
 
@@ -234,6 +246,83 @@ export class OrderToleranceOutcomeDto {
   evaluatedAt!: string;
 }
 
+/** D-439: this order's share of the group's payment next to the group's total (an order page shows both). */
+export class OrderPaymentShareDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000d0001' })
+  groupId!: string;
+
+  @ApiProperty({ example: 'OG-2610-00042' })
+  groupCode!: string;
+
+  @ApiProperty({ type: 'integer', example: 2, description: 'Orders of the group that are not cancelled' })
+  groupOrderCount!: number;
+
+  @ApiProperty({ example: '4302.86', description: 'This order, incl. VAT (= `totals.grossAmount`)' })
+  orderGrossAmount!: string;
+
+  @ApiProperty({ example: '4302.86', description: 'This order, after the expected withholding' })
+  orderCashAmount!: string;
+
+  @ApiProperty({
+    example: '9284.96',
+    description: 'The whole group, incl. VAT (one payment for all its orders)',
+  })
+  groupGrossAmount!: string;
+
+  @ApiProperty({ example: '9284.96', description: 'The whole group, after the expected withholding' })
+  groupCashAmount!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-22T11:47:00+07:00',
+    description: 'Payment deadline while the group waits for payment (D-060, D-436); null otherwise',
+  })
+  dueAt!: string | null;
+
+  @ApiProperty({
+    example: false,
+    description:
+      'Past the deadline and unpaid (D-436): never cancelled for it — "เลยกำหนดชำระ"; the customer re-quotes ' +
+      '(`store.orders.requoteGroup`) before paying',
+  })
+  overdue!: boolean;
+}
+
+/** A claim on the order that is still being handled (D-437). */
+export class OrderOpenClaimDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001' })
+  id!: string;
+
+  @ApiProperty({ example: 'CL-2610-0001' })
+  claimNo!: string;
+
+  @ApiProperty({
+    // The whole `ClaimStatus` component (a shared enum); only non-final values occur here.
+    enum: [
+      'submitted',
+      'under_review',
+      'need_info',
+      'factory_review',
+      'approved',
+      'rejected',
+      'resolved',
+      'closed',
+    ],
+    enumName: 'ClaimStatus',
+    example: 'under_review',
+    description: 'Never a final status (`rejected`, `resolved`, `closed`) here',
+  })
+  status!: string;
+
+  @ApiStatusLabelTh('ClaimStatus')
+  statusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('ClaimStatus')
+  statusLabelAdminTh!: string;
+}
+
 export class OrderDto {
   @IdField(ORDER_IDS.order)
   id!: string;
@@ -250,6 +339,32 @@ export class OrderDto {
   @ApiStatusLabelAdminTh('OrderStatus')
   statusLabelAdminTh!: string;
 
+  @ApiProperty({
+    enum: CUSTOMER_ORDER_STATUSES,
+    enumName: 'CustomerOrderStatus',
+    example: 'awaiting_payment',
+    description:
+      'THE status to show a customer (D-437), derived by the API from payment, artwork, production, shipment, ' +
+      'receipt, claims and cancellation; every customer surface (overview, list, detail, e-mail, LINE) uses it. ' +
+      '`status` is the stored fact status (staff)',
+  })
+  customerStatus!: string;
+
+  @ApiStatusLabelTh('CustomerOrderStatus', 'customerStatus')
+  customerStatusLabelTh!: string;
+
+  @ApiStatusLabelAdminTh('CustomerOrderStatus', 'customerStatus')
+  customerStatusLabelAdminTh!: string;
+
+  @ApiProperty({
+    enum: ACTION_OWNERS,
+    enumName: 'ActionOwner',
+    nullable: true,
+    example: 'customer',
+    description: 'Who acts next on the order (D-438): `team`, `customer`, or null when nothing is left to do',
+  })
+  actionOwner!: string | null;
+
   @ApiProperty({ enum: ARTWORK_STATUSES, enumName: 'ArtworkStatus', example: 'awaiting_template' })
   artworkStatus!: string;
 
@@ -258,6 +373,17 @@ export class OrderDto {
 
   @ApiStatusLabelAdminTh('ArtworkStatus', 'artworkStatus')
   artworkStatusLabelAdminTh!: string;
+
+  @ApiProperty({
+    enum: ACTION_OWNERS,
+    enumName: 'ActionOwner',
+    nullable: true,
+    example: 'team',
+    description:
+      'Who owns the artwork step (D-438): `team` ("รอทีมส่งแบบไดคัทให้", a file being checked — no upload ' +
+      'button), `customer` ("รอไฟล์จากคุณ", sent back, proof to answer); null once approved',
+  })
+  artworkOwner!: string | null;
 
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;
@@ -325,8 +451,21 @@ export class OrderDto {
   })
   estimatedDeliveryDate!: string | null;
 
+  @ApiProperty({
+    enum: DELIVERY_DATE_BASES,
+    enumName: 'DeliveryDateBasis',
+    example: 'after_payment',
+    description:
+      '`after_payment`: not paid yet — the dates above are only the plan made at placement and the storefront ' +
+      'shows "คำนวณหลังชำระเงิน" instead (D-439); `planned`: the production plan',
+  })
+  deliveryDateBasis!: (typeof DELIVERY_DATE_BASES)[number];
+
   @ApiProperty({ type: MoneyTotalsDto })
   totals!: MoneyTotalsDto;
+
+  @ApiProperty({ type: OrderPaymentShareDto })
+  payment!: OrderPaymentShareDto;
 
   @ApiProperty({ type: [OrderLineDto] })
   lines!: OrderLineDto[];
@@ -356,6 +495,12 @@ export class OrderDto {
 
   @ApiProperty({ type: OrderReceiptDto })
   receipt!: OrderReceiptDto;
+
+  @ApiProperty({
+    type: [OrderOpenClaimDto],
+    description: 'Claims still being handled, oldest first (D-437); empty when none',
+  })
+  openClaims!: OrderOpenClaimDto[];
 
   @ApiProperty({
     type: OrderToleranceOutcomeDto,
@@ -409,9 +554,17 @@ export class OrderGroupDto {
     format: 'date-time',
     nullable: true,
     example: '2026-10-08T10:00:00+07:00',
-    description: 'Unpaid groups are cancelled at this instant (D-060)',
+    description:
+      'Payment deadline of an unpaid group (D-060). Past it the group is NOT cancelled (D-436): it is overdue ' +
+      '("เลยกำหนดชำระ") and the customer re-quotes before paying',
   })
   expiresAt!: string | null;
+
+  @ApiProperty({
+    example: false,
+    description: 'Unpaid and past `expiresAt` (D-436): pay only after `store.orders.requoteGroup`',
+  })
+  paymentOverdue!: boolean;
 
   @TimestampField()
   placedAt!: string;
@@ -539,8 +692,12 @@ export const ORDER_EXAMPLE: OrderDto = {
   orderCode: 'OR-2610-00042',
   status: 'waiting_payment',
   ...statusLabels('OrderStatus', 'waiting_payment'),
+  customerStatus: 'awaiting_payment',
+  ...statusLabels('CustomerOrderStatus', 'awaiting_payment', 'customerStatus'),
+  actionOwner: 'customer',
   artworkStatus: 'awaiting_template',
   ...statusLabels('ArtworkStatus', 'awaiting_template', 'artworkStatus'),
+  artworkOwner: 'team',
   productTypeCode: 'folding_carton',
   summary: LINE_SUMMARY_EXAMPLE,
   quoteId: ORDER_IDS.quote,
@@ -554,7 +711,19 @@ export const ORDER_EXAMPLE: OrderDto = {
   leadTimeDays: 7,
   promisedShipDate: '2026-10-12',
   estimatedDeliveryDate: '2026-10-14',
+  deliveryDateBasis: 'after_payment',
   totals: MONEY_EXAMPLE,
+  payment: {
+    groupId: ORDER_IDS.group,
+    groupCode: 'OG-2610-00042',
+    groupOrderCount: 1,
+    orderGrossAmount: '14182.80',
+    orderCashAmount: '14182.80',
+    groupGrossAmount: '14182.80',
+    groupCashAmount: '14182.80',
+    dueAt: '2026-10-08T10:00:00+07:00',
+    overdue: false,
+  },
   lines: [
     {
       id: ORDER_IDS.line,
@@ -599,15 +768,17 @@ export const ORDER_EXAMPLE: OrderDto = {
   cancelReasonNameEn: null,
   receipt: {
     deliveredAt: null,
+    completionHeldByClaim: false,
     autoCompleteAt: null,
     claimWindowEndsAt: null,
     completedAt: null,
     completionMode: null,
     confirmedAt: null,
   },
+  openClaims: [],
   toleranceOutcome: null,
   createdAt: '2026-10-01T09:00:00+07:00',
-  nextActions: [{ key: 'order.upload_artwork', irreversible: false, disabledReason: null }],
+  nextActions: [],
 };
 
 export const ORDER_GROUP_EXAMPLE: OrderGroupDto = {
@@ -620,6 +791,7 @@ export const ORDER_GROUP_EXAMPLE: OrderGroupDto = {
   poNumber: null,
   totals: MONEY_EXAMPLE,
   expiresAt: '2026-10-08T10:00:00+07:00',
+  paymentOverdue: false,
   placedAt: '2026-10-01T10:00:00+07:00',
   cancelledAt: null,
   ccEmails: [],
@@ -718,6 +890,176 @@ export class RepriceOrderDto {
   @Type(() => DestinationInputDto)
   destinations?: DestinationInputDto[];
 }
+
+// --- customer re-quote of an overdue group (D-436) -------------------------------------------------------
+
+/** One order of the group priced at today's price (a new quotation of the same configuration and quantity). */
+export class RequoteOrderDto {
+  @ApiProperty({ format: 'uuid', example: ORDER_IDS.order })
+  orderId!: string;
+
+  @ApiProperty({ example: 'OR-2610-00016' })
+  orderCode!: string;
+
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca101',
+    description: 'The new quotation (send back on confirm)',
+  })
+  quoteId!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca102' })
+  quoteOptionId!: string;
+
+  @ApiProperty({ type: 'integer', example: 300 })
+  quantity!: number;
+
+  @ApiProperty({ example: '4302.86', description: 'This order before, incl. VAT and shipping' })
+  previousGrossAmount!: string;
+
+  @ApiProperty({ example: '4388.92', description: 'This order at today’s price, incl. VAT and shipping' })
+  newGrossAmount!: string;
+
+  @ApiProperty({ example: '86.06', description: 'new − previous (negative when cheaper)' })
+  differenceAmount!: string;
+
+  @ApiProperty({ example: '14.629733', description: 'Product unit price before VAT at today’s price' })
+  newUnitPrice!: string;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 5, description: 'Working days of production now' })
+  leadTimeDays!: number | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-11-03',
+    description: 'Ship date if paid now (today’s calendar and lead time)',
+  })
+  promisedShipDate!: string | null;
+
+  @ApiProperty({ type: String, format: 'date', nullable: true, example: '2026-11-05' })
+  estimatedDeliveryDate!: string | null;
+}
+
+/** `store.orders.requoteGroup`: the group at today's price, shown before the customer confirms and pays. */
+export class RequotePreviewDto {
+  @ApiProperty({ format: 'uuid', example: ORDER_IDS.group })
+  groupId!: string;
+
+  @ApiProperty({ example: 'OG-2610-00016' })
+  groupCode!: string;
+
+  @ApiProperty({ example: '9284.96' })
+  previousGrossAmount!: string;
+
+  @ApiProperty({ example: '9457.10', description: 'Send back as `expectedGrossAmount` on confirm' })
+  newGrossAmount!: string;
+
+  @ApiProperty({ example: '172.14', description: 'new − previous (negative when cheaper)' })
+  differenceAmount!: string;
+
+  @ApiProperty({
+    example: '9457.10',
+    description: 'What the customer transfers after the expected withholding',
+  })
+  newCashAmount!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-11-09T10:00:00+07:00',
+    description: 'The new prices are held until then (`quotes.validity_days`, D-051)',
+  })
+  priceValidUntil!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-11-01T10:00:00+07:00',
+    description: 'The new payment deadline once confirmed (`orders.unpaid_expiry_days` from now)',
+  })
+  paymentDueAt!: string;
+
+  @ApiProperty({ type: [RequoteOrderDto] })
+  orders!: RequoteOrderDto[];
+}
+
+export class ConfirmRequoteItemDto {
+  @ApiProperty({ format: 'uuid', example: ORDER_IDS.order })
+  @IsUUID()
+  orderId!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca101' })
+  @IsUUID()
+  quoteId!: string;
+
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca102' })
+  @IsUUID()
+  quoteOptionId!: string;
+}
+
+export class ConfirmRequoteDto {
+  @ApiProperty({
+    type: [ConfirmRequoteItemDto],
+    description: 'Every order of the group that is not cancelled, with the quotation of the preview',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => ConfirmRequoteItemDto)
+  orders!: ConfirmRequoteItemDto[];
+
+  @ApiProperty({
+    type: String,
+    example: '9457.10',
+    pattern: '^\\d{1,12}\\.\\d{2}$',
+    description: 'The preview’s `newGrossAmount`; a different total answers `order.requote_changed`',
+  })
+  @IsString()
+  @Matches(/^\d{1,12}\.\d{2}$/)
+  expectedGrossAmount!: string;
+}
+
+export const REQUOTE_PREVIEW_EXAMPLE: RequotePreviewDto = {
+  groupId: ORDER_IDS.group,
+  groupCode: 'OG-2610-00016',
+  previousGrossAmount: '9284.96',
+  newGrossAmount: '9457.10',
+  differenceAmount: '172.14',
+  newCashAmount: '9457.10',
+  priceValidUntil: '2026-11-09T10:00:00+07:00',
+  paymentDueAt: '2026-11-01T10:00:00+07:00',
+  orders: [
+    {
+      orderId: ORDER_IDS.order,
+      orderCode: 'OR-2610-00016',
+      quoteId: '0192f3a0-7c1e-7d2a-9b1f-0000000ca101',
+      quoteOptionId: '0192f3a0-7c1e-7d2a-9b1f-0000000ca102',
+      quantity: 300,
+      previousGrossAmount: '4302.86',
+      newGrossAmount: '4388.92',
+      differenceAmount: '86.06',
+      newUnitPrice: '14.629733',
+      leadTimeDays: 5,
+      promisedShipDate: '2026-11-03',
+      estimatedDeliveryDate: '2026-11-05',
+    },
+    {
+      orderId: '0192f3a0-7c1e-7d2a-9b1f-0000000d0003',
+      orderCode: 'OR-2610-00017',
+      quoteId: '0192f3a0-7c1e-7d2a-9b1f-0000000ca103',
+      quoteOptionId: '0192f3a0-7c1e-7d2a-9b1f-0000000ca104',
+      quantity: 300,
+      previousGrossAmount: '4982.10',
+      newGrossAmount: '5068.18',
+      differenceAmount: '86.08',
+      newUnitPrice: '15.784361',
+      leadTimeDays: 5,
+      promisedShipDate: '2026-11-03',
+      estimatedDeliveryDate: '2026-11-05',
+    },
+  ],
+};
 
 export class ChangeCustomerDto {
   @ApiProperty({ format: 'uuid', example: ORDER_IDS.customer })

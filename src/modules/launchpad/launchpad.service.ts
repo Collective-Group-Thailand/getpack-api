@@ -4,10 +4,13 @@ import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { CompaniesService } from '@modules/companies/companies.service';
 import { DesignsService } from '@modules/designs/designs.service';
+import { OPEN_CLAIMS } from '@modules/orders/customer-status';
 import { STORE_ORDER_ACTIONS } from '@modules/orders/order-actions';
+import { paymentOverdue } from '@modules/orders/order-views';
 import { type QuoteInput } from '@modules/quotes/quote-input';
 import { ReorderSuggestionsService } from '@modules/reorders/reorder-suggestions.service';
 import { Injectable } from '@nestjs/common';
+import { FilesService } from '@platform/files/files.service';
 
 import {
   type DefaultsDto,
@@ -46,6 +49,7 @@ export class LaunchpadService {
     private readonly designs: DesignsService,
     private readonly suggestions: ReorderSuggestionsService,
     private readonly companies: CompaniesService,
+    private readonly files: FilesService,
   ) {}
 
   async launchpad(actor: UserActor, now = new Date()): Promise<LaunchpadDto> {
@@ -64,16 +68,20 @@ export class LaunchpadService {
 
   private async recentDesigns(userId: bigint) {
     const [rows] = await this.designs.list(userId, 1, SHOWN);
-    return rows.map((r) => ({
-      id: r.publicId,
-      title: r.title,
-      catalogProductId: r.catalogProduct.publicId,
-      catalogProductNameTh: r.catalogProduct.nameTh,
-      catalogProductNameEn: r.catalogProduct.nameEn,
-      thumbnailFileId: r.thumbnailFile?.publicId ?? null,
-      lockedByOrderCode: r.lockedByOrder?.orderCode ?? null,
-      updatedAt: toBangkokIso(r.updatedAt),
-    }));
+    return Promise.all(
+      rows.map(async (r) => ({
+        id: r.publicId,
+        title: r.title,
+        catalogProductId: r.catalogProduct.publicId,
+        catalogProductNameTh: r.catalogProduct.nameTh,
+        catalogProductNameEn: r.catalogProduct.nameEn,
+        thumbnailFileId: r.thumbnailFile?.publicId ?? null,
+        // The overview's broken image (account Phase 0): a ready URL, as the design itself answers it.
+        thumbnailUrl: r.thumbnailFile ? ((await this.files.signedUrl(r.thumbnailFile))?.url ?? null) : null,
+        lockedByOrderCode: r.lockedByOrder?.orderCode ?? null,
+        updatedAt: toBangkokIso(r.updatedAt),
+      })),
+    );
   }
 
   private async reorderCandidates(actor: UserActor, now: Date): Promise<ReorderCandidateDto[]> {
@@ -128,7 +136,7 @@ export class LaunchpadService {
       }),
       this.prisma.order.findMany({
         where: { customerUserId: userId, cancelledAt: null, completedAt: null },
-        include: { productType: true, lines: { select: { lineType: true } } },
+        include: { productType: true, lines: { select: { lineType: true } }, claims: OPEN_CLAIMS },
         orderBy: [{ id: 'asc' }],
       }),
     ]);
@@ -140,9 +148,14 @@ export class LaunchpadService {
       productType: null,
       dueAt: g.expiresAt ? toBangkokIso(g.expiresAt) : null,
       amount: g.cashAmount.toFixed(2),
+      overdue: paymentOverdue(g),
     }));
     for (const o of orders) {
-      const offered = nextActions(o, STORE_ORDER_ACTIONS, NO_PERMISSIONS);
+      const offered = nextActions(
+        { ...o, openClaimCount: o.claims.length },
+        STORE_ORDER_ACTIONS,
+        NO_PERMISSIONS,
+      );
       // One item per order: the most urgent of its waiting actions.
       const action = offered
         .filter((a) => a.disabledReason === null && ORDER_ACTION[a.key])
@@ -157,6 +170,7 @@ export class LaunchpadService {
         productType: typeRef(o.productType),
         dueAt: null,
         amount: null,
+        overdue: false,
       });
     }
     // Stable: by the recommendation order, then as listed (oldest first).

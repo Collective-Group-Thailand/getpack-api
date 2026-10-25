@@ -6,6 +6,7 @@ import { lineSummary, SUMMARY_INCLUDE } from '@modules/quotes/line-summary';
 import { type SettingsService } from '@platform/settings/settings.service';
 
 import { type AddressSnapshotDto } from '../carts/carts.dto';
+import { actionOwnerOf, artworkOwner, customerStatusOf, OPEN_CLAIMS } from './customer-status';
 import { ADMIN_ORDER_ACTIONS, STORE_ORDER_ACTIONS } from './order-actions';
 import {
   type AdminOrderDto,
@@ -23,6 +24,19 @@ export const ORDER_INCLUDE = {
   quote: true,
   quoteOption: { select: { earliestShipDate: true, result: true } },
   selectedFactory: true,
+  // D-437 / D-439: the group's payment terms and the open claims feed the customer status and the order's share.
+  orderGroup: {
+    select: {
+      publicId: true,
+      groupCode: true,
+      status: true,
+      expiresAt: true,
+      grossAmount: true,
+      cashAmount: true,
+      orders: { where: { cancelledAt: null }, select: { id: true } },
+    },
+  },
+  claims: OPEN_CLAIMS,
   lines: { orderBy: { lineNo: 'asc' } },
   destinations: {
     orderBy: [{ sort: 'asc' }, { id: 'asc' }],
@@ -97,12 +111,23 @@ export async function orderViewContext(settings: SettingsService): Promise<Order
 
 const DAY_MS = 86_400_000;
 
+/** D-436: an unpaid group past its payment deadline — never cancelled; the customer re-quotes, then pays. */
+export function paymentOverdue(
+  group: { status: string; expiresAt: Date | null },
+  now: Date = new Date(),
+): boolean {
+  return group.status === 'waiting_payment' && group.expiresAt !== null && group.expiresAt <= now;
+}
+
 function receipt(row: OrderRow, ctx: OrderViewContext) {
   const pending = row.deliveredAt && !row.completedAt && !row.cancelledAt;
+  // Completion is held while a claim is open (B4.5): no automatic-completion date is promised meanwhile.
+  const held = row.claims.length > 0;
   return {
     deliveredAt: row.deliveredAt ? toBangkokIso(row.deliveredAt) : null,
+    completionHeldByClaim: Boolean(pending) && held,
     autoCompleteAt:
-      pending && ctx.autoCompleteDays !== null
+      pending && !held && ctx.autoCompleteDays !== null
         ? toBangkokIso(new Date(row.deliveredAt!.getTime() + ctx.autoCompleteDays * DAY_MS))
         : null,
     claimWindowEndsAt: row.claimWindowEndsAt ? toBangkokIso(row.claimWindowEndsAt) : null,
@@ -144,14 +169,36 @@ export function estimatedDeliveryDate(
   return new Date(Date.parse(`${delivery}T00:00:00Z`) + shift * DAY_MS).toISOString().slice(0, 10);
 }
 
+/** D-439: this order's share of what the group pays, next to the group's total and its deadline. */
+function payment(row: OrderRow) {
+  const group = row.orderGroup;
+  return {
+    groupId: group.publicId,
+    groupCode: group.groupCode,
+    groupOrderCount: group.orders.length,
+    orderGrossAmount: row.grossAmount.toFixed(2),
+    orderCashAmount: row.cashAmount.toFixed(2),
+    groupGrossAmount: group.grossAmount.toFixed(2),
+    groupCashAmount: group.cashAmount.toFixed(2),
+    dueAt: group.status === 'waiting_payment' && group.expiresAt ? toBangkokIso(group.expiresAt) : null,
+    overdue: paymentOverdue(group),
+  };
+}
+
 export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDays: null }): OrderDto {
+  const facts = { ...row, openClaimCount: row.claims.length };
+  const customerStatus = customerStatusOf(facts);
   return {
     id: row.publicId,
     orderCode: row.orderCode,
     status: row.status,
     ...statusLabels('OrderStatus', row.status),
+    customerStatus,
+    ...statusLabels('CustomerOrderStatus', customerStatus, 'customerStatus'),
+    actionOwner: actionOwnerOf(customerStatus, facts),
     artworkStatus: row.artworkStatus,
     ...statusLabels('ArtworkStatus', row.artworkStatus, 'artworkStatus'),
+    artworkOwner: artworkOwner(row.artworkStatus),
     productTypeCode: row.productType.code,
     summary: lineSummary(
       {
@@ -172,7 +219,10 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     leadTimeDays: row.leadTimeDays,
     promisedShipDate: row.promisedShipDate ? bangkokDate(row.promisedShipDate) : null,
     estimatedDeliveryDate: estimatedDeliveryDate(row.promisedShipDate, row.quoteOption),
+    // D-439: before payment the dates are only the plan at placement — the storefront says "คำนวณหลังชำระเงิน".
+    deliveryDateBasis: row.paidForProductionAt || row.cancelledAt ? 'planned' : 'after_payment',
     totals: totals(row),
+    payment: payment(row),
     lines: row.lines.map((l) => ({
       id: l.publicId,
       lineNo: l.lineNo,
@@ -201,9 +251,15 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     cancelReasonNameTh: row.cancelReason?.nameTh ?? null,
     cancelReasonNameEn: row.cancelReason?.nameEn ?? null,
     receipt: receipt(row, ctx),
+    openClaims: row.claims.map((c) => ({
+      id: c.publicId,
+      claimNo: c.claimNo,
+      status: c.status,
+      ...statusLabels('ClaimStatus', c.status),
+    })),
     toleranceOutcome: toleranceOutcome(row),
     createdAt: toBangkokIso(row.createdAt),
-    nextActions: nextActions(row, STORE_ORDER_ACTIONS, NO_PERMISSIONS),
+    nextActions: nextActions(facts, STORE_ORDER_ACTIONS, NO_PERMISSIONS),
   };
 }
 
@@ -233,6 +289,7 @@ export function orderGroupDto(row: OrderGroupRow, ctx?: OrderViewContext): Order
     poNumber: row.poNumber,
     totals: totals(row),
     expiresAt: row.expiresAt ? toBangkokIso(row.expiresAt) : null,
+    paymentOverdue: paymentOverdue(row),
     placedAt: toBangkokIso(row.placedAt),
     cancelledAt: row.cancelledAt ? toBangkokIso(row.cancelledAt) : null,
     ccEmails: row.ccEmails,

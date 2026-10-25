@@ -1,5 +1,7 @@
 import { type ActionRule } from '@common/next-actions/next-actions';
 
+import { artworkOwner } from './customer-status';
+
 /** What an order's action guards read (`order-state.ts` facts, `artwork.service.ts`, `delivery.service.ts`, …). */
 export interface OrderFacts {
   status: string;
@@ -12,6 +14,8 @@ export interface OrderFacts {
   completedAt: Date | null;
   cancelledAt: Date | null;
   claimWindowEndsAt: Date | null;
+  /** Claims not final yet; omitted = none known (readers that need the claim rules pass it). */
+  openClaimCount?: number;
   discountAmount: { toString(): string };
   lines: { lineType: string }[];
 }
@@ -21,25 +25,34 @@ const PRE_PRODUCTION = ['waiting_payment', 'paid_for_production', 'artwork_appro
 const takesArtwork = (o: OrderFacts) => PRE_PRODUCTION.includes(o.status) && o.artworkStatus !== 'approved';
 const OWN_ARTWORK = ['own_file', 'online_designer'];
 const received = (o: OrderFacts) => o.deliveredAt !== null && o.cancelledAt === null;
+const claimOpen = (o: OrderFacts) => (o.openClaimCount ?? 0) > 0;
 
 /** The customer's actions on an order (D-070, D-073, D-081, D-082, D-153). */
 export const STORE_ORDER_ACTIONS: ActionRule<OrderFacts>[] = [
   {
+    // D-438: only while the customer owns the artwork step ("รอไฟล์จากคุณ", sent back, proof to answer).
     key: 'order.upload_artwork',
-    when: (o) => takesArtwork(o) && OWN_ARTWORK.includes(o.designOption),
+    when: (o) =>
+      takesArtwork(o) && OWN_ARTWORK.includes(o.designOption) && artworkOwner(o.artworkStatus) === 'customer',
   },
   {
     key: 'order.approve_proof',
     irreversible: true,
     when: (o) => takesArtwork(o) && o.artworkStatus === 'proof_sent',
   },
-  { key: 'order.confirm_receipt', irreversible: true, when: (o) => received(o) && o.completedAt === null },
+  // D-437: completion is held while a claim is open (B4.5), so receipt is not asked for meanwhile.
   {
+    key: 'order.confirm_receipt',
+    irreversible: true,
+    when: (o) => received(o) && o.completedAt === null && !claimOpen(o),
+  },
+  {
+    // D-437: with a claim under review a closed window is not announced ("หมดเวลาแจ้งเคลม"); the claim is shown.
     key: 'order.open_claim',
     when: (o) =>
       received(o) &&
       o.claimWindowEndsAt !== null &&
-      (o.claimWindowEndsAt.getTime() >= Date.now() || 'claims.window_closed'),
+      (o.claimWindowEndsAt.getTime() >= Date.now() || (claimOpen(o) ? false : 'claims.window_closed')),
   },
   { key: 'order.reorder', when: received },
 ];

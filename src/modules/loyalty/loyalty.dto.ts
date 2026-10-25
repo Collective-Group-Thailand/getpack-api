@@ -73,6 +73,29 @@ export class LoyaltySummaryDto {
   @ApiProperty({ example: '42.50', description: 'My 12-month spend as % of the next tier (100 at the top)' })
   nextTierProgressPct!: string;
 
+  @ApiProperty({
+    example:
+      'นับยอดเมื่อคำสั่งซื้อเสร็จสิ้นหลังได้รับของ · ยอดก่อน VAT ไม่รวมค่าส่ง · ย้อนหลัง 12 เดือน · อัปเดตวันละครั้ง',
+    description:
+      'What `spend12m` counts, to show next to the tier progress (account Phase 0, D-134): completed orders ' +
+      'only, before VAT, without shipping, the last 12 months, recalculated nightly',
+  })
+  spendBasisTh!: string;
+
+  @ApiProperty({
+    example:
+      'Counts orders once completed after delivery · before VAT, without shipping · last 12 months · updated daily',
+  })
+  spendBasisEn!: string;
+
+  @ApiProperty({
+    example: '37372.73',
+    description:
+      'Paid orders not completed yet, on the same basis: what will count once they complete (explains a ' +
+      '`spend12m` of 0 while an order is on its way or a claim is open)',
+  })
+  spendNotYetCounted!: string;
+
   @ApiProperty({ type: 'integer', example: 128, description: 'Points that can be redeemed now' })
   availablePoints!: number;
 
@@ -106,6 +129,11 @@ export const SUMMARY_EXAMPLE: LoyaltySummaryDto = {
   nextTier: 'silver',
   nextTierMinSpend12m: '50000.00',
   nextTierProgressPct: '42.50',
+  spendBasisTh:
+    'นับยอดเมื่อคำสั่งซื้อเสร็จสิ้นหลังได้รับของ · ยอดก่อน VAT ไม่รวมค่าส่ง · ย้อนหลัง 12 เดือน · อัปเดตวันละครั้ง',
+  spendBasisEn:
+    'Counts orders once completed after delivery · before VAT, without shipping · last 12 months · updated daily',
+  spendNotYetCounted: '0.00',
   availablePoints: 128,
   pendingPoints: 25,
   pointValue: '2.50',

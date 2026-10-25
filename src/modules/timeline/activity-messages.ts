@@ -37,6 +37,13 @@ const document =
     return no ? { th: `${th} ${no}`, en: `Document ${no} ${en}` } : { th, en: `Document ${en}` };
   };
 
+/**
+ * Step words recorded before D-439 renamed them (activity rows keep their params as written): never a factory
+ * in the customer's timeline (`docs/design/GLOBAL-RULES.md` §1, D-435).
+ */
+const RENAMED_STEP_WORDS: Record<string, string> = { โรงงานรับงานแล้ว: 'รับงานเข้าผลิตแล้ว' };
+const customerWords = (th: string): string => RENAMED_STEP_WORDS[th] ?? th;
+
 const MESSAGES: Record<string, Render> = {
   // Order and group
   'order_group.placed': fixed('สั่งซื้อเรียบร้อย', 'Order placed'),
@@ -51,6 +58,7 @@ const MESSAGES: Record<string, Render> = {
   'order_group.company_rejected': fixed('ผู้อนุมัติของบริษัทไม่อนุมัติ', 'Not approved by your company'),
   'order_group.cancelled': fixed('ยกเลิกคำสั่งซื้อ', 'Order cancelled'),
   'order_group.expired': fixed('คำสั่งซื้อหมดอายุเพราะยังไม่ชำระเงิน', 'Order expired unpaid'),
+  'order_group.requoted': fixed('ตรวจราคาใหม่แล้ว พร้อมชำระเงิน', 'Price re-checked, ready to pay'),
   'order.cancelled': fixed('ยกเลิกรายการสั่งผลิต', 'Order item cancelled'),
   'order.charge_added': fixed('เพิ่มค่าใช้จ่ายในคำสั่งซื้อ', 'Charge added to the order'),
   'order.repriced': fixed('ปรับราคาคำสั่งซื้อ', 'Order repriced'),
@@ -111,7 +119,7 @@ const MESSAGES: Record<string, Render> = {
   // Production (no factory, D-050)
   'production.queued': fixed('เข้าคิวผลิตแล้ว', 'Queued for production'),
   'production.milestone_reached': (p) => ({
-    th: str(p['labelTh']) || 'ความคืบหน้าการผลิต',
+    th: customerWords(str(p['labelTh'])) || 'ความคืบหน้าการผลิต',
     en: str(p['labelEn']) || 'Production progress',
   }),
   // Delivery, claims, reviews

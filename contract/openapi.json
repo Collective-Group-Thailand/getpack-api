@@ -3081,6 +3081,50 @@
           "type": "https://errors.getpack/order.reprice_has_discounts"
         }
       },
+      "problem.order.requote_changed": {
+        "summary": "order.requote_changed",
+        "value": {
+          "code": "order.requote_changed",
+          "detail": "ราคาใหม่ไม่ตรงกับที่แสดงไว้ กรุณาตรวจราคาใหม่อีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ราคาเปลี่ยนแล้ว",
+          "type": "https://errors.getpack/order.requote_changed"
+        }
+      },
+      "problem.order.requote_not_due": {
+        "summary": "order.requote_not_due",
+        "value": {
+          "code": "order.requote_not_due",
+          "detail": "ตรวจราคาใหม่ได้เฉพาะคำสั่งซื้อที่ยังไม่ชำระและเลยกำหนดชำระแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่ต้องตรวจราคาใหม่",
+          "type": "https://errors.getpack/order.requote_not_due"
+        }
+      },
+      "problem.order.requote_required": {
+        "summary": "order.requote_required",
+        "value": {
+          "code": "order.requote_required",
+          "detail": "คำสั่งซื้อเลยกำหนดชำระแล้ว กรุณากด \"ตรวจราคาใหม่และชำระ\" เพื่อคำนวณราคาและวันส่งปัจจุบันก่อนชำระเงิน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เลยกำหนดชำระ ตรวจราคาใหม่ก่อนชำระ",
+          "type": "https://errors.getpack/order.requote_required"
+        }
+      },
+      "problem.order.requote_unavailable": {
+        "summary": "order.requote_unavailable",
+        "value": {
+          "code": "order.requote_unavailable",
+          "detail": "คำสั่งซื้อนี้ตรวจราคาใหม่เองไม่ได้ กรุณาติดต่อทีมงาน เราจะเสนอราคาปัจจุบันให้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตรวจราคาใหม่เองไม่ได้",
+          "type": "https://errors.getpack/order.requote_unavailable"
+        }
+      },
       "problem.orders.reorder_preview_expired": {
         "summary": "orders.reorder_preview_expired",
         "value": {
@@ -5608,6 +5652,14 @@
           "ruleId"
         ],
         "type": "object"
+      },
+      "ActionOwner": {
+        "description": "Who acts next on the order (D-438): `team`, `customer`, or null when nothing is left to do",
+        "enum": [
+          "team",
+          "customer"
+        ],
+        "type": "string"
       },
       "ActivationRequestDto": {
         "properties": {
@@ -9827,6 +9879,30 @@
       },
       "AdminOrderDto": {
         "properties": {
+          "actionOwner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActionOwner"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who acts next on the order (D-438): `team`, `customer`, or null when nothing is left to do",
+            "example": "customer"
+          },
+          "artworkOwner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActionOwner"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who owns the artwork step (D-438): `team` (\"รอทีมส่งแบบไดคัทให้\", a file being checked — no upload button), `customer` (\"รอไฟล์จากคุณ\", sent back, proof to answer); null once approved",
+            "example": "team"
+          },
           "artworkStatus": {
             "allOf": [
               {
@@ -9837,12 +9913,12 @@
           },
           "artworkStatusLabelAdminTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
             "type": "string"
           },
           "artworkStatusLabelTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "cancelReasonCode": {
@@ -9879,6 +9955,34 @@
             "example": "2026-10-01T09:00:00+07:00",
             "format": "date-time",
             "type": "string"
+          },
+          "customerStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerOrderStatus"
+              }
+            ],
+            "description": "THE status to show a customer (D-437), derived by the API from payment, artwork, production, shipment, receipt, claims and cancellation; every customer surface (overview, list, detail, e-mail, LINE) uses it. `status` is the stored fact status (staff)",
+            "example": "awaiting_payment"
+          },
+          "customerStatusLabelAdminTh": {
+            "description": "`customerStatus` (CustomerOrderStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
+          "customerStatusLabelTh": {
+            "description": "`customerStatus` (CustomerOrderStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `customerStatus` never changes.",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
+          "deliveryDateBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryDateBasis"
+              }
+            ],
+            "description": "`after_payment`: not paid yet — the dates above are only the plan made at placement and the storefront shows \"คำนวณหลังชำระเงิน\" instead (D-439); `planned`: the production plan",
+            "example": "after_payment"
           },
           "designOption": {
             "allOf": [
@@ -9939,9 +10043,19 @@
             },
             "type": "array"
           },
+          "openClaims": {
+            "description": "Claims still being handled, oldest first (D-437); empty when none",
+            "items": {
+              "$ref": "#/components/schemas/OrderOpenClaimDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "OR-2610-00042",
             "type": "string"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/OrderPaymentShareDto"
           },
           "productTypeCode": {
             "example": "folding_carton",
@@ -10050,9 +10164,14 @@
           "status",
           "statusLabelTh",
           "statusLabelAdminTh",
+          "customerStatus",
+          "customerStatusLabelTh",
+          "customerStatusLabelAdminTh",
+          "actionOwner",
           "artworkStatus",
           "artworkStatusLabelTh",
           "artworkStatusLabelAdminTh",
+          "artworkOwner",
           "productTypeCode",
           "summary",
           "quoteId",
@@ -10066,7 +10185,9 @@
           "leadTimeDays",
           "promisedShipDate",
           "estimatedDeliveryDate",
+          "deliveryDateBasis",
           "totals",
+          "payment",
           "lines",
           "destinations",
           "statusChangedAt",
@@ -10075,6 +10196,7 @@
           "cancelReasonNameTh",
           "cancelReasonNameEn",
           "receipt",
+          "openClaims",
           "toleranceOutcome",
           "createdAt",
           "nextActions",
@@ -10125,7 +10247,7 @@
             "type": "string"
           },
           "expiresAt": {
-            "description": "Unpaid groups are cancelled at this instant (D-060)",
+            "description": "Payment deadline of an unpaid group (D-060). Past it the group is NOT cancelled (D-436): it is overdue (\"เลยกำหนดชำระ\") and the customer re-quotes before paying",
             "example": "2026-10-08T10:00:00+07:00",
             "format": "date-time",
             "type": [
@@ -10152,6 +10274,11 @@
               "$ref": "#/components/schemas/AdminOrderDto"
             },
             "type": "array"
+          },
+          "paymentOverdue": {
+            "description": "Unpaid and past `expiresAt` (D-436): pay only after `store.orders.requoteGroup`",
+            "example": false,
+            "type": "boolean"
           },
           "placedAt": {
             "example": "2026-09-25T10:00:00+07:00",
@@ -10239,6 +10366,7 @@
           "poNumber",
           "totals",
           "expiresAt",
+          "paymentOverdue",
           "placedAt",
           "cancelledAt",
           "ccEmails",
@@ -10321,12 +10449,12 @@
           },
           "artworkStatusLabelAdminTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
             "type": "string"
           },
           "artworkStatusLabelTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "channel": {
@@ -24564,6 +24692,7 @@
         "type": "object"
       },
       "ClaimStatus": {
+        "description": "Never a final status (`rejected`, `resolved`, `closed`) here",
         "enum": [
           "submitted",
           "under_review",
@@ -27101,6 +27230,55 @@
             "type": "string"
           }
         },
+        "type": "object"
+      },
+      "ConfirmRequoteDto": {
+        "properties": {
+          "expectedGrossAmount": {
+            "description": "The preview’s `newGrossAmount`; a different total answers `order.requote_changed`",
+            "example": "9457.10",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": "string"
+          },
+          "orders": {
+            "description": "Every order of the group that is not cancelled, with the quotation of the preview",
+            "items": {
+              "$ref": "#/components/schemas/ConfirmRequoteItemDto"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "orders",
+          "expectedGrossAmount"
+        ],
+        "type": "object"
+      },
+      "ConfirmRequoteItemDto": {
+        "properties": {
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteOptionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca102",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "quoteId",
+          "quoteOptionId"
+        ],
         "type": "object"
       },
       "ConfirmStyleImportDto": {
@@ -35499,6 +35677,21 @@
         ],
         "type": "string"
       },
+      "CustomerOrderStatus": {
+        "description": "THE status to show a customer (D-437), derived by the API from payment, artwork, production, shipment, receipt, claims and cancellation; every customer surface (overview, list, detail, e-mail, LINE) uses it. `status` is the stored fact status (staff)",
+        "enum": [
+          "awaiting_payment",
+          "awaiting_artwork",
+          "awaiting_approval",
+          "in_production",
+          "shipping",
+          "received",
+          "claim_in_review",
+          "completed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
       "CustomerProfileDto": {
         "properties": {
           "createdAt": {
@@ -36502,6 +36695,14 @@
           "dielineFileId"
         ],
         "type": "object"
+      },
+      "DeliveryDateBasis": {
+        "description": "`after_payment`: not paid yet — the dates above are only the plan made at placement and the storefront shows \"คำนวณหลังชำระเงิน\" instead (D-439); `planned`: the production plan",
+        "enum": [
+          "after_payment",
+          "planned"
+        ],
+        "type": "string"
       },
       "DeliveryReconciliationDto": {
         "properties": {
@@ -70744,7 +70945,7 @@
             "type": "string"
           },
           "dueAt": {
-            "description": "`pay`: when the unpaid group expires (D-060); `confirm_receipt`: auto-completion is not shown here",
+            "description": "`pay`: the payment deadline of the unpaid group (D-060; never an automatic cancellation, D-436); `confirm_receipt`: auto-completion is not shown here",
             "example": null,
             "format": "date-time",
             "type": [
@@ -70756,6 +70957,11 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
             "format": "uuid",
             "type": "string"
+          },
+          "overdue": {
+            "description": "`pay` past its deadline (D-436): show \"เลยกำหนดชำระ\" and \"ตรวจราคาใหม่และชำระ\" (`store.orders.requoteGroup`)",
+            "example": false,
+            "type": "boolean"
           },
           "productType": {
             "anyOf": [
@@ -70784,6 +70990,7 @@
           "code",
           "productType",
           "dueAt",
+          "overdue",
           "amount"
         ],
         "type": "object"
@@ -70832,6 +71039,14 @@
               "null"
             ]
           },
+          "thumbnailUrl": {
+            "description": "Signed URL of the preview image (5 minutes), ready for an `<img>`; null without a preview (show the product placeholder)",
+            "example": "https://files.example.invalid/thumb.png?sig=…",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "title": {
             "example": "กล่องขนมไหว้พระจันทร์",
             "type": "string"
@@ -70849,6 +71064,7 @@
           "catalogProductNameTh",
           "catalogProductNameEn",
           "thumbnailFileId",
+          "thumbnailUrl",
           "lockedByOrderCode",
           "updatedAt"
         ],
@@ -71282,6 +71498,20 @@
             "example": "62500.00",
             "type": "string"
           },
+          "spendBasisEn": {
+            "example": "Counts orders once completed after delivery · before VAT, without shipping · last 12 months · updated daily",
+            "type": "string"
+          },
+          "spendBasisTh": {
+            "description": "What `spend12m` counts, to show next to the tier progress (account Phase 0, D-134): completed orders only, before VAT, without shipping, the last 12 months, recalculated nightly",
+            "example": "นับยอดเมื่อคำสั่งซื้อเสร็จสิ้นหลังได้รับของ · ยอดก่อน VAT ไม่รวมค่าส่ง · ย้อนหลัง 12 เดือน · อัปเดตวันละครั้ง",
+            "type": "string"
+          },
+          "spendNotYetCounted": {
+            "description": "Paid orders not completed yet, on the same basis: what will count once they complete (explains a `spend12m` of 0 while an order is on its way or a claim is open)",
+            "example": "37372.73",
+            "type": "string"
+          },
           "tier": {
             "allOf": [
               {
@@ -71298,6 +71528,9 @@
           "nextTier",
           "nextTierMinSpend12m",
           "nextTierProgressPct",
+          "spendBasisTh",
+          "spendBasisEn",
+          "spendNotYetCounted",
           "availablePoints",
           "pendingPoints",
           "pointValue",
@@ -73549,6 +73782,30 @@
       },
       "OrderDto": {
         "properties": {
+          "actionOwner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActionOwner"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who acts next on the order (D-438): `team`, `customer`, or null when nothing is left to do",
+            "example": "customer"
+          },
+          "artworkOwner": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ActionOwner"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who owns the artwork step (D-438): `team` (\"รอทีมส่งแบบไดคัทให้\", a file being checked — no upload button), `customer` (\"รอไฟล์จากคุณ\", sent back, proof to answer); null once approved",
+            "example": "team"
+          },
           "artworkStatus": {
             "allOf": [
               {
@@ -73559,12 +73816,12 @@
           },
           "artworkStatusLabelAdminTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
             "type": "string"
           },
           "artworkStatusLabelTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "cancelReasonCode": {
@@ -73601,6 +73858,34 @@
             "example": "2026-10-01T09:00:00+07:00",
             "format": "date-time",
             "type": "string"
+          },
+          "customerStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerOrderStatus"
+              }
+            ],
+            "description": "THE status to show a customer (D-437), derived by the API from payment, artwork, production, shipment, receipt, claims and cancellation; every customer surface (overview, list, detail, e-mail, LINE) uses it. `status` is the stored fact status (staff)",
+            "example": "awaiting_payment"
+          },
+          "customerStatusLabelAdminTh": {
+            "description": "`customerStatus` (CustomerOrderStatus) in Thai for staff and partner factories (D-313).",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
+          "customerStatusLabelTh": {
+            "description": "`customerStatus` (CustomerOrderStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `customerStatus` never changes.",
+            "example": "รอชำระเงิน",
+            "type": "string"
+          },
+          "deliveryDateBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryDateBasis"
+              }
+            ],
+            "description": "`after_payment`: not paid yet — the dates above are only the plan made at placement and the storefront shows \"คำนวณหลังชำระเงิน\" instead (D-439); `planned`: the production plan",
+            "example": "after_payment"
           },
           "designOption": {
             "allOf": [
@@ -73658,9 +73943,19 @@
             },
             "type": "array"
           },
+          "openClaims": {
+            "description": "Claims still being handled, oldest first (D-437); empty when none",
+            "items": {
+              "$ref": "#/components/schemas/OrderOpenClaimDto"
+            },
+            "type": "array"
+          },
           "orderCode": {
             "example": "OR-2610-00042",
             "type": "string"
+          },
+          "payment": {
+            "$ref": "#/components/schemas/OrderPaymentShareDto"
           },
           "productTypeCode": {
             "example": "folding_carton",
@@ -73769,9 +74064,14 @@
           "status",
           "statusLabelTh",
           "statusLabelAdminTh",
+          "customerStatus",
+          "customerStatusLabelTh",
+          "customerStatusLabelAdminTh",
+          "actionOwner",
           "artworkStatus",
           "artworkStatusLabelTh",
           "artworkStatusLabelAdminTh",
+          "artworkOwner",
           "productTypeCode",
           "summary",
           "quoteId",
@@ -73785,7 +74085,9 @@
           "leadTimeDays",
           "promisedShipDate",
           "estimatedDeliveryDate",
+          "deliveryDateBasis",
           "totals",
+          "payment",
           "lines",
           "destinations",
           "statusChangedAt",
@@ -73794,6 +74096,7 @@
           "cancelReasonNameTh",
           "cancelReasonNameEn",
           "receipt",
+          "openClaims",
           "toleranceOutcome",
           "createdAt",
           "nextActions"
@@ -73833,7 +74136,7 @@
             "type": "string"
           },
           "expiresAt": {
-            "description": "Unpaid groups are cancelled at this instant (D-060)",
+            "description": "Payment deadline of an unpaid group (D-060). Past it the group is NOT cancelled (D-436): it is overdue (\"เลยกำหนดชำระ\") and the customer re-quotes before paying",
             "example": "2026-10-08T10:00:00+07:00",
             "format": "date-time",
             "type": [
@@ -73855,6 +74158,11 @@
               "$ref": "#/components/schemas/OrderDto"
             },
             "type": "array"
+          },
+          "paymentOverdue": {
+            "description": "Unpaid and past `expiresAt` (D-436): pay only after `store.orders.requoteGroup`",
+            "example": false,
+            "type": "boolean"
           },
           "placedAt": {
             "example": "2026-09-25T10:00:00+07:00",
@@ -73901,6 +74209,7 @@
           "poNumber",
           "totals",
           "expiresAt",
+          "paymentOverdue",
           "placedAt",
           "cancelledAt",
           "ccEmails",
@@ -74056,6 +74365,110 @@
         ],
         "type": "object"
       },
+      "OrderOpenClaimDto": {
+        "properties": {
+          "claimNo": {
+            "example": "CL-2610-0001",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClaimStatus"
+              }
+            ],
+            "description": "Never a final status (`rejected`, `resolved`, `closed`) here",
+            "example": "under_review"
+          },
+          "statusLabelAdminTh": {
+            "description": "`status` (ClaimStatus) in Thai for staff and partner factories (D-313).",
+            "example": "แจ้งเคลมแล้ว",
+            "type": "string"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ClaimStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "แจ้งเคลมแล้ว",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "claimNo",
+          "status",
+          "statusLabelTh",
+          "statusLabelAdminTh"
+        ],
+        "type": "object"
+      },
+      "OrderPaymentShareDto": {
+        "properties": {
+          "dueAt": {
+            "description": "Payment deadline while the group waits for payment (D-060, D-436); null otherwise",
+            "example": "2026-10-22T11:47:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "groupCashAmount": {
+            "description": "The whole group, after the expected withholding",
+            "example": "9284.96",
+            "type": "string"
+          },
+          "groupCode": {
+            "example": "OG-2610-00042",
+            "type": "string"
+          },
+          "groupGrossAmount": {
+            "description": "The whole group, incl. VAT (one payment for all its orders)",
+            "example": "9284.96",
+            "type": "string"
+          },
+          "groupId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "groupOrderCount": {
+            "description": "Orders of the group that are not cancelled",
+            "example": 2,
+            "type": "integer"
+          },
+          "orderCashAmount": {
+            "description": "This order, after the expected withholding",
+            "example": "4302.86",
+            "type": "string"
+          },
+          "orderGrossAmount": {
+            "description": "This order, incl. VAT (= `totals.grossAmount`)",
+            "example": "4302.86",
+            "type": "string"
+          },
+          "overdue": {
+            "description": "Past the deadline and unpaid (D-436): never cancelled for it — \"เลยกำหนดชำระ\"; the customer re-quotes (`store.orders.requoteGroup`) before paying",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "groupId",
+          "groupCode",
+          "groupOrderCount",
+          "orderGrossAmount",
+          "orderCashAmount",
+          "groupGrossAmount",
+          "groupCashAmount",
+          "dueAt",
+          "overdue"
+        ],
+        "type": "object"
+      },
       "OrderProgressDto": {
         "properties": {
           "artworkApprovedAt": {
@@ -74185,12 +74598,12 @@
           },
           "artworkStatusLabelAdminTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
             "type": "string"
           },
           "artworkStatusLabelTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "customerName": {
@@ -74286,7 +74699,7 @@
       "OrderReceiptDto": {
         "properties": {
           "autoCompleteAt": {
-            "description": "While delivered and not completed: when the order completes by itself (`orders.auto_complete_days`, D-081)",
+            "description": "While delivered and not completed (and no claim open): when the order completes by itself (`orders.auto_complete_days`, D-081)",
             "example": "2026-10-27T15:00:00+07:00",
             "format": "date-time",
             "type": [
@@ -74310,6 +74723,11 @@
               "string",
               "null"
             ]
+          },
+          "completionHeldByClaim": {
+            "description": "Delivered, not completed, and a claim is open: completion waits for the claim (B4.5, D-437) — `autoCompleteAt` is null meanwhile and receipt is not asked for",
+            "example": false,
+            "type": "boolean"
           },
           "completionMode": {
             "anyOf": [
@@ -74342,6 +74760,7 @@
         },
         "required": [
           "deliveredAt",
+          "completionHeldByClaim",
           "autoCompleteAt",
           "claimWindowEndsAt",
           "completedAt",
@@ -79275,12 +79694,12 @@
           },
           "artworkStatusLabelAdminTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for staff and partner factories (D-313).",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้ลูกค้า",
             "type": "string"
           },
           "artworkStatusLabelTh": {
             "description": "`artworkStatus` (ArtworkStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `artworkStatus` never changes.",
-            "example": "รอแบบไดคัท",
+            "example": "รอทีมส่งแบบไดคัทให้",
             "type": "string"
           },
           "assignee": {
@@ -89533,6 +89952,156 @@
           "shipping"
         ],
         "type": "string"
+      },
+      "RequoteOrderDto": {
+        "properties": {
+          "differenceAmount": {
+            "description": "new − previous (negative when cheaper)",
+            "example": "86.06",
+            "type": "string"
+          },
+          "estimatedDeliveryDate": {
+            "example": "2026-11-05",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "leadTimeDays": {
+            "description": "Working days of production now",
+            "example": 5,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "newGrossAmount": {
+            "description": "This order at today’s price, incl. VAT and shipping",
+            "example": "4388.92",
+            "type": "string"
+          },
+          "newUnitPrice": {
+            "description": "Product unit price before VAT at today’s price",
+            "example": "14.629733",
+            "type": "string"
+          },
+          "orderCode": {
+            "example": "OR-2610-00016",
+            "type": "string"
+          },
+          "orderId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "previousGrossAmount": {
+            "description": "This order before, incl. VAT and shipping",
+            "example": "4302.86",
+            "type": "string"
+          },
+          "promisedShipDate": {
+            "description": "Ship date if paid now (today’s calendar and lead time)",
+            "example": "2026-11-03",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantity": {
+            "example": 300,
+            "type": "integer"
+          },
+          "quoteId": {
+            "description": "The new quotation (send back on confirm)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca101",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteOptionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca102",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderId",
+          "orderCode",
+          "quoteId",
+          "quoteOptionId",
+          "quantity",
+          "previousGrossAmount",
+          "newGrossAmount",
+          "differenceAmount",
+          "newUnitPrice",
+          "leadTimeDays",
+          "promisedShipDate",
+          "estimatedDeliveryDate"
+        ],
+        "type": "object"
+      },
+      "RequotePreviewDto": {
+        "properties": {
+          "differenceAmount": {
+            "description": "new − previous (negative when cheaper)",
+            "example": "172.14",
+            "type": "string"
+          },
+          "groupCode": {
+            "example": "OG-2610-00016",
+            "type": "string"
+          },
+          "groupId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "newCashAmount": {
+            "description": "What the customer transfers after the expected withholding",
+            "example": "9457.10",
+            "type": "string"
+          },
+          "newGrossAmount": {
+            "description": "Send back as `expectedGrossAmount` on confirm",
+            "example": "9457.10",
+            "type": "string"
+          },
+          "orders": {
+            "items": {
+              "$ref": "#/components/schemas/RequoteOrderDto"
+            },
+            "type": "array"
+          },
+          "paymentDueAt": {
+            "description": "The new payment deadline once confirmed (`orders.unpaid_expiry_days` from now)",
+            "example": "2026-11-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "previousGrossAmount": {
+            "example": "9284.96",
+            "type": "string"
+          },
+          "priceValidUntil": {
+            "description": "The new prices are held until then (`quotes.validity_days`, D-051)",
+            "example": "2026-11-09T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "groupId",
+          "groupCode",
+          "previousGrossAmount",
+          "newGrossAmount",
+          "differenceAmount",
+          "newCashAmount",
+          "priceValidUntil",
+          "paymentDueAt",
+          "orders"
+        ],
+        "type": "object"
       },
       "ResendETaxDto": {
         "properties": {
@@ -222797,14 +223366,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -222855,14 +223430,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -222871,6 +223452,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -222931,6 +223513,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "placedBy": {
                     "displayName": "สมชาย ทดสอบ",
@@ -223899,6 +224482,9 @@
                   "pendingPoints": 25,
                   "pointValue": "2.50",
                   "spend12m": "62500.00",
+                  "spendBasisEn": "Counts orders once completed after delivery · before VAT, without shipping · last 12 months · updated daily",
+                  "spendBasisTh": "นับยอดเมื่อคำสั่งซื้อเสร็จสิ้นหลังได้รับของ · ยอดก่อน VAT ไม่รวมค่าส่ง · ย้อนหลัง 12 เดือน · อัปเดตวันละครั้ง",
+                  "spendNotYetCounted": "0.00",
                   "tier": "silver"
                 },
                 "schema": {
@@ -268738,7 +269324,7 @@
                         "status": "approved",
                         "steps": [
                           {
-                            "customerLabelTh": "โรงงานรับงานแล้ว",
+                            "customerLabelTh": "รับงานเข้าผลิตแล้ว",
                             "customerVisible": true,
                             "evidence": "none",
                             "key": "job_received",
@@ -269150,7 +269736,7 @@
                     "reason": "เพิ่มขั้นตอนเคลือบ UV",
                     "steps": [
                       {
-                        "customerLabelTh": "โรงงานรับงานแล้ว",
+                        "customerLabelTh": "รับงานเข้าผลิตแล้ว",
                         "key": "job_received",
                         "nameEn": "Job received",
                         "nameTh": "รับงาน"
@@ -269196,7 +269782,7 @@
                       "status": "approved",
                       "steps": [
                         {
-                          "customerLabelTh": "โรงงานรับงานแล้ว",
+                          "customerLabelTh": "รับงานเข้าผลิตแล้ว",
                           "customerVisible": true,
                           "evidence": "none",
                           "key": "job_received",
@@ -272404,7 +272990,7 @@
     },
     "/v1/admin/order-groups": {
       "get": {
-        "description": "Filter by status; `q` matches a group or order code, or the customer code.\n\nImplements: D-060, D-073, D-142, D-050.",
+        "description": "Filter by status; `q` matches a group or order code, or the customer code.\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
         "operationId": "admin.orders.listGroups",
         "parameters": [
           {
@@ -272493,14 +273079,20 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                       "orders": [
                         {
+                          "actionOwner": "customer",
+                          "artworkOwner": "team",
                           "artworkStatus": "awaiting_template",
-                          "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                          "artworkStatusLabelTh": "รอแบบไดคัท",
+                          "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                          "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
                           "cancelledAt": null,
                           "createdAt": "2026-10-01T09:00:00+07:00",
+                          "customerStatus": "awaiting_payment",
+                          "customerStatusLabelAdminTh": "รอชำระเงิน",
+                          "customerStatusLabelTh": "รอชำระเงิน",
+                          "deliveryDateBasis": "after_payment",
                           "designOption": "own_file",
                           "destinations": [
                             {
@@ -272551,14 +273143,20 @@
                             }
                           ],
                           "mockupOption": "none",
-                          "nextActions": [
-                            {
-                              "disabledReason": null,
-                              "irreversible": false,
-                              "key": "order.upload_artwork"
-                            }
-                          ],
+                          "nextActions": [],
+                          "openClaims": [],
                           "orderCode": "OR-2610-00042",
+                          "payment": {
+                            "dueAt": "2026-10-08T10:00:00+07:00",
+                            "groupCashAmount": "14182.80",
+                            "groupCode": "OG-2610-00042",
+                            "groupGrossAmount": "14182.80",
+                            "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                            "groupOrderCount": 1,
+                            "orderCashAmount": "14182.80",
+                            "orderGrossAmount": "14182.80",
+                            "overdue": false
+                          },
                           "productTypeCode": "folding_carton",
                           "promisedShipDate": "2026-10-12",
                           "quantityOrdered": 1000,
@@ -272567,6 +273165,7 @@
                             "autoCompleteAt": null,
                             "claimWindowEndsAt": null,
                             "completedAt": null,
+                            "completionHeldByClaim": false,
                             "completionMode": null,
                             "confirmedAt": null,
                             "deliveredAt": null
@@ -272627,6 +273226,7 @@
                           }
                         }
                       ],
+                      "paymentOverdue": false,
                       "placedAt": "2026-10-01T10:00:00+07:00",
                       "placedBy": {
                         "displayName": "สมชาย ทดสอบ",
@@ -272816,7 +273416,7 @@
     },
     "/v1/admin/order-groups/{groupId}": {
       "get": {
-        "description": "Staff view with CS remarks; factory cost and margin need `factory_buy_prices.read` / `margin.read` (D-141).\n\nImplements: D-060, D-073, D-142, D-050, D-141.",
+        "description": "Staff view with CS remarks; factory cost and margin need `factory_buy_prices.read` / `margin.read` (D-141).\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439, D-141.",
         "operationId": "admin.orders.getGroup",
         "parameters": [
           {
@@ -272854,14 +273454,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -272912,14 +273518,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -272928,6 +273540,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -272988,6 +273601,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "placedBy": {
                     "displayName": "สมชาย ทดสอบ",
@@ -273234,14 +273848,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -273292,14 +273912,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -273308,6 +273934,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -273368,6 +273995,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "placedBy": {
                     "displayName": "สมชาย ทดสอบ",
@@ -273621,7 +274249,7 @@
     },
     "/v1/admin/order-groups/{groupId}/actions/cancel": {
       "post": {
-        "description": "Cancels every order that has not started production, with a reason. A paid group publishes `order_group.cancelled` with `refundRequired` (refund B3.2, credit note B5).\n\nImplements: D-060, D-073, D-142, D-050.",
+        "description": "Cancels every order that has not started production, with a reason. A paid group publishes `order_group.cancelled` with `refundRequired` (refund B3.2, credit note B5).\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
         "operationId": "admin.orders.cancelGroup",
         "parameters": [
           {
@@ -273682,14 +274310,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -273740,14 +274374,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -273756,6 +274396,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -273816,6 +274457,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "placedBy": {
                     "displayName": "สมชาย ทดสอบ",
@@ -274159,14 +274801,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -274217,14 +274865,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -274233,6 +274887,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -274293,6 +274948,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "placedBy": {
                     "displayName": "สมชาย ทดสอบ",
@@ -276351,7 +277007,7 @@
     },
     "/v1/admin/orders/{orderId}": {
       "get": {
-        "description": "Staff view of one order (D-141 masking).\n\nImplements: D-060, D-073, D-142, D-050, D-141.",
+        "description": "Staff view of one order (D-141 masking).\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439, D-141.",
         "operationId": "admin.orders.get",
         "parameters": [
           {
@@ -276372,14 +277028,20 @@
             "content": {
               "application/json": {
                 "example": {
+                  "actionOwner": "customer",
+                  "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                  "artworkStatusLabelTh": "รอแบบไดคัท",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
                   "cancelledAt": null,
                   "createdAt": "2026-10-01T09:00:00+07:00",
+                  "customerStatus": "awaiting_payment",
+                  "customerStatusLabelAdminTh": "รอชำระเงิน",
+                  "customerStatusLabelTh": "รอชำระเงิน",
+                  "deliveryDateBasis": "after_payment",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -276430,14 +277092,20 @@
                     }
                   ],
                   "mockupOption": "none",
-                  "nextActions": [
-                    {
-                      "disabledReason": null,
-                      "irreversible": false,
-                      "key": "order.upload_artwork"
-                    }
-                  ],
+                  "nextActions": [],
+                  "openClaims": [],
                   "orderCode": "OR-2610-00042",
+                  "payment": {
+                    "dueAt": "2026-10-08T10:00:00+07:00",
+                    "groupCashAmount": "14182.80",
+                    "groupCode": "OG-2610-00042",
+                    "groupGrossAmount": "14182.80",
+                    "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                    "groupOrderCount": 1,
+                    "orderCashAmount": "14182.80",
+                    "orderGrossAmount": "14182.80",
+                    "overdue": false
+                  },
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
@@ -276446,6 +277114,7 @@
                     "autoCompleteAt": null,
                     "claimWindowEndsAt": null,
                     "completedAt": null,
+                    "completionHeldByClaim": false,
                     "completionMode": null,
                     "confirmedAt": null,
                     "deliveredAt": null
@@ -276889,7 +277558,7 @@
     },
     "/v1/admin/orders/{orderId}/actions/cancel": {
       "post": {
-        "description": "Before production only (afterwards: claims, B4.5); the group follows its orders.\n\nImplements: D-060, D-073, D-142, D-050.",
+        "description": "Before production only (afterwards: claims, B4.5); the group follows its orders.\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
         "operationId": "admin.orders.cancel",
         "parameters": [
           {
@@ -276930,14 +277599,20 @@
             "content": {
               "application/json": {
                 "example": {
+                  "actionOwner": "customer",
+                  "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                  "artworkStatusLabelTh": "รอแบบไดคัท",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
                   "cancelledAt": null,
                   "createdAt": "2026-10-01T09:00:00+07:00",
+                  "customerStatus": "awaiting_payment",
+                  "customerStatusLabelAdminTh": "รอชำระเงิน",
+                  "customerStatusLabelTh": "รอชำระเงิน",
+                  "deliveryDateBasis": "after_payment",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -276988,14 +277663,20 @@
                     }
                   ],
                   "mockupOption": "none",
-                  "nextActions": [
-                    {
-                      "disabledReason": null,
-                      "irreversible": false,
-                      "key": "order.upload_artwork"
-                    }
-                  ],
+                  "nextActions": [],
+                  "openClaims": [],
                   "orderCode": "OR-2610-00042",
+                  "payment": {
+                    "dueAt": "2026-10-08T10:00:00+07:00",
+                    "groupCashAmount": "14182.80",
+                    "groupCode": "OG-2610-00042",
+                    "groupGrossAmount": "14182.80",
+                    "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                    "groupOrderCount": 1,
+                    "orderCashAmount": "14182.80",
+                    "orderGrossAmount": "14182.80",
+                    "overdue": false
+                  },
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
@@ -277004,6 +277685,7 @@
                     "autoCompleteAt": null,
                     "claimWindowEndsAt": null,
                     "completedAt": null,
+                    "completionHeldByClaim": false,
                     "completionMode": null,
                     "confirmedAt": null,
                     "deliveredAt": null
@@ -277325,14 +278007,20 @@
             "content": {
               "application/json": {
                 "example": {
+                  "actionOwner": "customer",
+                  "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                  "artworkStatusLabelTh": "รอแบบไดคัท",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
                   "cancelledAt": null,
                   "createdAt": "2026-10-01T09:00:00+07:00",
+                  "customerStatus": "awaiting_payment",
+                  "customerStatusLabelAdminTh": "รอชำระเงิน",
+                  "customerStatusLabelTh": "รอชำระเงิน",
+                  "deliveryDateBasis": "after_payment",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -277383,14 +278071,20 @@
                     }
                   ],
                   "mockupOption": "none",
-                  "nextActions": [
-                    {
-                      "disabledReason": null,
-                      "irreversible": false,
-                      "key": "order.upload_artwork"
-                    }
-                  ],
+                  "nextActions": [],
+                  "openClaims": [],
                   "orderCode": "OR-2610-00042",
+                  "payment": {
+                    "dueAt": "2026-10-08T10:00:00+07:00",
+                    "groupCashAmount": "14182.80",
+                    "groupCode": "OG-2610-00042",
+                    "groupGrossAmount": "14182.80",
+                    "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                    "groupOrderCount": 1,
+                    "orderCashAmount": "14182.80",
+                    "orderGrossAmount": "14182.80",
+                    "overdue": false
+                  },
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
@@ -277399,6 +278093,7 @@
                     "autoCompleteAt": null,
                     "claimWindowEndsAt": null,
                     "completedAt": null,
+                    "completionHeldByClaim": false,
                     "completionMode": null,
                     "confirmedAt": null,
                     "deliveredAt": null
@@ -353934,14 +354629,20 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                       "orders": [
                         {
+                          "actionOwner": "customer",
+                          "artworkOwner": "team",
                           "artworkStatus": "awaiting_template",
-                          "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                          "artworkStatusLabelTh": "รอแบบไดคัท",
+                          "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                          "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
                           "cancelledAt": null,
                           "createdAt": "2026-10-01T09:00:00+07:00",
+                          "customerStatus": "awaiting_payment",
+                          "customerStatusLabelAdminTh": "รอชำระเงิน",
+                          "customerStatusLabelTh": "รอชำระเงิน",
+                          "deliveryDateBasis": "after_payment",
                           "designOption": "own_file",
                           "destinations": [
                             {
@@ -353984,14 +354685,20 @@
                             }
                           ],
                           "mockupOption": "none",
-                          "nextActions": [
-                            {
-                              "disabledReason": null,
-                              "irreversible": false,
-                              "key": "order.upload_artwork"
-                            }
-                          ],
+                          "nextActions": [],
+                          "openClaims": [],
                           "orderCode": "OR-2610-00042",
+                          "payment": {
+                            "dueAt": "2026-10-08T10:00:00+07:00",
+                            "groupCashAmount": "14182.80",
+                            "groupCode": "OG-2610-00042",
+                            "groupGrossAmount": "14182.80",
+                            "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                            "groupOrderCount": 1,
+                            "orderCashAmount": "14182.80",
+                            "orderGrossAmount": "14182.80",
+                            "overdue": false
+                          },
                           "productTypeCode": "folding_carton",
                           "promisedShipDate": "2026-10-12",
                           "quantityOrdered": 1000,
@@ -354000,6 +354707,7 @@
                             "autoCompleteAt": null,
                             "claimWindowEndsAt": null,
                             "completedAt": null,
+                            "completionHeldByClaim": false,
                             "completionMode": null,
                             "confirmedAt": null,
                             "deliveredAt": null
@@ -354060,6 +354768,7 @@
                           }
                         }
                       ],
+                      "paymentOverdue": false,
                       "placedAt": "2026-10-01T10:00:00+07:00",
                       "poNumber": null,
                       "status": "waiting_payment",
@@ -354292,14 +355001,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -354342,14 +355057,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -354358,6 +355079,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -354418,6 +355140,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "poNumber": null,
                   "status": "waiting_payment",
@@ -354692,14 +355415,20 @@
             "content": {
               "application/json": {
                 "example": {
+                  "actionOwner": "customer",
+                  "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                  "artworkStatusLabelTh": "รอแบบไดคัท",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
                   "cancelledAt": null,
                   "createdAt": "2026-10-01T09:00:00+07:00",
+                  "customerStatus": "awaiting_payment",
+                  "customerStatusLabelAdminTh": "รอชำระเงิน",
+                  "customerStatusLabelTh": "รอชำระเงิน",
+                  "deliveryDateBasis": "after_payment",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -354742,14 +355471,20 @@
                     }
                   ],
                   "mockupOption": "none",
-                  "nextActions": [
-                    {
-                      "disabledReason": null,
-                      "irreversible": false,
-                      "key": "order.upload_artwork"
-                    }
-                  ],
+                  "nextActions": [],
+                  "openClaims": [],
                   "orderCode": "OR-2610-00042",
+                  "payment": {
+                    "dueAt": "2026-10-08T10:00:00+07:00",
+                    "groupCashAmount": "14182.80",
+                    "groupCode": "OG-2610-00042",
+                    "groupGrossAmount": "14182.80",
+                    "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                    "groupOrderCount": 1,
+                    "orderCashAmount": "14182.80",
+                    "orderGrossAmount": "14182.80",
+                    "overdue": false
+                  },
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
@@ -354758,6 +355493,7 @@
                     "autoCompleteAt": null,
                     "claimWindowEndsAt": null,
                     "completedAt": null,
+                    "completionHeldByClaim": false,
                     "completionMode": null,
                     "confirmedAt": null,
                     "deliveredAt": null
@@ -502016,14 +502752,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -502066,14 +502808,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -502082,6 +502830,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -502142,6 +502891,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "poNumber": null,
                   "status": "waiting_payment",
@@ -527127,6 +527877,9 @@
                   "pendingPoints": 25,
                   "pointValue": "2.50",
                   "spend12m": "62500.00",
+                  "spendBasisEn": "Counts orders once completed after delivery · before VAT, without shipping · last 12 months · updated daily",
+                  "spendBasisTh": "นับยอดเมื่อคำสั่งซื้อเสร็จสิ้นหลังได้รับของ · ยอดก่อน VAT ไม่รวมค่าส่ง · ย้อนหลัง 12 เดือน · อัปเดตวันละครั้ง",
+                  "spendNotYetCounted": "0.00",
                   "tier": "silver"
                 },
                 "schema": {
@@ -528515,6 +529268,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7301",
                       "lockedByOrderCode": null,
                       "thumbnailFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000e730c",
+                      "thumbnailUrl": "https://files.example.invalid/thumb.png?sig=…",
                       "title": "กล่องขนมไหว้พระจันทร์",
                       "updatedAt": "2026-10-03T16:20:00+07:00"
                     }
@@ -528526,6 +529280,7 @@
                       "code": "PK-2610-0003-01",
                       "dueAt": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7303",
+                      "overdue": false,
                       "productType": {
                         "code": "folding",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7306",
@@ -530159,7 +530914,7 @@
     },
     "/v1/store/order-groups": {
       "get": {
-        "description": "Newest first; each group holds one order per configuration (D-060 expiry shown while unpaid).\n\nImplements: D-060, D-073, D-142, D-050.",
+        "description": "Newest first; each group holds one order per configuration. The payment deadline is shown while unpaid (D-060) and an overdue group is re-quoted, never cancelled (`paymentOverdue`, D-436).\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
         "operationId": "store.orders.listGroups",
         "parameters": [
           {
@@ -530240,14 +530995,20 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                       "orders": [
                         {
+                          "actionOwner": "customer",
+                          "artworkOwner": "team",
                           "artworkStatus": "awaiting_template",
-                          "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                          "artworkStatusLabelTh": "รอแบบไดคัท",
+                          "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                          "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
                           "cancelledAt": null,
                           "createdAt": "2026-10-01T09:00:00+07:00",
+                          "customerStatus": "awaiting_payment",
+                          "customerStatusLabelAdminTh": "รอชำระเงิน",
+                          "customerStatusLabelTh": "รอชำระเงิน",
+                          "deliveryDateBasis": "after_payment",
                           "designOption": "own_file",
                           "destinations": [
                             {
@@ -530290,14 +531051,20 @@
                             }
                           ],
                           "mockupOption": "none",
-                          "nextActions": [
-                            {
-                              "disabledReason": null,
-                              "irreversible": false,
-                              "key": "order.upload_artwork"
-                            }
-                          ],
+                          "nextActions": [],
+                          "openClaims": [],
                           "orderCode": "OR-2610-00042",
+                          "payment": {
+                            "dueAt": "2026-10-08T10:00:00+07:00",
+                            "groupCashAmount": "14182.80",
+                            "groupCode": "OG-2610-00042",
+                            "groupGrossAmount": "14182.80",
+                            "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                            "groupOrderCount": 1,
+                            "orderCashAmount": "14182.80",
+                            "orderGrossAmount": "14182.80",
+                            "overdue": false
+                          },
                           "productTypeCode": "folding_carton",
                           "promisedShipDate": "2026-10-12",
                           "quantityOrdered": 1000,
@@ -530306,6 +531073,7 @@
                             "autoCompleteAt": null,
                             "claimWindowEndsAt": null,
                             "completedAt": null,
+                            "completionHeldByClaim": false,
                             "completionMode": null,
                             "confirmedAt": null,
                             "deliveredAt": null
@@ -530366,6 +531134,7 @@
                           }
                         }
                       ],
+                      "paymentOverdue": false,
                       "placedAt": "2026-10-01T10:00:00+07:00",
                       "poNumber": null,
                       "status": "waiting_payment",
@@ -530545,7 +531314,7 @@
     },
     "/v1/store/order-groups/{groupId}": {
       "get": {
-        "description": "The owner only; no factory data (D-050).\n\nImplements: D-060, D-073, D-142, D-050.",
+        "description": "The owner only; no factory data (D-050).\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
         "operationId": "store.orders.getGroup",
         "parameters": [
           {
@@ -530575,14 +531344,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -530625,14 +531400,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -530641,6 +531422,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -530701,6 +531483,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "poNumber": null,
                   "status": "waiting_payment",
@@ -530881,7 +531664,7 @@
     },
     "/v1/store/order-groups/{groupId}/actions/cancel": {
       "post": {
-        "description": "Only while it waits for payment and nothing is paid; after a payment CS cancels it (refund / credit note, B3.2 / B5). Releases reserved promotions and points.\n\nImplements: D-060, D-073, D-142, D-050.",
+        "description": "Only while it waits for payment and nothing is paid; after a payment CS cancels it (refund / credit note, B3.2 / B5). Releases reserved promotions and points.\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
         "operationId": "store.orders.cancelGroup",
         "parameters": [
           {
@@ -530932,14 +531715,20 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
                   "orders": [
                     {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
                       "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                      "artworkStatusLabelTh": "รอแบบไดคัท",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
                       "cancelledAt": null,
                       "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
                       "designOption": "own_file",
                       "destinations": [
                         {
@@ -530982,14 +531771,20 @@
                         }
                       ],
                       "mockupOption": "none",
-                      "nextActions": [
-                        {
-                          "disabledReason": null,
-                          "irreversible": false,
-                          "key": "order.upload_artwork"
-                        }
-                      ],
+                      "nextActions": [],
+                      "openClaims": [],
                       "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
                       "productTypeCode": "folding_carton",
                       "promisedShipDate": "2026-10-12",
                       "quantityOrdered": 1000,
@@ -530998,6 +531793,7 @@
                         "autoCompleteAt": null,
                         "claimWindowEndsAt": null,
                         "completedAt": null,
+                        "completionHeldByClaim": false,
                         "completionMode": null,
                         "confirmedAt": null,
                         "deliveredAt": null
@@ -531058,6 +531854,7 @@
                       }
                     }
                   ],
+                  "paymentOverdue": false,
                   "placedAt": "2026-10-01T10:00:00+07:00",
                   "poNumber": null,
                   "status": "cancelled",
@@ -531317,6 +532114,716 @@
           }
         ],
         "summary": "Cancel my unpaid order group",
+        "tags": [
+          "store.orders"
+        ]
+      }
+    },
+    "/v1/store/order-groups/{groupId}/actions/confirm-requote": {
+      "post": {
+        "description": "Writes the re-quote shown by `store.orders.requoteGroup` (D-436): every order of the group that is not cancelled with the quotation of the preview, and `expectedGrossAmount` = the preview’s `newGrossAmount` (else `order.requote_changed` — re-check again). Each order keeps its previous pricing as a revision and publishes `order.repriced` (the payment schedule follows, ADR-0008); the group gets a new payment deadline (`orders.unpaid_expiry_days`) and publishes `order_group.requoted`. Then pay with `store.payments.initiate`. Requires `Idempotency-Key`; a replay returns the same group.\n\nImplements: D-436, D-051, D-060.",
+        "operationId": "store.orders.confirmRequote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "expectedGrossAmount": "9457.10",
+                    "orders": [
+                      {
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                        "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca101",
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca102"
+                      },
+                      {
+                        "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                        "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca103",
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca104"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmRequoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cancelledAt": null,
+                  "ccEmails": [],
+                  "channel": "web",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "expiresAt": "2026-11-01T10:00:00+07:00",
+                  "groupCode": "OG-2610-00042",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                  "orders": [
+                    {
+                      "actionOwner": "customer",
+                      "artworkOwner": "team",
+                      "artworkStatus": "awaiting_template",
+                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "cancelReasonCode": null,
+                      "cancelReasonNameEn": null,
+                      "cancelReasonNameTh": null,
+                      "cancelledAt": null,
+                      "createdAt": "2026-10-01T09:00:00+07:00",
+                      "customerStatus": "awaiting_payment",
+                      "customerStatusLabelAdminTh": "รอชำระเงิน",
+                      "customerStatusLabelTh": "รอชำระเงิน",
+                      "deliveryDateBasis": "after_payment",
+                      "designOption": "own_file",
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0004",
+                          "quantity": 1000,
+                          "shippingNetAmount": "120.00"
+                        }
+                      ],
+                      "estimatedDeliveryDate": "2026-10-14",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                      "leadTimeDays": 7,
+                      "lines": [
+                        {
+                          "descriptionEn": "Product",
+                          "descriptionTh": "สินค้า",
+                          "discountAmount": "0.00",
+                          "grossAmount": "13380.00",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                          "lineNo": 1,
+                          "lineType": "product",
+                          "netAmount": "12504.21",
+                          "quantity": "1000",
+                          "unitPrice": "12.504206",
+                          "vatAmount": "875.79",
+                          "vatRatePct": "7.0000",
+                          "whtAmount": "0.00",
+                          "whtCategory": "hire_of_work"
+                        }
+                      ],
+                      "mockupOption": "none",
+                      "nextActions": [],
+                      "openClaims": [],
+                      "orderCode": "OR-2610-00042",
+                      "payment": {
+                        "dueAt": "2026-10-08T10:00:00+07:00",
+                        "groupCashAmount": "14182.80",
+                        "groupCode": "OG-2610-00042",
+                        "groupGrossAmount": "14182.80",
+                        "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                        "groupOrderCount": 1,
+                        "orderCashAmount": "14182.80",
+                        "orderGrossAmount": "14182.80",
+                        "overdue": false
+                      },
+                      "productTypeCode": "folding_carton",
+                      "promisedShipDate": "2026-10-12",
+                      "quantityOrdered": 1000,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "receipt": {
+                        "autoCompleteAt": null,
+                        "claimWindowEndsAt": null,
+                        "completedAt": null,
+                        "completionHeldByClaim": false,
+                        "completionMode": null,
+                        "confirmedAt": null,
+                        "deliveredAt": null
+                      },
+                      "status": "waiting_payment",
+                      "statusChangedAt": "2026-10-01T10:00:00+07:00",
+                      "statusLabelAdminTh": "รอชำระเงิน",
+                      "statusLabelTh": "รอชำระเงิน",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size",
+                            "labelTh": "ขนาด",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
+                      "toleranceOutcome": null,
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "totals": {
+                        "cashAmount": "14182.80",
+                        "currency": "THB",
+                        "discountAmount": "0.00",
+                        "grossAmount": "14182.80",
+                        "netAmount": "13254.95",
+                        "shippingNetAmount": "120.00",
+                        "vatAmount": "927.85",
+                        "whtAmount": "0.00"
+                      }
+                    }
+                  ],
+                  "paymentOverdue": false,
+                  "placedAt": "2026-10-01T10:00:00+07:00",
+                  "poNumber": null,
+                  "status": "waiting_payment",
+                  "statusLabelAdminTh": "รอชำระเงิน",
+                  "statusLabelTh": "รอชำระเงิน",
+                  "totals": {
+                    "cashAmount": "14182.80",
+                    "currency": "THB",
+                    "discountAmount": "0.00",
+                    "grossAmount": "14182.80",
+                    "netAmount": "13254.95",
+                    "shippingNetAmount": "120.00",
+                    "vatAmount": "927.85",
+                    "whtAmount": "0.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OrderGroupDto"
+                }
+              }
+            },
+            "description": "Re-quoted; pay now",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "order.reprice_below_paid": {
+                    "$ref": "#/components/examples/problem.order.reprice_below_paid"
+                  },
+                  "order.requote_changed": {
+                    "$ref": "#/components/examples/problem.order.requote_changed"
+                  },
+                  "order.requote_not_due": {
+                    "$ref": "#/components/examples/problem.order.requote_not_due"
+                  },
+                  "order.requote_unavailable": {
+                    "$ref": "#/components/examples/problem.order.requote_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `order.reprice_below_paid`, `order.requote_changed`, `order.requote_not_due`, `order.requote_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Accept today’s price of my overdue order group",
+        "tags": [
+          "store.orders"
+        ]
+      }
+    },
+    "/v1/store/order-groups/{groupId}/actions/requote": {
+      "post": {
+        "description": "\"ตรวจราคาใหม่และชำระ\" (D-436): for an unpaid group past its payment deadline (`paymentOverdue`) — never cancelled for it — every order is priced again through the pricing service at today’s price, lead time and ship date (a new instant quotation of the same configuration, quantity and delivery postcode). Answers the old and new totals and the difference; nothing on the order changes until `store.orders.confirmRequote`. Not offered online (`order.requote_unavailable`, the team quotes): an RFQ or sample quotation, a reorder, discounts or add-on charges, a payment being verified or part-paid.\n\nImplements: D-436, D-051, D-060.",
+        "operationId": "store.orders.requoteGroup",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "groupId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "differenceAmount": "172.14",
+                  "groupCode": "OG-2610-00016",
+                  "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                  "newCashAmount": "9457.10",
+                  "newGrossAmount": "9457.10",
+                  "orders": [
+                    {
+                      "differenceAmount": "86.06",
+                      "estimatedDeliveryDate": "2026-11-05",
+                      "leadTimeDays": 5,
+                      "newGrossAmount": "4388.92",
+                      "newUnitPrice": "14.629733",
+                      "orderCode": "OR-2610-00016",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0002",
+                      "previousGrossAmount": "4302.86",
+                      "promisedShipDate": "2026-11-03",
+                      "quantity": 300,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca101",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca102"
+                    },
+                    {
+                      "differenceAmount": "86.08",
+                      "estimatedDeliveryDate": "2026-11-05",
+                      "leadTimeDays": 5,
+                      "newGrossAmount": "5068.18",
+                      "newUnitPrice": "15.784361",
+                      "orderCode": "OR-2610-00017",
+                      "orderId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0003",
+                      "previousGrossAmount": "4982.10",
+                      "promisedShipDate": "2026-11-03",
+                      "quantity": 300,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca103",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca104"
+                    }
+                  ],
+                  "paymentDueAt": "2026-11-01T10:00:00+07:00",
+                  "previousGrossAmount": "9284.96",
+                  "priceValidUntil": "2026-11-09T10:00:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RequotePreviewDto"
+                }
+              }
+            },
+            "description": "Today’s price",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "order.requote_not_due": {
+                    "$ref": "#/components/examples/problem.order.requote_not_due"
+                  },
+                  "order.requote_unavailable": {
+                    "$ref": "#/components/examples/problem.order.requote_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `order.requote_not_due`, `order.requote_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Re-check the price of my overdue order group",
         "tags": [
           "store.orders"
         ]
@@ -531829,7 +533336,7 @@
         ]
       },
       "post": {
-        "description": "Starts a payment of the instalments due now (or those chosen): SCB QR returns the QR payload to render, 2C2P a redirect URL, a bank transfer waits for its slip. Methods are enabled by feature flag once getpack’s merchant accounts exist (D-176). The amount is the cash after the expected withholding. `bank_transfer_slip` returns the accounts to pay into (`receiverAccounts`). After a 2C2P page the provider sends the customer back to the fixed storefront route `/payments/{paymentId}/return` (no client-supplied return URL); poll `store.payments.get` there. Requires `Idempotency-Key`.\n\nImplements: D-061, D-020, D-176.",
+        "description": "Starts a payment of the instalments due now (or those chosen): SCB QR returns the QR payload to render, 2C2P a redirect URL, a bank transfer waits for its slip. Methods are enabled by feature flag once getpack’s merchant accounts exist (D-176). The amount is the cash after the expected withholding. `bank_transfer_slip` returns the accounts to pay into (`receiverAccounts`). After a 2C2P page the provider sends the customer back to the fixed storefront route `/payments/{paymentId}/return` (no client-supplied return URL); poll `store.payments.get` there. Past the group’s payment deadline the customer re-quotes first (`store.orders.requoteGroup`, D-436): `order.requote_required`. Requires `Idempotency-Key`.\n\nImplements: D-061, D-020, D-176, D-436.",
         "operationId": "store.payments.initiate",
         "parameters": [
           {
@@ -532013,6 +533520,9 @@
                   "idempotency.in_progress": {
                     "$ref": "#/components/examples/problem.idempotency.in_progress"
                   },
+                  "order.requote_required": {
+                    "$ref": "#/components/examples/problem.order.requote_required"
+                  },
                   "payments.group_not_payable": {
                     "$ref": "#/components/examples/problem.payments.group_not_payable"
                   },
@@ -532025,7 +533535,7 @@
                 }
               }
             },
-            "description": "Problem: `idempotency.in_progress`, `payments.group_not_payable`, `payments.nothing_to_pay`",
+            "description": "Problem: `idempotency.in_progress`, `order.requote_required`, `payments.group_not_payable`, `payments.nothing_to_pay`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -532138,7 +533648,7 @@
     },
     "/v1/store/orders/by-code/{orderCode}": {
       "get": {
-        "description": "For links in e-mails and LINE (contract §3 exception); the owner only.\n\nImplements: D-060, D-073, D-142, D-050.",
+        "description": "For links in e-mails and LINE (contract §3 exception); the owner only.\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
         "operationId": "store.orders.getByCode",
         "parameters": [
           {
@@ -532159,14 +533669,20 @@
             "content": {
               "application/json": {
                 "example": {
+                  "actionOwner": "customer",
+                  "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                  "artworkStatusLabelTh": "รอแบบไดคัท",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
                   "cancelledAt": null,
                   "createdAt": "2026-10-01T09:00:00+07:00",
+                  "customerStatus": "awaiting_payment",
+                  "customerStatusLabelAdminTh": "รอชำระเงิน",
+                  "customerStatusLabelTh": "รอชำระเงิน",
+                  "deliveryDateBasis": "after_payment",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -532209,14 +533725,20 @@
                     }
                   ],
                   "mockupOption": "none",
-                  "nextActions": [
-                    {
-                      "disabledReason": null,
-                      "irreversible": false,
-                      "key": "order.upload_artwork"
-                    }
-                  ],
+                  "nextActions": [],
+                  "openClaims": [],
                   "orderCode": "OR-2610-00042",
+                  "payment": {
+                    "dueAt": "2026-10-08T10:00:00+07:00",
+                    "groupCashAmount": "14182.80",
+                    "groupCode": "OG-2610-00042",
+                    "groupGrossAmount": "14182.80",
+                    "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                    "groupOrderCount": 1,
+                    "orderCashAmount": "14182.80",
+                    "orderGrossAmount": "14182.80",
+                    "overdue": false
+                  },
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
@@ -532225,6 +533747,7 @@
                     "autoCompleteAt": null,
                     "claimWindowEndsAt": null,
                     "completedAt": null,
+                    "completionHeldByClaim": false,
                     "completionMode": null,
                     "confirmedAt": null,
                     "deliveredAt": null
@@ -532425,7 +533948,7 @@
     },
     "/v1/store/orders/{orderId}": {
       "get": {
-        "description": "Lines, destinations and the status driven by payment, artwork, production and shipping facts.\n\nImplements: D-060, D-073, D-142, D-050.",
+        "description": "Lines, destinations and the status driven by payment, artwork, production and shipping facts; `customerStatus` is the one status to show the customer (D-437), with who acts next and the artwork step owner (D-438), this order’s share of the group payment and the delivery-date basis (D-439).\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
         "operationId": "store.orders.get",
         "parameters": [
           {
@@ -532446,14 +533969,20 @@
             "content": {
               "application/json": {
                 "example": {
+                  "actionOwner": "customer",
+                  "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                  "artworkStatusLabelTh": "รอแบบไดคัท",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
                   "cancelledAt": null,
                   "createdAt": "2026-10-01T09:00:00+07:00",
+                  "customerStatus": "awaiting_payment",
+                  "customerStatusLabelAdminTh": "รอชำระเงิน",
+                  "customerStatusLabelTh": "รอชำระเงิน",
+                  "deliveryDateBasis": "after_payment",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -532496,14 +534025,20 @@
                     }
                   ],
                   "mockupOption": "none",
-                  "nextActions": [
-                    {
-                      "disabledReason": null,
-                      "irreversible": false,
-                      "key": "order.upload_artwork"
-                    }
-                  ],
+                  "nextActions": [],
+                  "openClaims": [],
                   "orderCode": "OR-2610-00042",
+                  "payment": {
+                    "dueAt": "2026-10-08T10:00:00+07:00",
+                    "groupCashAmount": "14182.80",
+                    "groupCode": "OG-2610-00042",
+                    "groupGrossAmount": "14182.80",
+                    "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                    "groupOrderCount": 1,
+                    "orderCashAmount": "14182.80",
+                    "orderGrossAmount": "14182.80",
+                    "overdue": false
+                  },
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
@@ -532512,6 +534047,7 @@
                     "autoCompleteAt": null,
                     "claimWindowEndsAt": null,
                     "completedAt": null,
+                    "completionHeldByClaim": false,
                     "completionMode": null,
                     "confirmedAt": null,
                     "deliveredAt": null
@@ -532756,14 +534292,20 @@
             "content": {
               "application/json": {
                 "example": {
+                  "actionOwner": "customer",
+                  "artworkOwner": "team",
                   "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอแบบไดคัท",
-                  "artworkStatusLabelTh": "รอแบบไดคัท",
+                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
+                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
                   "cancelledAt": null,
                   "createdAt": "2026-10-01T09:00:00+07:00",
+                  "customerStatus": "awaiting_payment",
+                  "customerStatusLabelAdminTh": "รอชำระเงิน",
+                  "customerStatusLabelTh": "รอชำระเงิน",
+                  "deliveryDateBasis": "after_payment",
                   "designOption": "own_file",
                   "destinations": [
                     {
@@ -532806,14 +534348,20 @@
                     }
                   ],
                   "mockupOption": "none",
-                  "nextActions": [
-                    {
-                      "disabledReason": null,
-                      "irreversible": false,
-                      "key": "order.upload_artwork"
-                    }
-                  ],
+                  "nextActions": [],
+                  "openClaims": [],
                   "orderCode": "OR-2610-00042",
+                  "payment": {
+                    "dueAt": "2026-10-08T10:00:00+07:00",
+                    "groupCashAmount": "14182.80",
+                    "groupCode": "OG-2610-00042",
+                    "groupGrossAmount": "14182.80",
+                    "groupId": "0192f3a0-7c1e-7d2a-9b1f-0000000d0001",
+                    "groupOrderCount": 1,
+                    "orderCashAmount": "14182.80",
+                    "orderGrossAmount": "14182.80",
+                    "overdue": false
+                  },
                   "productTypeCode": "folding_carton",
                   "promisedShipDate": "2026-10-12",
                   "quantityOrdered": 1000,
@@ -532822,6 +534370,7 @@
                     "autoCompleteAt": null,
                     "claimWindowEndsAt": null,
                     "completedAt": null,
+                    "completionHeldByClaim": false,
                     "completionMode": null,
                     "confirmedAt": null,
                     "deliveredAt": null

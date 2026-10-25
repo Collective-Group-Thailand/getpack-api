@@ -314,14 +314,18 @@ describe('payments (e2e, B3.2)', () => {
       .expect(201);
     expect(sent.body.slips[0].status).toBe('manual_review');
 
+    // D-436: past the deadline the group is never cancelled, and a slip under review holds the re-quote.
     await ctx.prisma.orderGroup.update({
       where: { publicId: group.id },
       data: { expiresAt: new Date(Date.now() - 60_000) },
     });
-    await ctx.app.get(OrdersService).expireUnpaid();
     expect((await ctx.prisma.orderGroup.findUniqueOrThrow({ where: { publicId: group.id } })).status).toBe(
       'waiting_payment',
     );
+    await as(ctx, token)
+      .post(`/v1/store/order-groups/${group.id}/actions/requote`)
+      .expect(409)
+      .expect((res) => expect(res.body.code).toBe('order.requote_unavailable'));
 
     const csLead = await staffToken(ctx, 'cs-lead');
     await as(ctx, csLead).get('/v1/admin/slips').expect(403);

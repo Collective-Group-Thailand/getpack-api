@@ -33,6 +33,12 @@ interface Links {
   createdById?: bigint | null;
 }
 
+/** What the 12-month tier spend counts (`recalculateTiers`), in the customer's words. */
+const SPEND_BASIS = {
+  th: 'นับยอดเมื่อคำสั่งซื้อเสร็จสิ้นหลังได้รับของ · ยอดก่อน VAT ไม่รวมค่าส่ง · ย้อนหลัง 12 เดือน · อัปเดตวันละครั้ง',
+  en: 'Counts orders once completed after delivery · before VAT, without shipping · last 12 months · updated daily',
+};
+
 /**
  * Loyalty points (D-130…D-133, P10–P12). Earnings are written **pending** when an order completes and
  * credited — as a lot that expires 12 months later — once its claim window has passed and the group is
@@ -57,7 +63,7 @@ export class LoyaltyService {
 
   /** Available points (unexpired lots), pending earnings and lots expiring within the reminder window. */
   async summary(userId: bigint, now = new Date()) {
-    const [membership, lots, pending, value, expiry, tiers] = await Promise.all([
+    const [membership, lots, pending, value, expiry, tiers, uncounted] = await Promise.all([
       this.prisma.loyaltyMembership.findUnique({ where: { userId } }),
       this.prisma.pointsLot.findMany({
         where: { userId, remaining: { gt: 0 }, expiresAt: { gt: now } },
@@ -67,6 +73,12 @@ export class LoyaltyService {
       this.settings.at('loyalty.point_value', { at: now }),
       this.settings.at('loyalty.points_expiry', { at: now }),
       this.settings.at('loyalty.tiers', { at: now }),
+      // Paid, not completed, not cancelled: counts once it completes (the tier basis of `recalculateTiers`).
+      this.prisma.$queryRaw<{ spend: string | null }[]>`
+        SELECT sum(l.net_amount - l.discount_amount)::text AS spend
+          FROM orders o JOIN order_lines l ON l.order_id = o.id
+         WHERE o.customer_user_id = ${userId} AND o.paid_for_production_at IS NOT NULL
+           AND o.completed_at IS NULL AND o.cancelled_at IS NULL AND l.line_type <> 'shipping'`,
     ]);
     const available = lots.reduce((a, l) => a + l.remaining, 0);
     // Tier progress (D-134): the next tier above my 12-month spend, from the tier settings, never computed by the web.
@@ -87,6 +99,9 @@ export class LoyaltyService {
       nextTier: next?.tier ?? null,
       nextTierMinSpend12m: next ? D(next.minSpend12m).toFixed(2) : null,
       nextTierProgressPct: progressPct,
+      spendBasisTh: SPEND_BASIS.th,
+      spendBasisEn: SPEND_BASIS.en,
+      spendNotYetCounted: formatMoney(D(uncounted[0]?.spend ?? '0')),
       availablePoints: available,
       pendingPoints: pending._sum.points ?? 0,
       pointValue: D(value.value).toFixed(2),
