@@ -27,16 +27,94 @@ getpack-web/docs/design/
 
 2. Commit โฟลเดอร์ docs นี้ลง branch `fix/uat-phase0` ของทั้งสอง repo ก่อน (ดูข้อ 3) เพื่อให้ทุก branch ที่แตกต่อมามีไฟล์ครบ
 3. เปิด Claude Code ที่โฟลเดอร์ `getpack-web` (งาน API เปิดที่ `getpack-api`)
-4. ทุกครั้งที่เริ่ม session ใหม่ ให้วาง **prompt เปิดงาน** นี้ก่อน แล้วค่อยวาง prompt ของ Phase:
-
-```text
-Read docs/design/MASTER-RUN-ORDER.md and docs/design/GLOBAL-RULES.md first. GLOBAL-RULES.md overrides any
-prompt pack on conflict (factory confidentiality, branch base, single pricing service, no sample data).
-Tell me which step of the run order we are on, which branch you will use (created from which branch),
-then wait for the phase prompt.
-```
+4. ทุกครั้งที่เริ่ม session ใหม่ (1 Phase = 1 session) ให้วาง **หัว prompt** ตามแม่แบบในข้อ 1b แล้วต่อท้ายด้วย prompt ของ Phase นั้น
+   (บล็อก text ของ Phase จากไฟล์ PROMPT-*.md) ในข้อความเดียวกัน
 
 5. ทุก Phase จบด้วยรายงาน → ตรวจ screenshot (390 / 1440 / dark) และ diff → อนุมัติ → ค่อยรันขั้นถัดไป
+
+---
+
+## 1b. แม่แบบหัว prompt
+
+แก้ 3 จุดในวงเล็บ `<...>`: ขั้น (Step), branch, และ branch ต้นทาง (ดูตาราง branch ด้านล่าง)
+
+### ฝั่ง API (รันก่อน เฉพาะ Phase ที่มีงาน API ตามตารางข้อ 2b)
+
+```text
+Repo: getpack-api (backend only — do not touch any UI code).
+Read docs/design/MASTER-RUN-ORDER.md (sections 2b and 3) and docs/design/GLOBAL-RULES.md first.
+GLOBAL-RULES.md overrides the phase prompt on any conflict.
+
+Step: <C1 — products Phase 1>, API side only.
+Branch: <design/products-redesign>, created from <feat/catalog-commercial-fields>.
+Run `git fetch` first; if the branch already exists, continue it instead of recreating it.
+
+Do only the backend part of the phase prompt below. Migrations must be reversible. Never return factory
+ids/names/locations in any storefront response.
+When done: write docs/design/<products-redesign>/API-CHANGES.md (endpoints, DTOs, migrations, example
+requests/responses, env vars, open questions), run lint + tests, commit, push the branch.
+Never merge or open a PR to main, never force-push.
+Do NOT read whole prototype HTML files — grep only the sections you need.
+Stop with the phase report and wait for my approval.
+
+--- PHASE PROMPT ---
+<วางบล็อก text ของ Phase จาก PROMPT-*.md>
+```
+
+### ฝั่ง web
+
+session ฝั่ง web จะดึง `API-CHANGES.md` จาก getpack-api (branch เดียวกัน) มาเองและ commit ให้ ถ้าดึงไม่ได้จะหยุดถาม
+ให้คุณวางเนื้อหาไฟล์ลงในแชต (ถ้า Phase นั้นไม่มีงาน API ให้ลบบรรทัด API contract ออก)
+
+```text
+Repo: getpack-web (Next.js).
+Read docs/design/MASTER-RUN-ORDER.md and docs/design/GLOBAL-RULES.md first.
+GLOBAL-RULES.md overrides the phase prompt on any conflict.
+
+Step: <C1 — products Phase 1>, web side.
+Branch: <design/products-redesign>, created from <design/styles-catalog-redesign>.
+Run `git fetch` first; if the branch already exists, continue it instead of recreating it.
+
+API_INTERNAL_URL points to the shared UAT API (https://uat-api.getpack.co): READ-ONLY. Only GET requests;
+never POST/PUT/PATCH/DELETE, never submit forms, orders, payments, uploads or messages against it.
+New endpoints from API-CHANGES.md are NOT deployed to UAT yet: code against the contract, cover them with
+mocked tests (mocks live in test files only), and list what I must verify locally with both branches running.
+API contract: docs/design/<products-redesign>/API-CHANGES.md from repo Collective-Group-Thailand/getpack-api, branch
+<design/products-redesign>. If it is not in this repo yet, fetch it first (try in order: `gh api
+repos/Collective-Group-Thailand/getpack-api/contents/docs/design/<products-redesign>/API-CHANGES.md?ref=<branch>` decoded from
+base64, then `git clone --depth 1 -b <branch>` of the API repo into /tmp), save it to the same path here and
+commit it. If you cannot access the API repo, stop and ask me to paste the file. Use the contract exactly. If something you need is missing,
+stop and list it — do not invent endpoints and do not put mock/sample data in production code.
+When done: run lint, type-check, build and tests, commit, push the branch.
+Never merge or open a PR to main, never force-push.
+Do NOT read whole prototype HTML files — grep only the sections you need.
+Stop with the phase report and wait for my approval.
+
+--- PHASE PROMPT ---
+<วางบล็อก text ของ Phase จาก PROMPT-*.md>
+```
+
+### ตาราง branch (สร้างจาก)
+
+| ขั้น | getpack-web: branch ← สร้างจาก | getpack-api: branch ← สร้างจาก |
+|---|---|---|
+| Stage A (Phase 0 ทุกชุด) | `fix/uat-phase0` ← branch ทำงานปัจจุบัน | `fix/uat-phase0` ← branch ทำงานปัจจุบัน |
+| B1, B3 styles 1–2 | `design/styles-catalog-redesign` ← `fix/uat-phase0` | — |
+| B2 styles API | — | `feat/catalog-commercial-fields` ← `fix/uat-phase0` |
+| C1 products | `design/products-redesign` ← `design/styles-catalog-redesign` | `design/products-redesign` ← `feat/catalog-commercial-fields` |
+| C2 category | `design/category-redesign` ← products | (ถ้ามีงาน API) ← API branch ล่าสุด |
+| C3 pdp | `design/pdp-redesign` ← category | ← API branch ล่าสุด |
+| C4 configurator | `design/configurator-redesign` ← pdp | ← API branch ล่าสุด |
+| C5 checkout | `design/checkout-redesign` ← configurator | `design/checkout-redesign` ← API branch ล่าสุด |
+| C6 account | `design/account-redesign` ← checkout | ← API branch ล่าสุด |
+| C7 studio | `design/studio-redesign` ← account | ← API branch ล่าสุด |
+| C8 editor | `design/editor-redesign` ← studio | ← API branch ล่าสุด |
+| C9 upload | `design/upload-redesign` ← editor | `design/upload-redesign` ← API branch ล่าสุด |
+| C10 business | `design/business-redesign` ← upload | `design/business-redesign` ← API branch ล่าสุด |
+
+"API branch ล่าสุด" = branch ฝั่ง API ตัวล่าสุดที่สร้างไว้แล้วตามลำดับนี้ (Phase ที่ไม่มีงาน API จะไม่มี branch ฝั่ง API)
+Stage D ทำต่อบน branch ของหน้านั้นในแต่ละ repo
+Stage A ไม่ต้องใส่ "created from" ใช้ `Branch: fix/uat-phase0` ทุก Phase 0
 
 ---
 

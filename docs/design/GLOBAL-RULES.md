@@ -18,6 +18,8 @@ Never expose:
 - coverage per product type or area ("ยังไม่มีโรงงานรับ", "x/14 หมวด" …);
 - who ships (factory fleet / factory vehicle), factory terms or factory pricing;
 - factory ids or names inside API payloads sent to the storefront (strip them server-side, not only in the UI).
+- pickup/origin locations in shipment tracking events (show status, time and destination-side locations only);
+- factory names or counts in the sales-agent / affiliate area — agents are external people.
 
 Customer-facing wording: use "ทีมงาน", "ฝ่ายผลิต", "การผลิต", "มาตรฐานการผลิตของ getpack" — never "โรงงาน" for our
 own production. Examples: "ขั้นตอนการผลิต" (not "ขั้นตอนที่โรงงาน"), "ชำระแล้วจึงเริ่มผลิต",
