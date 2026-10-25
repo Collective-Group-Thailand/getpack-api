@@ -229,3 +229,50 @@ None specific to A4 (no code change).
 2. Mark a print choice such as ดำ / CMYK as "choose one" in the API and refuse a second ink?
 3. Return the smallest quantity that gets an instant price (e.g. 300 for size F)?
 4. Price ดำ below CMYK in the UAT seed so the choice shows a difference?
+
+---
+
+## A5 — upload · Phase 0 — PASS (report only, no API changes)
+
+Commit (made and pushed by the subagent): `a6ff6fc5` docs(upload): A5 Phase 0 findings.
+
+Gate: lint ✔ · typecheck ✔ · unit 170 suites / 1237 tests ✔ · contract test 8/8 ✔ · diff scan clean ✔ ·
+docs only; `contract/openapi.json` unchanged. Items 1–2 (`?design=own_file` pre-select, `/studio/upload` copy) are
+web only; the API already returns `design.default = 'own_file'`. The subagent read getpack-web through a read-only
+shallow clone in the session scratchpad (nothing changed there).
+
+### Findings (from code, seeds and decisions; UAT not touched)
+1. Artwork is uploaded **after the order is placed, not after payment** (accepted from `waiting_payment` until
+   artwork approval); no file on cart or quote. Private S3 bucket, keys without personal data, presigned PUT
+   (multipart, resumable), ClamAV scan, 5-minute download links. Approved proof → locked copy under legal hold;
+   production gets only that copy plus the dieline.
+2. Access: uploader and the order's customer; company members only for company uploads; factories only the
+   approved copy for their own jobs. **Every staff role has `files.read`**, and customer-file downloads are not audited.
+3. Retention: customer files are **never purged** (`purged_at` never set; PDPA deletion keeps files) — misses the
+   2-year / 90-day / delete-on-request decision (`DECISIONS-STAGE-A.md` §1).
+4. Production anonymisation (strip metadata, rename to job code) is not implemented.
+5. Upload limit is 2 GiB; hard rule 5 says ≤ 200 MB (the preflight stops at 200 MB).
+6. The API allows `own_file` for every product. `/studio/upload` shows 5 products because the web lists
+   instant-priced products (`availability !== 'rfq'`); on UAT only corrugated is instant. The web asks for 48 products
+   only, so a longer list would be cut silently.
+7. No Acrobat/PitStop/callas/Esko integration or profile. The API already runs its own post-order preflight
+   (ADR-0009, 9 checks: size mismatch and missing bleed block; low resolution and RGB warn). Not checked: ink
+   coverage, AI/PSD/EPS/ZIP, links, size/bleed without a dieline. Upload Phase 2 should extend this engine to 12 checks.
+8. No static .ai/.pdf/DXF dielines. Dielines are drawn by `@getpack/dieline` for the style library. The 5 products'
+   patterns have no `dielineKey`, so nothing is drawn even with `drawing.engine` on (off by default); Prepress uploads
+   templates by hand, and that path skips silently with no internal activity row.
+9. ฿15.70 vs ฿17.26: same as A4 (size 00 priced with two inks).
+
+API-CHANGES: `docs/design/upload-redesign/API-CHANGES.md` ("No API changes") · findings:
+`docs/design/upload-redesign/FINDINGS.md`
+
+### Tests to run locally (Docker)
+None (no code change).
+
+### Open questions
+1. Does Prepress use a preflight tool, and can it share the profile and the acceptance criteria?
+2. Do .ai/.pdf/DXF dielines exist for the 5 products and every size, and who owns them?
+3. Lower the customer artwork limit to 200 MB, with larger files sent by link?
+4. Limit staff access to customer artwork to the assigned Prepress and `artwork.read` holders, and audit every download?
+5. Anonymised production copy: which formats must be scrubbed (PDF/AI are straightforward; PSD/EPS/ZIP)?
+API work for retention purge, staff access and upload limit is listed for upload Phase 1–2 and needs approval.
