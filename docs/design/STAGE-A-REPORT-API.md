@@ -184,3 +184,48 @@ role lacked). Then `pnpm test:int`.
 4. Copy fixes, not applied: "โลโก้ 1–2 สี" description; white mailer box claims logo printing but has no ink option;
    seed size names written width × length (e.g. "9.75×14×6 ซม.").
 5. When a style has several published dieline variants, which one does "ดาวน์โหลดแบบกล่อง" use?
+
+---
+
+## A4 — configurator · Phase 0 — PASS (report only, no API changes)
+
+Commits (made and pushed by the subagent): `24bd074d` docs(configurator): A4 Phase 0 findings ·
+`51b08b54` docs(configurator): A4 API-CHANGES — no API changes.
+
+Gate: lint ✔ · typecheck ✔ · unit 170 suites / 1237 tests ✔ · contract test 8/8 ✔ · diff scan clean ✔ ·
+docs only (FINDINGS.md, API-CHANGES.md, PROGRESS.md); `contract/openapi.json` unchanged.
+
+### Findings (measured on a local API with the UAT rehearsal seed; fake data)
+- **Item 2:** ฿17.26 (and ฿14.96 at 1,000) is exactly size 00 priced with **two inks (ดำ + CMYK)**. In the rehearsal
+  data ดำ and CMYK cost the same (฿9.50/m²) for every size, so switching between them never changes the price; only
+  the number of inks does. Not a minimum charge and not a pricing bug: the web most likely sends the ink choice as
+  multi-select (confirm by logging the calculate request body). This replaces A3's "stale cache" guess. A3 check
+  passes: listing and configurator default both give ฿15.70 with the same spec label; ฿14.79 is the Studio size
+  (150 × 100 × 80), unprinted, through the same pricing service.
+- **Item 3:** flat 100/300/500 for sizes 00 and 0 is intended (digital print flat per piece; margin band 35 % → 25 %
+  at 1,000; flexo cheaper from 2,000; the ฿500 minimum lot does not apply at ≥ 100 pcs).
+- **Item 5 (VAT ฿338.58 vs ฿338.75):** computed in the API and copied into saved quote, cart, order and tax invoice.
+  VAT is taken from the exact price (฿5,175.44) before the per-piece price is rounded up (17.2515 → 17.26); the total
+  is 17.26 × 300 = ฿5,178 and the extra ฿2.56 carries no VAT. Always low, ~฿0.02–฿1 per line; shipping not involved.
+  **Related, larger:** the design fee's VAT is missing from `vatAmount` (a ฿2,000 fee leaves VAT ฿130.98 short:
+  307.99 instead of 438.97). Proposed fix, not applied: compute VAT in `QuoteEngineService` from the amount actually
+  charged (per line, half-up), calculators and golden tests untouched.
+- **Item 6:** size F at 100/200/250 pcs is `instant: false, reason: not_priceable` (too big for the digital sheet,
+  flexo needs ≥ 300). The calculate response already carries `instant`, `reason`, `calculationId`, dimensions and
+  `specLabel` for the web to switch to "ขอใบเสนอราคา" with the spec prefilled — no API change.
+- **Items 1 and 4:** web only.
+
+API-CHANGES: `docs/design/configurator-redesign/API-CHANGES.md` ("No API changes", with reasons) ·
+findings: `docs/design/configurator-redesign/FINDINGS.md`
+
+Note: the subagent's Write tool refused report `.md` files, so it wrote these two files through Bash.
+
+### Tests to run locally (Docker)
+None specific to A4 (no code change).
+
+### Open questions
+1. Approve the VAT fix and its rounding rule (VAT from the charged amount, per line, half-up, design fee included)?
+   Needs an accounting decision; it would be the only A4 API change.
+2. Mark a print choice such as ดำ / CMYK as "choose one" in the API and refuse a second ink?
+3. Return the smallest quantity that gets an instant price (e.g. 300 for size F)?
+4. Price ดำ below CMYK in the UAT seed so the choice shows a difference?
