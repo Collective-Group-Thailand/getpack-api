@@ -1,6 +1,7 @@
 import { DestinationInputDto } from '@modules/carts/carts.dto';
 import { QuoteCalculationDto, STORE_CALCULATION_EXAMPLE } from '@modules/pricing/quotes/quote.dto';
 import { TargetPriceField } from '@modules/pricing/quotes/target-price';
+import { LocalisedLabelDto } from '@modules/quotes/line-summary.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -254,13 +255,7 @@ export class PrintRuleDto {
   thresholds!: Record<string, number | string> | null;
 }
 
-export class LocalisedLabelDto {
-  @ApiProperty({ example: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่แบบตัวอย่างสำหรับอนุมัติพิมพ์' })
-  th!: string;
-
-  @ApiProperty({ example: 'Preview, not a contract proof' })
-  en!: string;
-}
+export { LocalisedLabelDto };
 
 export class SoftProofProfileDto {
   @ApiProperty({ example: 'paperboard' })

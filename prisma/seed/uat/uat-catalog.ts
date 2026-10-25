@@ -393,7 +393,11 @@ async function referenceConfiguration(tx: Tx, p: ProductSeed): Promise<Prisma.In
   const diecut =
     (await id(tx.diecutType.findUnique({ where: { code: p.diecuts?.[0] ?? 'dev-diecut' } }))) ?? undefined;
   const difficulty = await id(tx.difficultyLevel.findUnique({ where: { code: 'dev-normal' } }));
-  const cmyk = await id(tx.inkColour.findUnique({ where: { code: 'dev-cmyk' } }));
+  // D-441: the reference is the configurator's default spec — the product's first (default) ink, or unprinted when
+  // the product offers no print; full colour prints four times, a spot colour once.
+  const inkCode = p.inks?.[0];
+  const ink = inkCode ? await id(tx.inkColour.findUnique({ where: { code: inkCode } })) : undefined;
+  const runs = inkCode === 'dev-cmyk' ? [1, 2, 3, 4] : [1];
   const size = p.sizes?.[0];
   const quantity = p.quantities?.presets[1] ?? p.quantities?.min ?? 1000;
   const design = { graphic: false, structure: false };
@@ -411,7 +415,7 @@ async function referenceConfiguration(tx: Tx, p: ProductSeed): Promise<Prisma.In
         quantities: [quantity],
         parts: [
           {
-            printFront: [1, 2, 3, 4].map(() => ({ inkColourId: cmyk!, percent: 100 })),
+            ...(ink && { printFront: runs.map(() => ({ inkColourId: ink, percent: 100 })) }),
             ...(finish && { finish1FrontId: finish }),
             diecutTypeId: diecut,
           },
@@ -426,7 +430,7 @@ async function referenceConfiguration(tx: Tx, p: ProductSeed): Promise<Prisma.In
             orderBy: { seq: 'asc' },
           })
         : [];
-      const printed = { printFront: [{ inkColourId: cmyk!, area: 'top' }] };
+      const printed = ink ? { printFront: [{ inkColourId: ink, area: 'top' }] } : {};
       const parts =
         subPatterns.length === 0
           ? [printed]
@@ -453,7 +457,7 @@ async function referenceConfiguration(tx: Tx, p: ProductSeed): Promise<Prisma.In
         materialId: material!,
         difficultyLevelId: difficulty!,
         quantities: [quantity],
-        printFront: { inkColourIds: [cmyk!] },
+        ...(ink && { printFront: { inkColourIds: [ink] } }),
         ...(finish && { finishFrontId: finish }),
         diecutTypeId: diecut,
         design,
@@ -466,7 +470,7 @@ async function referenceConfiguration(tx: Tx, p: ProductSeed): Promise<Prisma.In
         materialId: material!,
         difficultyLevelId: difficulty!,
         quantities: [quantity],
-        printFront: [1, 2, 3, 4].map(() => ({ inkColourId: cmyk!, percent: 100 })),
+        ...(ink && { printFront: runs.map(() => ({ inkColourId: ink, percent: 100 })) }),
         ...(finish && { finish1FrontId: finish }),
         diecutTypeId: diecut,
         design,

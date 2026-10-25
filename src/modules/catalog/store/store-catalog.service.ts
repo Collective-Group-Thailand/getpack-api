@@ -3,6 +3,7 @@ import { toSkipTake } from '@common/pagination/pagination';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type CatalogOptionKind, Prisma } from '@generated/prisma/client';
+import { defaultSpecConfiguration, withSpecDefaults } from '@modules/pricing/hints/default-spec';
 import { Injectable } from '@nestjs/common';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
@@ -280,7 +281,11 @@ export class StoreCatalogService {
         constraints: pattern.constraints as Record<string, unknown>,
         dielineKey: pattern.dielineKey,
       })),
-      optionGroups: await this.optionGroups(p.options),
+      // D-441: the default spec's options are the defaults the product page shows.
+      optionGroups: withSpecDefaults(
+        await this.optionGroups(p.options),
+        defaultSpecConfiguration(p.referenceConfiguration, p.publicId),
+      ),
       standardSizes: p.standardSizes.map((s) => ({
         code: s.code,
         name: s.name,

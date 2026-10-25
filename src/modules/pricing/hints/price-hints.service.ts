@@ -2,39 +2,32 @@ import { MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
-import {
-  type BoxConfiguration,
-  boxSpecLines,
-  type LabelSpecConfiguration,
-  labelSpecLines,
-  type PouchSpecConfiguration,
-  pouchSpecLines,
-  serviceSpecLines,
-  type TagSleeveSpecConfiguration,
-  tagSleeveSpecLines,
-} from '@modules/quotes/line-summary';
 import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
+import { specLabel } from '@modules/quotes/spec-label';
 import { Injectable, Logger } from '@nestjs/common';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
 import { QuoteEngineService } from '../quotes/quote-engine.service';
+import { StorePricingService } from '../quotes/store-pricing.service';
+import { defaultSpecConfiguration, defaultSpecQuantity } from './default-spec';
 import { type PriceHintDto, type PriceHintQuery } from './price-hints.dto';
 
-const BOX = new Set(['folding', 'corrugate']);
 /** Every calculator a hint can be priced with (D-220). */
-const HINTED = new Set([...BOX, 'label', 'tag_sleeve', 'pouch', 'service']);
+const HINTED = new Set(['folding', 'corrugate', 'label', 'tag_sleeve', 'pouch', 'service']);
 
 /** Up to the next satang: a "starting from" figure never undercuts the price a quote gives (D-181). */
 const ceilMoney = (value: string) =>
   new MoneyDecimal(value).toDecimalPlaces(2, MoneyDecimal.ROUND_CEIL).toFixed(2);
 
 /**
- * "Starting from" prices (D-220, D-181): each catalogue product's admin-maintained reference configuration,
- * priced by its ported calculator through the quote path (cheapest instant path, D-043; no factory identity,
- * D-050), cached in `catalog_price_hints`. A product without a reference configuration, not instant, or with no
- * factory able to price it has no hint — the card shows the RFQ route, never an estimate.
+ * "Starting from" prices (D-220, D-181, D-441): each catalogue product's default spec — its admin-maintained
+ * reference configuration, the very spec the configurator opens on — priced through the one store pricing path
+ * (`StorePricingService`: store validation and rules, the quote engine, the spec-line helper; cheapest instant path,
+ * D-043; no factory identity, D-050) at the reference quantity, cached in `catalog_price_hints`. A product without
+ * a reference configuration, not instant, or with no factory able to price it has no hint — the card shows the RFQ
+ * route, never an estimate.
  */
 @Injectable()
 export class PriceHintsService {
@@ -43,6 +36,7 @@ export class PriceHintsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly engine: QuoteEngineService,
+    private readonly storePricing: StorePricingService,
   ) {}
 
   /** Recomputes the hints of one product or of all products that have (or had) one. */
@@ -102,28 +96,20 @@ export class PriceHintsService {
       return null;
     }
     const at = new Date();
-    const view = await this.engine.price(
-      key as never,
-      { ...cfg, catalogProductId: p.publicId },
-      { channel: 'web', at, log: false },
-    );
-    const cheapest = view.steps
-      .filter((s) => s.instant && s.unitPrice !== null)
-      .sort((a, b) => new MoneyDecimal(a.unitPrice!).cmp(new MoneyDecimal(b.unitPrice!)))[0];
-    if (!cheapest) return null;
-    const specSummary = BOX.has(key)
-      ? await boxSpecLines(this.prisma, cfg as unknown as BoxConfiguration)
-      : key === 'tag_sleeve'
-        ? await tagSleeveSpecLines(this.prisma, cfg as unknown as TagSleeveSpecConfiguration)
-        : key === 'pouch'
-          ? await pouchSpecLines(this.prisma, cfg as unknown as PouchSpecConfiguration)
-          : key === 'service'
-            ? await serviceSpecLines(this.prisma, cfg as unknown as { catalogProductId: string })
-            : await labelSpecLines(this.prisma, cfg as unknown as LabelSpecConfiguration);
+    const configuration = defaultSpecConfiguration(cfg, p.publicId)!;
+    const quantity = defaultSpecQuantity(configuration);
+    // D-441: the configurator's own path, so the card, the product page and the configurator agree to the satang.
+    const { view, calculation } = await this.storePricing.price(key as never, configuration, {
+      at,
+      log: false,
+    });
+    const step = view.steps.find((s) => s.quantity === quantity && s.instant && s.unitPrice !== null);
+    if (!step) return null;
+    const specSummary = calculation.specs;
     return {
-      quantity: cheapest.quantity,
-      unitPrice: cheapest.unitPrice!,
-      leadTimeDays: cheapest.leadTimeDays,
+      quantity: step.quantity,
+      unitPrice: step.unitPrice!,
+      leadTimeDays: step.leadTimeDays,
       specSummary: specSummary as unknown as Prisma.InputJsonValue,
       calculatorVersion: view.calculatorVersion,
       computedAt: at,
@@ -142,7 +128,7 @@ export class PriceHintsService {
       },
       select: {
         slug: true,
-        productType: { select: { code: true } },
+        productType: { select: { code: true, calculatorKey: true } },
         priceHint: true,
       },
       orderBy: { slug: 'asc' },
@@ -171,6 +157,7 @@ export class PriceHintsService {
                 includesVat: true,
                 includesDelivery: false,
                 specs: h.specSummary as unknown as SpecLineDto[],
+                label: specLabel(h.specSummary as unknown as SpecLineDto[], p.productType.calculatorKey),
               }
             : null,
           leadTimeBusinessDays:
@@ -199,9 +186,18 @@ export class PriceHintsService {
     return (await this.refresh()).priced;
   }
 
-  @OnDomainEvent(['price_list.version_approved', 'product_type.quote_mode_changed'], {
-    consumer: 'pricing.price_hints',
-  })
+  /** Anything that moves a store price moves the hint with it (D-441): price lists, sell margins, VAT, quote mode. */
+  @OnDomainEvent(
+    [
+      'price_list.version_approved',
+      'sell_margin_table.version_approved',
+      'tax_rate.version_approved',
+      'product_type.quote_mode_changed',
+    ],
+    {
+      consumer: 'pricing.price_hints',
+    },
+  )
   async onPricesChanged(): Promise<void> {
     await this.refresh();
   }

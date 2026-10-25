@@ -188,7 +188,8 @@ describe('specification model v2 (e2e, U2.1)', () => {
       const size = (saved.body.summary.specs as { key: string; valueEn: string }[]).filter((l) =>
         ['size', 'priced_size'].includes(l.key),
       );
-      expect(size.map((l) => l.valueEn)).toEqual(['304 × 404 × 254 mm (outside)', '300 × 400 × 250 mm']);
+      // L × W × H (D-441).
+      expect(size.map((l) => l.valueEn)).toEqual(['404 × 304 × 254 mm (outside)', '400 × 300 × 250 mm']);
       expect(saved.body.summary.specs).toContainEqual(
         expect.objectContaining({ key: 'style_code', valueEn: rscCode }),
       );

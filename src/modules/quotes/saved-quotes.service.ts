@@ -29,23 +29,7 @@ import { SettingsService } from '@platform/settings/settings.service';
 
 import { resolveAdvisoryLink } from './advisory-link';
 import { QuoteOutcomesService } from './levers/quote-outcomes.service';
-import {
-  type BoxConfiguration,
-  boxSpecLines,
-  type LabelSpecConfiguration,
-  labelSpecLines,
-  type PouchSpecConfiguration,
-  pouchSpecLines,
-  serviceSpecLines,
-  type StandardProductSpecConfiguration,
-  standardProductSpecLines,
-  SUMMARY_INCLUDE,
-  type TagSleeveSpecConfiguration,
-  tagSleeveSpecLines,
-  withBasisLines,
-} from './line-summary';
-
-const BOX_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate']);
+import { specLinesFor, SUMMARY_INCLUDE } from './line-summary';
 
 export const QUOTE_INCLUDE = {
   options: { orderBy: { quantity: 'asc' } },
@@ -160,27 +144,8 @@ export class SavedQuotesService {
       ),
     );
     const customerUserId = owner.kind === 'customer' ? owner.userId : (extra.customerUserId ?? null);
-    // Box calculators (folding, corrugate) share one configuration shape; others get their lines when ported.
-    const specLines = BOX_CALCULATORS.has(calculatorKey)
-      ? await boxSpecLines(this.prisma, configuration as unknown as BoxConfiguration)
-      : calculatorKey === 'label'
-        ? await labelSpecLines(this.prisma, configuration as unknown as LabelSpecConfiguration)
-        : calculatorKey === 'tag_sleeve'
-          ? await tagSleeveSpecLines(this.prisma, configuration as unknown as TagSleeveSpecConfiguration)
-          : calculatorKey === 'pouch'
-            ? await pouchSpecLines(this.prisma, configuration as unknown as PouchSpecConfiguration)
-            : calculatorKey === 'standard_product'
-              ? await standardProductSpecLines(
-                  this.prisma,
-                  configuration as unknown as StandardProductSpecConfiguration,
-                )
-              : calculatorKey === 'service'
-                ? await serviceSpecLines(
-                    this.prisma,
-                    configuration as unknown as { catalogProductId: string },
-                  )
-                : null;
-    const specSummary = specLines ? withBasisLines(specLines, view.dimensions) : null;
+    // D-441: the one spec-line dispatcher every surface uses (the label the customer saw, frozen with the quote).
+    const specSummary = await specLinesFor(this.prisma, calculatorKey, configuration, view.dimensions);
     const advisory = input.advisoryRecommendationId
       ? await resolveAdvisoryLink(this.prisma, owner, input.advisoryRecommendationId, configuration)
       : null;

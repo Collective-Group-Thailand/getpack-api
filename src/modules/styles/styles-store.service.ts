@@ -5,6 +5,8 @@ import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { sizeRulesOf } from '@modules/catalog/store/size-rules';
 import { imageUrl } from '@modules/catalog/store/store-catalog.service';
+import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
+import { specLabel } from '@modules/quotes/spec-label';
 import { Injectable } from '@nestjs/common';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
@@ -54,7 +56,13 @@ const LIBRARY_INCLUDE = {
               slug: true,
               status: true,
               priceHint: {
-                select: { unitPrice: true, quantity: true, computedAt: true, leadTimeDays: true },
+                select: {
+                  unitPrice: true,
+                  quantity: true,
+                  computedAt: true,
+                  leadTimeDays: true,
+                  specSummary: true,
+                },
               },
             },
           },
@@ -531,6 +539,11 @@ function card(r: LibraryRow, favourites: Set<bigint>): Omit<StyleCardDto, 'thumb
           quantity: hint.quantity,
           catalogProductSlug: hint.slug,
           computedAt: toBangkokIso(hint.computedAt),
+          // D-441: the spec this price is for, in the words of the configurator and the product page.
+          label: specLabel(
+            (Array.isArray(hint.specSummary) ? hint.specSummary : []) as unknown as SpecLineDto[],
+            r.productType?.calculatorKey ?? null,
+          ),
         }
       : null,
     referenceCode: r.referenceVerifiedAt ? r.referenceCode : null,

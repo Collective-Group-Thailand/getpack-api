@@ -4,10 +4,9 @@ import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
 import { type Prisma } from '@generated/prisma/client';
-import { assertStoreRules, validateConfiguration } from '@modules/pricing/quotes/configurations';
 import { type QuoteCalculationDto } from '@modules/pricing/quotes/quote.dto';
 import { QuoteEngineService } from '@modules/pricing/quotes/quote-engine.service';
-import { storeView } from '@modules/pricing/quotes/quotes.controller';
+import { StorePricingService } from '@modules/pricing/quotes/store-pricing.service';
 import { type QuoteRow, SavedQuotesService } from '@modules/quotes/saved-quotes.service';
 import { type RfqRow, RfqsService } from '@modules/rfq/rfqs.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
@@ -72,6 +71,7 @@ export class StudioQuotesService {
     private readonly engine: QuoteEngineService,
     private readonly quotes: SavedQuotesService,
     private readonly rfqs: RfqsService,
+    private readonly storePricing: StorePricingService,
     @Inject(REDIS) private readonly redis: Redis,
   ) {}
 
@@ -96,7 +96,11 @@ export class StudioQuotesService {
 
     const hashBytes = Buffer.from(p.hash, 'hex');
     const existing = await this.prisma.studioQuoteSnapshot.findUnique({ where: { specHash: hashBytes } });
-    const fresh = existing && existing.pricedAt.getTime() > Date.now() - CACHE_WINDOW_MS;
+    // A snapshot from before D-441 has no spec lines: priced again, so the dock always says which spec it priced.
+    const fresh =
+      existing &&
+      existing.pricedAt.getTime() > Date.now() - CACHE_WINDOW_MS &&
+      Array.isArray((existing.result as { specs?: unknown } | null)?.specs);
     let calculation: QuoteCalculationDto;
     if (fresh) {
       calculation = existing.result as unknown as QuoteCalculationDto;
@@ -261,20 +265,24 @@ export class StudioQuotesService {
     };
   }
 
-  /** The same path as `store.quotes.calculate` (validation, store rules, engine). */
+  /**
+   * The one store pricing path (D-441): the same service as `store.quotes.calculate` and the "starting from" prices
+   * (validation, store rules, engine, spec lines) — the dock shows `specLabel` with the price, e.g. an empty draft
+   * reads "… · ไม่พิมพ์" (Stage A decision: an empty draft is priced unprinted).
+   */
   private async price(input: StudioInput, actor: UserActor, target?: string): Promise<QuoteCalculationDto> {
     const type = await this.prisma.productType.findFirstOrThrow({ where: { code: input.productTypeCode } });
-    const configuration = await validateConfiguration(type.calculatorKey!, input.configuration, {
-      staff: false,
-    });
-    await assertStoreRules(this.prisma, type.calculatorKey!, configuration);
-    const view = await this.engine.price(type.calculatorKey!, configuration, {
-      channel: 'web',
-      actorUserId: actor.userId,
-      ip: RequestContext.current()?.ip,
-      deliveryPostcode: input.deliveryPostcode ?? undefined,
-    });
-    return storeView(view, target);
+    const priced = await this.storePricing.price(
+      type.calculatorKey!,
+      input.configuration,
+      {
+        actorUserId: actor.userId,
+        ip: RequestContext.current()?.ip,
+        deliveryPostcode: input.deliveryPostcode ?? undefined,
+      },
+      target,
+    );
+    return priced.calculation;
   }
 
   private async snapshot(hash: string) {

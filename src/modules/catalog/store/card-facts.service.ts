@@ -4,7 +4,14 @@ import { PrismaService } from '@database/prisma.service';
 import { type Promotion } from '@generated/prisma/client';
 import { QuotePathService } from '@modules/partners/quote-path/quote-path.service';
 import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
+import { type SpecLabel, specLabel } from '@modules/quotes/spec-label';
 import { Injectable } from '@nestjs/common';
+
+/** What a starting price assumes: its quantity and the default spec, as lines and as one string (D-441). */
+const basis = (h: { quantity: number; specSummary: unknown }, calculatorKey: string | null) => {
+  const specs = (Array.isArray(h.specSummary) ? h.specSummary : []) as SpecLineDto[];
+  return { quantity: h.quantity, specs, label: specLabel(specs, calculatorKey) };
+};
 
 /** Up to the next satang, like the D-220 hint (a starting price never undercuts a quote, D-181). */
 const ceilMoney = (value: MoneyValue) => value.toDecimalPlaces(2, MoneyDecimal.ROUND_CEIL).toFixed(2);
@@ -24,7 +31,7 @@ export interface CampaignBadge {
 
 export interface CardFacts {
   startingPricePerPiece: string | null;
-  startingPriceAssumes: { quantity: number; specs: SpecLineDto[] } | null;
+  startingPriceAssumes: { quantity: number; specs: SpecLineDto[]; label: SpecLabel } | null;
   moq: number | null;
   leadTimeDays: { min: number; max: number } | null;
   availability: 'instant' | 'partial' | 'rfq';
@@ -135,7 +142,13 @@ export class CardFactsService {
         quantityMin: true,
         priceHint: true,
         productType: {
-          select: { id: true, publicId: true, code: true, category: { select: { code: true } } },
+          select: {
+            id: true,
+            publicId: true,
+            code: true,
+            calculatorKey: true,
+            category: { select: { code: true } },
+          },
         },
       },
     });
@@ -159,9 +172,7 @@ export class CardFactsService {
       const promoted = promo && list && h ? this.promotedPrice(promo, list, h.quantity) : null;
       out.set(r.id, {
         startingPricePerPiece: list ? ceilMoney(promoted ?? list) : null,
-        startingPriceAssumes: h
-          ? { quantity: h.quantity, specs: h.specSummary as unknown as SpecLineDto[] }
-          : null,
+        startingPriceAssumes: h ? basis(h, r.productType.calculatorKey) : null,
         moq: r.quantityMin,
         leadTimeDays: h && h.leadTimeDays !== null ? { min: h.leadTimeDays, max: h.leadTimeDays } : null,
         availability: availability.get(r.productType.publicId) ?? 'rfq',
@@ -185,6 +196,7 @@ export class CardFactsService {
         id: true,
         publicId: true,
         code: true,
+        calculatorKey: true,
         category: { select: { code: true } },
         catalogProducts: {
           where: { status: 'active' },
@@ -213,9 +225,7 @@ export class CardFactsService {
       );
       out.set(t.id, {
         startingPricePerPiece: cheapest ? ceilMoney(new MoneyDecimal(cheapest.unitPrice.toString())) : null,
-        startingPriceAssumes: cheapest
-          ? { quantity: cheapest.quantity, specs: cheapest.specSummary as unknown as SpecLineDto[] }
-          : null,
+        startingPriceAssumes: cheapest ? basis(cheapest, t.calculatorKey) : null,
         moq: moqs.length ? Math.min(...moqs) : null,
         leadTimeDays: leads.length ? { min: Math.min(...leads), max: Math.max(...leads) } : null,
         availability: availability.get(t.publicId) ?? 'rfq',

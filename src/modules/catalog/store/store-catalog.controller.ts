@@ -62,6 +62,7 @@ const FACTS = {
         valueEn: 'Art card 350',
       },
     ],
+    label: { th: 'อาร์ตการ์ด 350', en: 'Art card 350' },
   },
   moq: 500,
   leadTimeDays: { min: 7, max: 10 },
@@ -235,8 +236,10 @@ export class StoreCatalogController {
     id: 'store.catalog.getProduct',
     summary: 'Get a catalogue product for the configurator',
     description:
-      'Patterns with their size constraints, the options it offers grouped by kind, standard sizes, images, videos and SEO meta.',
-    implements: CATALOG,
+      'Patterns with their size constraints, the options it offers grouped by kind, standard sizes, images, videos and SEO meta. ' +
+      'The starting price and `startingPriceAssumes` (lines and one-string `label`) are the default spec priced through ' +
+      'the configurator’s own path; with a default spec, `isDefault` marks the options it selects (D-441).',
+    implements: [...CATALOG, 'D-441'],
   })
   @ApiSuccess(200, {
     description: 'The product',
@@ -300,8 +303,11 @@ export class StoreCatalogController {
       'patterns with their parts, flutes and typed size rules, standard sizes, the options offered with the ids the ' +
       'configuration takes, the product’s difficulty level, print areas and the D-051 validity; `instant` says whether ' +
       'it is priced online now (D-043, D-100). A product of a type priced by RFQ only is not found. No prices or ' +
-      'factory data (D-050).',
-    implements: ['D-100', 'D-043', 'D-050', 'D-051'],
+      'factory data (D-050). `defaultSpec` is the spec to open on — the admin reference configuration (D-220) the ' +
+      '"starting from" price is priced at — and the option, size and quantity defaults follow it, so the configurator ' +
+      'opens on the price the product page showed (D-441). `dielineVariantCodes` give the style variants whose ' +
+      'dieline the product page can offer for download (D-271).',
+    implements: ['D-100', 'D-043', 'D-050', 'D-051', 'D-441'],
   })
   @ApiSuccess(200, {
     description: 'The configurator',

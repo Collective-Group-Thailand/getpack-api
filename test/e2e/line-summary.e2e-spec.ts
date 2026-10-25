@@ -132,7 +132,7 @@ describe('line summaries and configurator content (e2e, U-B0.1)', () => {
     );
     // The size names its measurement basis (D-182): the dev style is a flat product, measured finished.
     expect(summary.specs.find((s) => s.key === 'size')).toMatchObject({
-      valueEn: '200 × 300 × 50 mm (finished size)',
+      valueEn: '300 × 200 × 50 mm (finished size)', // L × W × H (D-441)
     });
     expect(saved.body.options[0]).toHaveProperty('toolingAmount');
 

@@ -80547,6 +80547,18 @@
             "example": true,
             "type": "boolean"
           },
+          "label": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              }
+            ],
+            "description": "The same spec as one string (D-441); show it with the price",
+            "example": {
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+            }
+          },
           "quantity": {
             "description": "Quantity the price per piece is for",
             "example": 1000,
@@ -80561,7 +80573,7 @@
             ]
           },
           "specs": {
-            "description": "The reference specification, as spec lines",
+            "description": "The default spec (D-220, D-441) — the spec the configurator opens on — as spec lines",
             "items": {
               "$ref": "#/components/schemas/SpecLineDto"
             },
@@ -80573,7 +80585,8 @@
           "sizeCode",
           "includesVat",
           "includesDelivery",
-          "specs"
+          "specs",
+          "label"
         ],
         "type": "object"
       },
@@ -85209,6 +85222,55 @@
               }
             }
           },
+          "specLabel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              }
+            ],
+            "description": "The same spec as one string (D-441), to show next to every price",
+            "example": {
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+            }
+          },
+          "specs": {
+            "description": "What was priced (D-441): the spec lines of this configuration, built by the same helper as quotations, carts, orders and the \"starting from\" basis; size as ยาว × กว้าง × สูง in mm",
+            "example": [
+              {
+                "key": "style",
+                "labelEn": "Style",
+                "labelTh": "แบบกล่อง",
+                "valueEn": "RSC",
+                "valueTh": "กล่องฝาชน"
+              },
+              {
+                "key": "size",
+                "labelEn": "Size (L × W × H)",
+                "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                "valueEn": "140 × 97.5 × 60 mm (inside)",
+                "valueTh": "140 × 97.5 × 60 มม. (ด้านใน)"
+              },
+              {
+                "key": "material",
+                "labelEn": "Material",
+                "labelTh": "วัสดุ",
+                "valueEn": "KA125 B-flute (3-ply)",
+                "valueTh": "ลูกฟูก KA125 ลอน B (3 ชั้น)"
+              },
+              {
+                "key": "print_front",
+                "labelEn": "Print (outside)",
+                "labelTh": "พิมพ์ด้านนอก",
+                "valueEn": "Black",
+                "valueTh": "ดำ"
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SpecLineDto"
+            },
+            "type": "array"
+          },
           "steps": {
             "items": {
               "$ref": "#/components/schemas/QuoteStepDto"
@@ -85243,7 +85305,9 @@
           "calculatorVersion",
           "steps",
           "dimensions",
-          "target"
+          "target",
+          "specs",
+          "specLabel"
         ],
         "type": "object"
       },
@@ -98225,7 +98289,7 @@
       "SpecLineDto": {
         "properties": {
           "key": {
-            "description": "Stable key of the line (`style`, `size`, `material`, `print_front`, `print_back`, `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)",
+            "description": "Stable key of the line (`style`, `size` — ยาว × กว้าง × สูง in mm (D-441), `material`, `print_front`, `print_back`, `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)",
             "example": "material",
             "type": "string"
           },
@@ -99984,13 +100048,25 @@
       },
       "StartingPriceBasisDto": {
         "properties": {
+          "label": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              }
+            ],
+            "description": "The same spec as one string (D-441); show it with the price",
+            "example": {
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+            }
+          },
           "quantity": {
             "description": "The quantity the starting price is quoted at",
             "example": 1000,
             "type": "integer"
           },
           "specs": {
-            "description": "The reference configuration it assumes (D-220)",
+            "description": "The default spec it assumes (D-220, D-441) — the spec the configurator opens on",
             "items": {
               "$ref": "#/components/schemas/SpecLineDto"
             },
@@ -99999,7 +100075,8 @@
         },
         "required": [
           "quantity",
-          "specs"
+          "specs",
+          "label"
         ],
         "type": "object"
       },
@@ -101350,6 +101427,110 @@
         ],
         "type": "string"
       },
+      "StoreConfiguratorDefaultSpecDto": {
+        "properties": {
+          "configuration": {
+            "additionalProperties": true,
+            "description": "The calculator configuration, ready for `store.quotes.calculate` (send it as is, or with the customer’s quantities)",
+            "example": {
+              "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+              "d": 250,
+              "design": {
+                "graphic": false,
+                "structure": false
+              },
+              "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000e006",
+              "l": 400,
+              "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000e007",
+              "parts": [
+                {
+                  "printFront": [
+                    {
+                      "area": "top",
+                      "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000e008"
+                    }
+                  ]
+                }
+              ],
+              "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+              "quantities": [
+                300
+              ],
+              "w": 300
+            },
+            "type": "object"
+          },
+          "quantity": {
+            "description": "The reference quantity the starting price is for",
+            "example": 300,
+            "type": "integer"
+          },
+          "specLabel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              }
+            ],
+            "description": "One string (D-441)",
+            "example": {
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+            }
+          },
+          "specs": {
+            "example": [
+              {
+                "key": "style",
+                "labelEn": "Style",
+                "labelTh": "แบบกล่อง",
+                "valueEn": "RSC",
+                "valueTh": "กล่องฝาชน"
+              },
+              {
+                "key": "size",
+                "labelEn": "Size (L × W × H)",
+                "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                "valueEn": "140 × 97.5 × 60 mm (inside)",
+                "valueTh": "140 × 97.5 × 60 มม. (ด้านใน)"
+              },
+              {
+                "key": "material",
+                "labelEn": "Material",
+                "labelTh": "วัสดุ",
+                "valueEn": "KA125 B-flute (3-ply)",
+                "valueTh": "ลูกฟูก KA125 ลอน B (3 ชั้น)"
+              },
+              {
+                "key": "print_front",
+                "labelEn": "Print (outside)",
+                "labelTh": "พิมพ์ด้านนอก",
+                "valueEn": "Black",
+                "valueTh": "ดำ"
+              }
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SpecLineDto"
+            },
+            "type": "array"
+          },
+          "standardSizeCode": {
+            "description": "The standard size it is; null for a custom size",
+            "example": "M",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "configuration",
+          "quantity",
+          "standardSizeCode",
+          "specs",
+          "specLabel"
+        ],
+        "type": "object"
+      },
       "StoreConfiguratorDesignDto": {
         "properties": {
           "default": {
@@ -101394,6 +101575,17 @@
             "format": "uuid",
             "type": "string"
           },
+          "defaultSpec": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoreConfiguratorDefaultSpecDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The spec to open on and the one the \"starting from\" price is for (D-441); null without a reference configuration (then there is no starting price either, D-220)"
+          },
           "design": {
             "$ref": "#/components/schemas/StoreConfiguratorDesignDto"
           },
@@ -101412,7 +101604,7 @@
             "type": "boolean"
           },
           "optionGroups": {
-            "description": "The options offered, with the ids the configuration takes",
+            "description": "The options offered, with the ids the configuration takes; with a default spec `isDefault` marks exactly the options it selects (a group it selects nothing in, e.g. no print, has no default) (D-441)",
             "items": {
               "$ref": "#/components/schemas/StoreOptionGroupDto"
             },
@@ -101456,7 +101648,7 @@
           "standardSizes": {
             "description": "Standard sizes (corrugate: no die block on them)",
             "items": {
-              "$ref": "#/components/schemas/StoreConfiguratorSizeDto"
+              "$ref": "#/components/schemas/StoreConfiguratorStandardSizeDto"
             },
             "type": "array"
           },
@@ -101484,7 +101676,8 @@
           "quoteValidityDays",
           "unit",
           "quantity",
-          "design"
+          "design",
+          "defaultSpec"
         ],
         "type": "object"
       },
@@ -101539,6 +101732,16 @@
               "string",
               "null"
             ]
+          },
+          "dielineVariantCodes": {
+            "description": "Published variants of the style drawn for this pattern (D-271): with a standard size, the product page links \"ดาวน์โหลดแบบกล่อง\" to `store.dielines.download` (`variantCode` + the size). Empty = no dieline to download",
+            "example": [
+              "PK-RSC-01-A"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
           },
           "fluteTypeIds": {
             "description": "Corrugate: the flutes offered (a board of another flute is refused); empty = any",
@@ -101618,7 +101821,8 @@
           "pouch",
           "descriptionTh",
           "descriptionEn",
-          "imageUrl"
+          "imageUrl",
+          "dielineVariantCodes"
         ],
         "type": "object"
       },
@@ -101710,6 +101914,53 @@
           "lengthMm",
           "widthMm",
           "heightMm"
+        ],
+        "type": "object"
+      },
+      "StoreConfiguratorStandardSizeDto": {
+        "properties": {
+          "code": {
+            "example": "M",
+            "type": "string"
+          },
+          "heightMm": {
+            "description": "Unit: mm.",
+            "example": 250,
+            "type": "number"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "isDefault": {
+            "description": "The size the configurator opens on: the default spec’s (D-441); without a default spec the first size",
+            "example": true,
+            "type": "boolean"
+          },
+          "lengthMm": {
+            "description": "Unit: mm.",
+            "example": 400,
+            "type": "number"
+          },
+          "name": {
+            "example": "30×40×25 ซม.",
+            "type": "string"
+          },
+          "widthMm": {
+            "description": "Unit: mm.",
+            "example": 300,
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "name",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "isDefault"
         ],
         "type": "object"
       },
@@ -106384,6 +106635,18 @@
             "description": "Always THB (one currency)",
             "example": "THB"
           },
+          "label": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              }
+            ],
+            "description": "The spec this price is for, as one string (D-441)",
+            "example": {
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+            }
+          },
           "quantity": {
             "description": "The quantity this price assumes",
             "example": 1000,
@@ -106400,7 +106663,8 @@
           "currency",
           "quantity",
           "catalogProductSlug",
-          "computedAt"
+          "computedAt",
+          "label"
         ],
         "type": "object"
       },
@@ -220537,8 +220801,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -220847,8 +221111,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -221209,8 +221473,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -221558,8 +221822,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -222195,8 +222459,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -222557,8 +222821,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -222907,8 +223171,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -223255,8 +223519,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -223682,8 +223946,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -273395,8 +273659,8 @@
                               },
                               {
                                 "key": "size",
-                                "labelEn": "Size",
-                                "labelTh": "ขนาด",
+                                "labelEn": "Size (L × W × H)",
+                                "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                                 "valueEn": "60 × 60 × 150 mm",
                                 "valueTh": "60 × 60 × 150 มม."
                               },
@@ -273770,8 +274034,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -274164,8 +274428,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -274626,8 +274890,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -275117,8 +275381,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -277344,8 +277608,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -277915,8 +278179,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -278323,8 +278587,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -301978,8 +302242,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -302380,8 +302644,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -302763,8 +303027,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -303117,8 +303381,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -303500,8 +303764,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -303833,8 +304097,8 @@
                         },
                         {
                           "key": "size",
-                          "labelEn": "Size",
-                          "labelTh": "ขนาด",
+                          "labelEn": "Size (L × W × H)",
+                          "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                           "valueEn": "60 × 60 × 150 mm",
                           "valueTh": "60 × 60 × 150 มม."
                         },
@@ -304593,8 +304857,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -355106,8 +355370,8 @@
                               },
                               {
                                 "key": "size",
-                                "labelEn": "Size",
-                                "labelTh": "ขนาด",
+                                "labelEn": "Size (L × W × H)",
+                                "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                                 "valueEn": "60 × 60 × 150 mm",
                                 "valueTh": "60 × 60 × 150 มม."
                               },
@@ -355478,8 +355742,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -355892,8 +356156,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -356259,8 +356523,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -495057,8 +495321,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -495391,8 +495655,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -495690,8 +495954,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -496041,8 +496305,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -496379,8 +496643,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -496994,8 +497258,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -497345,8 +497609,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -497684,8 +497948,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -498021,8 +498285,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -500151,13 +500415,17 @@
                     "basis": {
                       "includesDelivery": false,
                       "includesVat": true,
+                      "label": {
+                        "en": "60 × 60 × 150 mm",
+                        "th": "60 × 60 × 150 มม."
+                      },
                       "quantity": 1000,
                       "sizeCode": null,
                       "specs": [
                         {
                           "key": "size",
-                          "labelEn": "Size (W × L × D)",
-                          "labelTh": "ขนาด (กว้าง × ยาว × ลึก)",
+                          "labelEn": "Size (L × W × H)",
+                          "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                           "valueEn": "60 × 60 × 150 mm",
                           "valueTh": "60 × 60 × 150 มม."
                         }
@@ -500425,6 +500693,10 @@
                     "nameTh": "กล่องกระดาษแข็ง",
                     "quoteMode": "instant",
                     "startingPriceAssumes": {
+                      "label": {
+                        "en": "Art card 350",
+                        "th": "อาร์ตการ์ด 350"
+                      },
                       "quantity": 1000,
                       "specs": [
                         {
@@ -500637,6 +500909,10 @@
                       "productTypeCode": "folding_carton",
                       "slug": "tuck-end-box",
                       "startingPriceAssumes": {
+                        "label": {
+                          "en": "Art card 350",
+                          "th": "อาร์ตการ์ด 350"
+                        },
                         "quantity": 1000,
                         "specs": [
                           {
@@ -500767,7 +501043,7 @@
     },
     "/v1/store/catalog/products/{slug}": {
       "get": {
-        "description": "Patterns with their size constraints, the options it offers grouped by kind, standard sizes, images, videos and SEO meta.\n\nImplements: D-100, D-050.",
+        "description": "Patterns with their size constraints, the options it offers grouped by kind, standard sizes, images, videos and SEO meta. The starting price and `startingPriceAssumes` (lines and one-string `label`) are the default spec priced through the configurator’s own path; with a default spec, `isDefault` marks the options it selects (D-441).\n\nImplements: D-100, D-050, D-441.",
         "operationId": "store.catalog.getProduct",
         "parameters": [
           {
@@ -500868,6 +501144,10 @@
                     }
                   ],
                   "startingPriceAssumes": {
+                    "label": {
+                      "en": "Art card 350",
+                      "th": "อาร์ตการ์ด 350"
+                    },
                     "quantity": 1000,
                     "specs": [
                       {
@@ -501003,7 +501283,7 @@
     },
     "/v1/store/catalog/products/{slug}/configurator": {
       "get": {
-        "description": "What the configurator needs to build the quote configuration of the product’s calculator (folding, corrugate): patterns with their parts, flutes and typed size rules, standard sizes, the options offered with the ids the configuration takes, the product’s difficulty level, print areas and the D-051 validity; `instant` says whether it is priced online now (D-043, D-100). A product of a type priced by RFQ only is not found. No prices or factory data (D-050).\n\nImplements: D-100, D-043, D-050, D-051.",
+        "description": "What the configurator needs to build the quote configuration of the product’s calculator (folding, corrugate): patterns with their parts, flutes and typed size rules, standard sizes, the options offered with the ids the configuration takes, the product’s difficulty level, print areas and the D-051 validity; `instant` says whether it is priced online now (D-043, D-100). A product of a type priced by RFQ only is not found. No prices or factory data (D-050). `defaultSpec` is the spec to open on — the admin reference configuration (D-220) the \"starting from\" price is priced at — and the option, size and quantity defaults follow it, so the configurator opens on the price the product page showed (D-441). `dielineVariantCodes` give the style variants whose dieline the product page can offer for download (D-271).\n\nImplements: D-100, D-043, D-050, D-051, D-441.",
         "operationId": "store.catalog.getConfigurator",
         "parameters": [
           {
@@ -501026,6 +501306,56 @@
                 "example": {
                   "calculator": "corrugate",
                   "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                  "defaultSpec": {
+                    "configuration": {
+                      "catalogProductId": "0192f3a0-7c1e-7d2a-9b1f-00000000e001",
+                      "d": 250,
+                      "design": {
+                        "graphic": false,
+                        "structure": false
+                      },
+                      "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000e006",
+                      "l": 400,
+                      "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000e007",
+                      "parts": [
+                        {}
+                      ],
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000e002",
+                      "quantities": [
+                        300
+                      ],
+                      "w": 300
+                    },
+                    "quantity": 300,
+                    "specLabel": {
+                      "en": "กล่องฝาชน · 400 × 300 × 250 mm (inside) · Kraft board KA125 B-flute · Unprinted",
+                      "th": "กล่องฝาชน · 400 × 300 × 250 มม. (ด้านใน) · กระดาษลัง KA125 ลอน B · ไม่พิมพ์"
+                    },
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "กล่องฝาชน",
+                        "valueTh": "กล่องฝาชน"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                        "valueEn": "400 × 300 × 250 mm (inside)",
+                        "valueTh": "400 × 300 × 250 มม. (ด้านใน)"
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "Kraft board KA125 B-flute",
+                        "valueTh": "กระดาษลัง KA125 ลอน B"
+                      }
+                    ],
+                    "standardSizeCode": "M"
+                  },
                   "design": {
                     "default": "own_file",
                     "options": [
@@ -501066,6 +501396,7 @@
                       "descriptionEn": "Regular slotted carton, flaps meet in the middle",
                       "descriptionTh": "กล่องลูกฟูกทรงมาตรฐาน ฝาบนล่างชนกัน",
                       "dielineKey": "rsc",
+                      "dielineVariantCodes": [],
                       "fluteTypeIds": [
                         "0192f3a0-7c1e-7d2a-9b1f-00000000e004"
                       ],
@@ -501097,14 +501428,15 @@
                   ],
                   "productTypeCode": "corrugated",
                   "quantity": {
-                    "default": 1000,
+                    "default": 300,
                     "max": 50000,
                     "maxTiers": 10,
                     "min": 100,
                     "presets": [
+                      100,
+                      300,
                       500,
-                      1000,
-                      3000
+                      1000
                     ]
                   },
                   "quoteValidityDays": 15,
@@ -501114,6 +501446,7 @@
                       "code": "M",
                       "heightMm": 250,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000e005",
+                      "isDefault": true,
                       "lengthMm": 400,
                       "name": "30×40×25 ซม.",
                       "widthMm": 300
@@ -503229,8 +503562,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -515603,8 +515936,8 @@
                         },
                         {
                           "key": "size",
-                          "labelEn": "Size",
-                          "labelTh": "ขนาด",
+                          "labelEn": "Size (L × W × H)",
+                          "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                           "valueEn": "60 × 60 × 150 mm",
                           "valueTh": "60 × 60 × 150 มม."
                         },
@@ -531472,8 +531805,8 @@
                               },
                               {
                                 "key": "size",
-                                "labelEn": "Size",
-                                "labelTh": "ขนาด",
+                                "labelEn": "Size (L × W × H)",
+                                "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                                 "valueEn": "60 × 60 × 150 mm",
                                 "valueTh": "60 × 60 × 150 มม."
                               },
@@ -531821,8 +532154,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -532192,8 +532525,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -532660,8 +532993,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -534146,8 +534479,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -534446,8 +534779,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -534769,8 +535102,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -535129,8 +535462,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -543746,8 +544079,8 @@
                           },
                           {
                             "key": "size",
-                            "labelEn": "Size",
-                            "labelTh": "ขนาด",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                             "valueEn": "60 × 60 × 150 mm",
                             "valueTh": "60 × 60 × 150 มม."
                           },
@@ -544102,8 +544435,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -544329,7 +544662,7 @@
     },
     "/v1/store/quotes/actions/calculate": {
       "post": {
-        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch, standard product, service). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously. With `targetPricePerUnit` the response gives each instant quantity’s gap against it (D-247); the target is not stored here.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-247.",
+        "description": "Prices each quantity from the active factories that hold an instant price path (D-043, D-100): price incl. VAT, lead time and earliest ship date within capacity (D-101), quantity tolerance (D-021). A quantity without an instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator (folding, corrugate, label, tag & sleeve, pouch, standard product, service). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned (D-050). Works signed in or anonymously. With `targetPricePerUnit` the response gives each instant quantity’s gap against it (D-247); the target is not stored here. `specs` and `specLabel` say which spec the price is for, built by the same helper as quotations, carts, orders and the \"starting from\" basis (size as ยาว × กว้าง × สูง, mm); every store surface prices through this one path (D-441).\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-247, D-441.",
         "operationId": "store.quotes.calculate",
         "parameters": [
           {
@@ -544519,6 +544852,40 @@
                       "product": null
                     }
                   },
+                  "specLabel": {
+                    "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+                    "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                  },
+                  "specs": [
+                    {
+                      "key": "style",
+                      "labelEn": "Style",
+                      "labelTh": "แบบกล่อง",
+                      "valueEn": "RSC",
+                      "valueTh": "กล่องฝาชน"
+                    },
+                    {
+                      "key": "size",
+                      "labelEn": "Size (L × W × H)",
+                      "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                      "valueEn": "140 × 97.5 × 60 mm (inside)",
+                      "valueTh": "140 × 97.5 × 60 มม. (ด้านใน)"
+                    },
+                    {
+                      "key": "material",
+                      "labelEn": "Material",
+                      "labelTh": "วัสดุ",
+                      "valueEn": "KA125 B-flute (3-ply)",
+                      "valueTh": "ลูกฟูก KA125 ลอน B (3 ชั้น)"
+                    },
+                    {
+                      "key": "print_front",
+                      "labelEn": "Print (outside)",
+                      "labelTh": "พิมพ์ด้านนอก",
+                      "valueEn": "Black",
+                      "valueTh": "ดำ"
+                    }
+                  ],
                   "steps": [
                     {
                       "designFeeAmount": "0.00",
@@ -545048,8 +545415,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -545342,8 +545709,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -545663,8 +546030,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -546027,8 +546394,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -546384,8 +546751,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -546717,8 +547084,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -547309,8 +547676,8 @@
                         },
                         {
                           "key": "size",
-                          "labelEn": "Size",
-                          "labelTh": "ขนาด",
+                          "labelEn": "Size (L × W × H)",
+                          "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                           "valueEn": "60 × 60 × 150 mm",
                           "valueTh": "60 × 60 × 150 มม."
                         },
@@ -547915,8 +548282,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -548441,8 +548808,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -552324,8 +552691,8 @@
                             },
                             {
                               "key": "size",
-                              "labelEn": "Size",
-                              "labelTh": "ขนาด",
+                              "labelEn": "Size (L × W × H)",
+                              "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                               "valueEn": "60 × 60 × 150 mm",
                               "valueTh": "60 × 60 × 150 มม."
                             },
@@ -562786,7 +563153,7 @@
     },
     "/v1/store/studio/{designId}/quote": {
       "post": {
-        "description": "Prices a version of my design (default: the current one) from its calculator spec — checked against its box: style, sizes and basis, material, print sides — through the same engine and rules as `store.quotes.calculate`, and answers the same calculation object with a `specHash`. The same hash is served from its snapshot for 5 minutes. With `previousSpecHash` the answer explains the change (reason codes and unit prices before / now). A type without an instant price answers `mode: rfq` — ask for a quotation instead. Limited to 60 a minute (D-277).\n\nImplements: D-277, D-275, D-051.",
+        "description": "Prices a version of my design (default: the current one) from its calculator spec — checked against its box: style, sizes and basis, material, print sides — through the same engine and rules as `store.quotes.calculate`, and answers the same calculation object with a `specHash`. The same hash is served from its snapshot for 5 minutes. With `previousSpecHash` the answer explains the change (reason codes and unit prices before / now). A type without an instant price answers `mode: rfq` — ask for a quotation instead. Limited to 60 a minute (D-277). The calculation carries `specs` and `specLabel` — the spec priced, in the configurator’s words (e.g. \"… · 150 × 100 × 80 มม. (ด้านใน) · … · ไม่พิมพ์\" for an empty draft) — from the one store pricing path (D-441).\n\nImplements: D-277, D-275, D-051, D-441.",
         "operationId": "store.studio.quote",
         "parameters": [
           {
@@ -562874,6 +563241,40 @@
                         "product": null
                       }
                     },
+                    "specLabel": {
+                      "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+                      "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                    },
+                    "specs": [
+                      {
+                        "key": "style",
+                        "labelEn": "Style",
+                        "labelTh": "แบบกล่อง",
+                        "valueEn": "RSC",
+                        "valueTh": "กล่องฝาชน"
+                      },
+                      {
+                        "key": "size",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                        "valueEn": "140 × 97.5 × 60 mm (inside)",
+                        "valueTh": "140 × 97.5 × 60 มม. (ด้านใน)"
+                      },
+                      {
+                        "key": "material",
+                        "labelEn": "Material",
+                        "labelTh": "วัสดุ",
+                        "valueEn": "KA125 B-flute (3-ply)",
+                        "valueTh": "ลูกฟูก KA125 ลอน B (3 ชั้น)"
+                      },
+                      {
+                        "key": "print_front",
+                        "labelEn": "Print (outside)",
+                        "labelTh": "พิมพ์ด้านนอก",
+                        "valueEn": "Black",
+                        "valueTh": "ดำ"
+                      }
+                    ],
                     "steps": [
                       {
                         "designFeeAmount": "0.00",
@@ -563299,8 +563700,8 @@
                       },
                       {
                         "key": "size",
-                        "labelEn": "Size",
-                        "labelTh": "ขนาด",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
                         "valueEn": "60 × 60 × 150 mm",
                         "valueTh": "60 × 60 × 150 มม."
                       },
@@ -564830,6 +565231,10 @@
                         "catalogProductSlug": "dev-tuck-end-box",
                         "computedAt": "2026-10-03T10:00:00+07:00",
                         "currency": "THB",
+                        "label": {
+                          "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+                          "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                        },
                         "quantity": 1000,
                         "unitPrice": "4.85"
                       },
@@ -565427,6 +565832,10 @@
                         "catalogProductSlug": "dev-tuck-end-box",
                         "computedAt": "2026-10-03T10:00:00+07:00",
                         "currency": "THB",
+                        "label": {
+                          "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+                          "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                        },
                         "quantity": 1000,
                         "unitPrice": "4.85"
                       },
@@ -565686,6 +566095,10 @@
                       "catalogProductSlug": "dev-tuck-end-box",
                       "computedAt": "2026-10-03T10:00:00+07:00",
                       "currency": "THB",
+                      "label": {
+                        "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+                        "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                      },
                       "quantity": 1000,
                       "unitPrice": "4.85"
                     },
@@ -566251,6 +566664,10 @@
                     "catalogProductSlug": "dev-tuck-end-box",
                     "computedAt": "2026-10-03T10:00:00+07:00",
                     "currency": "THB",
+                    "label": {
+                      "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
+                      "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                    },
                     "quantity": 1000,
                     "unitPrice": "4.85"
                   },

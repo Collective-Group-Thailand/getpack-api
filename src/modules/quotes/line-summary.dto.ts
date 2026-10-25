@@ -6,7 +6,7 @@ export class SpecLineDto {
   @ApiProperty({
     example: 'material',
     description:
-      'Stable key of the line (`style`, `size`, `material`, `print_front`, `print_back`, `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)',
+      'Stable key of the line (`style`, `size` — ยาว × กว้าง × สูง in mm (D-441), `material`, `print_front`, `print_back`, `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)',
   })
   key!: string;
 
@@ -22,6 +22,52 @@ export class SpecLineDto {
   @ApiProperty({ example: 'Art card 350 gsm' })
   valueEn!: string;
 }
+
+/** A Thai / English pair of words (shared by the Studio and the one spec label of D-441). */
+export class LocalisedLabelDto {
+  @ApiProperty({ example: 'ภาพจำลองเพื่อดูตัวอย่าง ไม่ใช่แบบตัวอย่างสำหรับอนุมัติพิมพ์' })
+  th!: string;
+
+  @ApiProperty({ example: 'Preview, not a contract proof' })
+  en!: string;
+}
+
+/**
+ * One string per spec (GLOBAL-RULES §5, D-441): the values of the spec lines joined by " · " — size as
+ * ยาว × กว้าง × สูง in mm, "ไม่พิมพ์" when nothing prints. Every surface shows it next to a price.
+ */
+export const SpecLabelDto = LocalisedLabelDto;
+export type SpecLabelDto = LocalisedLabelDto;
+
+export const SPEC_LINES_EXAMPLE: SpecLineDto[] = [
+  { key: 'style', labelTh: 'แบบกล่อง', labelEn: 'Style', valueTh: 'กล่องฝาชน', valueEn: 'RSC' },
+  {
+    key: 'size',
+    labelTh: 'ขนาด (ยาว × กว้าง × สูง)',
+    labelEn: 'Size (L × W × H)',
+    valueTh: '140 × 97.5 × 60 มม. (ด้านใน)',
+    valueEn: '140 × 97.5 × 60 mm (inside)',
+  },
+  {
+    key: 'material',
+    labelTh: 'วัสดุ',
+    labelEn: 'Material',
+    valueTh: 'ลูกฟูก KA125 ลอน B (3 ชั้น)',
+    valueEn: 'KA125 B-flute (3-ply)',
+  },
+  {
+    key: 'print_front',
+    labelTh: 'พิมพ์ด้านนอก',
+    labelEn: 'Print (outside)',
+    valueTh: 'ดำ',
+    valueEn: 'Black',
+  },
+];
+
+export const SPEC_LABEL_EXAMPLE: SpecLabelDto = {
+  th: 'กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ',
+  en: 'RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black',
+};
 
 export class LineProductDto {
   @ApiProperty({ example: 'tuck-end-box' })
@@ -87,8 +133,8 @@ export const LINE_SUMMARY_EXAMPLE: LineSummaryDto = {
     { key: 'style', labelTh: 'แบบกล่อง', labelEn: 'Style', valueTh: 'ฝาเสียบ', valueEn: 'ฝาเสียบ' },
     {
       key: 'size',
-      labelTh: 'ขนาด',
-      labelEn: 'Size',
+      labelTh: 'ขนาด (ยาว × กว้าง × สูง)',
+      labelEn: 'Size (L × W × H)',
       valueTh: '60 × 60 × 150 มม.',
       valueEn: '60 × 60 × 150 mm',
     },

@@ -1,7 +1,7 @@
 import { lineSummary, rfqSpecLines } from './line-summary';
 
 describe('line summary', () => {
-  it('labels RFQ spec fields from the admin schema, in schema order, then the dimensions first', () => {
+  it('labels RFQ spec fields from the admin schema, in schema order, the dimensions first as L × W × H (D-441)', () => {
     const schema = {
       type: 'object',
       properties: {
@@ -17,10 +17,10 @@ describe('line summary', () => {
     expect(lines).toEqual([
       {
         key: 'size',
-        labelTh: 'ขนาด (กว้าง × ยาว × ลึก)',
-        labelEn: 'Size (W × L × D)',
-        valueTh: '200 × 300 × — มม.',
-        valueEn: '200 × 300 × — mm',
+        labelTh: 'ขนาด (ยาว × กว้าง × สูง)',
+        labelEn: 'Size (L × W × H)',
+        valueTh: '300 × 200 × — มม.',
+        valueEn: '300 × 200 × — mm',
       },
       { key: 'style', labelTh: 'รูปทรง', labelEn: 'Shape', valueTh: 'ถุงกระดาษ', valueEn: 'ถุงกระดาษ' },
       { key: 'handles', labelTh: 'หูหิ้ว', labelEn: 'หูหิ้ว', valueTh: '✓', valueEn: '✓' },

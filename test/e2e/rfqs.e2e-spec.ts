@@ -380,7 +380,7 @@ describe('requests for quote (e2e, B2.5)', () => {
       productTypeCode: 'paper_bag',
       unit: 'piece',
       specs: [
-        expect.objectContaining({ key: 'size', valueEn: '120 × 250 × 320 mm' }),
+        expect.objectContaining({ key: 'size', valueEn: '250 × 120 × 320 mm' }),
         expect.objectContaining({ key: 'material', valueTh: 'kraft 150 gsm (fake)' }),
       ],
     });

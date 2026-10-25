@@ -1,5 +1,11 @@
 import { storeEnum } from '@common/labels/store-words';
 import { BoolField, DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
+import {
+  SPEC_LABEL_EXAMPLE,
+  SPEC_LINES_EXAMPLE,
+  SpecLabelDto,
+  SpecLineDto,
+} from '@modules/quotes/line-summary.dto';
 import { RATE_MISS_REASONS } from '@modules/shipping/rates/customer-rates.dto';
 import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
 import { QUOTE_DIMENSIONS_EXAMPLE, QuoteDimensionsDto } from '@modules/specs/specs.dto';
@@ -531,6 +537,22 @@ export class QuoteCalculationDto {
       'The gap of each instant quantity against `targetPricePerUnit` (D-247); null when none was sent',
   })
   target!: QuoteTargetDto | null;
+
+  @ApiProperty({
+    type: [SpecLineDto],
+    example: SPEC_LINES_EXAMPLE,
+    description:
+      'What was priced (D-441): the spec lines of this configuration, built by the same helper as quotations, carts, ' +
+      'orders and the "starting from" basis; size as ยาว × กว้าง × สูง in mm',
+  })
+  specs!: SpecLineDto[];
+
+  @ApiProperty({
+    type: SpecLabelDto,
+    example: SPEC_LABEL_EXAMPLE,
+    description: 'The same spec as one string (D-441), to show next to every price',
+  })
+  specLabel!: SpecLabelDto;
 }
 
 export class QuotePartInternalDto {
@@ -736,6 +758,8 @@ export class AdminQuoteCalculationDto {
 
 export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
   calculatorVersion: '1.0.0',
+  specs: SPEC_LINES_EXAMPLE,
+  specLabel: SPEC_LABEL_EXAMPLE,
   target: QUOTE_TARGET_EXAMPLE,
   dimensions: QUOTE_DIMENSIONS_EXAMPLE,
   calculationId: '0192f3a0-7c1e-7d2a-9b1f-0000000c1001',

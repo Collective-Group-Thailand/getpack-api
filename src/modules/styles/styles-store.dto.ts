@@ -1,4 +1,5 @@
 import { CursorMeta, CursorQuery } from '@common/pagination/pagination.dto';
+import { SPEC_LABEL_EXAMPLE, SpecLabelDto } from '@modules/quotes/line-summary.dto';
 import { LocalisedLabelDto } from '@modules/studio/studio.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
@@ -118,6 +119,13 @@ export class StylePriceDto {
 
   @ApiProperty({ format: 'date-time', example: TS })
   computedAt!: string;
+
+  @ApiProperty({
+    type: SpecLabelDto,
+    example: SPEC_LABEL_EXAMPLE,
+    description: 'The spec this price is for, as one string (D-441)',
+  })
+  label!: SpecLabelDto;
 }
 
 /** The style's photo (D-426): what the card shows, with its alt text. */
@@ -427,6 +435,7 @@ export const CARD_EXAMPLE: StyleCardDto = {
     quantity: 1000,
     catalogProductSlug: 'dev-tuck-end-box',
     computedAt: TS,
+    label: SPEC_LABEL_EXAMPLE,
   },
   referenceCode: null,
   favourite: null,

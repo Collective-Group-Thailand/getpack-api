@@ -4,6 +4,9 @@ import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
 import { type QuoteDimensions } from '@modules/specs/specs.service';
 
 import { type LineSummaryDto, type SpecLineDto } from './line-summary.dto';
+import { sizeText } from './spec-label';
+
+export { sizeText, type SpecLabel, specLabel } from './spec-label';
 
 /**
  * Spec lines of a quote (U-B0.1): resolved from catalogue names when the quote is made and stored on it
@@ -44,7 +47,7 @@ type Named = { publicId: string; th: string; en: string; code?: string | null };
 const LABELS = {
   style: ['แบบกล่อง', 'Style'],
   style_code: ['รหัสแบบ', 'Style code'],
-  size: ['ขนาด (กว้าง × ยาว × ลึก)', 'Size (W × L × D)'],
+  size: ['ขนาด (ยาว × กว้าง × สูง)', 'Size (L × W × H)'],
   material: ['วัสดุ', 'Material'],
   print_front: ['พิมพ์ด้านนอก', 'Print (outside)'],
   print_back: ['พิมพ์ด้านใน', 'Print (inside)'],
@@ -58,7 +61,7 @@ const LABELS = {
 type LineKey = keyof typeof LABELS;
 /** A flat blank (tag & sleeve): W × L, printed front and back. */
 const FLAT_LABELS: Partial<Record<LineKey, readonly [string, string]>> = {
-  size: ['ขนาด (กว้าง × ยาว)', 'Size (W × L)'],
+  size: ['ขนาด (ยาว × กว้าง)', 'Size (L × W)'],
   print_front: ['พิมพ์ด้านหน้า', 'Print (front)'],
   print_back: ['พิมพ์ด้านหลัง', 'Print (back)'],
   coating_front: ['เคลือบด้านหน้า', 'Coating (front)'],
@@ -146,7 +149,7 @@ export async function boxSpecLines(
   // D-184: the public style code travels with the spec to the cart, order, proof, job sheet and exports.
   const styleCode = pattern?.code;
   if (styleCode) push('style_code', styleCode, styleCode);
-  const size = opts.flat ? `${mm(cfg.w)} × ${mm(cfg.l)}` : `${mm(cfg.w)} × ${mm(cfg.l)} × ${mm(cfg.d)}`;
+  const size = sizeText({ l: cfg.l, w: cfg.w, d: opts.flat ? null : cfg.d });
   push('size', `${size} มม.`, `${size} mm`);
   const material = materials.get(cfg.materialId);
   if (material) push('material', material.th, material.en);
@@ -212,7 +215,7 @@ export interface LabelSpecConfiguration {
 }
 
 const LABEL_LINES = {
-  size: ['ขนาด (กว้าง × ยาว)', 'Size (W × L)'],
+  size: ['ขนาด (ยาว × กว้าง)', 'Size (L × W)'],
   material: ['วัสดุ', 'Material'],
   print_front: ['พิมพ์ด้านหน้า', 'Print (face)'],
   print_back: ['พิมพ์ด้านหลัง', 'Print (back)'],
@@ -266,7 +269,8 @@ export async function labelSpecLines(db: Tx, cfg: LabelSpecConfiguration): Promi
       .filter((n): n is Named => !!n);
     if (found.length) push(key, found.map((n) => n.th).join(', '), found.map((n) => n.en).join(', '));
   };
-  push('size', `${mm(cfg.w)} × ${mm(cfg.l)} มม.`, `${mm(cfg.w)} × ${mm(cfg.l)} mm`);
+  const size = sizeText({ l: cfg.l, w: cfg.w });
+  push('size', `${size} มม.`, `${size} mm`);
   list(materials, [cfg.materialId], 'material');
   list(inks, cfg.printFront?.inkColourIds ?? [], 'print_front');
   list(inks, cfg.printBack?.inkColourIds ?? [], 'print_back');
@@ -470,7 +474,7 @@ export function rfqSpecLines(
   dims: { lengthMm: number | null; widthMm: number | null; heightMm: number | null },
 ): SpecLineDto[] {
   const lines: SpecLineDto[] = [];
-  const size = [dims.widthMm, dims.lengthMm, dims.heightMm];
+  const size = [dims.lengthMm, dims.widthMm, dims.heightMm];
   if (size.some((n) => n !== null)) {
     const value = size.map((n) => (n === null ? '—' : mm(n))).join(' × ');
     lines.push({
@@ -568,7 +572,7 @@ export function withBasisLines(lines: SpecLineDto[], dimensions: QuoteDimensions
   );
   if (dimensions.basis !== dimensions.pricedBasis) {
     const p = dimensions.priced;
-    const size = `${mm(p.w)} × ${mm(p.l)} × ${mm(p.d)}`;
+    const size = sizeText(p);
     const at = out.findIndex((line) => line.key === 'size');
     out.splice(at + 1, 0, {
       key: 'priced_size',
@@ -579,4 +583,34 @@ export function withBasisLines(lines: SpecLineDto[], dimensions: QuoteDimensions
     });
   }
   return out;
+}
+
+const BOX_CALCULATORS: ReadonlySet<string> = new Set(['folding', 'corrugate']);
+/**
+ * The spec lines of a calculator configuration (D-441): one dispatcher for every surface — saved quotes, carts and
+ * orders (frozen on the quote), the "starting from" basis, the configurator's default spec and every store
+ * calculation (configurator, Studio, hero) — so the same configuration always reads the same words. `dimensions`
+ * adds the measuring basis and the inside size priced (D-182). Null for a calculator without spec lines.
+ */
+export async function specLinesFor(
+  db: Tx,
+  calculatorKey: string,
+  configuration: Record<string, unknown>,
+  dimensions: QuoteDimensions | null,
+): Promise<SpecLineDto[] | null> {
+  const cfg = configuration as unknown;
+  const lines = BOX_CALCULATORS.has(calculatorKey)
+    ? await boxSpecLines(db, cfg as BoxConfiguration)
+    : calculatorKey === 'label'
+      ? await labelSpecLines(db, cfg as LabelSpecConfiguration)
+      : calculatorKey === 'tag_sleeve'
+        ? await tagSleeveSpecLines(db, cfg as TagSleeveSpecConfiguration)
+        : calculatorKey === 'pouch'
+          ? await pouchSpecLines(db, cfg as PouchSpecConfiguration)
+          : calculatorKey === 'standard_product'
+            ? await standardProductSpecLines(db, cfg as StandardProductSpecConfiguration)
+            : calculatorKey === 'service'
+              ? await serviceSpecLines(db, cfg as { catalogProductId: string })
+              : null;
+  return lines ? withBasisLines(lines, dimensions) : null;
 }

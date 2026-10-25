@@ -356,8 +356,9 @@ export class StoreStudioController {
       'and answers the same calculation object with a `specHash`. The same hash is served from its snapshot for ' +
       '5 minutes. With `previousSpecHash` the answer explains the change (reason codes and unit prices before / now). ' +
       'A type without an instant price answers `mode: rfq` — ask for a quotation instead. Limited to 60 a minute ' +
-      '(D-277).',
-    implements: DECISIONS,
+      '(D-277). The calculation carries `specs` and `specLabel` — the spec priced, in the configurator’s words ' +
+      '(e.g. "… · 150 × 100 × 80 มม. (ด้านใน) · … · ไม่พิมพ์" for an empty draft) — from the one store pricing path (D-441).',
+    implements: [...DECISIONS, 'D-441'],
   })
   @ApiBody({
     type: StudioQuoteRequestDto,

@@ -2,10 +2,17 @@ import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
 import { CalculatorRegistry } from '@modules/pricing/calculators/calculator';
 import {
+  defaultSizeIndex,
+  defaultSpecConfiguration,
+  defaultSpecQuantity,
+  withSpecDefaults,
+} from '@modules/pricing/hints/default-spec';
+import {
   CALCULATOR_SALES_UNIT,
   CALCULATORS_WITHOUT_DIFFICULTY,
 } from '@modules/pricing/quotes/configurations';
 import { MAX_QUANTITY_TIERS } from '@modules/pricing/quotes/quote.dto';
+import { StorePricingService } from '@modules/pricing/quotes/store-pricing.service';
 import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 
@@ -29,6 +36,7 @@ export class StoreConfiguratorService {
     private readonly catalog: StoreCatalogService,
     private readonly settings: SettingsService,
     private readonly calculators: CalculatorRegistry,
+    private readonly storePricing: StorePricingService,
   ) {}
 
   async get(slug: string): Promise<StoreConfiguratorDto> {
@@ -45,6 +53,18 @@ export class StoreConfiguratorService {
                 ...CONTENT_INCLUDE,
                 subPatterns: { orderBy: { seq: 'asc' } },
                 fluteTypes: { include: { fluteType: { select: { publicId: true } } } },
+                // The style drawn for "ดาวน์โหลดแบบกล่อง" (D-271): its published variants, never a factory.
+                styleBase: {
+                  select: {
+                    code: true,
+                    status: true,
+                    variants: {
+                      where: { publishable: true, status: ACTIVE },
+                      select: { code: true },
+                      orderBy: { code: 'asc' },
+                    },
+                  },
+                },
               },
             },
           },
@@ -58,6 +78,20 @@ export class StoreConfiguratorService {
     if (!p || !calculator || !this.calculators.has(calculator)) throw new DomainException('http.not_found');
     const difficulty = p.defaultDifficultyLevel?.status === ACTIVE ? p.defaultDifficultyLevel.publicId : null;
     const validity = await this.settings.at('quotes.validity_days');
+    // D-441: the default spec (the D-220 reference configuration) is what the configurator opens on and what the
+    // "starting from" price is priced at — option defaults, the standard size and the quantity follow it.
+    const spec = defaultSpecConfiguration(p.referenceConfiguration, p.publicId);
+    const sizes = p.standardSizes.map((s) => ({
+      id: s.publicId,
+      code: s.code,
+      name: s.name,
+      lengthMm: s.lengthMm.toNumber(),
+      widthMm: s.widthMm.toNumber(),
+      heightMm: s.heightMm.toNumber(),
+    }));
+    const sizeIndex = defaultSizeIndex(sizes, spec);
+    const specQuantity = defaultSpecQuantity(spec);
+    const described = spec ? await this.storePricing.describe(calculator, spec).catch(() => null) : null;
     return {
       slug: p.slug,
       catalogProductId: p.publicId,
@@ -81,23 +115,28 @@ export class StoreConfiguratorService {
         descriptionTh: pattern.descriptionTh,
         descriptionEn: pattern.descriptionEn,
         imageUrl: imageUrl(pattern.imageFile?.publicId),
+        dielineVariantCodes:
+          pattern.styleBase?.status === ACTIVE ? pattern.styleBase.variants.map((v) => v.code) : [],
       })),
-      standardSizes: p.standardSizes.map((s) => ({
-        id: s.publicId,
-        code: s.code,
-        name: s.name,
-        lengthMm: s.lengthMm.toNumber(),
-        widthMm: s.widthMm.toNumber(),
-        heightMm: s.heightMm.toNumber(),
-      })),
-      optionGroups: await this.catalog.optionGroups(p.options),
+      standardSizes: sizes.map((s, i) => ({ ...s, isDefault: spec ? i === sizeIndex : i === 0 })),
+      optionGroups: withSpecDefaults(await this.catalog.optionGroups(p.options), spec),
+      defaultSpec:
+        spec && described && specQuantity !== null
+          ? {
+              configuration: spec,
+              quantity: specQuantity,
+              standardSizeCode: sizeIndex >= 0 ? sizes[sizeIndex]!.code : null,
+              specs: described.specs,
+              specLabel: described.label,
+            }
+          : null,
       printAreas: calculator === 'corrugate' ? ['top', 'side', 'top_side', 'all_round'] : [],
       quoteValidityDays: Number(validity.value),
       unit: CALCULATOR_SALES_UNIT[calculator] ?? 'piece',
       quantity: {
         min: p.quantityMin,
         max: p.quantityMax,
-        default: p.quantityDefault,
+        default: specQuantity ?? p.quantityDefault,
         presets: [...(p.quantityPresets ?? [])].sort((a, b) => a - b),
         maxTiers: MAX_QUANTITY_TIERS,
       },

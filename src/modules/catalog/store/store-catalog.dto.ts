@@ -1,7 +1,7 @@
 import { CodeNameRefDto } from '@common/dto/code-name-ref.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { BusinessDayRangeDto } from '@modules/pricing/hints/price-hints.dto';
-import { SpecLineDto } from '@modules/quotes/line-summary.dto';
+import { SPEC_LABEL_EXAMPLE, SpecLabelDto, SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
 
@@ -35,8 +35,18 @@ export class StartingPriceBasisDto {
   })
   quantity!: number;
 
-  @ApiProperty({ type: [SpecLineDto], description: 'The reference configuration it assumes (D-220)' })
+  @ApiProperty({
+    type: [SpecLineDto],
+    description: 'The default spec it assumes (D-220, D-441) — the spec the configurator opens on',
+  })
   specs!: SpecLineDto[];
+
+  @ApiProperty({
+    type: SpecLabelDto,
+    example: SPEC_LABEL_EXAMPLE,
+    description: 'The same spec as one string (D-441); show it with the price',
+  })
+  label!: SpecLabelDto;
 }
 
 /** D-307 / D-181 what a made-to-order card may say: real starting prices, never manufactured urgency. */

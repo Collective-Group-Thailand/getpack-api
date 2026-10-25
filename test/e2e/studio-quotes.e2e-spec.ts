@@ -106,6 +106,8 @@ describe('studio quotes (e2e, U4.B2)', () => {
       .expect(200);
     const prices = (steps: Step[]) => steps.map((s) => [s.quantity, s.unitPrice, s.grossAmount]);
     expect(prices(first.body.calculation.steps as Step[])).toEqual(prices(direct.body.steps as Step[]));
+    // D-441: the dock says which spec it priced, in the configurator's words.
+    expect(first.body.calculation.specLabel).toEqual(direct.body.specLabel);
     const again = await as(ctx, token)
       .post(`/v1/store/studio/${d.id}/quote`, { quantities: [1000, 3000] })
       .expect(200);

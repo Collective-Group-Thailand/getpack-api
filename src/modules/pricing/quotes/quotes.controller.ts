@@ -24,7 +24,6 @@ import { ApiBody, ApiExtraModels, ApiParam, ApiQuery, ApiTags } from '@nestjs/sw
 import { Throttle } from '@nestjs/throttler';
 import { SettingsService } from '@platform/settings/settings.service';
 
-import { assertStoreRules, validateConfiguration } from './configurations';
 import { HERO_PREVIEW_EXAMPLE, HeroPreviewDto, HeroPreviewRequestDto } from './hero-presets.dto';
 import { HeroPresetsService } from './hero-presets.service';
 
@@ -86,8 +85,8 @@ import {
   StandardProductConfigurationDto,
 } from './standard-product.dto';
 import { StandardProductInputDataService } from './standard-product-input-data.service';
+import { StorePricingService } from './store-pricing.service';
 import { TAG_SLEEVE_CONFIGURATION_EXAMPLE, TagSleeveConfigurationDto } from './tag-sleeve.dto';
-import { targetGap, targetString } from './target-price';
 import { toolingView } from './tooling-view';
 
 const CALCULATION = ['D-100', 'D-043', 'D-050', 'D-051', 'D-101'];
@@ -105,22 +104,6 @@ class ParseOptionalPostcodePipe implements PipeTransform<unknown, string | undef
     return value;
   }
 }
-
-export const storeView = (view: QuoteView, target?: string): QuoteCalculationDto => ({
-  calculatorVersion: view.calculatorVersion,
-  calculationId: view.calculateLog?.publicId ?? null,
-  steps: view.steps.map(({ internal: _internal, ...step }) => step),
-  dimensions: view.dimensions,
-  // D-247: the gap of each instant quantity against the customer's target (nothing is stored).
-  target: target
-    ? {
-        targetPricePerUnit: targetString(target)!,
-        steps: view.steps
-          .filter((s) => s.instant && s.unitPrice !== null)
-          .map((s) => ({ quantity: s.quantity, ...targetGap(s.unitPrice, target)! })),
-      }
-    : null,
-});
 
 /** The staff view with buy prices only for `factory_buy_prices.read` and margins only for `margin.read` (D-141). */
 async function adminView(
@@ -176,6 +159,7 @@ export class StoreQuotesController {
     private readonly prisma: PrismaService,
     private readonly hero: HeroPresetsService,
     private readonly settings: SettingsService,
+    private readonly storePricing: StorePricingService,
   ) {}
 
   @Post('actions/calculate')
@@ -190,8 +174,10 @@ export class StoreQuotesController {
       'instant price carries the reason and routes to RFQ. The configuration is the one of the type’s calculator ' +
       '(folding, corrugate, label, tag & sleeve, pouch, standard product, service). Nothing is saved (quotes are saved with B2.5, D-051); no factory data is returned ' +
       '(D-050). Works signed in or anonymously. With `targetPricePerUnit` the response gives each instant ' +
-      'quantity’s gap against it (D-247); the target is not stored here.',
-    implements: [...CALCULATION, 'D-247'],
+      'quantity’s gap against it (D-247); the target is not stored here. `specs` and `specLabel` say which spec the ' +
+      'price is for, built by the same helper as quotations, carts, orders and the "starting from" basis (size as ' +
+      'ยาว × กว้าง × สูง, mm); every store surface prices through this one path (D-441).',
+    implements: [...CALCULATION, 'D-247', 'D-441'],
   })
   @ApiBody({
     type: CalculateQuoteDto,
@@ -299,17 +285,18 @@ export class StoreQuotesController {
       !this.engine.hasCalculator(type.calculatorKey)
     )
       throw new DomainException('pricing.not_instant');
-    const configuration = await validateConfiguration(type.calculatorKey, body.configuration, {
-      staff: false,
-    });
-    await assertStoreRules(this.prisma, type.calculatorKey, configuration);
-    const view = await this.engine.price(type.calculatorKey, configuration, {
-      channel: 'web',
-      actorUserId: actor?.type === 'user' ? actor.userId : undefined,
-      ip: RequestContext.current()?.ip,
-      deliveryPostcode: body.deliveryPostcode,
-    });
-    return storeView(view, body.targetPricePerUnit);
+    // D-441: the one store pricing path (validation, store rules, engine, spec lines).
+    const priced = await this.storePricing.price(
+      type.calculatorKey,
+      body.configuration,
+      {
+        actorUserId: actor?.type === 'user' ? actor.userId : undefined,
+        ip: RequestContext.current()?.ip,
+        deliveryPostcode: body.deliveryPostcode,
+      },
+      body.targetPricePerUnit,
+    );
+    return priced.calculation;
   }
 }
 

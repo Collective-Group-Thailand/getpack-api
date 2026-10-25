@@ -30,6 +30,7 @@ import { PouchInputDataService } from './quotes/pouch-input-data.service';
 import { QuoteEngineService } from './quotes/quote-engine.service';
 import { ServiceInputDataService } from './quotes/service-input-data.service';
 import { StandardProductInputDataService } from './quotes/standard-product-input-data.service';
+import { StorePricingService } from './quotes/store-pricing.service';
 import { ToleranceService } from './quotes/tolerance.service';
 import { SellMarginsService } from './sell-margins/sell-margins.service';
 
@@ -49,6 +50,7 @@ const SERVICES = [
   ServiceSnapshotLoader,
   ServiceQuoteAdapter,
   QuoteEngineService,
+  StorePricingService,
   SpecsService,
   ToleranceService,
   FoldingInputDataService,

@@ -13,6 +13,7 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { FilesService } from '@platform/files/files.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
+import { sizeText } from './line-summary';
 import { type SpecLineDto } from './line-summary.dto';
 import { type QuoteDocument, renderQuoteDocument } from './quote-document';
 
@@ -85,7 +86,9 @@ export class QuotePdfService {
       specification: Array.isArray(quote.specSummary)
         ? (quote.specSummary as unknown as SpecLineDto[]).map((l) => `${l.labelTh} ${l.valueTh}`).join(' · ')
         : [
-            cfg.w && cfg.l ? `ขนาด ${cfg.w} × ${cfg.l}${cfg.d ? ` × ${cfg.d}` : ''} มม.` : null,
+            cfg.w && cfg.l
+              ? `ขนาด ${sizeText({ l: Number(cfg.l), w: Number(cfg.w), d: cfg.d ? Number(cfg.d) : null })} มม.`
+              : null,
             material ? `วัสดุ ${material.nameTh}` : null,
           ]
             .filter(Boolean)

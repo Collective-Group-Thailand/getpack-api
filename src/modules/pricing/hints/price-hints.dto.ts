@@ -1,5 +1,5 @@
 import { SLUG, SNAKE_CODE } from '@modules/catalog/crud/dto-fields';
-import { SpecLineDto } from '@modules/quotes/line-summary.dto';
+import { SPEC_LABEL_EXAMPLE, SpecLabelDto, SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
@@ -67,8 +67,18 @@ export class PriceHintBasisDto {
   })
   includesDelivery!: boolean;
 
-  @ApiProperty({ type: [SpecLineDto], description: 'The reference specification, as spec lines' })
+  @ApiProperty({
+    type: [SpecLineDto],
+    description: 'The default spec (D-220, D-441) — the spec the configurator opens on — as spec lines',
+  })
   specs!: SpecLineDto[];
+
+  @ApiProperty({
+    type: SpecLabelDto,
+    example: SPEC_LABEL_EXAMPLE,
+    description: 'The same spec as one string (D-441); show it with the price',
+  })
+  label!: SpecLabelDto;
 }
 
 export class BusinessDayRangeDto {
@@ -129,12 +139,13 @@ export const PRICE_HINT_EXAMPLE: PriceHintDto = {
     specs: [
       {
         key: 'size',
-        labelTh: 'ขนาด (กว้าง × ยาว × ลึก)',
-        labelEn: 'Size (W × L × D)',
+        labelTh: 'ขนาด (ยาว × กว้าง × สูง)',
+        labelEn: 'Size (L × W × H)',
         valueTh: '60 × 60 × 150 มม.',
         valueEn: '60 × 60 × 150 mm',
       },
     ],
+    label: { th: '60 × 60 × 150 มม.', en: '60 × 60 × 150 mm' },
   },
   leadTimeBusinessDays: { min: 7, max: 7 },
   computedAt: '2026-10-01T09:00:00+07:00',

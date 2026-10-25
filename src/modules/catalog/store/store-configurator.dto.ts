@@ -1,5 +1,11 @@
 import { DESIGN_OPTIONS } from '@modules/carts/carts.dto';
 import { POUCH_FORMULAS, type PouchFormula } from '@modules/pricing/calculators/pouch/geometry';
+import {
+  SPEC_LABEL_EXAMPLE,
+  SPEC_LINES_EXAMPLE,
+  SpecLabelDto,
+  SpecLineDto,
+} from '@modules/quotes/line-summary.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
 import { CALCULATOR_KEYS } from '../product-structure/product-structure.dto';
@@ -152,6 +158,15 @@ export class StoreConfiguratorPatternDto {
 
   @ApiProperty({ type: String, nullable: true, example: null })
   imageUrl!: string | null;
+
+  @ApiProperty({
+    type: [String],
+    example: ['PK-RSC-01-A'],
+    description:
+      'Published variants of the style drawn for this pattern (D-271): with a standard size, the product page links ' +
+      '"ดาวน์โหลดแบบกล่อง" to `store.dielines.download` (`variantCode` + the size). Empty = no dieline to download',
+  })
+  dielineVariantCodes!: string[];
 }
 
 export class StoreConfiguratorSizeDto {
@@ -172,6 +187,64 @@ export class StoreConfiguratorSizeDto {
 
   @ApiProperty({ example: 250, description: 'Unit: mm.' })
   heightMm!: number;
+}
+
+/** A standard size of the store configurator, with the one it opens on (D-441). */
+export class StoreConfiguratorStandardSizeDto extends StoreConfiguratorSizeDto {
+  @ApiProperty({
+    example: true,
+    description:
+      'The size the configurator opens on: the default spec’s (D-441); without a default spec the first size',
+  })
+  isDefault!: boolean;
+}
+
+/**
+ * The default spec (D-441): the admin's reference configuration (D-220), which the configurator opens on and the
+ * "starting from" price of cards, category pages, the product page and its JSON-LD is priced at, through the same
+ * `store.quotes.calculate` path.
+ */
+export class StoreConfiguratorDefaultSpecDto {
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: true,
+    example: {
+      catalogProductId: ID('001'),
+      patternId: ID('002'),
+      l: 400,
+      w: 300,
+      d: 250,
+      materialId: ID('007'),
+      difficultyLevelId: ID('006'),
+      quantities: [300],
+      parts: [{ printFront: [{ inkColourId: ID('008'), area: 'top' }] }],
+      design: { graphic: false, structure: false },
+    },
+    description:
+      'The calculator configuration, ready for `store.quotes.calculate` (send it as is, or with the customer’s quantities)',
+  })
+  configuration!: Record<string, unknown>;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 300,
+    description: 'The reference quantity the starting price is for',
+  })
+  quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'M',
+    description: 'The standard size it is; null for a custom size',
+  })
+  standardSizeCode!: string | null;
+
+  @ApiProperty({ type: [SpecLineDto], example: SPEC_LINES_EXAMPLE })
+  specs!: SpecLineDto[];
+
+  @ApiProperty({ type: SpecLabelDto, example: SPEC_LABEL_EXAMPLE, description: 'One string (D-441)' })
+  specLabel!: SpecLabelDto;
 }
 
 /**
@@ -246,14 +319,16 @@ export class StoreConfiguratorDto {
   patterns!: StoreConfiguratorPatternDto[];
 
   @ApiProperty({
-    type: [StoreConfiguratorSizeDto],
+    type: [StoreConfiguratorStandardSizeDto],
     description: 'Standard sizes (corrugate: no die block on them)',
   })
-  standardSizes!: StoreConfiguratorSizeDto[];
+  standardSizes!: StoreConfiguratorStandardSizeDto[];
 
   @ApiProperty({
     type: [StoreOptionGroupDto],
-    description: 'The options offered, with the ids the configuration takes',
+    description:
+      'The options offered, with the ids the configuration takes; with a default spec `isDefault` marks exactly ' +
+      'the options it selects (a group it selects nothing in, e.g. no print, has no default) (D-441)',
   })
   optionGroups!: StoreOptionGroupDto[];
 
@@ -282,6 +357,15 @@ export class StoreConfiguratorDto {
 
   @ApiProperty({ type: StoreConfiguratorDesignDto })
   design!: StoreConfiguratorDesignDto;
+
+  @ApiProperty({
+    type: StoreConfiguratorDefaultSpecDto,
+    nullable: true,
+    description:
+      'The spec to open on and the one the "starting from" price is for (D-441); null without a reference ' +
+      'configuration (then there is no starting price either, D-220)',
+  })
+  defaultSpec!: StoreConfiguratorDefaultSpecDto | null;
 }
 
 export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
@@ -316,10 +400,19 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
       descriptionTh: 'กล่องลูกฟูกทรงมาตรฐาน ฝาบนล่างชนกัน',
       descriptionEn: 'Regular slotted carton, flaps meet in the middle',
       imageUrl: null,
+      dielineVariantCodes: [],
     },
   ],
   standardSizes: [
-    { id: ID('005'), code: 'M', name: '30×40×25 ซม.', lengthMm: 400, widthMm: 300, heightMm: 250 },
+    {
+      id: ID('005'),
+      code: 'M',
+      name: '30×40×25 ซม.',
+      lengthMm: 400,
+      widthMm: 300,
+      heightMm: 250,
+      isDefault: true,
+    },
   ],
   optionGroups: [
     {
@@ -343,6 +436,43 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
   printAreas: ['top', 'side', 'top_side', 'all_round'],
   quoteValidityDays: 15,
   unit: 'piece',
-  quantity: { min: 100, max: 50000, default: 1000, presets: [500, 1000, 3000], maxTiers: 10 },
+  quantity: { min: 100, max: 50000, default: 300, presets: [100, 300, 500, 1000], maxTiers: 10 },
   design: { options: ['own_file', 'online_designer', 'hired_design'], default: 'own_file' },
+  defaultSpec: {
+    configuration: {
+      catalogProductId: ID('001'),
+      patternId: ID('002'),
+      l: 400,
+      w: 300,
+      d: 250,
+      materialId: ID('007'),
+      difficultyLevelId: ID('006'),
+      quantities: [300],
+      parts: [{}],
+      design: { graphic: false, structure: false },
+    },
+    quantity: 300,
+    standardSizeCode: 'M',
+    specs: [
+      { key: 'style', labelTh: 'แบบกล่อง', labelEn: 'Style', valueTh: 'กล่องฝาชน', valueEn: 'กล่องฝาชน' },
+      {
+        key: 'size',
+        labelTh: 'ขนาด (ยาว × กว้าง × สูง)',
+        labelEn: 'Size (L × W × H)',
+        valueTh: '400 × 300 × 250 มม. (ด้านใน)',
+        valueEn: '400 × 300 × 250 mm (inside)',
+      },
+      {
+        key: 'material',
+        labelTh: 'วัสดุ',
+        labelEn: 'Material',
+        valueTh: 'กระดาษลัง KA125 ลอน B',
+        valueEn: 'Kraft board KA125 B-flute',
+      },
+    ],
+    specLabel: {
+      th: 'กล่องฝาชน · 400 × 300 × 250 มม. (ด้านใน) · กระดาษลัง KA125 ลอน B · ไม่พิมพ์',
+      en: 'กล่องฝาชน · 400 × 300 × 250 mm (inside) · Kraft board KA125 B-flute · Unprinted',
+    },
+  },
 };
