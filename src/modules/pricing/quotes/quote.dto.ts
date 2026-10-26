@@ -1,6 +1,7 @@
 import { storeEnum } from '@common/labels/store-words';
 import { BoolField, DecimalField, EnumField, IntField, RefField } from '@modules/catalog/crud/dto-fields';
 import {
+  LocalisedLabelDto,
   SPEC_LABEL_EXAMPLE,
   SPEC_LINES_EXAMPLE,
   SpecLabelDto,
@@ -338,6 +339,27 @@ export const QUOTE_NO_PRICE_REASONS = [
   'rfq_required',
 ] as const;
 
+/** C4-API-2: the arrival window, Asia/Bangkok dates. */
+export class QuoteArrivalDto {
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+    example: '2026-10-10',
+    description: 'Earliest arrival (Asia/Bangkok)',
+  })
+  from!: string;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    pattern: '^\\d{4}-\\d{2}-\\d{2}$',
+    example: '2026-10-10',
+    description: 'Latest arrival (Asia/Bangkok); equals `from` while no maximum transit is recorded',
+  })
+  to!: string;
+}
+
 export class QuoteStepDto {
   @ApiProperty({ example: 1000 })
   quantity!: number;
@@ -414,6 +436,45 @@ export class QuoteStepDto {
     description: 'VAT included in the amounts',
   })
   vatAmount!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '0.07',
+    description:
+      'C4-API-2 (D-441, GLOBAL-RULES §5): the VAT rate `vatAmount` used, as a fraction (decimal string) — the ' +
+      'approved `vat_standard` rate in force, the same rate as the shared VAT helper; null when `vatAmount` is null',
+  })
+  vatRate!: string | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    example: 12,
+    description:
+      'C4-API-2: "ประหยัด x%" against the smallest priced quantity of this calculation — (1 − unitPrice ÷ that ' +
+      'tier’s unitPrice) × 100, rounded half-up to a whole number; null for that tier itself, a tier without an ' +
+      'instant price, or a result ≤ 0',
+  })
+  savingPercent!: number | null;
+
+  @ApiProperty({
+    type: LocalisedLabelDto,
+    nullable: true,
+    description:
+      'C4-API-2: the customer-facing name of the destination zone the shipping estimate used (from the delivery ' +
+      'postcode); null while shipping is not priced. Never an origin or factory location (GLOBAL-RULES §1)',
+  })
+  zoneName!: LocalisedLabelDto | null;
+
+  @ApiProperty({
+    type: QuoteArrivalDto,
+    nullable: true,
+    description:
+      'C4-API-2 (D-101): arrival window — the earliest ship date plus the zone’s extra lead days or the carrier’s ' +
+      'transit days, counted in working days of the business calendar (holidays excluded); null when unknown',
+  })
+  arrival!: QuoteArrivalDto | null;
 
   @ApiProperty({ type: String, nullable: true, example: '13380.00', description: 'Total incl. VAT' })
   grossAmount!: string | null;
@@ -781,6 +842,10 @@ export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
       shippingNetAmount: '120.00',
       shippingVatAmount: '8.40',
       vatAmount: '883.73',
+      vatRate: '0.07',
+      savingPercent: null,
+      zoneName: { th: 'กรุงเทพฯ และปริมณฑล', en: 'Bangkok and vicinity' },
+      arrival: { from: '2026-10-10', to: '2026-10-10' },
       grossAmount: '13508.40',
       leadTimeDays: 7,
       earliestShipDate: '2026-10-09',

@@ -175,3 +175,53 @@ Migration: none. Env: none required (optional `CALCULATE_BATCH_THROTTLE_LIMIT`).
   all `"0.00"`. `deltas` is `null` without `baselineKey`, or when the variant has no calculation (also when the baseline failed: all of that
   batch's instant deltas are then null per quantity).
 - No new writes; same pricing path. Unit tests in `quote-batch.service.spec.ts`.
+
+---
+
+# C4-API-2 — store fields for `/configure` (additive, backwards-compatible)
+
+Branch `design/configurator-redesign`. No new endpoint, no migration, no env. Only new response fields; nothing
+existing changed or removed.
+
+## 1. Design: `freeRevisions` — `GET /v1/store/catalog/products/{slug}/configurator` (`store.catalog.getConfigurator`)
+- `design.freeRevisions: integer | null` — free revision rounds of `hired_design` ("แก้ฟรี {n} ครั้ง").
+- Setting: **reuses the existing `design.free_revision_rounds`** (D-071, integer, seeded `3`, effective-dated and
+  audited per ADR-0005, edited in the settings back office). It is the value the design service already charges extra
+  rounds by (`design-services.service.ts`), so a second key `design.free_revisions` would be a second source of truth
+  (GLOBAL-RULES §5) — none was added. Read: the version in force at request time; `null` only if the setting has no
+  version (never a default in code).
+- Example: `"design": { "options": ["own_file","online_designer","hired_design"], "default": "own_file", "freeRevisions": 3 }`
+
+## 2–4. Per quantity tier — `store.quotes.calculate` and every `calculation` of `store.quotes.calculateBatch`
+(both go through `StorePricingService.price` → `storeView`; also `store.quotes.preview` uses the same path, and staff
+calculate views get the same fields.) New fields on each `steps[]` item (`QuoteStepDto`):
+
+| Field | Type | Rule |
+|---|---|---|
+| `savingPercent` | integer \| null | (1 − `unitPrice` ÷ `unitPrice` of the smallest **priced** quantity of this calculation) × 100, rounded half-up to a whole number (decimal.js). `null` for that smallest tier, a tier with `instant:false` / no `unitPrice`, or a result ≤ 0. |
+| `vatRate` | decimal string \| null | The approved `vat_standard` rate in force the engine used for `vatAmount` (same rate `computeVat` gets), as a fraction: `"0.07"`. `null` when `vatAmount` is `null`. |
+| `zoneName` | `{ th, en }` \| null | Customer-facing names (`zones.name_th` / `name_en`) of the destination zone the customer rate card resolved from `deliveryPostcode`. `null` while shipping is not priced. Destination side only — no factory, origin or pickup location. |
+| `arrival` | `{ from, to }` \| null | ISO dates, Asia/Bangkok. = the existing `earliestDeliveryDate`: earliest ship date + the zone's extra lead days or the carrier's transit days, counted with `WorkingDayCalendar.addWorkingDays` on the business calendar (national holidays from `th_public` + closures). `to` equals `from`: no maximum transit is recorded today (open question). `null` when the delivery date is unknown (no postcode / no transit). |
+
+Example step (excerpt):
+```json
+{ "quantity": 1000, "instant": true, "unitPrice": "12.00", "vatAmount": "883.73", "vatRate": "0.07",
+  "savingPercent": 10, "zoneName": { "th": "กรุงเทพฯ และปริมณฑล", "en": "Bangkok and vicinity" },
+  "arrival": { "from": "2026-10-10", "to": "2026-10-10" }, "earliestDeliveryDate": "2026-10-10" }
+```
+Batch: the fields are inside `results[].calculation.steps[]`; `deltas` unchanged.
+
+## 5. Materials description (confirmation only, nothing changed)
+`materials.description_th` / `description_en` (Prisma `Material.descriptionTh/descriptionEn`, max 1000 chars) exist
+and are editable in the back office: `PATCH /v1/admin/catalog/materials/{id}` (`admin.catalogMaterials.update`,
+generic catalogue CRUD) and the Excel import kind `materials`. The configurator already returns them on each material
+option (`optionGroups[].options[].descriptionTh/descriptionEn`).
+
+## Implementation / tests
+- `src/modules/pricing/quotes/store-step-fields.ts` (pure helper), `QuoteView.vatRatePct` / `shippingZone` from the
+  engine, zone names added to the customer `RateResolution`; `StoreConfiguratorService.freeRevisions()`.
+- Unit: `store-step-fields.spec.ts` (saving %, half-up, unpriced/≤0, vatRate, zone/arrival only where priced, no
+  extra keys), `store-configurator.free-revisions.spec.ts` (value in force, new version, unset → null).
+- Contract: `contract/openapi.json` regenerated (`QuoteArrivalDto`; `zoneName` reuses `LocalisedLabelDto`).
+- e2e to run locally (docker DB): `pnpm test:e2e -- folding-quotes price-consistency studio-quotes target-price phase4-contract`
+  (+ the configurator read e2e) — they assert existing step fields; new fields are additive.

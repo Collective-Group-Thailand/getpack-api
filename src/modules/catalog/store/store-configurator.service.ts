@@ -14,7 +14,7 @@ import {
 import { MAX_QUANTITY_TIERS } from '@modules/pricing/quotes/quote.dto';
 import { StorePricingService } from '@modules/pricing/quotes/store-pricing.service';
 import { Injectable } from '@nestjs/common';
-import { SettingsService } from '@platform/settings/settings.service';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { CONTENT_INCLUDE } from '../crud/option-content';
 import { type InkKind, PRINT_MODEL_CALCULATORS, storePrintModel } from '../print-model/print-model';
@@ -81,6 +81,7 @@ export class StoreConfiguratorService {
     if (!p || !calculator || !this.calculators.has(calculator)) throw new DomainException('http.not_found');
     const difficulty = p.defaultDifficultyLevel?.status === ACTIVE ? p.defaultDifficultyLevel.publicId : null;
     const validity = await this.settings.at('quotes.validity_days');
+    const freeRevisions = await this.freeRevisions();
     // D-441: the default spec (the D-220 reference configuration) is what the configurator opens on and what the
     // "starting from" price is priced at — option defaults, the standard size and the quantity follow it.
     const spec = defaultSpecConfiguration(p.referenceConfiguration, p.publicId);
@@ -147,8 +148,26 @@ export class StoreConfiguratorService {
       },
       // Uploading a file is always possible, the online designer works from the pattern's dieline (B4.1) and a
       // hired design is priced by quoting with `design.graphic` (D-071); `free_design` needs a promotion (D-181).
-      design: { options: ['own_file', 'online_designer', 'hired_design'], default: 'own_file' },
+      design: {
+        options: ['own_file', 'online_designer', 'hired_design'],
+        default: 'own_file',
+        freeRevisions,
+      },
     };
+  }
+
+  /**
+   * C4-API-2 (D-071): the free revision rounds of a hired design in force — the very setting the design service
+   * charges extra rounds by (`design.free_revision_rounds`), so the page and the service never disagree. Null when
+   * the setting has no version (never a default invented here).
+   */
+  private async freeRevisions(): Promise<number | null> {
+    const setting = await this.settings.at('design.free_revision_rounds').catch((error: unknown) => {
+      if (error instanceof SettingNotFoundError) return null;
+      throw error;
+    });
+    const value = setting === null ? NaN : Number(setting.value);
+    return Number.isInteger(value) && value >= 0 ? value : null;
   }
 
   /**

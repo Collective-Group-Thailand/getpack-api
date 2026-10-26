@@ -11071,6 +11071,17 @@
       },
       "AdminQuoteStepDto": {
         "properties": {
+          "arrival": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteArrivalDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C4-API-2 (D-101): arrival window — the earliest ship date plus the zone’s extra lead days or the carrier’s transit days, counted in working days of the business calendar (holidays excluded); null when unknown"
+          },
           "designFeeAmount": {
             "example": "0.00",
             "type": [
@@ -11149,6 +11160,14 @@
             ],
             "description": "Why there is no instant price (staff: `capacity_unavailable` names the capacity gap)",
             "example": null
+          },
+          "savingPercent": {
+            "description": "C4-API-2: \"ประหยัด x%\" against the smallest priced quantity of this calculation — (1 − unitPrice ÷ that tier’s unitPrice) × 100, rounded half-up to a whole number; null for that tier itself, a tier without an instant price, or a result ≤ 0",
+            "example": 12,
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "shippingAmount": {
             "description": "Shipping incl. VAT, its own line (D-013); null while not priced",
@@ -11264,6 +11283,25 @@
               "string",
               "null"
             ]
+          },
+          "vatRate": {
+            "description": "C4-API-2 (D-441, GLOBAL-RULES §5): the VAT rate `vatAmount` used, as a fraction (decimal string) — the approved `vat_standard` rate in force, the same rate as the shared VAT helper; null when `vatAmount` is null",
+            "example": "0.07",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "zoneName": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C4-API-2: the customer-facing name of the destination zone the shipping estimate used (from the delivery postcode); null while shipping is not priced. Never an origin or factory location (GLOBAL-RULES §1)"
           }
         },
         "required": [
@@ -11280,6 +11318,10 @@
           "shippingNetAmount",
           "shippingVatAmount",
           "vatAmount",
+          "vatRate",
+          "savingPercent",
+          "zoneName",
+          "arrival",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -85706,6 +85748,29 @@
         ],
         "type": "object"
       },
+      "QuoteArrivalDto": {
+        "properties": {
+          "from": {
+            "description": "Earliest arrival (Asia/Bangkok)",
+            "example": "2026-10-10",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          },
+          "to": {
+            "description": "Latest arrival (Asia/Bangkok); equals `from` while no maximum transit is recorded",
+            "example": "2026-10-10",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
       "QuoteAssemblyInputDto": {
         "properties": {
           "amount": {
@@ -86925,6 +86990,17 @@
       },
       "QuoteStepDto": {
         "properties": {
+          "arrival": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteArrivalDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C4-API-2 (D-101): arrival window — the earliest ship date plus the zone’s extra lead days or the carrier’s transit days, counted in working days of the business calendar (holidays excluded); null when unknown"
+          },
           "designFeeAmount": {
             "example": "0.00",
             "type": [
@@ -86993,6 +87069,14 @@
             ],
             "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266); `not_instant`: no instant price now — request a quotation (D-440)",
             "example": null
+          },
+          "savingPercent": {
+            "description": "C4-API-2: \"ประหยัด x%\" against the smallest priced quantity of this calculation — (1 − unitPrice ÷ that tier’s unitPrice) × 100, rounded half-up to a whole number; null for that tier itself, a tier without an instant price, or a result ≤ 0",
+            "example": 12,
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "shippingAmount": {
             "description": "Shipping incl. VAT, its own line (D-013); null while not priced",
@@ -87108,6 +87192,25 @@
               "string",
               "null"
             ]
+          },
+          "vatRate": {
+            "description": "C4-API-2 (D-441, GLOBAL-RULES §5): the VAT rate `vatAmount` used, as a fraction (decimal string) — the approved `vat_standard` rate in force, the same rate as the shared VAT helper; null when `vatAmount` is null",
+            "example": "0.07",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "zoneName": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C4-API-2: the customer-facing name of the destination zone the shipping estimate used (from the delivery postcode); null while shipping is not priced. Never an origin or factory location (GLOBAL-RULES §1)"
           }
         },
         "required": [
@@ -87124,6 +87227,10 @@
           "shippingNetAmount",
           "shippingVatAmount",
           "vatAmount",
+          "vatRate",
+          "savingPercent",
+          "zoneName",
+          "arrival",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -102353,6 +102460,14 @@
             ],
             "example": "own_file"
           },
+          "freeRevisions": {
+            "description": "C4-API-2 (D-071): free revision rounds included with `hired_design` (\"แก้ฟรี {n} ครั้ง\") — the setting `design.free_revision_rounds` in force (effective-dated, audited; the same value the design service charges by); null when not set",
+            "example": 3,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "options": {
             "example": [
               "own_file",
@@ -102367,7 +102482,8 @@
         },
         "required": [
           "options",
-          "default"
+          "default",
+          "freeRevisions"
         ],
         "type": "object"
       },
@@ -213111,6 +213227,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -213151,6 +213271,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -213164,7 +213285,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -213733,6 +213859,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -213773,6 +213903,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -213786,7 +213917,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -214329,6 +214465,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -214369,6 +214509,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -214382,7 +214523,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -214855,6 +215001,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -214895,6 +215045,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -214908,7 +215059,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -215627,6 +215783,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -215667,6 +215827,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -215680,7 +215841,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -216117,6 +216283,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -216157,6 +216327,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -216170,7 +216341,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -216642,6 +216818,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -216682,6 +216862,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -216695,7 +216876,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -503887,6 +504073,7 @@
                   },
                   "design": {
                     "default": "own_file",
+                    "freeRevisions": 3,
                     "options": [
                       "own_file",
                       "online_designer",
@@ -547476,6 +547663,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -547485,6 +547676,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -547498,7 +547690,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ],
                   "target": {
@@ -547865,6 +548062,10 @@
                         ],
                         "steps": [
                           {
+                            "arrival": {
+                              "from": "2026-10-10",
+                              "to": "2026-10-10"
+                            },
                             "designFeeAmount": "0.00",
                             "earliestDeliveryDate": "2026-10-10",
                             "earliestShipDate": "2026-10-09",
@@ -547874,6 +548075,7 @@
                             "productAmount": "13380.00",
                             "quantity": 1000,
                             "reason": null,
+                            "savingPercent": null,
                             "shippingAmount": "128.40",
                             "shippingNetAmount": "120.00",
                             "shippingPending": false,
@@ -547887,7 +548089,12 @@
                             "toolingAmount": "0.00",
                             "toolingWaiver": null,
                             "unitPrice": "13.38",
-                            "vatAmount": "883.73"
+                            "vatAmount": "883.73",
+                            "vatRate": "0.07",
+                            "zoneName": {
+                              "en": "Bangkok and vicinity",
+                              "th": "กรุงเทพฯ และปริมณฑล"
+                            }
                           }
                         ],
                         "target": {
@@ -566252,6 +566459,10 @@
                     ],
                     "steps": [
                       {
+                        "arrival": {
+                          "from": "2026-10-10",
+                          "to": "2026-10-10"
+                        },
                         "designFeeAmount": "0.00",
                         "earliestDeliveryDate": "2026-10-10",
                         "earliestShipDate": "2026-10-09",
@@ -566261,6 +566472,7 @@
                         "productAmount": "13380.00",
                         "quantity": 1000,
                         "reason": null,
+                        "savingPercent": null,
                         "shippingAmount": "128.40",
                         "shippingNetAmount": "120.00",
                         "shippingPending": false,
@@ -566274,7 +566486,12 @@
                         "toolingAmount": "0.00",
                         "toolingWaiver": null,
                         "unitPrice": "13.38",
-                        "vatAmount": "883.73"
+                        "vatAmount": "883.73",
+                        "vatRate": "0.07",
+                        "zoneName": {
+                          "en": "Bangkok and vicinity",
+                          "th": "กรุงเทพฯ และปริมณฑล"
+                        }
                       }
                     ],
                     "target": {

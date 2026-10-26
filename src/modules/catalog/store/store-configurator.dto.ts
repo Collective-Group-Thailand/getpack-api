@@ -284,6 +284,17 @@ export class StoreConfiguratorDesignDto {
 
   @ApiProperty({ enum: DESIGN_OPTIONS, enumName: 'DesignOption', example: 'own_file' })
   default!: (typeof DESIGN_OPTIONS)[number];
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 3,
+    description:
+      'C4-API-2 (D-071): free revision rounds included with `hired_design` ("แก้ฟรี {n} ครั้ง") — the setting ' +
+      '`design.free_revision_rounds` in force (effective-dated, audited; the same value the design service ' +
+      'charges by); null when not set',
+  })
+  freeRevisions!: number | null;
 }
 
 export class StoreConfiguratorDto {
@@ -451,7 +462,7 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
   quoteValidityDays: 15,
   unit: 'piece',
   quantity: { min: 100, max: 50000, default: 300, presets: [100, 300, 500, 1000], maxTiers: 10 },
-  design: { options: ['own_file', 'online_designer', 'hired_design'], default: 'own_file' },
+  design: { options: ['own_file', 'online_designer', 'hired_design'], default: 'own_file', freeRevisions: 3 },
   defaultSpec: {
     configuration: {
       catalogProductId: ID('001'),

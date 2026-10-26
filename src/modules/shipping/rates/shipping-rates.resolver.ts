@@ -16,6 +16,9 @@ export type RateResolution =
       zoneId: bigint;
       zonePublicId: string;
       zoneCode: string;
+      /** The zone's customer-facing names (destination side only, never an origin). */
+      zoneNameTh: string;
+      zoneNameEn: string;
       rateId: bigint;
       /** VAT-exclusive. */
       net: MoneyValue;
@@ -144,6 +147,8 @@ export class ShippingRatesResolver {
       zoneId: zone.id,
       zonePublicId: zone.publicId,
       zoneCode: zone.code,
+      zoneNameTh: zone.nameTh,
+      zoneNameEn: zone.nameEn,
       rateId: band.id,
       net: bandAmount(band, parcel.weightG),
     };

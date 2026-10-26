@@ -95,6 +95,7 @@ import {
 } from './standard-product.dto';
 import { StandardProductInputDataService } from './standard-product-input-data.service';
 import { StorePricingService } from './store-pricing.service';
+import { storeStepFields } from './store-step-fields';
 import { TAG_SLEEVE_CONFIGURATION_EXAMPLE, TagSleeveConfigurationDto } from './tag-sleeve.dto';
 import { toolingView } from './tooling-view';
 
@@ -128,12 +129,14 @@ async function adminView(
     actor.type === 'user' ? (await permissions.forUser(actor.userId)).permissions : new Set<string>();
   const cost = granted.has('factory_buy_prices.read');
   const margin = granted.has('margin.read');
+  const extra = storeStepFields(view);
   return {
     calculatorVersion: view.calculatorVersion,
     options: view.options,
     dimensions: view.dimensions,
-    steps: view.steps.map((s) => ({
+    steps: view.steps.map((s, i) => ({
       ...s,
+      ...extra[i]!,
       internal: s.internal && {
         ...s.internal,
         buyPrice: cost ? s.internal.buyPrice : null,
