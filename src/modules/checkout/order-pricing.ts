@@ -141,7 +141,7 @@ export function priceOrderLines(
       ctx.vatPct,
     );
     // Inclusive lines keep their gross (the price the customer saw); shipping gets its own net's VAT.
-    const others = shared.lineNets.slice(1).map((net, i) => {
+    const others = shared.lineNets.slice(1).map((net, i): (typeof drafts)[number] => {
       const fee = fees[i];
       return fee
         ? { type: fee.type, quantity: 1, net, vat: fee.gross.sub(net) }
