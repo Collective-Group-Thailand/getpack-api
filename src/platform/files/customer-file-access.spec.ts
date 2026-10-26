@@ -13,6 +13,7 @@ import {
 } from './customer-file-access.controller';
 import { CustomerFileAccessService } from './customer-file-access.service';
 import { FilesService } from './files.service';
+import { StudioRenderPreviewService } from './studio-render-preview.service';
 
 /** Obviously fake fixtures (CLAUDE.md): one order (50) of customer 100, made by factory 10. */
 const ORDER = 50n;
@@ -50,6 +51,8 @@ const FILES = {
   studioPrint: file(8n, { purpose: 'artwork' }),
   designAsset: file(9n, { purpose: 'design_asset', ownerUserId: CUSTOMER }),
   studioRender: file(10n, { purpose: 'image', mimeType: 'image/png' }),
+  // B-API-7: the render's low-resolution preview (upload thumbnail pipeline).
+  renderPreview: file(11n, { thumbnailOfFileId: 10n, mimeType: 'image/webp' }),
 };
 const STUDIO_JOB_FILES = new Set([8n]);
 const STUDIO_DESIGN_FILES = new Set([10n]);
@@ -171,6 +174,11 @@ function setup() {
       ),
     },
     studioPrintJob: {
+      findMany: jest.fn(({ where }: { where: { version: { renders: { some: { fileId: bigint } } } } }) =>
+        Promise.resolve(
+          STUDIO_DESIGN_FILES.has(where.version.renders.some.fileId) ? [{ orderId: ORDER }] : [],
+        ),
+      ),
       findFirst: jest.fn(({ where }: { where: { OR: Record<string, bigint>[] } }) =>
         Promise.resolve(
           where.OR.some((o) => Object.values(o).some((id) => STUDIO_JOB_FILES.has(id)))
@@ -254,7 +262,9 @@ function setup() {
     {} as never,
   ).onModuleInit();
   new JobsQueryService(prisma as never, scoping as never, files).onModuleInit();
-  return { files, logs, prisma };
+  const thumbnails = { ensureThumbnail: jest.fn().mockResolvedValue(FILES.renderPreview) };
+  const previews = new StudioRenderPreviewService(prisma as never, access, files, thumbnails as never);
+  return { files, logs, prisma, previews, thumbnails };
 }
 
 describe('customer file access (D-444, DECISIONS-STAGE-A §7)', () => {
@@ -329,6 +339,68 @@ describe('customer file access (D-444, DECISIONS-STAGE-A §7)', () => {
     expect(await can(customer(CUSTOMER), FILES.copy)).toBe(false);
     expect(await can(customer(999n), FILES.original)).toBe(false);
     expect(await can(customer(999n), FILES.approvedProof)).toBe(false);
+  });
+});
+
+describe('Studio render previews (B-API-7, D-446)', () => {
+  it('CS handling the order reads the preview but not the render; logged as a thumbnail of the order', async () => {
+    const { files, previews, logs, thumbnails } = setup();
+    for (const who of ['csHandling', 'csExplicit', 'csLeadHandling']) {
+      expect(await files.canRead(staff(who), FILES.renderPreview)).toBe(true);
+      expect(await files.canRead(staff(who), FILES.studioRender)).toBe(false);
+      await expect(files.downloadUrl(staff(who), FILES.studioRender.publicId, 'admin')).rejects.toMatchObject(
+        {
+          code: 'http.not_found',
+        },
+      );
+    }
+    const { url } = await previews.previewUrl(staff('csExplicit'), FILES.studioRender.publicId);
+    expect(url).toMatch(/^https:/);
+    expect(thumbnails.ensureThumbnail).toHaveBeenCalledWith(FILES.studioRender);
+    expect(logs).toEqual([
+      expect.objectContaining({
+        actorUserId: 304n,
+        fileObjectId: 11n,
+        fileKind: 'customer_original',
+        orderId: ORDER,
+        channel: 'admin',
+        purpose: 'thumbnail',
+      }),
+    ]);
+  });
+
+  it('CS not handling the order: preview and render both denied, nothing generated or logged', async () => {
+    const { files, previews, logs, thumbnails } = setup();
+    expect(await files.canRead(staff('csOther'), FILES.renderPreview)).toBe(false);
+    expect(await files.canRead(staff('csOther'), FILES.studioRender)).toBe(false);
+    await expect(previews.previewUrl(staff('csOther'), FILES.studioRender.publicId)).rejects.toMatchObject({
+      code: 'http.not_found',
+    });
+    expect(thumbnails.ensureThumbnail).not.toHaveBeenCalled();
+    expect(logs).toEqual([]);
+  });
+
+  it.each(['admin', 'finance', 'logistics', 'auditor', 'superadmin', 'csLead'])(
+    'other staff (%s): preview and render denied',
+    async (who) => {
+      const { files, previews } = setup();
+      expect(await files.canRead(staff(who), FILES.renderPreview)).toBe(false);
+      expect(await files.canRead(staff(who), FILES.studioRender)).toBe(false);
+      await expect(previews.previewUrl(staff(who), FILES.studioRender.publicId)).rejects.toMatchObject({
+        code: 'http.not_found',
+      });
+    },
+  );
+
+  it('Prepress reads both; previews are only for Studio renders (not other customer artwork)', async () => {
+    const { files, previews } = setup();
+    expect(await files.canRead(staff('prepress'), FILES.renderPreview)).toBe(true);
+    expect(await files.canRead(staff('prepress'), FILES.studioRender)).toBe(true);
+    await expect(previews.previewUrl(staff('csHandling'), FILES.original.publicId)).rejects.toMatchObject({
+      code: 'http.not_found',
+    });
+    // The original artwork's own thumbnail keeps following its original (CS not handling: denied).
+    expect(await files.canRead(staff('csOther'), FILES.thumbnail)).toBe(false);
   });
 });
 
@@ -585,5 +657,161 @@ describe('explicit order support assignment (B-API-6, D-444)', () => {
       OrderSupportAssignmentsController.prototype.set,
     ])
       expect(Reflect.getMetadata(REQUIRED_PERMISSIONS, handler)).toEqual(['orders.assign_support']);
+  });
+});
+
+describe('support assignment ends with the claim window (B-API-7, D-446)', () => {
+  const NOW = new Date('2026-11-20T03:00:00Z');
+  const LIVE = {
+    id: 7n,
+    publicId: 'asg-1',
+    assignedAt: new Date('2026-11-01T03:00:00Z'),
+    endedAt: null,
+    order: { id: ORDER, publicId: 'o-1' },
+    user: { publicId: 'staff-csExplicit' },
+  };
+
+  function endSetup(order: { claimWindowEndsAt: Date | null; openClaims: number }) {
+    const tx = {
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      order: {
+        findUniqueOrThrow: jest.fn().mockResolvedValue({
+          claimWindowEndsAt: order.claimWindowEndsAt,
+          _count: { claims: order.openClaims },
+        }),
+      },
+      orderSupportAssignment: {
+        findUnique: jest.fn().mockResolvedValue(LIVE),
+        updateMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    // The selection the database would make: window ended, no open claim.
+    const due =
+      order.claimWindowEndsAt !== null && order.claimWindowEndsAt <= NOW && order.openClaims === 0
+        ? [{ id: 7n }]
+        : [];
+    const prisma = {
+      orderSupportAssignment: { findMany: jest.fn().mockResolvedValue(due) },
+      withTx: jest.fn((work: (t: unknown) => Promise<unknown>) => work(tx)),
+    };
+    const audit = { record: jest.fn().mockResolvedValue(undefined) };
+    const events = { record: jest.fn().mockResolvedValue({ id: 1n }) };
+    const service = new CustomerFileAccessService(
+      prisma as never,
+      {} as never,
+      audit as never,
+      events as never,
+    );
+    return { service, prisma, tx, audit, events };
+  }
+
+  it('ends the live assignment once the window has ended, audited, with order.support_unassigned', async () => {
+    const { service, prisma, tx, audit, events } = endSetup({
+      claimWindowEndsAt: new Date('2026-11-19T17:00:00Z'),
+      openClaims: 0,
+    });
+    expect(await service.endAfterClaimWindow(NOW)).toBe(1);
+    expect(prisma.orderSupportAssignment.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          endedAt: null,
+          order: {
+            claimWindowEndsAt: { lte: NOW },
+            claims: { none: { status: { notIn: ['rejected', 'resolved', 'closed'] } } },
+          },
+        },
+      }),
+    );
+    expect(tx.orderSupportAssignment.updateMany).toHaveBeenCalledWith({
+      where: { id: 7n, endedAt: null },
+      data: { endedAt: NOW, endedById: null },
+    });
+    const data = {
+      orderId: 'o-1',
+      userId: 'staff-csExplicit',
+      assignmentId: 'asg-1',
+      reason: 'claim_window_ended',
+    };
+    expect(audit.record).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ action: 'order.support_unassigned', resourcePublicId: 'o-1', data }),
+    );
+    expect(events.record).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ type: 'order.support_unassigned', aggregateId: 'o-1', payload: data }),
+      expect.objectContaining({ type: 'system' }),
+    );
+  });
+
+  it('keeps the assignment while a claim is open, even after the window date (re-checked under the lock)', async () => {
+    const { service, tx, audit } = endSetup({
+      claimWindowEndsAt: new Date('2026-11-19T17:00:00Z'),
+      openClaims: 1,
+    });
+    expect(await service.endAfterClaimWindow(NOW)).toBe(0);
+    // A claim opened between the selection and the lock also keeps it.
+    const raced = endSetup({ claimWindowEndsAt: new Date('2026-11-19T17:00:00Z'), openClaims: 0 });
+    raced.tx.order.findUniqueOrThrow.mockResolvedValue({
+      claimWindowEndsAt: new Date('2026-11-19T17:00:00Z'),
+      _count: { claims: 1 },
+    });
+    expect(await raced.service.endAfterClaimWindow(NOW)).toBe(0);
+    expect(raced.tx.orderSupportAssignment.updateMany).not.toHaveBeenCalled();
+    expect(tx.orderSupportAssignment.updateMany).not.toHaveBeenCalled();
+    expect(audit.record).not.toHaveBeenCalled();
+  });
+
+  it('keeps it before the window ends and while the order has no window yet (not delivered)', async () => {
+    for (const claimWindowEndsAt of [new Date('2026-11-25T17:00:00Z'), null]) {
+      const { service, tx } = endSetup({ claimWindowEndsAt, openClaims: 0 });
+      expect(await service.endAfterClaimWindow(NOW)).toBe(0);
+      expect(tx.orderSupportAssignment.updateMany).not.toHaveBeenCalled();
+    }
+  });
+});
+
+describe('manual end by CS Lead still works (B-API-7)', () => {
+  it('PUT with null ends the live assignment before the window ends', async () => {
+    const tx = {
+      order: {
+        findUnique: jest
+          .fn()
+          .mockResolvedValue({ id: ORDER, publicId: 'o-1', orderCode: 'DEVOR-2610-00001' }),
+      },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      orderSupportAssignment: {
+        findFirst: jest.fn().mockResolvedValue({ id: 7n, publicId: 'asg-1', userId: 304n }),
+        update: jest.fn().mockResolvedValue({}),
+        create: jest.fn(),
+      },
+    };
+    const prisma = { withTx: jest.fn((work: (t: unknown) => Promise<unknown>) => work(tx)) };
+    const audit = { record: jest.fn().mockResolvedValue(undefined) };
+    const events = { record: jest.fn().mockResolvedValue({ id: 1n }) };
+    const service = new CustomerFileAccessService(
+      prisma as never,
+      {} as never,
+      audit as never,
+      events as never,
+    );
+    const lead = {
+      type: 'user',
+      userId: 305n,
+      publicId: 'staff-csLead',
+      audience: 'staff',
+      scopes: [],
+    } as const;
+    await service.assignSupport(lead, 'o-1', null);
+    expect(tx.orderSupportAssignment.update).toHaveBeenCalledWith({
+      where: { id: 7n },
+      data: { endedAt: expect.any(Date), endedById: 305n },
+    });
+    expect(events.record).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({
+        type: 'order.support_assigned',
+        payload: expect.objectContaining({ userId: null }),
+      }),
+    );
   });
 });

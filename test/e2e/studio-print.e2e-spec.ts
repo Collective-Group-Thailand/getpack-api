@@ -10,6 +10,7 @@ import { type DevFolding } from '../../prisma/seed/dev-folding';
 import { type UserActor } from '../../src/common/context/actor';
 import { StudioPrintService } from '../../src/modules/studio/studio-print.service';
 import { StyleImportService } from '../../src/modules/styles/style-import.service';
+import { CustomerFileAccessService } from '../../src/platform/files/customer-file-access.service';
 import { FileProcessingJobs } from '../../src/platform/files/file-processing.jobs';
 import {
   addAddress,
@@ -306,6 +307,51 @@ describe('studio print file and order hand-off (e2e, U4.B4)', () => {
       where: { versionId: job.versionId, source: 'pdf' },
     });
     expect(pdfRun).not.toBeNull();
+
+    // B-API-7 (D-446): support handling the order reads the render's low-resolution preview, never the render.
+    const cs = await staffToken(ctx, 'cs');
+    const csLead = await staffToken(ctx, 'cs_lead');
+    const admin = await staffToken(ctx, 'admin');
+    const csUser = await ctx.prisma.user.findFirstOrThrow({ where: { email: 'cs@example.invalid' } });
+    await as(ctx, cs).get(`/v1/admin/files/${jpeg}/preview`).expect(404);
+    await as(ctx, csLead)
+      .put(`/v1/admin/orders/${orderId}/support-assignment`, { supportUserId: csUser.publicId })
+      .expect(200);
+    const preview = await as(ctx, cs).get(`/v1/admin/files/${jpeg}/preview`).expect(200);
+    expect(preview.body.url).toMatch(/^https?:\/\//);
+    await as(ctx, cs).get(`/v1/admin/files/${jpeg}/download`).expect(404);
+    await as(ctx, admin).get(`/v1/admin/files/${jpeg}/preview`).expect(404);
+    const renderFile = await ctx.prisma.fileObject.findUniqueOrThrow({ where: { publicId: jpeg } });
+    const previewRow = await ctx.prisma.fileObject.findFirstOrThrow({
+      where: { thumbnailOfFileId: renderFile.id },
+    });
+    expect(previewRow.mimeType).toBe('image/webp');
+    expect(
+      await ctx.prisma.customerFileAccessLog.count({
+        where: {
+          fileObjectId: previewRow.id,
+          actorUserId: csUser.id,
+          purpose: 'thumbnail',
+          order: { publicId: orderId },
+        },
+      }),
+    ).toBe(1);
+
+    // The assignment ends by itself once the claim window has ended (no open claim); the preview is then refused.
+    await ctx.prisma.order.update({
+      where: { publicId: orderId },
+      data: { claimWindowEndsAt: new Date(Date.now() - 60_000) },
+    });
+    expect(await ctx.app.get(CustomerFileAccessService).endAfterClaimWindow()).toBeGreaterThanOrEqual(1);
+    expect(
+      (await as(ctx, csLead).get(`/v1/admin/orders/${orderId}/support-assignment`).expect(200)).body.assignee,
+    ).toBeNull();
+    expect(
+      await ctx.prisma.auditLog.count({
+        where: { action: 'order.support_unassigned', resourcePublicId: orderId },
+      }),
+    ).toBe(1);
+    await as(ctx, cs).get(`/v1/admin/files/${jpeg}/preview`).expect(404);
   });
 
   it('attaches a print file finished after the order was placed', async () => {

@@ -1,15 +1,17 @@
-import { type Actor, type UserActor } from '@common/context/actor';
+import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { DomainException } from '@common/errors/domain.exception';
 import { decodeCursor, encodeCursor } from '@common/pagination/pagination';
 import { PrismaService } from '@database/prisma.service';
 import {
+  type ClaimStatus,
   type CustomerFileKind,
   type FileAccessChannel,
   type FileAccessPurpose,
   type FileObject,
   type Prisma,
 } from '@generated/prisma/client';
+import { FINAL_CLAIM_STATUSES } from '@modules/claims/liability';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
@@ -147,6 +149,105 @@ export class CustomerFileAccessService {
       }),
     ]);
     return assigned + conversations > 0;
+  }
+
+  /**
+   * B-API-7: the orders made from the design version a Studio render belongs to (its Studio print jobs with an
+   * order). Empty when the file is not a render or no order uses it.
+   */
+  async renderOrders(fileId: bigint): Promise<bigint[]> {
+    const jobs = await this.prisma.studioPrintJob.findMany({
+      where: { orderId: { not: null }, version: { renders: { some: { fileId } } } },
+      select: { orderId: true },
+      orderBy: { id: 'asc' },
+    });
+    return jobs.map((j) => j.orderId).filter((id): id is bigint => id !== null);
+  }
+
+  /**
+   * B-API-7: whether a staff member may read the preview (thumbnail) of a Studio render — Prepress
+   * (`customer_files.read`) for any render, support (`customer_files.read_handled`) for a render of an order they
+   * handle. Returns the reference to log (with that order), or null when denied. The render itself is not covered.
+   */
+  async staffMayPreview(userId: bigint, renderFileId: bigint): Promise<CustomerFileRef | null> {
+    const orders = await this.renderOrders(renderFileId);
+    const granted = (await this.permissions.forUser(userId)).permissions;
+    if (granted.has('customer_files.read')) {
+      const isRender =
+        orders.length > 0 ||
+        (await this.prisma.designVersionRender.count({ where: { fileId: renderFileId } })) > 0;
+      return isRender ? { kind: 'customer_original', orderId: orders[0] ?? null } : null;
+    }
+    if (!granted.has('customer_files.read_handled')) return null;
+    for (const orderId of orders)
+      if (await this.handles(userId, orderId)) return { kind: 'customer_original', orderId };
+    return null;
+  }
+
+  /**
+   * B-API-7 (worker, `orders.support_assignment_end`): ends every live support assignment whose order's claim window
+   * (`orders.claim_window_ends_at`, set at delivery) has ended, unless a claim on the order is still open (the window
+   * stays open for it, D-437). One transaction per order with an audit row and the `order.support_unassigned` event
+   * (reason `claim_window_ended`).
+   */
+  async endAfterClaimWindow(now: Date = new Date(), limit = 200): Promise<number> {
+    const openClaim = { status: { notIn: [...FINAL_CLAIM_STATUSES] as ClaimStatus[] } };
+    const due = await this.prisma.orderSupportAssignment.findMany({
+      where: { endedAt: null, order: { claimWindowEndsAt: { lte: now }, claims: { none: openClaim } } },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+      take: limit,
+    });
+    const actor = systemActor('orders.support_assignment_end');
+    let ended = 0;
+    for (const { id } of due) {
+      const done = await this.prisma.withTx(async (tx) => {
+        const live = await tx.orderSupportAssignment.findUnique({
+          where: { id },
+          include: { order: { select: { id: true, publicId: true } }, user: { select: { publicId: true } } },
+        });
+        if (!live || live.endedAt) return false;
+        await tx.$queryRaw`SELECT id FROM orders WHERE id = ${live.order.id} FOR UPDATE`;
+        const order = await tx.order.findUniqueOrThrow({
+          where: { id: live.order.id },
+          select: { claimWindowEndsAt: true, _count: { select: { claims: { where: openClaim } } } },
+        });
+        if (!order.claimWindowEndsAt || order.claimWindowEndsAt > now || order._count.claims > 0)
+          return false;
+        const changed = await tx.orderSupportAssignment.updateMany({
+          where: { id, endedAt: null },
+          data: { endedAt: now < live.assignedAt ? live.assignedAt : now, endedById: null },
+        });
+        if (changed.count === 0) return false;
+        const data = {
+          orderId: live.order.publicId,
+          userId: live.user.publicId,
+          assignmentId: live.publicId,
+          reason: 'claim_window_ended',
+        };
+        await this.audit.record(tx, {
+          category: 'iam',
+          action: 'order.support_unassigned',
+          actor,
+          resourceType: 'order',
+          resourcePublicId: live.order.publicId,
+          data,
+        });
+        await this.events.record(
+          tx,
+          {
+            type: 'order.support_unassigned',
+            aggregateType: 'order',
+            aggregateId: live.order.publicId,
+            payload: data,
+          },
+          actor,
+        );
+        return true;
+      });
+      if (done) ended += 1;
+    }
+    return ended;
   }
 
   /** The live support assignment of an order (B-API-6), with the order. 404 for an unknown order. */

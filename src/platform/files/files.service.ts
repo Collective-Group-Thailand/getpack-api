@@ -444,7 +444,10 @@ export class FilesService {
       file.thumbnailOfFileId === null
         ? file
         : await this.prisma.fileObject.findUnique({ where: { id: file.thumbnailOfFileId } });
-    const ref = subject ? await this.customerFiles.classify(subject) : null;
+    let ref = subject ? await this.customerFiles.classify(subject) : null;
+    // B-API-7: a Studio render's preview is logged against the order it was read for.
+    if (ref && subject && ref.orderId === null && file.thumbnailOfFileId !== null && isStaff(actor))
+      ref = (await this.customerFiles.staffMayPreview(actor.userId, subject.id)) ?? ref;
     if (ref) {
       await this.customerFiles.record(actor, {
         fileObjectId: file.id,
@@ -483,11 +486,15 @@ export class FilesService {
    * file, or an attachment policy of the owning module. A thumbnail follows its original.
    * D-444: a customer's artwork / original or a production copy of one is read on staff only by Prepress
    * (`customer_files.read`) and by support handling the order (`customer_files.read_handled`), not by `files.read`.
+   * B-API-7: the thumbnail (preview) of a Studio render is also read by support handling an order made from it.
    */
   async canRead(actor: Actor, file: FileObject): Promise<boolean> {
     if (file.thumbnailOfFileId !== null) {
       const original = await this.prisma.fileObject.findUnique({ where: { id: file.thumbnailOfFileId } });
-      return original ? this.canRead(actor, original) : false;
+      if (!original) return false;
+      if (await this.canRead(actor, original)) return true;
+      // B-API-7: the low-resolution preview of a Studio render, for staff handling an order made from it.
+      return isStaff(actor) && (await this.customerFiles.staffMayPreview(actor.userId, original.id)) !== null;
     }
     if (actor.type === 'system') return true;
     if (actor.type === 'user') {
@@ -556,6 +563,9 @@ export class FilesService {
     return file;
   }
 }
+
+const isStaff = (actor: Actor): actor is Extract<Actor, { type: 'user' }> =>
+  actor.type === 'user' && actor.audience === 'staff';
 
 /** The surface a URL is issued through when the caller does not say (the actor's own zone). */
 function channelOf(actor: Actor): FileAccessChannel {
