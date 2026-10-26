@@ -86,6 +86,25 @@ export function customerArtworkStatus(designOption: string, artworkStatus: strin
     : artworkStatus;
 }
 
+/** B-API-4b: what the customer reads while a file sent before payment waits for it. */
+export const ARTWORK_RECEIVED_BEFORE_PAYMENT_TH = 'ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน';
+
+/**
+ * B-API-4b (DECISIONS-STAGE-A §7): the artwork next step to show the customer, or null for none. A file uploaded
+ * before payment is preflighted at once, but Prepress reviews it only after payment — the order says so.
+ */
+export function customerArtworkNoteTh(f: {
+  artworkStatus: string;
+  paidForProductionAt: Date | null;
+  cancelledAt: Date | null;
+}): string | null {
+  return !f.paidForProductionAt &&
+    !f.cancelledAt &&
+    (f.artworkStatus === 'uploaded' || f.artworkStatus === 'in_review')
+    ? ARTWORK_RECEIVED_BEFORE_PAYMENT_TH
+    : null;
+}
+
 /**
  * The customer status, first match wins: cancelled · a delivered order with an open claim ("ได้รับแล้ว ·
  * เคลมกำลังตรวจ", also after completion) · completed · received · shipping · in production · unpaid · the artwork

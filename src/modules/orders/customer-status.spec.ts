@@ -3,8 +3,10 @@ import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
 
 import {
   actionOwnerOf,
+  ARTWORK_RECEIVED_BEFORE_PAYMENT_TH,
   artworkOwner,
   CUSTOMER_ORDER_STATUSES,
+  customerArtworkNoteTh,
   customerArtworkStatus,
   type CustomerStatusFacts,
   customerStatusOf,
@@ -188,5 +190,30 @@ describe('payment deadline (D-436)', () => {
     expect(sameConfiguration(input, { ...input, configuration: { b: [1, 2], a: 1 } })).toBe(true);
     expect(sameConfiguration(input, { ...input, configuration: { a: 2, b: [1, 2] } })).toBe(false);
     expect(sameConfiguration(input, { ...input, deliveryPostcode: '10120' })).toBe(false);
+  });
+});
+
+describe('artwork note before payment (B-API-4b)', () => {
+  const at = new Date('2026-10-20T03:00:00Z');
+  it('tells the customer a file sent before payment is checked after payment', () => {
+    expect(ARTWORK_RECEIVED_BEFORE_PAYMENT_TH).toBe('ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน');
+    expect(
+      customerArtworkNoteTh({ artworkStatus: 'uploaded', paidForProductionAt: null, cancelledAt: null }),
+    ).toBe(ARTWORK_RECEIVED_BEFORE_PAYMENT_TH);
+  });
+  it('says nothing once paid, when cancelled or without a file', () => {
+    expect(
+      customerArtworkNoteTh({ artworkStatus: 'uploaded', paidForProductionAt: at, cancelledAt: null }),
+    ).toBeNull();
+    expect(
+      customerArtworkNoteTh({ artworkStatus: 'uploaded', paidForProductionAt: null, cancelledAt: at }),
+    ).toBeNull();
+    expect(
+      customerArtworkNoteTh({
+        artworkStatus: 'awaiting_upload',
+        paidForProductionAt: null,
+        cancelledAt: null,
+      }),
+    ).toBeNull();
   });
 });

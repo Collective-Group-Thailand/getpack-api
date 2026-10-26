@@ -327,3 +327,45 @@ Run unchanged (they download customer or proof files): `production-milestones`, 
 4. **Design-studio assets** (`design_asset` uploads, studio designs) and hired-design briefs are not classified as
    customer artwork yet (their own readers decide; staff still read them with `files.read`).
 5. Approved proof copies stay readable by every staff role with `files.read` (staff-made proof); only logged.
+
+## B-API-4b Prepress queue after payment
+
+Product-owner decision (DECISIONS-STAGE-A §7, "Own-file upload before payment"): the customer may upload before
+payment and the automatic file check (preflight worker) runs at once, but Prepress reviews **paid orders only**.
+Answers B-API-4 open question 1.
+
+### Changed behaviour
+
+| What | Before → after |
+|---|---|
+| `admin.artwork.queue` `kind=submissions` | every preflighted submission → only orders with `paidForProductionAt`; `since` (SLA start) = the later of the check and the payment |
+| `admin.orderOperations.queue` `artwork_review` and the dashboard counter `orders.artwork_review` (`orderQueueWhere`) | uploaded / in review → same, **paid orders only** |
+| Upload on an unpaid order (`artworkStatus` → `uploaded`) | event `artwork.submitted` (routes the Prepress notification) → **`artwork.submitted_before_payment`** (no notification route; customer timeline "ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน") |
+| Order paid (`order.fact_recorded` `paid_for_production`) | — → new subscriber `artwork.prepress_after_payment` records `artwork.submitted` (internal activity, payload `afterPayment: true`) for the order's pending `submitted` version, so the seeded Prepress route (in-app + LINE) fires then |
+| `OrderDto` (store, B2B, logistics, admin) | new nullable **`artworkNoteTh`**: "ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน" while unpaid, not cancelled and `artworkStatus` is `uploaded` / `in_review`; null otherwise |
+
+Uploads on a paid order still emit `artwork.submitted` at once. `changes_requested` / `proofs_waiting` are unchanged
+(a proof needs an accepted submission, which now comes from the paid queue). No migration, setting or env var;
+contract regenerated (`artworkNoteTh`, endpoint descriptions).
+
+### Production waits for payment (unchanged, verified)
+
+`applyFact` (`src/modules/orders/order-state.ts`, `production_started`) refuses without `paidForProductionAt`
+("instalments required before production are unpaid", D-073), also for a manual start; the gate
+(`production.gate`, `ProductionService.onFact` / `evaluate`) releases only on `paid_for_production` / `artwork_approved`.
+
+### Factory confidentiality
+
+No partner-facing field; `test/unit/storefront-factory-confidentiality.spec.ts` green.
+
+### e2e specs to run locally
+
+Changed: `artwork` (unpaid submission not queued, `artworkNoteTh`, paid via `applyFact`, then queued),
+`order-operations` (`artwork_review` lists the paid order only). Run unchanged: `notification-matrix` (pays before
+the upload), `launchpad`, `orders`, `payments`, `designs`, `studio-documents`, `production-release`.
+
+### Open questions
+
+1. Prepress can still accept / reject an unpaid order's submission by direct id (not listed). Should review actions
+   refuse until payment? Kept open (queue-only change).
+2. Should `kind=changes_requested` also be limited to paid orders? Not changed (proofs follow an accepted, paid-queue file).

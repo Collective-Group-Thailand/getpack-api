@@ -9910,6 +9910,14 @@
             "description": "Who acts next on the order (D-438): `team`, `customer`, or null when nothing is left to do",
             "example": "customer"
           },
+          "artworkNoteTh": {
+            "description": "The artwork next step to show the customer (B-API-4b, DECISIONS-STAGE-A §7): \"ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน\" while a file sent before payment waits for it (Prepress reviews paid orders only); null otherwise",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "artworkOwner": {
             "anyOf": [
               {
@@ -10191,6 +10199,7 @@
           "artworkStatusLabelTh",
           "artworkStatusLabelAdminTh",
           "artworkOwner",
+          "artworkNoteTh",
           "productTypeCode",
           "summary",
           "quoteId",
@@ -73988,6 +73997,14 @@
             "description": "Who acts next on the order (D-438): `team`, `customer`, or null when nothing is left to do",
             "example": "customer"
           },
+          "artworkNoteTh": {
+            "description": "The artwork next step to show the customer (B-API-4b, DECISIONS-STAGE-A §7): \"ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน\" while a file sent before payment waits for it (Prepress reviews paid orders only); null otherwise",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "artworkOwner": {
             "anyOf": [
               {
@@ -74266,6 +74283,7 @@
           "artworkStatusLabelTh",
           "artworkStatusLabelAdminTh",
           "artworkOwner",
+          "artworkNoteTh",
           "productTypeCode",
           "summary",
           "quoteId",
@@ -225153,6 +225171,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -274866,6 +274885,7 @@
                       "orders": [
                         {
                           "actionOwner": "customer",
+                          "artworkNoteTh": null,
                           "artworkOwner": "customer",
                           "artworkStatus": "awaiting_upload",
                           "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -275241,6 +275261,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -275635,6 +275656,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -276097,6 +276119,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -276588,6 +276611,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -277937,7 +277961,7 @@
     },
     "/v1/admin/order-queues/{queue}": {
       "get": {
-        "description": "`waiting_payment` (รอชำระ, oldest first), `artwork_review` (รอตรวจไฟล์: uploaded / in review), `waiting_production` (รอเริ่มผลิต: paid, not started), `due_soon` (ใกล้ครบกำหนดส่ง: promised ship date within `withinDays`, not shipped), `late` (ล่าช้า: promised ship date passed, not shipped).\n\nImplements: D-060, D-073.",
+        "description": "`waiting_payment` (รอชำระ, oldest first), `artwork_review` (รอตรวจไฟล์: uploaded / in review, paid orders only — B-API-4b), `waiting_production` (รอเริ่มผลิต: paid, not started), `due_soon` (ใกล้ครบกำหนดส่ง: promised ship date within `withinDays`, not shipped), `late` (ล่าช้า: promised ship date passed, not shipped).\n\nImplements: D-060, D-073.",
         "operationId": "admin.orderOperations.queue",
         "parameters": [
           {
@@ -278815,6 +278839,7 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
+                  "artworkNoteTh": null,
                   "artworkOwner": "customer",
                   "artworkStatus": "awaiting_upload",
                   "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -279386,6 +279411,7 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
+                  "artworkNoteTh": null,
                   "artworkOwner": "customer",
                   "artworkStatus": "awaiting_upload",
                   "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -279794,6 +279820,7 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
+                  "artworkNoteTh": null,
                   "artworkOwner": "customer",
                   "artworkStatus": "awaiting_upload",
                   "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -291431,7 +291458,7 @@
     },
     "/v1/admin/prepress/queue": {
       "get": {
-        "description": "`submissions`: preflighted files waiting for review, oldest first; `changes_requested`: proofs the customer sent back; `proofs_waiting`: proofs waiting for the customer. `dueAt` follows `artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set. Filter by the Prepress owner (`assigneeId`, `none` = unowned), product type and artwork status; rows carry the customer, product type, artwork status and owner.\n\nImplements: D-070, D-175.",
+        "description": "`submissions`: preflighted files of paid orders waiting for review, oldest first (a file received before payment joins at payment, `since` = the later of check and payment — B-API-4b); `changes_requested`: proofs the customer sent back; `proofs_waiting`: proofs waiting for the customer. `dueAt` follows `artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set. Filter by the Prepress owner (`assigneeId`, `none` = unowned), product type and artwork status; rows carry the customer, product type, artwork status and owner.\n\nImplements: D-070, D-175.",
         "operationId": "admin.artwork.queue",
         "parameters": [
           {
@@ -356633,6 +356660,7 @@
                       "orders": [
                         {
                           "actionOwner": "customer",
+                          "artworkNoteTh": null,
                           "artworkOwner": "customer",
                           "artworkStatus": "awaiting_upload",
                           "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -357005,6 +357033,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -357419,6 +357448,7 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
+                  "artworkNoteTh": null,
                   "artworkOwner": "customer",
                   "artworkStatus": "awaiting_upload",
                   "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
@@ -504924,6 +504954,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
@@ -533167,6 +533198,7 @@
                       "orders": [
                         {
                           "actionOwner": "customer",
+                          "artworkNoteTh": null,
                           "artworkOwner": "customer",
                           "artworkStatus": "awaiting_upload",
                           "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
@@ -533516,6 +533548,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
@@ -533887,6 +533920,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
@@ -534355,6 +534389,7 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
+                      "artworkNoteTh": null,
                       "artworkOwner": "customer",
                       "artworkStatus": "awaiting_upload",
                       "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
@@ -535841,6 +535876,7 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
+                  "artworkNoteTh": null,
                   "artworkOwner": "customer",
                   "artworkStatus": "awaiting_upload",
                   "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
@@ -536141,6 +536177,7 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
+                  "artworkNoteTh": null,
                   "artworkOwner": "customer",
                   "artworkStatus": "awaiting_upload",
                   "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
@@ -536464,6 +536501,7 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
+                  "artworkNoteTh": null,
                   "artworkOwner": "customer",
                   "artworkStatus": "awaiting_upload",
                   "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",

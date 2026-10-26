@@ -259,7 +259,7 @@ export class AdminOrderOperationsController {
     id: 'admin.orderOperations.queue',
     summary: 'Work queue of orders',
     description:
-      '`waiting_payment` (รอชำระ, oldest first), `artwork_review` (รอตรวจไฟล์: uploaded / in review), ' +
+      '`waiting_payment` (รอชำระ, oldest first), `artwork_review` (รอตรวจไฟล์: uploaded / in review, paid orders only — B-API-4b), ' +
       '`waiting_production` (รอเริ่มผลิต: paid, not started), `due_soon` (ใกล้ครบกำหนดส่ง: promised ship date ' +
       'within `withinDays`, not shipped), `late` (ล่าช้า: promised ship date passed, not shipped).',
     implements: ['D-060', 'D-073'],

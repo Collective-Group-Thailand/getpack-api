@@ -1,4 +1,4 @@
-import { type Actor, type UserActor } from '@common/context/actor';
+import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { statusLabels } from '@common/labels/status-labels';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -14,7 +14,9 @@ import { pricedConfiguration } from '@modules/quotes/quote-input';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
+import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
+import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { FILE_PURPOSES } from '@platform/files/file-purposes';
 import { FilesService } from '@platform/files/files.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
@@ -29,6 +31,13 @@ import { SUBMISSION_INCLUDE, type SubmissionRow } from './artwork-views';
 
 /** Artwork may change until it is approved and production starts (D-073). */
 const TAKES_ARTWORK: readonly string[] = ['waiting_payment', 'paid_for_production', 'artwork_approved'];
+
+/** B-API-4b: the prepress review queue holds only paid orders (production gate D-073). */
+const PAID_ORDER = { paidForProductionAt: { not: null } } satisfies Prisma.OrderWhereInput;
+
+function latest(a: Date, b: Date | null): Date {
+  return b && b > a ? b : a;
+}
 
 export interface SubmitInput {
   files?: { fileId: string; role?: 'artwork' | 'font' | 'reference' }[];
@@ -260,10 +269,12 @@ export class ArtworkService implements OnModuleInit {
       });
     }
     await this.setArtworkStatus(tx, current.id, 'uploaded', actor);
+    // B-API-4b: before payment the file is received (and preflighted) but Prepress is told only after payment
+    // (`artwork.prepress_after_payment`), so no `artwork.submitted` reaches its notification route yet.
     await this.record(
       tx,
       current.publicId,
-      'artwork.submitted',
+      current.paidForProductionAt ? 'artwork.submitted' : 'artwork.submitted_before_payment',
       {
         submissionId: submission.publicId,
         versionNo,
@@ -275,6 +286,42 @@ export class ArtworkService implements OnModuleInit {
       await this.customerPublicId(tx, current.customerUserId),
     );
     return submission.id;
+  }
+
+  /**
+   * B-API-4b: when an order is paid, the file it received before payment reaches Prepress — its submission is
+   * already in the queue (paid orders only) and `artwork.submitted` (internal) routes Prepress's notification.
+   */
+  @OnDomainEvent('order.fact_recorded', { consumer: 'artwork.prepress_after_payment' })
+  async onPaid(event: DomainEventEnvelope, tx: Tx): Promise<void> {
+    if (event.payload['fact'] !== 'paid_for_production') return;
+    const order = await tx.order.findUnique({
+      where: { publicId: event.aggregateId },
+      select: { id: true, publicId: true, customerUserId: true, cancelledAt: true },
+    });
+    if (!order || order.cancelledAt) return;
+    const pending = await tx.artworkSubmission.findFirst({
+      where: { orderId: order.id, status: 'submitted' },
+      orderBy: { versionNo: 'desc' },
+      include: { _count: { select: { files: true } } },
+    });
+    if (!pending) return;
+    await this.record(
+      tx,
+      order.publicId,
+      'artwork.submitted',
+      {
+        submissionId: pending.publicId,
+        versionNo: pending.versionNo,
+        source: pending.source,
+        channel: pending.channel,
+        files: pending._count.files,
+        afterPayment: true,
+      },
+      systemActor('artwork.prepress_after_payment'),
+      await this.customerPublicId(tx, order.customerUserId),
+      ['internal'],
+    );
   }
 
   // --- prepress review -------------------------------------------------------------------------------
@@ -448,6 +495,7 @@ export class ArtworkService implements OnModuleInit {
         publicId: true,
         orderCode: true,
         artworkStatus: true,
+        paidForProductionAt: true,
         productType: { select: { code: true } },
         orderGroup: { select: { customer: { select: { publicId: true, displayName: true } } } },
         prepressAssignee: { select: { publicId: true, displayName: true } },
@@ -465,10 +513,11 @@ export class ArtworkService implements OnModuleInit {
     }[];
     let total: number;
     if (kind === 'submissions') {
+      // B-API-4b: a file uploaded before payment is preflighted at once but reaches Prepress only once paid.
       const where: Prisma.ArtworkSubmissionWhereInput = {
         status: 'submitted',
         preflightStatus: { notIn: ['pending', 'running'] },
-        order: liveOrder,
+        order: { ...liveOrder, ...PAID_ORDER },
       };
       const [rows, count] = await Promise.all([
         this.prisma.artworkSubmission.findMany({
@@ -487,7 +536,8 @@ export class ArtworkService implements OnModuleInit {
         itemId: r.publicId,
         versionNo: r.versionNo,
         preflight: r.preflightStatus,
-        since: r.preflightCompletedAt ?? r.submittedAt,
+        // Waiting for Prepress since the later of the check and the payment (B-API-4b).
+        since: latest(r.preflightCompletedAt ?? r.submittedAt, r.order.paidForProductionAt),
       }));
       total = count;
     } else {

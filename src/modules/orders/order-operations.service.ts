@@ -609,7 +609,12 @@ export function orderQueueWhere(key: QueueKey, withinDays = 3, now = new Date())
   return key === 'waiting_payment'
     ? { status: 'waiting_payment', orderGroup: { status: 'waiting_payment' } }
     : key === 'artwork_review'
-      ? { artworkStatus: { in: ['uploaded', 'in_review'] }, cancelledAt: null }
+      ? // B-API-4b: Prepress reviews paid orders only; a file received before payment waits for it.
+        {
+          artworkStatus: { in: ['uploaded', 'in_review'] },
+          cancelledAt: null,
+          paidForProductionAt: { not: null },
+        }
       : key === 'waiting_production'
         ? { status: { in: ['paid_for_production', 'artwork_approved'] } }
         : key === 'due_soon'

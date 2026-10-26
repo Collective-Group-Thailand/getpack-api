@@ -97,6 +97,10 @@ const MESSAGES: Record<string, Render> = {
   'customer_document.correction_rejected': document('ไม่อนุมัติการแก้ไขเอกสาร', 'correction declined'),
   // Artwork and proof (glossary: แบบตัวอย่าง / ตรวจแบบก่อนพิมพ์)
   'artwork.submitted': fixed('ได้รับไฟล์งานแล้ว', 'Artwork received'),
+  'artwork.submitted_before_payment': fixed(
+    'ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน',
+    'File received; the team checks it after payment',
+  ),
   'artwork.preflight_completed': fixed('ตรวจไฟล์อัตโนมัติเสร็จแล้ว', 'Automatic file check done'),
   'artwork.accepted_for_proof': fixed(
     'ไฟล์ผ่านการตรวจ กำลังทำแบบตัวอย่าง',

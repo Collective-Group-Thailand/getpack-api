@@ -83,3 +83,4 @@ Decided by the product owner after the Stage A API review (`STAGE-A-REPORT-API.m
 | Carrier pickup at the factory | **Deferred** until a carrier is enabled; carriers stay switched off. |
 | Return address (`entity.return_address`) | The product owner enters it in settings. Bookings stay refused until then. |
 | Customer file access | **Stage B:** role-based access to customer files (not every staff role) plus an access audit log of every download. |
+| Own-file upload before payment | Allowed. The automatic file check may run at once; the prepress review queue includes only paid orders; unpaid orders show the customer "ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน". Production starts only after payment. |

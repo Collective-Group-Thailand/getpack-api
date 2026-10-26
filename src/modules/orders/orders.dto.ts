@@ -387,6 +387,17 @@ export class OrderDto {
   })
   artworkOwner!: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description:
+      'The artwork next step to show the customer (B-API-4b, DECISIONS-STAGE-A §7): "ไฟล์ได้รับแล้ว ' +
+      'ทีมงานจะตรวจหลังชำระเงิน" while a file sent before payment waits for it (Prepress reviews paid orders ' +
+      'only); null otherwise',
+  })
+  artworkNoteTh!: string | null;
+
   @ApiProperty({ example: 'folding_carton' })
   productTypeCode!: string;
 
@@ -700,6 +711,7 @@ export const ORDER_EXAMPLE: OrderDto = {
   artworkStatus: 'awaiting_upload',
   ...statusLabels('ArtworkStatus', 'awaiting_upload', 'artworkStatus'),
   artworkOwner: 'customer',
+  artworkNoteTh: null,
   productTypeCode: 'folding_carton',
   summary: LINE_SUMMARY_EXAMPLE,
   quoteId: ORDER_IDS.quote,

@@ -177,11 +177,13 @@ describe('order operations (e2e, B3.1)', () => {
     expect(ids(await queue('waiting_production'))).toContain(b.orders[0]!.id);
     expect(ids(await queue('waiting_payment'))).not.toContain(b.orders[0]!.id);
 
-    await ctx.prisma.order.update({
-      where: { publicId: a.orders[0]!.id },
+    await ctx.prisma.order.updateMany({
+      where: { publicId: { in: [a.orders[0]!.id, b.orders[0]!.id] } },
       data: { artworkStatus: 'uploaded' },
     });
-    expect(ids(await queue('artwork_review'))).toContain(a.orders[0]!.id);
+    // B-API-4b: Prepress reviews paid orders only (b is paid, a is not).
+    expect(ids(await queue('artwork_review'))).toContain(b.orders[0]!.id);
+    expect(ids(await queue('artwork_review'))).not.toContain(a.orders[0]!.id);
 
     const today = new Date(`${new Date(Date.now() + 7 * 3_600_000).toISOString().slice(0, 10)}T00:00:00Z`);
     await ctx.prisma.order.update({

@@ -1,7 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
+import { systemActor } from '@common/context/actor';
 import { PreflightService } from '@modules/artwork/preflight/preflight.service';
 import { ProductionCopiesService } from '@modules/artwork/production-copies.service';
+import { OrdersService } from '@modules/orders/orders.service';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {
@@ -133,7 +135,24 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       }),
     ).toBeGreaterThan(0);
 
-    // The queue shows it with no due time until an SLA is set.
+    // B-API-4b: before payment the file is checked but not queued for Prepress; the customer is told why.
+    const unpaidQueue = await as(ctx, prepress)
+      .get('/v1/admin/prepress/queue?kind=submissions&perPage=100')
+      .expect(200);
+    expect((unpaidQueue.body.data as { itemId: string }[]).some((i) => i.itemId === v2.body.id)).toBe(false);
+    expect((await as(ctx, token).get(`/v1/store/orders/${orderId}`).expect(200)).body.artworkNoteTh).toBe(
+      'ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน',
+    );
+    await ctx.prisma.withTx(async (tx) => {
+      await ctx.app
+        .get(OrdersService)
+        .applyFact(tx, order.id, { kind: 'paid_for_production' }, systemActor('e2e'));
+    });
+    expect(
+      (await as(ctx, token).get(`/v1/store/orders/${orderId}`).expect(200)).body.artworkNoteTh,
+    ).toBeNull();
+
+    // Paid: the queue shows it with no due time until an SLA is set.
     const queue = await as(ctx, prepress)
       .get('/v1/admin/prepress/queue?kind=submissions&perPage=100')
       .expect(200);
@@ -457,7 +476,9 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
     });
     for (const c of made) {
       expect(c.status).toBe('ready');
-      expect(c.copyFile!.originalName).toMatch(new RegExp(`^${orderRow.orderCode}-original-v\\d+(-\\d+)?\\.pdf$`));
+      expect(c.copyFile!.originalName).toMatch(
+        new RegExp(`^${orderRow.orderCode}-original-v\\d+(-\\d+)?\\.pdf$`),
+      );
       expect(c.copyFile!.ownerUserId).toBeNull();
       expect(c.copyFile!.metadataStrippedAt).not.toBeNull();
     }

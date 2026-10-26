@@ -10,6 +10,7 @@ import { type AddressSnapshotDto } from '../carts/carts.dto';
 import {
   actionOwnerOf,
   artworkOwner,
+  customerArtworkNoteTh,
   customerArtworkStatus,
   customerStatusOf,
   OPEN_CLAIMS,
@@ -208,6 +209,7 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     artworkStatus,
     ...statusLabels('ArtworkStatus', artworkStatus, 'artworkStatus'),
     artworkOwner: artworkOwner(artworkStatus),
+    artworkNoteTh: customerArtworkNoteTh({ ...row, artworkStatus }),
     productTypeCode: row.productType.code,
     summary: lineSummary(
       {

@@ -159,7 +159,8 @@ export class AdminArtworkController {
     id: 'admin.artwork.queue',
     summary: 'The prepress work queue',
     description:
-      '`submissions`: preflighted files waiting for review, oldest first; `changes_requested`: proofs the customer ' +
+      '`submissions`: preflighted files of paid orders waiting for review, oldest first (a file received before ' +
+      'payment joins at payment, `since` = the later of check and payment — B-API-4b); `changes_requested`: proofs the customer ' +
       'sent back; `proofs_waiting`: proofs waiting for the customer. `dueAt` follows ' +
       '`artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set. Filter by the ' +
       'Prepress owner (`assigneeId`, `none` = unowned), product type and artwork status; rows carry the customer, ' +
