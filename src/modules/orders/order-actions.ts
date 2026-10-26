@@ -1,6 +1,6 @@
 import { type ActionRule } from '@common/next-actions/next-actions';
 
-import { artworkOwner } from './customer-status';
+import { artworkOwner, customerArtworkStatus } from './customer-status';
 
 /** What an order's action guards read (`order-state.ts` facts, `artwork.service.ts`, `delivery.service.ts`, …). */
 export interface OrderFacts {
@@ -30,10 +30,13 @@ const claimOpen = (o: OrderFacts) => (o.openClaimCount ?? 0) > 0;
 /** The customer's actions on an order (D-070, D-073, D-081, D-082, D-153). */
 export const STORE_ORDER_ACTIONS: ActionRule<OrderFacts>[] = [
   {
-    // D-438: only while the customer owns the artwork step ("รอไฟล์จากคุณ", sent back, proof to answer).
+    // D-438: only while the customer owns the artwork step ("รอไฟล์จากคุณ", sent back, proof to answer);
+    // an own-file order owns it from the start (B-API-4).
     key: 'order.upload_artwork',
     when: (o) =>
-      takesArtwork(o) && OWN_ARTWORK.includes(o.designOption) && artworkOwner(o.artworkStatus) === 'customer',
+      takesArtwork(o) &&
+      OWN_ARTWORK.includes(o.designOption) &&
+      artworkOwner(customerArtworkStatus(o.designOption, o.artworkStatus)) === 'customer',
   },
   {
     key: 'order.approve_proof',

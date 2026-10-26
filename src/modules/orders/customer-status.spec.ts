@@ -5,6 +5,7 @@ import {
   actionOwnerOf,
   artworkOwner,
   CUSTOMER_ORDER_STATUSES,
+  customerArtworkStatus,
   type CustomerStatusFacts,
   customerStatusOf,
   initialArtworkStatus,
@@ -87,10 +88,26 @@ describe('artwork owner (D-438)', () => {
     expect(artworkOwner('approved')).toBeNull();
   });
 
-  it('starts an online design with the customer, everything else with the team', () => {
+  it('starts an online design and an own-file order with the customer, a hired design with the team (B-API-4)', () => {
     expect(initialArtworkStatus('online_designer')).toBe('awaiting_upload');
-    expect(initialArtworkStatus('own_file')).toBe('awaiting_template');
+    expect(initialArtworkStatus('own_file')).toBe('awaiting_upload');
     expect(initialArtworkStatus('hired_design')).toBe('awaiting_template');
+  });
+
+  it('reads an own-file order without a file as "รอไฟล์จากคุณ", dieline sent or not (B-API-4)', () => {
+    expect(customerArtworkStatus('own_file', 'awaiting_template')).toBe('awaiting_upload');
+    expect(customerArtworkStatus('own_file', 'awaiting_upload')).toBe('awaiting_upload');
+    expect(artworkOwner(customerArtworkStatus('own_file', 'awaiting_template'))).toBe('customer');
+    expect(statusLabel('ArtworkStatus', customerArtworkStatus('own_file', 'awaiting_template')).th).toBe(
+      'รอไฟล์จากคุณ',
+    );
+    // A file accepted / being checked / approved is never read back as waiting for the customer's file.
+    for (const s of ['uploaded', 'in_review', 'proof_sent', 'approved'])
+      expect(customerArtworkStatus('own_file', s)).toBe(s);
+    // Hired and online designs read as stored.
+    expect(customerArtworkStatus('hired_design', 'awaiting_template')).toBe('awaiting_template');
+    expect(artworkOwner(customerArtworkStatus('hired_design', 'awaiting_template'))).toBe('team');
+    expect(customerArtworkStatus('online_designer', 'awaiting_template')).toBe('awaiting_template');
   });
 });
 
@@ -115,10 +132,19 @@ describe('store order actions (D-437, D-438)', () => {
     );
 
   it('offers "ส่งไฟล์งาน" only while the customer owns the artwork step', () => {
-    expect(keys(order)).toEqual([]);
     expect(keys({ ...order, artworkStatus: 'in_review' })).toEqual([]);
+    expect(keys({ ...order, artworkStatus: 'uploaded' })).toEqual([]);
     expect(keys({ ...order, artworkStatus: 'awaiting_upload' })).toEqual(['order.upload_artwork']);
     expect(keys({ ...order, artworkStatus: 'changes_requested' })).toEqual(['order.upload_artwork']);
+  });
+
+  it('offers "ส่งไฟล์งาน" on an own-file order without a file, never on a hired design (B-API-4)', () => {
+    expect(keys({ ...order, artworkStatus: initialArtworkStatus('own_file') })).toEqual([
+      'order.upload_artwork',
+    ]);
+    // An own-file order placed before B-API-4 (still `awaiting_template`) is the customer's too.
+    expect(keys(order)).toEqual(['order.upload_artwork']);
+    expect(keys({ ...order, designOption: 'hired_design' })).toEqual([]);
   });
 
   // UATOR-2610-00008: delivered, window passed, a claim under review.

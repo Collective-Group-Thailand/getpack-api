@@ -224727,10 +224727,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -274440,10 +274440,10 @@
                       "orders": [
                         {
                           "actionOwner": "customer",
-                          "artworkOwner": "team",
-                          "artworkStatus": "awaiting_template",
-                          "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                          "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                          "artworkOwner": "customer",
+                          "artworkStatus": "awaiting_upload",
+                          "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                          "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
@@ -274815,10 +274815,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -275209,10 +275209,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -275671,10 +275671,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -276162,10 +276162,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -278389,10 +278389,10 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
-                  "artworkOwner": "team",
-                  "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                  "artworkOwner": "customer",
+                  "artworkStatus": "awaiting_upload",
+                  "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                  "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -278960,10 +278960,10 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
-                  "artworkOwner": "team",
-                  "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                  "artworkOwner": "customer",
+                  "artworkStatus": "awaiting_upload",
+                  "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                  "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -279368,10 +279368,10 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
-                  "artworkOwner": "team",
-                  "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                  "artworkOwner": "customer",
+                  "artworkStatus": "awaiting_upload",
+                  "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                  "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -356207,10 +356207,10 @@
                       "orders": [
                         {
                           "actionOwner": "customer",
-                          "artworkOwner": "team",
-                          "artworkStatus": "awaiting_template",
-                          "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                          "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                          "artworkOwner": "customer",
+                          "artworkStatus": "awaiting_upload",
+                          "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                          "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
@@ -356579,10 +356579,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -356993,10 +356993,10 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
-                  "artworkOwner": "team",
-                  "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้ลูกค้า",
-                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                  "artworkOwner": "customer",
+                  "artworkStatus": "awaiting_upload",
+                  "artworkStatusLabelAdminTh": "รอไฟล์จากลูกค้า",
+                  "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -504498,10 +504498,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -532741,10 +532741,10 @@
                       "orders": [
                         {
                           "actionOwner": "customer",
-                          "artworkOwner": "team",
-                          "artworkStatus": "awaiting_template",
-                          "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
-                          "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                          "artworkOwner": "customer",
+                          "artworkStatus": "awaiting_upload",
+                          "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
+                          "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                           "cancelReasonCode": null,
                           "cancelReasonNameEn": null,
                           "cancelReasonNameTh": null,
@@ -533090,10 +533090,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -533461,10 +533461,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -533929,10 +533929,10 @@
                   "orders": [
                     {
                       "actionOwner": "customer",
-                      "artworkOwner": "team",
-                      "artworkStatus": "awaiting_template",
-                      "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
-                      "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                      "artworkOwner": "customer",
+                      "artworkStatus": "awaiting_upload",
+                      "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
+                      "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                       "cancelReasonCode": null,
                       "cancelReasonNameEn": null,
                       "cancelReasonNameTh": null,
@@ -535415,10 +535415,10 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
-                  "artworkOwner": "team",
-                  "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
-                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                  "artworkOwner": "customer",
+                  "artworkStatus": "awaiting_upload",
+                  "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
+                  "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -535715,10 +535715,10 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
-                  "artworkOwner": "team",
-                  "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
-                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                  "artworkOwner": "customer",
+                  "artworkStatus": "awaiting_upload",
+                  "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
+                  "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,
@@ -536038,10 +536038,10 @@
               "application/json": {
                 "example": {
                   "actionOwner": "customer",
-                  "artworkOwner": "team",
-                  "artworkStatus": "awaiting_template",
-                  "artworkStatusLabelAdminTh": "รอทีมส่งแบบไดคัทให้",
-                  "artworkStatusLabelTh": "รอทีมส่งแบบไดคัทให้",
+                  "artworkOwner": "customer",
+                  "artworkStatus": "awaiting_upload",
+                  "artworkStatusLabelAdminTh": "รอไฟล์จากคุณ",
+                  "artworkStatusLabelTh": "รอไฟล์จากคุณ",
                   "cancelReasonCode": null,
                   "cancelReasonNameEn": null,
                   "cancelReasonNameTh": null,

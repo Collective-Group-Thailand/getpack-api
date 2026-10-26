@@ -7,7 +7,13 @@ import { lineSummary, SUMMARY_INCLUDE } from '@modules/quotes/line-summary';
 import { type SettingsService } from '@platform/settings/settings.service';
 
 import { type AddressSnapshotDto } from '../carts/carts.dto';
-import { actionOwnerOf, artworkOwner, customerStatusOf, OPEN_CLAIMS } from './customer-status';
+import {
+  actionOwnerOf,
+  artworkOwner,
+  customerArtworkStatus,
+  customerStatusOf,
+  OPEN_CLAIMS,
+} from './customer-status';
 import { ADMIN_ORDER_ACTIONS, STORE_ORDER_ACTIONS } from './order-actions';
 import {
   type AdminOrderDto,
@@ -187,7 +193,9 @@ function payment(row: OrderRow) {
 }
 
 export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDays: null }): OrderDto {
-  const facts = { ...row, openClaimCount: row.claims.length };
+  // D-438 (B-API-4): an own-file order without a file reads "รอไฟล์จากคุณ" (customer), never the team's step.
+  const artworkStatus = customerArtworkStatus(row.designOption, row.artworkStatus);
+  const facts = { ...row, artworkStatus, openClaimCount: row.claims.length };
   const customerStatus = customerStatusOf(facts);
   return {
     id: row.publicId,
@@ -197,9 +205,9 @@ export function orderDto(row: OrderRow, ctx: OrderViewContext = { autoCompleteDa
     customerStatus,
     ...statusLabels('CustomerOrderStatus', customerStatus, 'customerStatus'),
     actionOwner: actionOwnerOf(customerStatus, facts),
-    artworkStatus: row.artworkStatus,
-    ...statusLabels('ArtworkStatus', row.artworkStatus, 'artworkStatus'),
-    artworkOwner: artworkOwner(row.artworkStatus),
+    artworkStatus,
+    ...statusLabels('ArtworkStatus', artworkStatus, 'artworkStatus'),
+    artworkOwner: artworkOwner(artworkStatus),
     productTypeCode: row.productType.code,
     summary: lineSummary(
       {

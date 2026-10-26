@@ -162,3 +162,52 @@ shows old values with the side prefix ("พิมพ์ด้านนอก: �
 
 `line-summary`, `price-consistency`, `studio-quotes`, `spec-model`, `rfqs`, `spec-sheet`, `dieline-downloads`,
 `corrugate-quotes`.
+
+## B-API-4 Own-file orders
+
+An own-file order ("มีไฟล์งานแล้ว", `designOption = own_file`) with no accepted file reads **"รอไฟล์จากคุณ"**
+(`artworkStatus = awaiting_upload`, `artworkOwner = customer`, `nextActions` offers `order.upload_artwork` /
+"ส่งไฟล์งาน") — never "รอทีมส่งแบบไดคัทให้", whether or not a dieline was sent (GLOBAL-RULES §6, D-438). This
+answers account-redesign API-CHANGES §8 open question 1: the customer can upload straight away; the dieline the team
+sends after payment (`drawings.auto_send`, `admin.artwork.sendTemplate`) is still delivered as a help.
+
+### Root cause
+
+`initialArtworkStatus()` (checkout) started every non-online-design order at `awaiting_template`, so an own-file
+order waited for the team until a dieline went out — never, with the drawing engine off or
+`templateAvailability = none`.
+
+### Changed behaviour
+
+| What | Before → after |
+|---|---|
+| Checkout: initial `artworkStatus` of `own_file` | `awaiting_template` → **`awaiting_upload`** |
+| Store/B2B/logistics `OrderDto` (`artworkStatus`, labels, `artworkOwner`, `customerStatus`/`actionOwner` facts) | an `own_file` order still stored at `awaiting_template` is read as `awaiting_upload` (`customerArtworkStatus()`) |
+| `order.upload_artwork` (`nextActions`, launchpad `needsAction`) | own-file order without a file: hidden → **offered** (also before payment, as for online designs) |
+| `OrderDto` example | `artworkStatus` `awaiting_upload`, `artworkOwner` `customer` (contract regenerated) |
+
+Unchanged: `hired_design` and `free_design` start at `awaiting_template` (team); `online_designer` at
+`awaiting_upload`; every later artwork status (`uploaded`, `in_review`, `proof_sent`, `changes_requested`,
+`approved`) reads as stored. No new field, enum value, error code, setting or env var.
+
+### Migration
+
+`prisma/migrations/20261217000001_own_file_awaiting_upload/migration.sql` (data only): own-file orders at
+`awaiting_template`, not cancelled, without an `accepted_for_proof` submission → `awaiting_upload`. No event or
+activity row (pre-launch status correction, as A2 / D-425). Reversible: `down.sql` returns own-file orders at
+`awaiting_upload` with no dieline delivery and no submission to `awaiting_template` (apply with `psql`, then remove the
+row from `_prisma_migrations`). Not run here (no database in this VM).
+
+### Factory confidentiality
+
+No new field; `test/unit/storefront-factory-confidentiality.spec.ts` green.
+
+### e2e specs to run locally
+
+Changed: `launchpad` (own-file order offers the upload before and after payment, no manual status update).
+Run unchanged: `artwork`, `designs`, `orders`, `payments`, `company-orders`.
+
+### Open questions
+
+1. Upload before payment is offered for own-file orders (same rule as online designs, `assertTakesArtwork` accepts
+   `waiting_payment`). Should "ส่งไฟล์งาน" wait for payment instead? Kept as the existing rule.

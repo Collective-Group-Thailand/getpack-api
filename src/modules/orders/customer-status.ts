@@ -65,12 +65,25 @@ export function artworkOwner(artworkStatus: string): ActionOwner | null {
 }
 
 /**
- * D-438: the artwork status an order starts with. An own-file order waits for the dieline the team sends after
- * payment ("รอทีมส่งแบบไดคัทให้"; the drawing engine or Prepress); an online design waits for the customer to
- * submit it ("รอไฟล์จากคุณ"); a hired design waits for the team's designer.
+ * D-438 (B-API-4): the artwork status an order starts with. An own-file order ("มีไฟล์งานแล้ว") and an online design
+ * wait for the customer's file ("รอไฟล์จากคุณ", upload offered) — the dieline the team may send after payment is a
+ * help, not a step the customer waits for; a hired design waits for the team's designer (`awaiting_template`).
  */
 export function initialArtworkStatus(designOption: string): 'awaiting_template' | 'awaiting_upload' {
-  return designOption === 'online_designer' ? 'awaiting_upload' : 'awaiting_template';
+  return designOption === 'online_designer' || designOption === 'own_file'
+    ? 'awaiting_upload'
+    : 'awaiting_template';
+}
+
+/**
+ * D-438 (B-API-4): the artwork status the customer reads. An own-file order never waits for the team before its
+ * first file: `awaiting_template` on such an order (rows placed before B-API-4) reads as `awaiting_upload`, whether
+ * or not a dieline was sent. Every other status and design option is read as stored.
+ */
+export function customerArtworkStatus(designOption: string, artworkStatus: string): string {
+  return designOption === 'own_file' && artworkStatus === 'awaiting_template'
+    ? 'awaiting_upload'
+    : artworkStatus;
 }
 
 /**
