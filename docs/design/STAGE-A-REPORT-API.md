@@ -353,3 +353,42 @@ Follow-up (not done): carton labels and packing lists still print "getpack" fixe
 Breaking contract changes for the web (regenerate the API client): A1 (removed endpoint and fields), A2 (customer
 status fields, store-only enums, status labels, agent refusal code). A3 additive; A5b touches no store endpoint.
 Before Stage B: run `pnpm test:e2e` and `pnpm test:int` locally on PostgreSQL 18.
+
+---
+
+# Stage B API
+
+Gate per step: `pnpm lint` · `pnpm typecheck` · related unit tests · factory-confidentiality contract test.
+Final full unit run: 178 suites / 1317 tests ✔ · contract test 8/8 ✔ · `prisma migrate status` up to date ·
+diff scan (secrets, seed factory names) clean. All changes: `docs/design/stage-b/API-CHANGES.md`.
+
+| Step | Status | Commits |
+|---|---|---|
+| B-API-1 VAT | PASS | `8490927d`, `6b690066` (8490927d was pushed before typecheck passed; 6b690066 fixes the typing) |
+| B-API-2 Print model | PASS | `a5b40cb1` (D-443, migration `20261216000001_catalog_print_model`) |
+| B-API-3 Spec label | PASS | `5a49d868` |
+| B-API-4 Own-file orders | PASS | `84db62d1` (data migration `20261217000001_own_file_awaiting_upload`) |
+| B-API-5 Customer file access | PASS | `eadcb298` (D-444, migration `20261218000001_customer_file_access_logs`; run `pnpm db:seed` for role grants) |
+| B-API-4b Prepress queue after payment | PASS | `e22ba2e8` (decision row in DECISIONS-STAGE-A §7) |
+
+## Open questions
+- **B-API-1:** rounding rule still pending the accountant. RFQ quotation lines and the CS pricing endpoint compute
+  VAT on their own — move them to the shared helper?
+- **B-API-2:** effective-dated print config (today immediate + audited)? Real N, M and spot colours per product?
+  Inside print on corrugate at all? Extend the model to folding, tag & sleeve, label, pouch? Not priceable yet:
+  spot ≥ 2 colours (one spot ink priced), flexo CMYK + spot (3-colour limit), digital inside print (one flat rate).
+- **B-API-3:** show spot colour names in the label ("สีพิเศษ 1 สี (ดำ)") or the method only? Pouch keeps กว้าง × สูง;
+  flat items read "พิมพ์ด้านหน้า/หลัง".
+- **B-API-5:** "handles an order" = assigned to an open order conversation only (tickets are not linked to orders) —
+  should tickets, closed conversations or an explicit assignment count? Confirm Superadmin reads the log but not
+  the files; confirm Admin/Auditor need no originals; studio/design-asset files are not yet classed as customer artwork.
+- **B-API-4b:** should prepress accept/reject on an unpaid order be refused until payment? Should
+  `changes_requested` also list paid orders only?
+
+## Integration/e2e specs to run locally (Docker, PostgreSQL 18)
+Edited: launchpad, files, artwork, production-release, corrugate-quotes, price-consistency, order-operations.
+Affected: folding-quotes, label-quotes, pouch-quotes, tag-sleeve-quotes, standard-product-quotes, checkout,
+promotions-checkout, call-offs, company-orders, receivables, design-services, line-summary, studio-quotes,
+spec-model, rfqs, spec-sheet, dieline-downloads, designs, orders, payments, production-milestones,
+production-oversight, companies-store, conversations-v2, timeline, admin-platform, acceptance,
+notification-matrix, studio-documents. Simplest: full `pnpm test:e2e` and `pnpm test:int`.
