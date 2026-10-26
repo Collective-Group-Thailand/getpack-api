@@ -61,7 +61,10 @@ import { AuditQueryService } from '@platform/audit/audit-query.service';
 import { AdminCalendarController } from '@platform/calendar/calendar-admin.controller';
 import { OutboxAdminController } from '@platform/domain-events/outbox-admin.controller';
 import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.controller';
-import { CustomerFileAccessLogsController } from '@platform/files/customer-file-access.controller';
+import {
+  CustomerFileAccessLogsController,
+  OrderSupportAssignmentsController,
+} from '@platform/files/customer-file-access.controller';
 import { AdminFilesController } from '@platform/files/files.controllers';
 import { AdminDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { AdminInboxController } from '@platform/notifications/my-notifications.controller';
@@ -111,6 +114,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     AdminDeepLinksController,
     AuditLogsController,
     CustomerFileAccessLogsController,
+    OrderSupportAssignmentsController,
     DocumentSeriesController,
 
     ...CATALOG_ADMIN_CONTROLLERS,

@@ -14,6 +14,7 @@ import { orderedImages, uploadedPhotoVariant } from '../crud/image-order';
 import { RefResolver } from '../crud/ref-resolver';
 import { type InkKind, PRINT_MODEL_CALCULATORS, validatePrintModel } from '../print-model/print-model';
 import { type PrintModelDto } from '../print-model/print-model.dto';
+import { printLimitsAt } from '../print-model/print-model-versions';
 import { assertPrintCombination } from '../print-model/print-rules';
 import { resolveOptionIds } from './option-refs';
 import {
@@ -44,6 +45,9 @@ const REFERENCE_CALCULATORS: ReadonlySet<string> = new Set([
   'pouch',
   'service',
 ]);
+
+/** Clock skew tolerated on a client-sent `effectiveFrom` of "now" (not a business value). */
+const EFFECTIVE_FROM_SKEW_MS = 60_000;
 
 @Injectable()
 export class ProductStructureService {
@@ -178,7 +182,17 @@ export class ProductStructureService {
     publicId: string,
     ifMatch: string | undefined,
     model: PrintModelDto | null,
+    effectiveFrom?: Date,
   ) {
+    const now = new Date();
+    if (effectiveFrom && effectiveFrom.getTime() < now.getTime() - EFFECTIVE_FROM_SKEW_MS) {
+      throw new DomainException('validation.failed', {
+        errors: [
+          { path: 'effectiveFrom', code: 'min', message: 'a print model version cannot start in the past' },
+        ],
+      });
+    }
+    const from = effectiveFrom && effectiveFrom.getTime() > now.getTime() ? effectiveFrom : now;
     return this.onCatalogProduct(actor, publicId, ifMatch, 'printModel', async (tx, product) => {
       if (model !== null) {
         const type = await tx.productType.findFirstOrThrow({
@@ -201,23 +215,46 @@ export class ProductStructureService {
           where: { id: { in: inkIds }, status: 'active' },
           select: { publicId: true, colourKind: true },
         });
+        // B-API-6: nothing beyond what the engine can price (`catalog.print_limits` at the version's start).
         const errors = validatePrintModel(
           model,
           new Map<string, InkKind>(inks.map((i) => [i.publicId, i.colourKind])),
+          await printLimitsAt(tx, from),
         );
         if (errors.length > 0) throw new DomainException('validation.failed', { errors });
       }
-      await tx.catalogProduct.update({
-        where: { id: product.id },
+      // B-API-6 (ADR-0005): a new version, never an overwrite; reads use the version in force.
+      const last = await tx.catalogProductPrintModel.findFirst({
+        where: { catalogProductId: product.id },
+        orderBy: { versionNo: 'desc' },
+        select: { versionNo: true },
+      });
+      const version = await tx.catalogProductPrintModel.create({
         data: {
-          printModel:
+          catalogProductId: product.id,
+          versionNo: (last?.versionNo ?? 0) + 1,
+          model:
             model === null ? Prisma.DbNull : (JSON.parse(JSON.stringify(model)) as Prisma.InputJsonValue),
+          effectiveFrom: from,
+          createdById: actor.userId,
         },
       });
-      // The default spec must stay one valid choice per side (D-441 + D-443).
+      await this.audit.record(tx, {
+        category: 'config',
+        action: 'catalog.print_model_version_created',
+        resourceType: 'catalog_product',
+        resourcePublicId: publicId,
+        data: {
+          versionId: version.publicId,
+          versionNo: version.versionNo,
+          effectiveFrom: from.toISOString(),
+          cleared: model === null,
+        },
+      });
+      // The default spec must stay one valid choice per side (D-441 + D-443) under the new version.
       const reference = product.referenceConfiguration as Record<string, unknown> | null;
       if (model !== null && reference) {
-        await assertPrintCombination(tx, 'corrugate', { ...reference, catalogProductId: publicId });
+        await assertPrintCombination(tx, 'corrugate', { ...reference, catalogProductId: publicId }, from);
       }
     });
   }

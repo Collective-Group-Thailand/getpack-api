@@ -321,7 +321,9 @@ export const API_TAGS: Record<string, string> = {
   'partner.files': 'Factory uploads (evidence, documents): presign → PUT → complete → signed download.',
   'admin.auditLogs': 'The audit log: search and CSV export (itself audited).',
   'admin.customerFileAccessLogs':
-    'D-444 the append-only log of every download of customer artwork / originals, production copies and approved proof copies (Superadmin).',
+    'D-444 the append-only log of every download of customer artwork / originals, production copies and approved proof copies (Superadmin, Auditor).',
+  'admin.orderSupportAssignments':
+    'D-444 (B-API-6) the support staff member who handles an order and so reads its customer artwork, set by CS Lead / Admin.',
   'admin.outbox': 'Domain-event outbox: dead-letter list and replay.',
   'partner.rum': 'Real-user monitoring: Core Web Vitals samples by route pattern (U-B0.3).',
   'partner.me': 'The signed-in factory user, their factories and device PINs.',

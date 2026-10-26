@@ -150,6 +150,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ดูแลระบบ',
     nameEn: 'Admin',
     permissions: [
+      'orders.assign_support',
       'settings.change',
       'agents.read',
       'agents.manage',
@@ -295,6 +296,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'CS Lead',
     permissions: [
       'customer_files.read_handled',
+      'orders.assign_support',
       'settings.read',
       'settings.change',
       'reports.export',
@@ -671,6 +673,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'approvals.read',
       'audit_logs.read',
       'audit_logs.export',
+      'customer_file_access_logs.read',
       'users.read',
       'files.read',
       'partners.read',

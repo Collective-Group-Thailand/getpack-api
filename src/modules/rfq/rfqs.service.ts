@@ -24,6 +24,7 @@ import { DocumentNumberingService } from '@platform/numbering/document-numbering
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { MAX_RFQ_FILES, MAX_RFQ_TIERS, rfqDimensions, rfqFormFields } from './rfq-form';
+import { rfqLineAmounts, shippingVat } from './rfq-quote-amounts';
 import { specErrors } from './rfq-spec';
 import { type StoreRfqFormDto } from './rfqs.dto';
 
@@ -463,7 +464,7 @@ export class RfqsService implements OnModuleInit {
         ),
       );
       const options = lines.map((l, i) => {
-        const shippingVat = l.shippingNetAmount.mul(vat.ratePct).div(100).toDecimalPlaces(2);
+        const shippingVatAmount = shippingVat(l.shippingNetAmount, vat.ratePct);
         const tolerance = tolerances[i]!;
         return {
           quantity: l.quantity,
@@ -474,7 +475,7 @@ export class RfqsService implements OnModuleInit {
             productAmount: l.netAmount.sub(l.shippingNetAmount).toFixed(2),
             designFeeAmount: '0.00',
             structureDesignFeeAmount: '0.00',
-            shippingAmount: l.shippingNetAmount.add(shippingVat).toFixed(2),
+            shippingAmount: l.shippingNetAmount.add(shippingVatAmount).toFixed(2),
             shippingNetAmount: l.shippingNetAmount.toFixed(2),
             leadTimeDays: l.leadTimeDays,
             earliestShipDate: null,
@@ -490,7 +491,7 @@ export class RfqsService implements OnModuleInit {
           discountAmount: '0.00',
           vatAmount: l.vatAmount,
           grossAmount: l.grossAmount,
-          shippingAmount: l.shippingNetAmount.add(shippingVat),
+          shippingAmount: l.shippingNetAmount.add(shippingVatAmount),
           unitPrice: l.unitPrice,
           leadTimeDays: l.leadTimeDays,
           toleranceShortagePct: tolerance.shortage,
@@ -809,8 +810,12 @@ export class RfqsService implements OnModuleInit {
       return lines.map((l) => {
         const unit = new MoneyDecimal(l.unitPrice);
         const shipping = new MoneyDecimal(l.shippingNetAmount ?? '0');
-        const net = unit.mul(l.quantity).add(shipping).toDecimalPlaces(2);
-        const vatAmount = net.mul(vat.ratePct).div(100).toDecimalPlaces(2);
+        // B-API-6: VAT from the shared helper (GLOBAL-RULES §5); a sent quotation is never recalculated.
+        const {
+          netAmount: net,
+          vatAmount,
+          grossAmount,
+        } = rfqLineAmounts(unit, l.quantity, shipping, vat.ratePct);
         const margin =
           l.buyUnitPrice && !unit.isZero()
             ? unit.sub(l.buyUnitPrice).div(unit).mul(100).toDecimalPlaces(4)
@@ -820,7 +825,7 @@ export class RfqsService implements OnModuleInit {
           unitPrice: unit.toFixed(6),
           netAmount: net.toFixed(2),
           vatAmount: vatAmount.toFixed(2),
-          grossAmount: net.add(vatAmount).toFixed(2),
+          grossAmount: grossAmount.toFixed(2),
           shippingNetAmount: shipping.toFixed(2),
           leadTimeDays: l.leadTimeDays,
           factoryId: l.factoryId ? factories.get(l.factoryId)! : null,

@@ -161,7 +161,7 @@ export class AdminArtworkController {
     description:
       '`submissions`: preflighted files of paid orders waiting for review, oldest first (a file received before ' +
       'payment joins at payment, `since` = the later of check and payment — B-API-4b); `changes_requested`: proofs the customer ' +
-      'sent back; `proofs_waiting`: proofs waiting for the customer. `dueAt` follows ' +
+      'sent back, paid orders only (B-API-6); `proofs_waiting`: proofs waiting for the customer. `dueAt` follows ' +
       '`artwork.prepress_sla_business_hours` on business hours (D-175) — null while no SLA is set. Filter by the ' +
       'Prepress owner (`assigneeId`, `none` = unowned), product type and artwork status; rows carry the customer, ' +
       'product type, artwork status and owner.',
@@ -246,7 +246,8 @@ export class AdminArtworkController {
     description:
       'Prepress takes the version into proof preparation (order artwork status `in_review`). Refused while ' +
       'preflight runs or when it blocked — D-070 blocks on size mismatch or missing bleed. An optional `note` is ' +
-      'kept on the internal timeline.',
+      'kept on the internal timeline. Refused with 409 `artwork.order_unpaid` until the order is paid (B-API-6: ' +
+      'Prepress reviews paid orders only).',
     implements: DECISIONS,
   })
   @ApiBody({
@@ -268,6 +269,7 @@ export class AdminArtworkController {
     'artwork.preflight_pending',
     'artwork.preflight_blocked',
     'artwork.not_accepting',
+    'artwork.order_unpaid',
   )
   async accept(
     @CurrentActor() actor: Actor,
@@ -307,7 +309,9 @@ export class AdminArtworkController {
   @ApiEndpoint({
     id: 'admin.artwork.reject',
     summary: 'Reject a submission with a reason',
-    description: 'The customer is asked for a new version (order artwork status `changes_requested`, D-070).',
+    description:
+      'The customer is asked for a new version (order artwork status `changes_requested`, D-070). Refused with 409 ' +
+      '`artwork.order_unpaid` until the order is paid (B-API-6: Prepress reviews paid orders only).',
     implements: DECISIONS,
   })
   @ApiBody({
@@ -326,6 +330,7 @@ export class AdminArtworkController {
     'validation.failed',
     'artwork.invalid_status',
     'artwork.not_accepting',
+    'artwork.order_unpaid',
   )
   async reject(
     @CurrentActor() actor: Actor,

@@ -3,7 +3,7 @@ import { type ProblemFieldError } from '@common/errors/problem-details.dto';
 import { validateAs } from '@common/validation/validation';
 import { type Tx } from '@database/prisma.service';
 import { type CalculatorKey, type ProductUnit } from '@generated/prisma/client';
-import { assertPrintCombination } from '@modules/catalog/print-model/print-rules';
+import { type PrintCombinationError, printCombinationErrors } from '@modules/catalog/print-model/print-rules';
 import { gussetViolation, sizeRulesOf, sizeViolation } from '@modules/catalog/store/size-rules';
 import { type Type } from '@nestjs/common';
 import { getMetadataStorage, ValidationTypes } from 'class-validator';
@@ -68,14 +68,16 @@ export async function validateConfiguration(
  * - the catalogue product's fixed difficulty level (legacy's customer path hard-coded it, port map quirk C9): a
  *   product with a default difficulty is priced at that level only; a corrugate request names its catalogue product,
  *   which the configurator gives.
- * - the product's per-side print model (D-443): one valid print choice per side (`pricing.print_combination_invalid`).
+ * - the product's per-side print model in force (D-443, B-API-6): one valid print choice per side
+ *   (`pricing.print_combination_invalid`, or collected for the store calculation, which answers with the quote path).
  * A missing pattern is left to the calculator's own validation.
  */
 export async function assertStoreRules(
   db: Tx,
   key: CalculatorKey,
   configuration: Record<string, unknown>,
-): Promise<void> {
+  options: { printCombination?: 'refuse' | 'collect' } = {},
+): Promise<{ printErrors: PrintCombinationError[] }> {
   const fail = (path: string, code: string, message: string): never => {
     throw new DomainException('validation.failed', { errors: [{ path, code, message }] });
   };
@@ -103,13 +105,18 @@ export async function assertStoreRules(
   ) {
     fail('configuration.catalogProductId', 'required', 'the catalogue product is required');
   }
-  await assertPrintCombination(db, key, configuration);
-  if (typeof configuration['patternId'] !== 'string') return;
+  // B-API-6: the store calculation collects a combination the engine cannot price (it answers with the quote path);
+  // every other caller refuses it (422 `pricing.print_combination_invalid`).
+  const printErrors = await printCombinationErrors(db, key, configuration);
+  if (printErrors.length > 0 && options.printCombination !== 'collect')
+    throw new DomainException('pricing.print_combination_invalid', { errors: printErrors });
+  const result = { printErrors };
+  if (typeof configuration['patternId'] !== 'string') return result;
   const pattern = await db.pattern.findUnique({
     where: { publicId: configuration['patternId'] },
     select: { constraints: true },
   });
-  if (!pattern) return;
+  if (!pattern) return result;
   const violation = sizeViolation(
     sizeRulesOf(pattern.constraints),
     { w: Number(configuration['w']), l: Number(configuration['l']), d: Number(configuration['d']) },
@@ -120,6 +127,7 @@ export async function assertStoreRules(
     const gusset = gussetViolation(pattern.constraints, configuration);
     if (gusset) throw new DomainException('validation.failed', { errors: [gusset] });
   }
+  return result;
 }
 
 /** The calculators whose sizes carry a measurement basis the customer must choose (D-182). */

@@ -1,15 +1,22 @@
+import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
-import { ApiEndpoint, ApiStandardErrors } from '@common/openapi/decorators';
+import { type Actor } from '@common/context/actor';
+import { DomainException } from '@common/errors/domain.exception';
+import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiCursorPaginated } from '@common/pagination/api-paginated.decorator';
 import { type CursorPage, CursorQuery, DEFAULT_CURSOR_LIMIT } from '@common/pagination/pagination.dto';
 import { toBangkokIso } from '@common/time/bangkok';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Controller, Get, Query } from '@nestjs/common';
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
+import { ApiBody, ApiParam, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsOptional, IsUUID } from 'class-validator';
+import { IsDate, IsOptional, IsUUID, ValidateIf } from 'class-validator';
 
-import { CustomerFileAccessService, type FileAccessLogRow } from './customer-file-access.service';
+import {
+  CustomerFileAccessService,
+  type FileAccessLogRow,
+  type SupportAssignmentView,
+} from './customer-file-access.service';
 
 const FILE_KINDS = ['customer_original', 'production_copy', 'approved_proof_copy'] as const;
 // Alphabetical (the RUM zone enum lists the same surfaces in another order and means something else).
@@ -160,7 +167,7 @@ export class CustomerFileAccessLogsController {
       "D-444: every download URL issued for a customer's artwork / original, a production copy of one or an approved " +
       'proof copy — who, when, which file and order, through which surface (store / admin / partner) and for what ' +
       '(download / thumbnail). Newest first; filter by order, file, user and period. Append-only; no URL or token is ' +
-      'stored. Superadmin only (`customer_file_access_logs.read`).',
+      'stored. Superadmin and Auditor (`customer_file_access_logs.read`, B-API-6); neither reads the files.',
     implements: ['D-444'],
   })
   @ApiCursorPaginated(FileAccessLogEntryDto, { example: EXAMPLE })
@@ -178,5 +185,129 @@ export class CustomerFileAccessLogsController {
       query.limit ?? DEFAULT_CURSOR_LIMIT,
     );
     return { data: rows.map(toFileAccessLogDto), meta: { nextCursor } };
+  }
+}
+
+// ------------------------------------------------------------------------------------------------ B-API-6
+
+export class StaffRefDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8c' })
+  id!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'ซัพพอร์ต ทดสอบ' })
+  displayName!: string | null;
+}
+
+export class SetSupportAssignmentDto {
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: '0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8c',
+    description:
+      'The support staff member who handles the order (an active staff user holding `customer_files.read_handled`); ' +
+      '`null` ends the assignment',
+  })
+  @ValidateIf((o: { supportUserId: unknown }) => o.supportUserId !== null)
+  @IsUUID()
+  supportUserId!: string | null;
+}
+
+export class OrderSupportAssignmentDto {
+  @ApiProperty({ type: FileAccessOrderDto })
+  order!: FileAccessOrderDto;
+
+  @ApiProperty({ type: StaffRefDto, nullable: true, description: 'null = no explicit assignment' })
+  assignee!: StaffRefDto | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-26T10:15:00+07:00' })
+  assignedAt!: string | null;
+
+  @ApiProperty({ type: StaffRefDto, nullable: true, description: 'The CS Lead / Admin who assigned' })
+  assignedBy!: StaffRefDto | null;
+}
+
+const ASSIGNMENT_EXAMPLE: OrderSupportAssignmentDto = {
+  order: { id: '0192f3a0-7c1e-7d2a-9b1f-00000000a001', orderCode: 'DEVOR-2610-00001' },
+  assignee: { id: '0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8c', displayName: 'ซัพพอร์ต ทดสอบ' },
+  assignedAt: '2026-10-26T10:15:00+07:00',
+  assignedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8d', displayName: 'หัวหน้าซีเอส ทดสอบ' },
+};
+
+export const toSupportAssignmentDto = (v: SupportAssignmentView): OrderSupportAssignmentDto => ({
+  order: { id: v.order.publicId, orderCode: v.order.orderCode },
+  assignee: v.assignment
+    ? { id: v.assignment.user.publicId, displayName: v.assignment.user.displayName }
+    : null,
+  assignedAt: v.assignment ? toBangkokIso(v.assignment.assignedAt) : null,
+  assignedBy: v.assignment?.assignedBy
+    ? { id: v.assignment.assignedBy.publicId, displayName: v.assignment.assignedBy.displayName }
+    : null,
+});
+
+const orderParam = ApiParam({ name: 'orderId', format: 'uuid' });
+
+/** D-444 + B-API-6: who on support handles an order (reads its customer artwork with `customer_files.read_handled`). */
+@ApiSurface('admin', 'orderSupportAssignments')
+@Controller('orders/:orderId/support-assignment')
+export class OrderSupportAssignmentsController {
+  constructor(private readonly access: CustomerFileAccessService) {}
+
+  @Get()
+  @Can('orders.assign_support')
+  @orderParam
+  @ApiEndpoint({
+    id: 'admin.orderSupportAssignments.get',
+    summary: 'Read who on support handles an order',
+    description:
+      'D-444 (B-API-6): the live explicit support assignment of the order, set by CS Lead / Admin; `assignee` null ' +
+      'when none. Support also handles an order through an open conversation about it assigned to them (not shown ' +
+      'here). `orders.assign_support`.',
+    implements: ['D-444'],
+  })
+  @ApiSuccess(200, {
+    description: 'The assignment',
+    type: OrderSupportAssignmentDto,
+    example: ASSIGNMENT_EXAMPLE,
+  })
+  @ApiStandardErrors('http.not_found')
+  async get(@Param('orderId', ParseUUIDPipe) orderId: string): Promise<OrderSupportAssignmentDto> {
+    return toSupportAssignmentDto(await this.access.supportAssignment(orderId));
+  }
+
+  @Put()
+  @Can('orders.assign_support')
+  @orderParam
+  @ApiEndpoint({
+    id: 'admin.orderSupportAssignments.set',
+    summary: 'Assign the support staff member who handles an order',
+    description:
+      'D-444 (B-API-6): CS Lead / Admin (`orders.assign_support`) name the support staff member who handles the order ' +
+      '— an active staff user holding `customer_files.read_handled` (CS, CS Lead) — so they may read its customer ' +
+      'artwork / originals and production copies (every download logged); `null` ends the assignment. One live ' +
+      'assignment per order: a change ends the previous one (history kept). Setting the same user again changes ' +
+      'nothing. Audited (`order.support_assigned`) with the event `order.support_assigned`.',
+    implements: ['D-444'],
+  })
+  @ApiBody({
+    type: SetSupportAssignmentDto,
+    examples: {
+      assign: { value: { supportUserId: '0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8c' } },
+      end: { value: { supportUserId: null } },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'The assignment now',
+    type: OrderSupportAssignmentDto,
+    example: ASSIGNMENT_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'http.not_found', 'validation.failed')
+  async set(
+    @CurrentActor() actor: Actor,
+    @Param('orderId', ParseUUIDPipe) orderId: string,
+    @Body() body: SetSupportAssignmentDto,
+  ): Promise<OrderSupportAssignmentDto> {
+    if (actor.type !== 'user' || actor.audience !== 'staff') throw new DomainException('auth.forbidden');
+    return toSupportAssignmentDto(await this.access.assignSupport(actor, orderId, body.supportUserId));
   }
 }

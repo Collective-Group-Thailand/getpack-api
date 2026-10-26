@@ -8,6 +8,7 @@ import { compact, jsonField } from '../crud/compact';
 import { num } from '../crud/dto-fields';
 import { CONTENT_INCLUDE, contentImage, contentView } from '../crud/option-content';
 import { printModelOf } from '../print-model/print-model';
+import { PRINT_MODEL_VERSION_ORDER, versionInForce } from '../print-model/print-model-versions';
 import { optionKey, type OptionPublicIds, optionPublicIds } from './option-refs';
 import {
   CatalogProductDto,
@@ -302,6 +303,7 @@ export const CATALOG_PRODUCT_INCLUDE = {
   patterns: { include: { pattern: { select: { publicId: true, code: true } } }, orderBy: { sort: 'asc' } },
   options: { orderBy: [{ sort: 'asc' }, { optionKind: 'asc' }] },
   images: { include: { fileObject: { select: { publicId: true } } }, orderBy: { sort: 'asc' } },
+  printModelVersions: { orderBy: PRINT_MODEL_VERSION_ORDER },
 } satisfies Prisma.CatalogProductInclude;
 export type CatalogProductRow = Prisma.CatalogProductGetPayload<{ include: typeof CATALOG_PRODUCT_INCLUDE }>;
 
@@ -325,7 +327,7 @@ export function catalogProductDto(row: CatalogProductRow, optionIds: OptionPubli
     quantityDefault: row.quantityDefault,
     quantityPresets: [...(row.quantityPresets ?? [])].sort((a, b) => a - b),
     referenceConfiguration: (row.referenceConfiguration as Record<string, unknown> | null) ?? null,
-    printModel: printModelOf(row.printModel),
+    ...printModelFields(row.printModelVersions),
     sort: row.sort,
     status: row.status,
     patterns: row.patterns.map((p) => ({
@@ -354,6 +356,25 @@ export function catalogProductDto(row: CatalogProductRow, optionIds: OptionPubli
   };
 }
 
+/** B-API-6: the print model in force now and every version (ADR-0005). */
+function printModelFields(
+  versions: CatalogProductRow['printModelVersions'],
+  now = new Date(),
+): Pick<CatalogProductDto, 'printModel' | 'printModelVersions'> {
+  const current = versionInForce(versions, now);
+  return {
+    printModel: printModelOf(current?.model ?? null),
+    printModelVersions: versions.map((v) => ({
+      id: v.publicId,
+      versionNo: v.versionNo,
+      effectiveFrom: toBangkokIso(v.effectiveFrom),
+      inForce: v === current,
+      printModel: printModelOf(v.model),
+      createdAt: toBangkokIso(v.createdAt),
+    })),
+  };
+}
+
 export const CATALOG_PRODUCT_EXAMPLE: CatalogProductDto = {
   id: EXAMPLE_IDS.catalogProduct,
   productTypeId: EXAMPLE_IDS.productType,
@@ -373,6 +394,7 @@ export const CATALOG_PRODUCT_EXAMPLE: CatalogProductDto = {
   quantityPresets: [],
   referenceConfiguration: null,
   printModel: null,
+  printModelVersions: [],
   sort: 10,
   status: 'active',
   patterns: [

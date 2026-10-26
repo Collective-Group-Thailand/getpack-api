@@ -5,7 +5,12 @@ import { ArtworkService } from '@modules/artwork/artwork.service';
 import { ROLES } from '@modules/iam/roles.catalog';
 import { JobsQueryService } from '@modules/production/jobs-query.service';
 
-import { CustomerFileAccessLogsController, toFileAccessLogDto } from './customer-file-access.controller';
+import {
+  CustomerFileAccessLogsController,
+  OrderSupportAssignmentsController,
+  toFileAccessLogDto,
+  toSupportAssignmentDto,
+} from './customer-file-access.controller';
 import { CustomerFileAccessService } from './customer-file-access.service';
 import { FilesService } from './files.service';
 
@@ -41,7 +46,13 @@ const FILES = {
   unsubmitted: file(5n, { purpose: 'artwork', ownerUserId: CUSTOMER }),
   onBehalf: file(6n, { purpose: 'artwork', ownerUserId: 301n }),
   thumbnail: file(7n, { thumbnailOfFileId: 1n, mimeType: 'image/webp' }),
+  // B-API-6: Studio and design-studio files are customer artwork.
+  studioPrint: file(8n, { purpose: 'artwork' }),
+  designAsset: file(9n, { purpose: 'design_asset', ownerUserId: CUSTOMER }),
+  studioRender: file(10n, { purpose: 'image', mimeType: 'image/png' }),
 };
+const STUDIO_JOB_FILES = new Set([8n]);
+const STUDIO_DESIGN_FILES = new Set([10n]);
 const SUBMITTED = new Set([1n, 6n]);
 
 /** Staff users and their role (real grants from the role catalogue). */
@@ -54,8 +65,14 @@ const STAFF: Record<string, { id: bigint; role: string }> = {
   admin: { id: 401n, role: 'admin' },
   logistics: { id: 402n, role: 'logistics' },
   superadmin: { id: 1n, role: 'superadmin' },
+  auditor: { id: 403n, role: 'auditor' },
+  csExplicit: { id: 304n, role: 'cs' },
+  csLead: { id: 305n, role: 'cs_lead' },
 };
+/** Assigned to an open conversation about the order. */
 const ASSIGNED = new Set([301n, 303n]);
+/** B-API-6: explicit order support assignment (`order_support_assignments`, live). */
+const EXPLICIT = new Set([304n]);
 
 const staff = (key: string): Actor => ({
   type: 'user',
@@ -153,6 +170,34 @@ function setup() {
           ),
       ),
     },
+    studioPrintJob: {
+      findFirst: jest.fn(({ where }: { where: { OR: Record<string, bigint>[] } }) =>
+        Promise.resolve(
+          where.OR.some((o) => Object.values(o).some((id) => STUDIO_JOB_FILES.has(id)))
+            ? { orderId: ORDER }
+            : null,
+        ),
+      ),
+    },
+    designAsset: {
+      count: jest.fn(({ where }: { where: { fileObjectId: bigint } }) =>
+        Promise.resolve(where.fileObjectId === FILES.designAsset.id ? 1 : 0),
+      ),
+    },
+    designVersionRender: {
+      count: jest.fn(({ where }: { where: { fileId: bigint } }) =>
+        Promise.resolve(STUDIO_DESIGN_FILES.has(where.fileId) ? 1 : 0),
+      ),
+    },
+    designDocument: { count: jest.fn().mockResolvedValue(0) },
+    designDocumentVersion: { count: jest.fn().mockResolvedValue(0) },
+    orderSupportAssignment: {
+      count: jest.fn(({ where }: { where: { orderId: bigint; userId: bigint; endedAt: null } }) =>
+        Promise.resolve(
+          EXPLICIT.has(where.userId) && where.orderId === ORDER && where.endedAt === null ? 1 : 0,
+        ),
+      ),
+    },
     attachment: { findMany: jest.fn().mockResolvedValue([]) },
     customerFileAccessLog: {
       create: jest.fn(({ data }: { data: Record<string, unknown> }) => {
@@ -181,7 +226,12 @@ function setup() {
     presignGet: jest.fn().mockResolvedValue('https://files.example.invalid/x?X-Amz-Signature=fake-secret'),
   };
   const audit = { recordStandalone: jest.fn() };
-  const access = new CustomerFileAccessService(prisma as never, permissions as never);
+  const access = new CustomerFileAccessService(
+    prisma as never,
+    permissions as never,
+    {} as never,
+    {} as never,
+  );
   const files = new FilesService(
     prisma as never,
     {} as never,
@@ -221,6 +271,10 @@ describe('customer file access (D-444, DECISIONS-STAGE-A §7)', () => {
     ['admin', false, false, true, true],
     ['logistics', false, false, true, true],
     ['superadmin', false, false, true, true],
+    // B-API-6: Auditor has no access to originals (reads the access log instead); explicit assignment counts.
+    ['auditor', false, false, true, true],
+    ['csExplicit', true, true, true, true],
+    ['csLead', false, false, true, true],
   ])(
     'staff %s: original %s, copy %s, approved proof %s, other files %s',
     async (who, original, copy, proof, other) => {
@@ -232,6 +286,20 @@ describe('customer file access (D-444, DECISIONS-STAGE-A §7)', () => {
       expect(await can(staff(who), FILES.thumbnail)).toBe(original);
     },
   );
+
+  it('classes Studio print-job files, design-studio assets and Studio renders as customer artwork (B-API-6)', async () => {
+    for (const f of [FILES.studioPrint, FILES.designAsset, FILES.studioRender]) {
+      expect(await can(staff('prepress'), f)).toBe(true);
+      for (const who of ['admin', 'auditor', 'superadmin', 'finance', 'csOther'])
+        expect(await can(staff(who), f)).toBe(false);
+    }
+    // A Studio print job belongs to an order: the support member handling it reads it; design assets have no order.
+    expect(await can(staff('csExplicit'), FILES.studioPrint)).toBe(true);
+    expect(await can(staff('csHandling'), FILES.studioPrint)).toBe(true);
+    expect(await can(staff('csExplicit'), FILES.designAsset)).toBe(false);
+    // The customer keeps reading their own design asset (uploader rule).
+    expect(await can(customer(CUSTOMER), FILES.designAsset)).toBe(true);
+  });
 
   it('gives support no access to an artwork upload that is not part of an order yet', async () => {
     expect(await can(staff('csHandling'), FILES.unsubmitted)).toBe(false);
@@ -320,6 +388,21 @@ describe('customer file access log (D-444)', () => {
     expect(logs).toEqual([]);
   });
 
+  it('logs Studio and design-studio file downloads as customer originals (B-API-6)', async () => {
+    const { files, logs } = setup();
+    await files.downloadUrl(staff('prepress'), FILES.studioPrint.publicId, 'admin');
+    await files.downloadUrl(customer(CUSTOMER), FILES.designAsset.publicId, 'store');
+    expect(logs).toEqual([
+      expect.objectContaining({ fileObjectId: 8n, fileKind: 'customer_original', orderId: ORDER }),
+      expect.objectContaining({
+        fileObjectId: 9n,
+        fileKind: 'customer_original',
+        orderId: null,
+        channel: 'store',
+      }),
+    ]);
+  });
+
   it('fails the request when the log row cannot be written (no URL without a row)', async () => {
     const { files, prisma } = setup();
     prisma.customerFileAccessLog.create.mockRejectedValueOnce(new Error('db down'));
@@ -340,8 +423,13 @@ describe('customer file permissions (D-444)', () => {
     expect(holders('customer_files.read_handled')).toEqual(['cs', 'cs_lead']);
   });
 
-  it('protects the access log list with a permission held by Superadmin only', () => {
-    expect(holders('customer_file_access_logs.read')).toEqual(['superadmin']);
+  it('lets Superadmin and Auditor read the access log, but neither reads the files (B-API-6)', () => {
+    expect(holders('customer_file_access_logs.read')).toEqual(['auditor', 'superadmin']);
+    for (const role of ['superadmin', 'auditor', 'admin']) {
+      const granted = ROLES.find((r) => r.key === role)!.permissions as readonly string[];
+      expect(granted).not.toContain('customer_files.read');
+      expect(granted).not.toContain('customer_files.read_handled');
+    }
     const required = Reflect.getMetadata(
       REQUIRED_PERMISSIONS,
       CustomerFileAccessLogsController.prototype.list,
@@ -379,5 +467,123 @@ describe('customer file permissions (D-444)', () => {
       purpose: 'download',
       requestId: 'req-1',
     });
+  });
+});
+
+describe('explicit order support assignment (B-API-6, D-444)', () => {
+  const ORDER_ROW = { id: ORDER, publicId: 'o-1', orderCode: 'DEVOR-2610-00001' };
+  const lead = {
+    type: 'user',
+    userId: 305n,
+    publicId: 'staff-csLead',
+    audience: 'staff',
+    scopes: [],
+  } as const;
+
+  function assignSetup(live: { id: bigint; publicId: string; userId: bigint } | null) {
+    const tx = {
+      order: { findUnique: jest.fn().mockResolvedValue(ORDER_ROW) },
+      $queryRaw: jest.fn().mockResolvedValue([]),
+      orderSupportAssignment: {
+        findFirst: jest.fn().mockResolvedValue(live),
+        findUniqueOrThrow: jest.fn(),
+        update: jest.fn().mockResolvedValue({}),
+        create: jest.fn(({ data }: { data: { userId: bigint; assignedAt: Date } }) =>
+          Promise.resolve({
+            publicId: 'asg-2',
+            ...data,
+            user: { publicId: 'staff-csExplicit', displayName: 'ซัพพอร์ต (fake)' },
+            assignedBy: { publicId: 'staff-csLead', displayName: 'หัวหน้าซีเอส (fake)' },
+          }),
+        ),
+      },
+    };
+    const users: Record<string, { id: bigint; publicId: string }> = {
+      'u-cs': { id: 304n, publicId: 'u-cs' },
+      'u-finance': { id: 400n, publicId: 'u-finance' },
+    };
+    const prisma = {
+      user: {
+        findFirst: jest.fn(({ where }: { where: { publicId: string } }) =>
+          Promise.resolve(users[where.publicId] ?? null),
+        ),
+      },
+      withTx: jest.fn((work: (t: unknown) => Promise<unknown>) => work(tx)),
+    };
+    const permissions = {
+      forUser: jest.fn((userId: bigint) => {
+        const who = Object.values(STAFF).find((x) => x.id === userId);
+        return Promise.resolve({
+          permissions: new Set<string>(ROLES.find((r) => r.key === who?.role)?.permissions ?? []),
+        });
+      }),
+    };
+    const audit = { record: jest.fn().mockResolvedValue(undefined) };
+    const events = { record: jest.fn().mockResolvedValue({ id: 1n }) };
+    const service = new CustomerFileAccessService(
+      prisma as never,
+      permissions as never,
+      audit as never,
+      events as never,
+    );
+    return { service, tx, audit, events };
+  }
+
+  it('assigns a support member in one transaction with an audit row and an outbox event', async () => {
+    const { service, tx, audit, events } = assignSetup(null);
+    const view = await service.assignSupport(lead, 'o-1', 'u-cs');
+    expect(tx.orderSupportAssignment.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ orderId: ORDER, userId: 304n, assignedById: 305n }),
+      }),
+    );
+    expect(audit.record).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ action: 'order.support_assigned', resourcePublicId: 'o-1' }),
+    );
+    expect(events.record).toHaveBeenCalledWith(
+      tx,
+      expect.objectContaining({ type: 'order.support_assigned' }),
+    );
+    expect(toSupportAssignmentDto(view)).toMatchObject({
+      order: { id: 'o-1', orderCode: 'DEVOR-2610-00001' },
+      assignee: { id: 'staff-csExplicit' },
+      assignedBy: { id: 'staff-csLead' },
+    });
+  });
+
+  it('ends the live assignment on a change or on null (history kept)', async () => {
+    const { service, tx } = assignSetup({ id: 7n, publicId: 'asg-1', userId: 301n });
+    const view = await service.assignSupport(lead, 'o-1', null);
+    expect(tx.orderSupportAssignment.update).toHaveBeenCalledWith({
+      where: { id: 7n },
+      data: { endedAt: expect.any(Date), endedById: 305n },
+    });
+    expect(tx.orderSupportAssignment.create).not.toHaveBeenCalled();
+    expect(toSupportAssignmentDto(view).assignee).toBeNull();
+  });
+
+  it('refuses a user who is not support (no customer_files.read_handled) or not active staff', async () => {
+    const { service } = assignSetup(null);
+    await expect(service.assignSupport(lead, 'o-1', 'u-finance')).rejects.toMatchObject({
+      code: 'validation.failed',
+    });
+    await expect(service.assignSupport(lead, 'o-1', 'u-unknown')).rejects.toMatchObject({
+      code: 'validation.failed',
+    });
+  });
+
+  it('is set and read by CS Lead / Admin only (orders.assign_support)', () => {
+    const holders = ROLES.filter((r) =>
+      (r.permissions as readonly string[]).includes('orders.assign_support'),
+    )
+      .map((r) => r.key)
+      .sort();
+    expect(holders).toEqual(['admin', 'cs_lead', 'superadmin']);
+    for (const handler of [
+      OrderSupportAssignmentsController.prototype.get,
+      OrderSupportAssignmentsController.prototype.set,
+    ])
+      expect(Reflect.getMetadata(REQUIRED_PERMISSIONS, handler)).toEqual(['orders.assign_support']);
   });
 });

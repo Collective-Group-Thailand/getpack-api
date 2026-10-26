@@ -59,6 +59,27 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-051'],
   },
   {
+    key: 'catalog.print_limits',
+    valueType: 'json',
+    value: { maxSpotColoursPerSide: 1, cmykSpotAddOnEnabled: false },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['maxSpotColoursPerSide', 'cmykSpotAddOnEnabled'],
+      properties: {
+        maxSpotColoursPerSide: { type: 'integer', minimum: 1, maximum: 8 },
+        cmykSpotAddOnEnabled: { type: 'boolean' },
+      },
+    },
+    description:
+      'D-443 / B-API-6: what the engine can price per print side — the most spot colours on a side and whether ' +
+      'CMYK + spot colour is offered. Caps every catalogue print model; beyond it the configurator offers nothing ' +
+      'and a store calculation gets the quote path',
+    decisions: ['D-443'],
+    confirmation: 'pending_business',
+    ownerRole: 'admin',
+  },
+  {
     key: 'discounts.cs_limit_pct',
     valueType: 'percent',
     value: '5',

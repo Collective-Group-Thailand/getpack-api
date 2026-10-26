@@ -17,13 +17,9 @@ import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { CONTENT_INCLUDE } from '../crud/option-content';
-import {
-  type InkKind,
-  PRINT_MODEL_CALCULATORS,
-  printModelOf,
-  storePrintModel,
-} from '../print-model/print-model';
+import { type InkKind, PRINT_MODEL_CALCULATORS, storePrintModel } from '../print-model/print-model';
 import { type StorePrintModelDto } from '../print-model/print-model.dto';
+import { printLimitsAt, printModelInForce } from '../print-model/print-model-versions';
 import { pouchShapeOf, sizeRulesOf } from './size-rules';
 import { imageUrl, StoreCatalogService } from './store-catalog.service';
 import { type StoreConfiguratorDto } from './store-configurator.dto';
@@ -99,7 +95,7 @@ export class StoreConfiguratorService {
     const sizeIndex = defaultSizeIndex(sizes, spec);
     const specQuantity = defaultSpecQuantity(spec);
     const described = spec ? await this.storePricing.describe(calculator, spec).catch(() => null) : null;
-    const printModel = await this.printModel(calculator, p.printModel, p.options, spec);
+    const printModel = await this.printModel(calculator, p.id, p.options, spec);
     return {
       slug: p.slug,
       catalogProductId: p.publicId,
@@ -161,12 +157,16 @@ export class StoreConfiguratorService {
    */
   private async printModel(
     calculator: string,
-    stored: unknown,
+    productId: bigint,
     options: { optionKind: string; optionId: bigint; isDefault: boolean }[],
     spec: Record<string, unknown> | null,
   ): Promise<StorePrintModelDto | null> {
-    const model = printModelOf(stored);
-    if (!model || !PRINT_MODEL_CALCULATORS.has(calculator)) return null;
+    if (!PRINT_MODEL_CALCULATORS.has(calculator)) return null;
+    // B-API-6: the version in force (ADR-0005), capped by what the engine can price (`catalog.print_limits`).
+    const now = new Date();
+    const model = await printModelInForce(this.prisma, { id: productId }, now);
+    if (!model) return null;
+    const limits = await printLimitsAt(this.prisma, now);
     const offered = options.filter((o) => o.optionKind === 'ink_colour');
     const inks = await this.prisma.inkColour.findMany({
       where: { id: { in: offered.map((o) => o.optionId) }, status: ACTIVE },
@@ -175,6 +175,6 @@ export class StoreConfiguratorService {
     const kinds = new Map<string, InkKind>(inks.map((i) => [i.publicId, i.colourKind]));
     const flagged = offered.find((o) => o.isDefault);
     const defaultInk = inks.find((i) => i.id === flagged?.optionId)?.publicId ?? null;
-    return storePrintModel(model, spec, (id) => kinds.get(id), defaultInk);
+    return storePrintModel(model, spec, (id) => kinds.get(id), defaultInk, limits);
   }
 }

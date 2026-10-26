@@ -1,12 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
   IsBoolean,
+  IsDate,
   IsIn,
   IsInt,
+  IsOptional,
   IsUUID,
   Max,
   Min,
@@ -140,13 +142,52 @@ export class SetPrintModelDto {
   @ValidateNested()
   @Type(() => PrintModelDto)
   printModel!: PrintModelDto | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    example: '2026-11-01T00:00:00+07:00',
+    description:
+      'B-API-6 (ADR-0005): when this version takes effect; now when omitted, never in the past. Reads use the ' +
+      'version in force; earlier versions are kept',
+  })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  effectiveFrom?: Date;
 }
 
+/** B-API-6: one version of a product's print model (ADR-0005), newest first in `printModelVersions`. */
+export class PrintModelVersionDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-00000000f301' })
+  id!: string;
+
+  @ApiProperty({ type: 'integer', example: 2 })
+  versionNo!: number;
+
+  @ApiProperty({ format: 'date-time', example: '2026-11-01T00:00:00+07:00' })
+  effectiveFrom!: string;
+
+  @ApiProperty({ example: false, description: 'This is the version in force now' })
+  inForce!: boolean;
+
+  @ApiProperty({
+    type: PrintModelDto,
+    nullable: true,
+    description: 'null = the model was removed from this date',
+  })
+  printModel!: PrintModelDto | null;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-26T10:15:00+07:00' })
+  createdAt!: string;
+}
+
+/** Within the seeded `catalog.print_limits` (1 spot colour per side, no CMYK add-on — B-API-6). */
 export const PRINT_MODEL_EXAMPLE: PrintModelDto = {
   outside: {
     methods: ['none', 'spot', 'cmyk'],
-    spot: { maxColours: 2, inkColourIds: [INK('101'), INK('102')] },
-    cmyk: { inkColourId: INK('103'), addOn: { enabled: true, maxColours: 1 } },
+    spot: { maxColours: 1, inkColourIds: [INK('101'), INK('102')] },
+    cmyk: { inkColourId: INK('103'), addOn: { enabled: false, maxColours: 0 } },
   },
   inside: {
     methods: ['none', 'spot'],
@@ -182,7 +223,11 @@ export class StorePrintSpotDto {
   @ApiProperty({ type: 'integer', example: 1, description: 'Counter minimum (always 1)' })
   minColours!: number;
 
-  @ApiProperty({ type: 'integer', example: 2, description: 'Counter maximum N (back-office data)' })
+  @ApiProperty({
+    type: 'integer',
+    example: 2,
+    description: 'Counter maximum N (back-office data, capped by `catalog.print_limits`, B-API-6)',
+  })
   maxColours!: number;
 
   @ApiProperty({
@@ -195,7 +240,11 @@ export class StorePrintSpotDto {
 }
 
 export class StorePrintAddOnDto {
-  @ApiProperty({ example: true, description: 'Show the "+ สีพิเศษ" counter beside CMYK' })
+  @ApiProperty({
+    example: false,
+    description:
+      'Show the "+ สีพิเศษ" counter beside CMYK (off while `catalog.print_limits` disables it, B-API-6)',
+  })
   enabled!: boolean;
 
   @ApiProperty({ type: 'integer', example: 0 })
@@ -256,8 +305,8 @@ export const STORE_PRINT_MODEL_EXAMPLE: StorePrintModelDto = {
   outside: {
     field: 'printFront',
     methods: ['none', 'spot', 'cmyk'],
-    spot: { minColours: 1, maxColours: 2, inkColourIds: [INK('101'), INK('102')] },
-    cmyk: { inkColourId: INK('103'), addOn: { enabled: true, minColours: 0, maxColours: 1 } },
+    spot: { minColours: 1, maxColours: 1, inkColourIds: [INK('101'), INK('102')] },
+    cmyk: { inkColourId: INK('103'), addOn: { enabled: false, minColours: 0, maxColours: 0 } },
     default: { method: 'cmyk', spotInkColourIds: [], cmykAddOnInkColourIds: [] },
   },
   inside: {

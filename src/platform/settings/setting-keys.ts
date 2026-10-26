@@ -25,6 +25,8 @@ export interface SettingValues {
   'notifications.marketing_window': { from: string; to: string; timezone?: string };
   'pricing.margin_floor_pct': string;
   'quotes.validity_days': number;
+  /** B-API-6: what the engine can price per side today (pending business); caps every print model. */
+  'catalog.print_limits': { maxSpotColoursPerSide: number; cmykSpotAddOnEnabled: boolean };
   'fulfilment.tolerance_default_pct': string;
   'partners.peer_benchmark_min_factories': number;
   'partners.impact_simulation_window_days': number;

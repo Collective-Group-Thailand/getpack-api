@@ -3,7 +3,8 @@
  *
  * Per side the method is one choice — `none` (ไม่พิมพ์), `spot` (สีพิเศษ: 1..N spot colours, ดำ is one of them) or
  * `cmyk` (พิมพ์ 4 สี, optionally "+ สีพิเศษ" 0..M when the add-on is enabled). N, M, the allowed colours and the
- * process ink are back-office data (`catalog_products.print_model`, `PUT …/print-model`), never constants.
+ * process ink are back-office data, effective-dated (`catalog_product_print_models`; `PUT …/print-model` adds a
+ * version, B-API-6) and capped by the `catalog.print_limits` setting — never constants.
  *
  * The model maps to the ink inputs the pricing engine already takes (corrugate `parts[].printFront` / `printBack`:
  * one entry per ink, the process set is one entry): no formula changes. Pure functions only.
@@ -61,6 +62,33 @@ export interface PrintModel {
   inside: PrintSideConfig;
 }
 
+/**
+ * B-API-6: what the engine can price today, an effective-dated setting (`catalog.print_limits`, ADR-0005; seeded
+ * max 1 spot colour per side, CMYK + spot add-on off until the business answers). It caps every model: combinations
+ * beyond it are not offered by the configurator and a store calculation that still sends one gets the quote path.
+ * Null when the setting has no version in force (then only the product's model applies).
+ */
+export interface PrintLimits {
+  maxSpotColoursPerSide: number;
+  cmykSpotAddOnEnabled: boolean;
+}
+
+/** A side's model capped by the limits in force (N ≤ the limit; the add-on off unless the limits allow it). */
+export function limitSide(config: PrintSideConfig, limits: PrintLimits | null): PrintSideConfig {
+  if (!limits) return config;
+  const spot = config.spot && {
+    ...config.spot,
+    maxColours: Math.min(config.spot.maxColours, limits.maxSpotColoursPerSide),
+  };
+  const addOnOn = !!config.cmyk?.addOn.enabled && limits.cmykSpotAddOnEnabled;
+  const cmyk = config.cmyk && {
+    inkColourId: config.cmyk.inkColourId,
+    addOn: { enabled: addOnOn, maxColours: addOnOn ? config.cmyk.addOn.maxColours : 0 },
+  };
+  const methods = config.methods.filter((m) => m !== 'spot' || (spot !== null && spot.maxColours >= 1));
+  return { methods, spot, cmyk };
+}
+
 /** What a customer chose on one side. */
 export interface PrintSelection {
   method: PrintMethod;
@@ -116,15 +144,25 @@ export function checkSide(
   config: PrintSideConfig | null,
   inkColourIds: string[],
   kindOf: (id: string) => InkKind | undefined,
+  limits: PrintLimits | null = null,
 ): PrintViolation | null {
   const selection = selectionOf(inkColourIds, kindOf);
   if ('code' in selection) return selection;
   if (!config) {
-    return selection.method === 'cmyk' && selection.cmykAddOnInkColourIds.length > 0
-      ? { code: 'cmyk_with_spot', message: 'CMYK and a spot colour on one side are not offered' }
-      : null;
+    if (selection.method === 'cmyk' && selection.cmykAddOnInkColourIds.length > 0)
+      return { code: 'cmyk_with_spot', message: 'CMYK and a spot colour on one side are not offered' };
+    if (
+      limits &&
+      selection.method === 'spot' &&
+      selection.spotInkColourIds.length > limits.maxSpotColoursPerSide
+    )
+      return {
+        code: 'spot_count',
+        message: `at most ${limits.maxSpotColoursPerSide} spot colours on a side (catalog.print_limits)`,
+      };
+    return null;
   }
-  return checkSelection(config, selection, inkColourIds);
+  return checkSelection(limitSide(config, limits), selection, inkColourIds);
 }
 
 /** Checks a selection against the side's model (also used for the default spec). */
@@ -243,11 +281,25 @@ export function defaultSelection(
 export function validatePrintModel(
   model: PrintModel,
   offered: ReadonlyMap<string, InkKind>,
+  limits: PrintLimits | null = null,
 ): { path: string; code: string; message: string }[] {
   const errors: { path: string; code: string; message: string }[] = [];
   for (const side of PRINT_SIDES) {
     const c = model[side];
     const at = (p: string) => `printModel.${side}${p}`;
+    // B-API-6: nothing beyond what the engine can price today (`catalog.print_limits`).
+    if (limits && c.spot && c.spot.maxColours > limits.maxSpotColoursPerSide)
+      errors.push({
+        path: at('.spot.maxColours'),
+        code: 'spot_count',
+        message: `at most ${limits.maxSpotColoursPerSide} spot colours per side (catalog.print_limits)`,
+      });
+    if (limits && c.cmyk?.addOn.enabled && !limits.cmykSpotAddOnEnabled)
+      errors.push({
+        path: at('.cmyk.addOn.enabled'),
+        code: 'add_on_count',
+        message: 'the CMYK + spot colour add-on is not offered (catalog.print_limits)',
+      });
     if (c.methods.length === 0 || repeated(c.methods))
       errors.push({ path: at('.methods'), code: 'invalid', message: 'list each offered method once' });
     if (c.spot) {
@@ -310,9 +362,11 @@ export function storePrintModel(
   reference: Record<string, unknown> | null,
   kindOf: (id: string) => InkKind | undefined,
   defaultInkColourId: string | null,
+  limits: PrintLimits | null = null,
 ): { outside: StorePrintSide; inside: StorePrintSide } {
   const view = (side: PrintSide): StorePrintSide => {
-    const c = model[side];
+    // B-API-6: only what the engine can price is offered (`catalog.print_limits`).
+    const c = limitSide(model[side], limits);
     const spotIds = (c.spot?.inkColourIds ?? []).filter((id) => {
       const kind = kindOf(id);
       return kind !== undefined && kind !== 'process';

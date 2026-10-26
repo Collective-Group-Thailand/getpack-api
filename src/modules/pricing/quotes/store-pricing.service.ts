@@ -47,6 +47,16 @@ export const storeView = (
   specLabel: described.label,
 });
 
+/** The engine context of a store calculation: a print combination not offered routes every quantity to RFQ (B-API-6). */
+export const storeQuoteContext = (
+  ctx: Omit<QuoteContext, 'channel'>,
+  printErrorCount: number,
+): QuoteContext => ({
+  ...ctx,
+  channel: 'web',
+  ...(printErrorCount > 0 && { instantBlock: 'rfq_required' as const }),
+});
+
 /**
  * The one store pricing path (D-441, GLOBAL-RULES §5): validate the configuration as a store request (DTO and store
  * rules), price it with the quote engine on the web channel and describe it with the one spec-line helper. The
@@ -69,8 +79,16 @@ export class StorePricingService {
     target?: string,
   ): Promise<StorePriced> {
     const validated = await validateConfiguration(calculatorKey, configuration, { staff: false });
-    await assertStoreRules(this.prisma, calculatorKey, validated);
-    const view = await this.engine.price(calculatorKey, validated, { ...ctx, channel: 'web' });
+    // B-API-6: a print combination the engine cannot price (or the product does not offer) is not an error here —
+    // every quantity answers `instant: false` with `reason: rfq_required`, the quote path.
+    const { printErrors } = await assertStoreRules(this.prisma, calculatorKey, validated, {
+      printCombination: 'collect',
+    });
+    const view = await this.engine.price(
+      calculatorKey,
+      validated,
+      storeQuoteContext(ctx, printErrors.length),
+    );
     const described = await this.lines(calculatorKey, validated, view.dimensions);
     return { configuration: validated, view, calculation: storeView(view, described, target) };
   }

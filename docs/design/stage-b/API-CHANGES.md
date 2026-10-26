@@ -369,3 +369,118 @@ the upload), `launchpad`, `orders`, `payments`, `designs`, `studio-documents`, `
 1. Prepress can still accept / reject an unpaid order's submission by direct id (not listed). Should review actions
    refuse until payment? Kept open (queue-only change).
 2. Should `kind=changes_requested` also be limited to paid orders? Not changed (proofs follow an accepted, paid-queue file).
+
+## B-API-6 Decisions follow-up
+
+Product-owner answers to the Stage B open questions (DECISIONS-STAGE-A §7 rows "(B-API-6)", decision **D-445**;
+amends D-443 and D-444). Answers B-API-2 "Config follows the catalogue-option model", B-API-5 open questions 1–4 and
+B-API-4b open questions 1–2.
+
+### 1. VAT (RFQ quotations, CS service pricing)
+
+| Where | Change |
+|---|---|
+| RFQ quotation lines (`src/modules/rfq/rfq-quote-amounts.ts`, used by draft / send and accept) | goods (ex-VAT unit × quantity) and ex-VAT shipping are the taxable lines of `computeVat`; `vatAmount` = rate % of their rounded sum (half-up); `grossAmount` = net + VAT; the shipping line's own VAT also comes from the helper |
+| `POST /v1/admin/cs/service/actions/price` (`admin.csService.price`) | `unit` / `total` `netAmount`, `vatAmount`, `grossAmount` (and `marginAmount` = net − buy) from `computeVat`: basis `buy_price_net` → VAT on the net of the quantity; basis `sell_gross` → gross as entered, VAT = rate % of its ex-VAT amount, net = gross − VAT |
+
+No schema change. Legacy margin / buy-price / freelancer-payable maths unchanged. Values differ only by a satang in rare
+cases (e.g. `sell_gross` ฿1.15: VAT `0.07`, net `1.08`; legacy VAT 0.08, net 1.07) or on totals of several units
+(VAT on the quantity's net, not unit VAT × quantity: 3 × ฿1,069.52 → VAT `224.60`). Quotations already sent and issued
+documents keep their stored amounts.
+
+### 2. Print model effective-dated, priced combinations only
+
+- **Table** `catalog_product_print_models` (`id`, `public_id`, `catalog_product_id`, `version_no` (unique per product),
+  `model` jsonb (null = model removed from that date), `effective_from`, `created_at`, `created_by`). Reads use the
+  version with the greatest `effective_from ≤ now` (ties: greatest `version_no`). `catalog_products.print_model` is
+  dropped.
+- **Setting** `catalog.print_limits` (ADR-0005: effective-dated, audited, owner role Admin; `pending_business`), seeded
+  `{ "maxSpotColoursPerSide": 1, "cmykSpotAddOnEnabled": false }`. It caps every model; not a constant in pricing code.
+  Without a version in force only the product's model applies.
+
+| Endpoint | Change |
+|---|---|
+| `PUT /v1/admin/catalog/catalog-products/{id}/print-model` (`admin.catalogProducts.setPrintModel`) | adds a version instead of overwriting; body `SetPrintModelDto` gains optional **`effectiveFrom`** (date-time; now when omitted; 422 `validation.failed` `effectiveFrom`/`min` when in the past). Audit `catalog.print_model_version_created` (`versionId`, `versionNo`, `effectiveFrom`, `cleared`) besides `catalog.catalog_product_updated`. New 422 errors: `printModel.<side>.spot.maxColours` `spot_count` (N above the limit), `printModel.<side>.cmyk.addOn.enabled` `add_on_count` (add-on while disabled). The reference configuration is checked against the new version at its `effectiveFrom`. |
+| every `CatalogProductDto` answer | `printModel` = the version in force; new **`printModelVersions: PrintModelVersionDto[]`** (`id`, `versionNo`, `effectiveFrom`, `inForce`, `printModel`, `createdAt`), newest `effectiveFrom` first, future versions included |
+| `GET /v1/store/catalog/products/{slug}/configurator` | `printModel` from the version in force, capped by the limits: `spot.maxColours` ≤ 1 and `cmyk.addOn` `{ enabled: false, maxColours: 0 }` with the seeded values |
+| `POST /v1/store/quotes/actions/calculate` (and everything priced through `StorePricingService`: hero preview, Studio dock, price hints) | a combination the model in force or the limits do not offer is **no longer 422**: 200 with every step `instant: false`, `reason: "rfq_required"` (the quote path). Other store paths (saved quotes, quote levers, advisor, reference configuration) still answer 422 `pricing.print_combination_invalid`; the limits apply there too (e.g. `spot_count` for two spot colours without a model). |
+
+Example (two spot colours on the outside, seeded limits):
+
+```json
+{ "steps": [{ "quantity": 1000, "instant": false, "reason": "rfq_required", "unitPrice": null, "grossAmount": null }] }
+```
+
+**Migration** `20261219000001_catalog_print_model_versions`: creates the table, copies each non-null
+`catalog_products.print_model` into version 1 (`effective_from` = the product's `updated_at`, `created_by` =
+`updated_by`), drops the column. `down.sql` re-adds the column with the model in force now and drops the table
+(history and future versions lost). The UAT seed writes version 1. The setting is seeded by `pnpm db:seed`.
+
+### 3. Spec label
+
+Confirmed, unchanged: spot colours are named, e.g. "สีพิเศษ 1 สี (ดำ)" (`src/modules/quotes/spec-label.spec.ts`).
+
+### 4. Customer file access (D-444 follow-up)
+
+- **"Handles an order"** = a live explicit support assignment **or** (unchanged) an open order conversation assigned
+  to the user.
+- **Table** `order_support_assignments` (`public_id`, `order_id`, `user_id`, `assigned_at`, `assigned_by`, `ended_at`,
+  `ended_by`; one live row per order — partial unique index `ux_order_support_assignments__one_live`; check
+  `ended_at ≥ assigned_at`). A change ends the live row and adds a new one.
+- **Studio and design files are customer artwork** (`customer_original`, same access rules and log rows): Studio
+  print-job files (`print_file_id`, `proof_file_id`, `snapshot_file_id`; order = the job's order), design-studio assets
+  (purpose `design_asset`, `design_assets`), Studio design renders (`design_version_renders`) and design / version
+  thumbnails (no order: Prepress and the uploader only).
+
+| Endpoint | Change |
+|---|---|
+| `GET /v1/admin/orders/{orderId}/support-assignment` — **new** `admin.orderSupportAssignments.get` | `OrderSupportAssignmentDto { order { id, orderCode }, assignee { id, displayName } \| null, assignedAt \| null, assignedBy \| null }`; 404 unknown order |
+| `PUT /v1/admin/orders/{orderId}/support-assignment` — **new** `admin.orderSupportAssignments.set` | body `SetSupportAssignmentDto { supportUserId: uuid \| null }` (null ends it); 422 `validation.failed` `supportUserId` (`exists`: not an active staff user; `invalid`: lacks `customer_files.read_handled`); one transaction with audit `order.support_assigned` (category `iam`) and event `order.support_assigned` (payload `orderId`, `userId`, `previousAssignmentId`, `assignmentId`); same user again = no change |
+| `GET /v1/admin/customer-file-access-logs` | now also Auditor |
+
+```json
+{ "order": { "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001", "orderCode": "DEVOR-2610-00001" },
+  "assignee": { "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8c", "displayName": "ซัพพอร์ต ทดสอบ" },
+  "assignedAt": "2026-10-26T10:15:00+07:00",
+  "assignedBy": { "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8d", "displayName": "หัวหน้าซีเอส ทดสอบ" } }
+```
+
+| Permission | Granted to |
+|---|---|
+| `orders.assign_support` (new) | `cs_lead`, `admin` (and `superadmin`, every staff permission) |
+| `customer_file_access_logs.read` | `superadmin`, **`auditor`** (new) |
+| `customer_files.read` / `customer_files.read_handled` | unchanged (`prepress` / `cs`, `cs_lead`); still never Superadmin, Admin or Auditor |
+
+`docs/rbac.md` regenerated; grants reach existing databases with `pnpm db:seed`. **Migration**
+`20261219000002_order_support_assignments` (`down.sql` drops the table; assignments lost).
+
+### 5. Prepress on paid orders only
+
+| What | Change |
+|---|---|
+| `POST /v1/admin/artwork-submissions/{id}/actions/accept` and `…/reject` | 409 **`artwork.order_unpaid`** ("คำสั่งซื้อยังไม่ชำระเงิน") while the order has no `paidForProductionAt` (direct id included) |
+| `GET /v1/admin/prepress/queue?kind=changes_requested` | paid orders only (as `submissions`); `proofs_waiting` unchanged |
+
+### Tests
+
+Unit: `src/modules/rfq/rfq-quote-amounts.spec.ts`, `src/modules/pricing/quotes/cs-service-vat.spec.ts`,
+`src/modules/catalog/print-model/print-model.spec.ts` (limits, versions in force),
+`src/modules/pricing/quotes/store-print-route.spec.ts`, `src/platform/files/customer-file-access.spec.ts` (matrix with
+Auditor, explicit assignment, Studio files; assignment service and permissions),
+`src/modules/artwork/prepress-paid-review.spec.ts`, `test/unit/seed-data.spec.ts`;
+`storefront-factory-confidentiality` green.
+
+### e2e specs to run locally
+
+Changed: `artwork` (accept / reject 409 before payment, then paid; explicit assignment by CS Lead, Admin / Auditor 404
+on originals, Auditor reads the log), `corrugate-quotes` (CMYK twice → 200 quote path), `spec-sheet` (pays before
+approving the artwork). Run unchanged: `rfqs`, `rfq-baskets`, `service-quotes`, `price-consistency`, `design-services`,
+`designs`, `studio-documents`, `production-release`, `notification-matrix`, `files`, `admin-platform`,
+`catalog-cms`, `acceptance`.
+
+### Open questions
+
+1. `catalog.print_limits` values are placeholders (`pending_business`); the business sets real N / add-on per side.
+2. Studio design renders and thumbnails are now hidden from staff other than Prepress (they are customer artwork);
+   confirm no back-office screen needs them for non-Prepress roles.
+3. A support assignment does not end automatically when the order closes; CS Lead ends it.

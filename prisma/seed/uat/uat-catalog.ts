@@ -586,6 +586,7 @@ async function seedProducts(tx: Tx): Promise<number> {
       patterns.push({ patternId: (await tx.pattern.findUniqueOrThrow({ where: { code } })).id, sort: i });
     }
     const instantCapable = type.calculatorKey !== null;
+    const model = p.type === 'corrugated' ? await printModel(tx, p) : null;
     await tx.catalogProduct.create({
       data: {
         productTypeId: type.id,
@@ -605,7 +606,10 @@ async function seedProducts(tx: Tx): Promise<number> {
         ...(instantCapable && {
           referenceConfiguration: (await referenceConfiguration(tx, p)) ?? undefined,
         }),
-        ...(p.type === 'corrugated' && { printModel: (await printModel(tx, p)) ?? undefined }),
+        // B-API-6: the print model is effective-dated (version 1, in force from the seed run).
+        ...(model !== null && {
+          printModelVersions: { create: { versionNo: 1, model, effectiveFrom: new Date() } },
+        }),
         patterns: { create: patterns },
         options: { create: options },
         standardSizes: {

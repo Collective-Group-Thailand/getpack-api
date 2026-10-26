@@ -267,6 +267,7 @@ export const ERROR_CODES = {
   'artwork.invalid_status': HttpStatus.CONFLICT,
   'artwork.preflight_pending': HttpStatus.CONFLICT,
   'artwork.preflight_blocked': HttpStatus.CONFLICT,
+  'artwork.order_unpaid': HttpStatus.CONFLICT,
   'proofs.no_accepted_artwork': HttpStatus.CONFLICT,
   'proofs.not_pending': HttpStatus.CONFLICT,
   'proofs.annotation_closed': HttpStatus.CONFLICT,

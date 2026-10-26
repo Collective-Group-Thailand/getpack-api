@@ -35,6 +35,14 @@ const TAKES_ARTWORK: readonly string[] = ['waiting_payment', 'paid_for_productio
 /** B-API-4b: the prepress review queue holds only paid orders (production gate D-073). */
 const PAID_ORDER = { paidForProductionAt: { not: null } } satisfies Prisma.OrderWhereInput;
 
+/**
+ * B-API-6 (DECISIONS-STAGE-A §7): Prepress reviews paid orders only — accepting or rejecting a submission of an
+ * unpaid order is refused (409 `artwork.order_unpaid`), even by direct id. The file check still runs before payment.
+ */
+export function assertPaidForReview(paidForProductionAt: Date | null): void {
+  if (paidForProductionAt === null) throw new DomainException('artwork.order_unpaid');
+}
+
 function latest(a: Date, b: Date | null): Date {
   return b && b > a ? b : a;
 }
@@ -370,6 +378,7 @@ export class ArtworkService implements OnModuleInit {
       if (row.preflightStatus === 'blocked') throw new DomainException('artwork.preflight_blocked');
       const order = await tx.order.findUniqueOrThrow({ where: { id: row.orderId } });
       this.assertTakesArtwork(order.status, order.artworkStatus);
+      assertPaidForReview(order.paidForProductionAt);
       await tx.artworkSubmission.update({
         where: { id: row.id },
         data: {
@@ -413,6 +422,7 @@ export class ArtworkService implements OnModuleInit {
         throw new DomainException('artwork.invalid_status', { params: { status: row.status } });
       const order = await tx.order.findUniqueOrThrow({ where: { id: row.orderId } });
       this.assertTakesArtwork(order.status, order.artworkStatus);
+      assertPaidForReview(order.paidForProductionAt);
       await tx.artworkSubmission.update({
         where: { id: row.id },
         data: {
@@ -543,7 +553,11 @@ export class ArtworkService implements OnModuleInit {
     } else {
       const where: Prisma.ProofWhereInput = {
         status: kind === 'proofs_waiting' ? 'pending_customer' : 'changes_requested',
-        order: { ...liveOrder, ...(kind === 'changes_requested' && { artworkStatus: 'changes_requested' }) },
+        // B-API-6: like the submissions queue, "changes requested" lists paid orders only.
+        order: {
+          ...liveOrder,
+          ...(kind === 'changes_requested' && { artworkStatus: 'changes_requested', ...PAID_ORDER }),
+        },
         ...(kind === 'changes_requested' && { nextProofs: { none: {} } }),
       };
       const [rows, count] = await Promise.all([

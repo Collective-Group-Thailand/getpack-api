@@ -377,6 +377,29 @@ model PrintType {
   @@map("print_types")
 }
 
+/// D-443 + B-API-6 (ADR-0005): the per-side print model of a catalogue product, effective-dated. Reads use the version
+/// with the greatest `effective_from ≤ now` (ties: greatest `version_no`); an admin change adds a version, never
+/// overwrites one. `model` null = no model from that date (only never-valid combinations are refused).
+model CatalogProductPrintModel {
+  id               BigInt   @id(map: "pk_catalog_product_print_models") @default(autoincrement())
+  publicId         String   @unique(map: "ux_catalog_product_print_models__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  catalogProductId BigInt   @map("catalog_product_id")
+  versionNo        Int      @map("version_no")
+  /// outside / inside: methods none / spot / cmyk, N spot colours and the allowed colours, the CMYK add-on M.
+  model            Json?
+  effectiveFrom    DateTime @map("effective_from") @db.Timestamptz(6)
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?  @map("created_by")
+
+  catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_print_models__catalog_product_id")
+  createdBy      User?          @relation("CatalogProductPrintModelCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_product_print_models__created_by")
+
+  @@unique([catalogProductId, versionNo], map: "ux_catalog_product_print_models__product_version")
+  @@index([catalogProductId, effectiveFrom], map: "ix_catalog_product_print_models__product_effective")
+  @@index([createdById], map: "ix_catalog_product_print_models__created_by")
+  @@map("catalog_product_print_models")
+}
+
 /// The customer-facing product (legacy `mapping_inputs`, e.g. "กล่องฝาเสียบ").
 model CatalogProduct {
   id                       BigInt               @id(map: "pk_catalog_products") @default(autoincrement())
@@ -400,8 +423,6 @@ model CatalogProduct {
   quantityPresets          Int[]                @default([]) @map("quantity_presets")
   /// D-220 the configuration its "starting from" price is quoted at (calculator input, one quantity); null = no price hint.
   referenceConfiguration   Json?                @map("reference_configuration")
-  /// D-443 the per-side print model (outside / inside: methods none / spot / cmyk, N spot colours, CMYK add-on M); null = not configured.
-  printModel               Json?                @map("print_model")
   sort                     Int                  @default(0)
   status                   CatalogStatus        @default(draft)
   createdAt                DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -415,6 +436,7 @@ model CatalogProduct {
   defaultDifficultyLevel DifficultyLevel?        @relation("CatalogProductDefaultDifficulty", fields: [defaultDifficultyLevelId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_products__default_difficulty_level_id")
   patterns               CatalogProductPattern[]
   options                CatalogProductOption[]
+  printModelVersions     CatalogProductPrintModel[]
   images                 CatalogProductImage[]
   standardSizes          StandardSize[]
   showcaseProducts       ShowcaseProduct[]

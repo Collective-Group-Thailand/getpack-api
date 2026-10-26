@@ -644,6 +644,7 @@ model Order {
   designDocumentVersion DesignDocumentVersion? @relation("OrderDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_version_id")
   designsLocked         DesignDocument[]       @relation("DesignDocumentLockedByOrder")
   prepressAssignee      User?                  @relation("OrderPrepressAssignee", fields: [prepressAssigneeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__prepress_assignee_id")
+  supportAssignments    OrderSupportAssignment[]
   reuseArtworkProof     Proof?                 @relation("OrderReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reuse_artwork_proof_id")
 
   // --- Fulfilment B4.1 (generated back-relations)
@@ -731,6 +732,33 @@ model Order {
   @@index([shippedAt], map: "ix_orders__shipped_at", where: raw("(shipped_at IS NOT NULL)"))
   @@index([orderCode(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_orders__order_code_trgm")
   @@map("orders")
+}
+
+/// D-444 + B-API-6: the support staff member who handles an order, set by CS Lead / Admin (`orders.assign_support`).
+/// With `customer_files.read_handled` the assignee reads the order's customer artwork (an open conversation about the
+/// order assigned to them counts too). One live assignment per order (`ended_at` null, partial unique index in SQL);
+/// a change ends the live row and adds a new one, so the history stays.
+model OrderSupportAssignment {
+  id           BigInt    @id(map: "pk_order_support_assignments") @default(autoincrement())
+  publicId     String    @unique(map: "ux_order_support_assignments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  orderId      BigInt    @map("order_id")
+  userId       BigInt    @map("user_id")
+  assignedAt   DateTime  @default(now()) @map("assigned_at") @db.Timestamptz(6)
+  assignedById BigInt?   @map("assigned_by")
+  endedAt      DateTime? @map("ended_at") @db.Timestamptz(6)
+  endedById    BigInt?   @map("ended_by")
+
+  order      Order @relation(fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_support_assignments__order_id")
+  user       User  @relation("OrderSupportAssignmentUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_support_assignments__user_id")
+  assignedBy User? @relation("OrderSupportAssignmentAssignedBy", fields: [assignedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_support_assignments__assigned_by") // client: keep
+  endedBy    User? @relation("OrderSupportAssignmentEndedBy", fields: [endedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_support_assignments__ended_by")
+
+  @@index([orderId], map: "ix_order_support_assignments__order_id")
+  @@unique([orderId], map: "ux_order_support_assignments__one_live", where: raw("(ended_at IS NULL)"))
+  @@index([userId], map: "ix_order_support_assignments__user_id")
+  @@index([assignedById], map: "ix_order_support_assignments__assigned_by")
+  @@index([endedById], map: "ix_order_support_assignments__ended_by")
+  @@map("order_support_assignments")
 }
 
 /// Charge lines of an order (§2.9 amount set). Replaced only by a re-price before production.

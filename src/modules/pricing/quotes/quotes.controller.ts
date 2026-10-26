@@ -176,8 +176,10 @@ export class StoreQuotesController {
       '(D-050). Works signed in or anonymously. With `targetPricePerUnit` the response gives each instant ' +
       'quantity’s gap against it (D-247); the target is not stored here. `specs` and `specLabel` say which spec the ' +
       'price is for, built by the same helper as quotations, carts, orders and the "starting from" basis (size as ' +
-      'ยาว × กว้าง × สูง, mm); every store surface prices through this one path (D-441).',
-    implements: [...CALCULATION, 'D-247', 'D-441'],
+      'ยาว × กว้าง × สูง, mm); every store surface prices through this one path (D-441). A print combination the ' +
+      'product’s print model in force or `catalog.print_limits` does not offer (D-443) is not an error: every ' +
+      'quantity answers `instant: false` with `reason: rfq_required` (the quote path, B-API-6).',
+    implements: [...CALCULATION, 'D-247', 'D-441', 'D-443'],
   })
   @ApiBody({
     type: CalculateQuoteDto,

@@ -226,9 +226,14 @@ export class CatalogProductRelationsController {
       'สีพิเศษ, `cmyk` พิมพ์ 4 สี — the most spot colours N and the allowed spot colours, the process ink of CMYK and ' +
       'the "+ สีพิเศษ" add-on beside CMYK (enabled, at most M). Every ink must be an active `ink_colour` option of the ' +
       'product (spot colours of kind spot / white / metallic, CMYK of kind process). Corrugate products only. ' +
-      '`store.catalog.getConfigurator` exposes it as `printModel` and `store.quotes.calculate` refuses any other ' +
-      'combination (`pricing.print_combination_invalid`); the reference configuration (D-441) must remain a valid ' +
-      'choice. `null` removes the model. The price hint is recomputed. Guarded by the product ETag; audited.',
+      'B-API-6 (ADR-0005): each call adds a version effective from `effectiveFrom` (now when omitted, never in the ' +
+      'past); reads use the version in force and earlier versions are kept (`printModelVersions`). N and the add-on ' +
+      'may not exceed `catalog.print_limits` (seeded: 1 spot colour per side, no CMYK + spot add-on) — 422 ' +
+      '`spot_count` / `add_on_count`. `store.catalog.getConfigurator` exposes the version in force as `printModel`; ' +
+      '`store.quotes.calculate` answers any other combination with the quote path (`instant: false`, ' +
+      '`reason: rfq_required`), other store paths refuse it (`pricing.print_combination_invalid`); the reference ' +
+      'configuration (D-441) must remain a valid choice. `null` removes the model from `effectiveFrom`. The price ' +
+      'hint is recomputed. Guarded by the product ETag; audited.',
     implements: ['D-443', 'D-441'],
   })
   @ApiConcurrency()
@@ -236,13 +241,27 @@ export class CatalogProductRelationsController {
     type: SetPrintModelDto,
     examples: {
       default: { value: { printModel: PRINT_MODEL_EXAMPLE } },
+      scheduled: { value: { printModel: PRINT_MODEL_EXAMPLE, effectiveFrom: '2026-11-01T00:00:00+07:00' } },
       clear: { value: { printModel: null } },
     },
   })
   @ApiSuccess(200, {
     description: 'The catalogue product',
     type: CatalogProductDto,
-    example: { ...CATALOG_PRODUCT_EXAMPLE, printModel: PRINT_MODEL_EXAMPLE },
+    example: {
+      ...CATALOG_PRODUCT_EXAMPLE,
+      printModel: PRINT_MODEL_EXAMPLE,
+      printModelVersions: [
+        {
+          id: '0192f3a0-7c1e-7d2a-9b1f-00000000f301',
+          versionNo: 1,
+          effectiveFrom: '2026-10-26T10:15:00+07:00',
+          inForce: true,
+          printModel: PRINT_MODEL_EXAMPLE,
+          createdAt: '2026-10-26T10:15:00+07:00',
+        },
+      ],
+    },
   })
   @ApiStandardErrors(...COLLECTION_ERRORS, 'pricing.print_combination_invalid')
   async setPrintModel(
@@ -252,7 +271,13 @@ export class CatalogProductRelationsController {
     @Body() body: SetPrintModelDto,
     @Res({ passthrough: true }) res: Response,
   ): Promise<object> {
-    const row = await this.service.setPrintModel(staffActor(actor), id, ifMatch, body.printModel);
+    const row = await this.service.setPrintModel(
+      staffActor(actor),
+      id,
+      ifMatch,
+      body.printModel,
+      body.effectiveFrom,
+    );
     await this.hints.refresh((row as unknown as { id: bigint }).id);
     return this.respond(row, res);
   }

@@ -38,6 +38,8 @@ describe('seed data (B1.2 step 3)', () => {
       'loyalty.expected_redemption_rate_pct': 'pending_cpa',
       // D-430: the registered e-Tax sender is the business's; the subject date and retries are proposed.
       'e_tax.email_from': 'pending_business',
+      // B-API-6: what the engine can price per print side, until the business answers.
+      'catalog.print_limits': 'pending_business',
       'e_tax.subject_date_format': 'proposed',
       'e_tax.email_retry': 'proposed',
       // ADR-0004 values chosen on 2026-09-23, pending the security review (B1.3).

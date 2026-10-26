@@ -1,5 +1,6 @@
-import { type Actor } from '@common/context/actor';
+import { type Actor, type UserActor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
+import { DomainException } from '@common/errors/domain.exception';
 import { decodeCursor, encodeCursor } from '@common/pagination/pagination';
 import { PrismaService } from '@database/prisma.service';
 import {
@@ -11,6 +12,8 @@ import {
 } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { Injectable } from '@nestjs/common';
+import { AuditService } from '@platform/audit/audit.service';
+import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 /** A file that is a customer's artwork / original, or made from one, and the order it belongs to. */
 export interface CustomerFileRef {
@@ -40,22 +43,39 @@ export type FileAccessLogRow = Prisma.CustomerFileAccessLogGetPayload<{ include:
  * their production copies, and the append-only log of every download URL issued for them.
  *
  * - Prepress (`customer_files.read`): any order.
- * - Support (`customer_files.read_handled`): orders whose open conversation (`conversations.subject_type = order`,
- *   not closed) is assigned to them.
+ * - Support (`customer_files.read_handled`): orders explicitly assigned to them (`order_support_assignments`, set
+ *   by CS Lead / Admin, B-API-6) or whose open conversation (`conversations.subject_type = order`, not closed) is
+ *   assigned to them.
+ * - Studio print-job files, design-studio assets and Studio design renders / thumbnails are customer artwork too
+ *   (B-API-6): same rules, same log.
  * - Every other staff role: none — `files.read` no longer covers these files. An approved proof's locked copy is a
  *   staff-made proof, so staff keep reading it with `files.read`; its downloads are logged all the same.
  * Customers, company members and factories keep their own rules (`FilesService.canRead` and the registered readers).
  */
+const ASSIGNMENT_INCLUDE = {
+  user: { select: { publicId: true, displayName: true } },
+  assignedBy: { select: { publicId: true, displayName: true } },
+} satisfies Prisma.OrderSupportAssignmentInclude;
+export type SupportAssignmentRow = Prisma.OrderSupportAssignmentGetPayload<{
+  include: typeof ASSIGNMENT_INCLUDE;
+}>;
+export interface SupportAssignmentView {
+  order: { publicId: string; orderCode: string };
+  assignment: SupportAssignmentRow | null;
+}
+
 @Injectable()
 export class CustomerFileAccessService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly permissions: PermissionResolver,
+    private readonly audit: AuditService,
+    private readonly events: DomainEvents,
   ) {}
 
   /** The kind of customer file this is (a thumbnail is classified by its caller through the original), or null. */
   async classify(file: FileObject): Promise<CustomerFileRef | null> {
-    const [copy, submitted, proof] = await Promise.all([
+    const [copy, submitted, proof, studioJob, studio] = await Promise.all([
       this.prisma.artworkProductionCopy.findUnique({
         where: { copyFileId: file.id },
         select: { submissionFile: { select: { submission: { select: { orderId: true } } } } },
@@ -70,13 +90,34 @@ export class CustomerFileAccessService {
         select: { orderId: true },
         orderBy: { id: 'desc' },
       }),
+      // B-API-6: the files of a Studio print job (print-ready file, soft proof, snapshot) are the customer's design.
+      this.prisma.studioPrintJob.findFirst({
+        where: { OR: [{ printFileId: file.id }, { proofFileId: file.id }, { snapshotFileId: file.id }] },
+        select: { orderId: true },
+        orderBy: { id: 'desc' },
+      }),
+      this.isStudioDesignFile(file.id),
     ]);
     if (copy) return { kind: 'production_copy', orderId: copy.submissionFile.submission.orderId };
     if (submitted) return { kind: 'customer_original', orderId: submitted.submission.orderId };
     if (proof) return { kind: 'approved_proof_copy', orderId: proof.orderId };
-    // An artwork upload not yet in a submission is still the customer's original.
-    if (file.purpose === 'artwork') return { kind: 'customer_original', orderId: null };
+    if (studioJob) return { kind: 'customer_original', orderId: studioJob.orderId };
+    // An artwork upload not yet in a submission is still the customer's original; so are (B-API-6) design-studio
+    // assets and the renders / thumbnails of a Studio design — customer artwork with no order yet.
+    if (file.purpose === 'artwork' || file.purpose === 'design_asset' || studio)
+      return { kind: 'customer_original', orderId: null };
     return null;
+  }
+
+  /** A Studio design's asset, render or thumbnail (B-API-6: classed as customer artwork). */
+  private async isStudioDesignFile(fileId: bigint): Promise<boolean> {
+    const [asset, render, document, version] = await Promise.all([
+      this.prisma.designAsset.count({ where: { fileObjectId: fileId } }),
+      this.prisma.designVersionRender.count({ where: { fileId } }),
+      this.prisma.designDocument.count({ where: { thumbnailFileId: fileId } }),
+      this.prisma.designDocumentVersion.count({ where: { thumbnailFileId: fileId } }),
+    ]);
+    return asset + render + document + version > 0;
   }
 
   /** Whether a staff member may read this customer file (the uploader rule is checked before, by the caller). */
@@ -89,12 +130,124 @@ export class CustomerFileAccessService {
     return false;
   }
 
-  /** "Handles the order": assigned to an open (not closed) conversation about that order. */
+  /**
+   * "Handles the order": the live explicit support assignment of the order (B-API-6, set by CS Lead / Admin), or an
+   * open (not closed) conversation about that order assigned to the user.
+   */
   async handles(userId: bigint, orderId: bigint): Promise<boolean> {
-    const n = await this.prisma.conversation.count({
-      where: { assignedUserId: userId, subjectType: 'order', subjectId: orderId, status: { not: 'closed' } },
+    const [assigned, conversations] = await Promise.all([
+      this.prisma.orderSupportAssignment.count({ where: { orderId, userId, endedAt: null } }),
+      this.prisma.conversation.count({
+        where: {
+          assignedUserId: userId,
+          subjectType: 'order',
+          subjectId: orderId,
+          status: { not: 'closed' },
+        },
+      }),
+    ]);
+    return assigned + conversations > 0;
+  }
+
+  /** The live support assignment of an order (B-API-6), with the order. 404 for an unknown order. */
+  async supportAssignment(orderPublicId: string): Promise<SupportAssignmentView> {
+    const order = await this.prisma.order.findUnique({
+      where: { publicId: orderPublicId },
+      select: { id: true, publicId: true, orderCode: true },
     });
-    return n > 0;
+    if (!order) throw new DomainException('http.not_found');
+    const live = await this.prisma.orderSupportAssignment.findFirst({
+      where: { orderId: order.id, endedAt: null },
+      include: ASSIGNMENT_INCLUDE,
+    });
+    return { order, assignment: live };
+  }
+
+  /**
+   * B-API-6 (D-444): CS Lead / Admin (`orders.assign_support`) sets who on support handles an order — an active staff
+   * member holding `customer_files.read_handled` — or `null` to end the assignment. The live row is ended and a new
+   * one added (history kept), in one transaction with an audit row and the `order.support_assigned` event.
+   */
+  async assignSupport(
+    actor: UserActor,
+    orderPublicId: string,
+    userPublicId: string | null,
+  ): Promise<SupportAssignmentView> {
+    const assignee = userPublicId
+      ? await this.prisma.user.findFirst({
+          where: { publicId: userPublicId, kind: 'staff', status: 'active' },
+          select: { id: true, publicId: true },
+        })
+      : null;
+    if (userPublicId && !assignee)
+      throw new DomainException('validation.failed', {
+        errors: [{ path: 'supportUserId', code: 'exists', message: 'not an active staff user' }],
+      });
+    if (
+      assignee &&
+      !(await this.permissions.forUser(assignee.id)).permissions.has('customer_files.read_handled')
+    )
+      throw new DomainException('validation.failed', {
+        errors: [
+          {
+            path: 'supportUserId',
+            code: 'invalid',
+            message: 'the user does not hold customer_files.read_handled (support)',
+          },
+        ],
+      });
+    return this.prisma.withTx(async (tx) => {
+      const order = await tx.order.findUnique({
+        where: { publicId: orderPublicId },
+        select: { id: true, publicId: true, orderCode: true },
+      });
+      if (!order) throw new DomainException('http.not_found');
+      await tx.$queryRaw`SELECT id FROM orders WHERE id = ${order.id} FOR UPDATE`;
+      const live = await tx.orderSupportAssignment.findFirst({ where: { orderId: order.id, endedAt: null } });
+      if ((live?.userId ?? null) === (assignee?.id ?? null)) {
+        return {
+          order,
+          assignment: live
+            ? await tx.orderSupportAssignment.findUniqueOrThrow({
+                where: { id: live.id },
+                include: ASSIGNMENT_INCLUDE,
+              })
+            : null,
+        };
+      }
+      const now = new Date();
+      if (live)
+        await tx.orderSupportAssignment.update({
+          where: { id: live.id },
+          data: { endedAt: now, endedById: actor.userId },
+        });
+      const created = assignee
+        ? await tx.orderSupportAssignment.create({
+            data: { orderId: order.id, userId: assignee.id, assignedAt: now, assignedById: actor.userId },
+            include: ASSIGNMENT_INCLUDE,
+          })
+        : null;
+      const data = {
+        orderId: order.publicId,
+        userId: assignee?.publicId ?? null,
+        previousAssignmentId: live?.publicId ?? null,
+        assignmentId: created?.publicId ?? null,
+      };
+      await this.audit.record(tx, {
+        category: 'iam',
+        action: 'order.support_assigned',
+        resourceType: 'order',
+        resourcePublicId: order.publicId,
+        data,
+      });
+      await this.events.record(tx, {
+        type: 'order.support_assigned',
+        aggregateType: 'order',
+        aggregateId: order.publicId,
+        payload: data,
+      });
+      return { order, assignment: created };
+    });
   }
 
   /**

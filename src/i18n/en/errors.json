@@ -893,6 +893,10 @@
     "preflight_blocked": {
       "title": "Preflight blocked",
       "detail": "The file is blocked by preflight (size mismatch or missing bleed); a new file is needed"
+    },
+    "order_unpaid": {
+      "title": "Order not paid",
+      "detail": "Prepress reviews paid orders only; the file is reviewed once the order is paid"
     }
   },
   "proofs": {

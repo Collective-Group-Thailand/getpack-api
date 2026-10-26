@@ -4,6 +4,8 @@ import {
   checkSide,
   defaultSelection,
   type InkKind,
+  limitSide,
+  type PrintLimits,
   type PrintModel,
   type PrintSelection,
   type PrintSideConfig,
@@ -12,7 +14,8 @@ import {
   toCorrugateColours,
   validatePrintModel,
 } from './print-model';
-import { assertPrintCombination } from './print-rules';
+import { modelInForce, versionInForce } from './print-model-versions';
+import { assertPrintCombination, printCombinationErrors } from './print-rules';
 
 // Fake ids (D-443 tests): two spot colours, one process set.
 const BLACK = 'ink-black';
@@ -32,6 +35,15 @@ const side = (over: Partial<PrintSideConfig> = {}): PrintSideConfig => ({
   ...over,
 });
 const MODEL: PrintModel = { outside: side(), inside: side() };
+
+/** The seeded `catalog.print_limits` (B-API-6): 1 spot colour per side, no CMYK + spot add-on. */
+const SEEDED_LIMITS: PrintLimits = { maxSpotColoursPerSide: 1, cmykSpotAddOnEnabled: false };
+/** A `settings` row with one approved version, as `SettingsService` reads it (null: no setting). */
+const limitsSetting = (limits: PrintLimits | null) =>
+  limits && {
+    id: 1n,
+    versions: [{ id: 2n, versionNo: 1, effectiveFrom: new Date('2026-01-01T00:00:00Z'), value: limits }],
+  };
 
 const reference = (parts: unknown[]) => ({
   patternId: 'pattern',
@@ -194,9 +206,12 @@ describe('print model per side (D-443)', () => {
   });
 
   describe('store rule (store.quotes.calculate)', () => {
-    const db = (printModel: unknown) =>
+    const db = (printModel: unknown, limits: PrintLimits | null = null) =>
       ({
-        catalogProduct: { findUnique: jest.fn().mockResolvedValue({ printModel }) },
+        catalogProductPrintModel: {
+          findFirst: jest.fn().mockResolvedValue(printModel === null ? null : { model: printModel }),
+        },
+        setting: { findFirst: jest.fn().mockResolvedValue(limitsSetting(limits)) },
         inkColour: {
           findMany: jest
             .fn()
@@ -244,6 +259,118 @@ describe('print model per side (D-443)', () => {
       expect((error as DomainException).errors).toEqual([
         expect.objectContaining({ path: 'configuration.parts[0].printBack', code: 'method_not_offered' }),
       ]);
+    });
+  });
+
+  describe('B-API-6: what the engine can price (catalog.print_limits)', () => {
+    const wide: PrintModel = {
+      outside: side({
+        spot: { maxColours: 2, inkColourIds: [BLACK, RED] },
+        cmyk: { inkColourId: CMYK, addOn: { enabled: true, maxColours: 1 } },
+      }),
+      inside: side(),
+    };
+
+    it('caps N at the limit and turns the CMYK add-on off while the limits disable it', () => {
+      expect(limitSide(wide.outside, SEEDED_LIMITS)).toEqual({
+        methods: ['none', 'spot', 'cmyk'],
+        spot: { maxColours: 1, inkColourIds: [BLACK, RED] },
+        cmyk: { inkColourId: CMYK, addOn: { enabled: false, maxColours: 0 } },
+      });
+      expect(limitSide(wide.outside, { maxSpotColoursPerSide: 2, cmykSpotAddOnEnabled: true })).toEqual(
+        wide.outside,
+      );
+      expect(limitSide(wide.outside, null)).toBe(wide.outside);
+    });
+
+    it('the configurator does not offer combinations beyond the limits', () => {
+      const view = storePrintModel(wide, null, kindOf, null, SEEDED_LIMITS);
+      expect(view.outside.spot).toEqual({ minColours: 1, maxColours: 1, inkColourIds: [BLACK, RED] });
+      expect(view.outside.cmyk?.addOn).toEqual({ enabled: false, minColours: 0, maxColours: 0 });
+    });
+
+    it('refuses 2 spot colours and CMYK + spot on a side under the seeded limits, even when the model allows them', () => {
+      expect(checkSide(wide.outside, [BLACK, RED], kindOf, SEEDED_LIMITS)?.code).toBe('spot_count');
+      expect(checkSide(wide.outside, [CMYK, RED], kindOf, SEEDED_LIMITS)?.code).toBe('cmyk_with_spot');
+      expect(checkSide(wide.outside, [BLACK, RED], kindOf, null)).toBeNull();
+      // Without a model too.
+      expect(checkSide(null, [BLACK, RED], kindOf, SEEDED_LIMITS)?.code).toBe('spot_count');
+      expect(checkSide(null, [BLACK], kindOf, SEEDED_LIMITS)).toBeNull();
+    });
+
+    it('the admin cannot save a model beyond the limits', () => {
+      const offered = new Map<string, InkKind>(KINDS);
+      expect(validatePrintModel(wide, offered, SEEDED_LIMITS)).toEqual([
+        expect.objectContaining({ path: 'printModel.outside.spot.maxColours', code: 'spot_count' }),
+        expect.objectContaining({ path: 'printModel.outside.cmyk.addOn.enabled', code: 'add_on_count' }),
+      ]);
+      expect(validatePrintModel(MODEL, offered, SEEDED_LIMITS)).toEqual([]);
+    });
+
+    it('reads the limits from the setting in force (no limits while it has no version)', async () => {
+      const cfg = {
+        catalogProductId: 'product-1',
+        parts: [{ printFront: [{ inkColourId: BLACK }, { inkColourId: RED }] }],
+      };
+      const dbFor = (limits: PrintLimits | null) =>
+        ({
+          catalogProductPrintModel: { findFirst: jest.fn().mockResolvedValue({ model: wide }) },
+          setting: { findFirst: jest.fn().mockResolvedValue(limitsSetting(limits)) },
+          inkColour: {
+            findMany: jest
+              .fn()
+              .mockResolvedValue([...KINDS].map(([publicId, colourKind]) => ({ publicId, colourKind }))),
+          },
+        }) as never;
+      expect(await printCombinationErrors(dbFor(SEEDED_LIMITS), 'corrugate', cfg)).toEqual([
+        expect.objectContaining({ path: 'configuration.parts[0].printFront', code: 'spot_count' }),
+      ]);
+      expect(await printCombinationErrors(dbFor(null), 'corrugate', cfg)).toEqual([]);
+    });
+  });
+
+  describe('B-API-6: effective-dated print model (ADR-0005)', () => {
+    const v = (versionNo: number, from: string, model: unknown) => ({
+      versionNo,
+      effectiveFrom: new Date(from),
+      model,
+    });
+    const versions = [
+      v(1, '2026-10-01T00:00:00Z', MODEL),
+      v(2, '2026-11-01T00:00:00Z', null),
+      v(3, '2026-11-01T00:00:00Z', { outside: side({ methods: ['none'] }), inside: side() }),
+    ];
+
+    it('uses the version in force: greatest effectiveFrom ≤ at, ties by version number', () => {
+      expect(versionInForce(versions, new Date('2026-09-30T00:00:00Z'))).toBeNull();
+      expect(versionInForce(versions, new Date('2026-10-26T00:00:00Z'))?.versionNo).toBe(1);
+      expect(versionInForce(versions, new Date('2026-11-02T00:00:00Z'))?.versionNo).toBe(3);
+    });
+
+    it('a future version does not change today’s model; a cleared version means no model', () => {
+      expect(modelInForce(versions, new Date('2026-10-26T00:00:00Z'))).toEqual(MODEL);
+      expect(modelInForce([v(1, '2026-10-01T00:00:00Z', null)], new Date('2026-10-26T00:00:00Z'))).toBeNull();
+    });
+
+    it('the store rule reads the version in force at the time it is given', async () => {
+      const findFirst = jest.fn().mockResolvedValue({ model: MODEL });
+      const at = new Date('2026-10-26T03:00:00Z');
+      await printCombinationErrors(
+        {
+          catalogProductPrintModel: { findFirst },
+          setting: { findFirst: jest.fn().mockResolvedValue(null) },
+          inkColour: { findMany: jest.fn().mockResolvedValue([]) },
+        } as never,
+        'corrugate',
+        { catalogProductId: 'product-1', parts: [{ printFront: [] }] },
+        at,
+      );
+      expect(findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { catalogProduct: { publicId: 'product-1' }, effectiveFrom: { lte: at } },
+          orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+        }),
+      );
     });
   });
 });

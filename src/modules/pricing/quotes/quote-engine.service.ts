@@ -53,6 +53,11 @@ export interface QuoteContext {
   log?: boolean;
   /** D-289: tooling in the register a reorder may reuse; set only by the reorder path. */
   toolingCredits?: readonly ToolingCredit[];
+  /**
+   * B-API-6: no instant price for this configuration (a print combination the engine cannot price); every quantity
+   * carries this reason and routes to RFQ. Set only by the store pricing path.
+   */
+  instantBlock?: 'rfq_required';
 }
 
 export interface ToolingCredit {
@@ -265,7 +270,7 @@ export class QuoteEngineService {
     cfg = measured.cfg;
     const resolved = (await adapter.resolve(cfg, db)) as ResolvedBase;
     // D-243: a configuration naming an unpublishable style variant gets no instant price at all.
-    const styleBlock = await this.styleVariantBlock(cfg as Record<string, unknown>, db);
+    const styleBlock = ctx.instantBlock ?? (await this.styleVariantBlock(cfg as Record<string, unknown>, db));
     const candidates = styleBlock
       ? []
       : await this.quotePath.instantCandidates(resolved.productTypeId, at, db);

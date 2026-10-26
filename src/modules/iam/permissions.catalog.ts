@@ -88,14 +88,21 @@ export const PERMISSIONS = [
     key: 'customer_files.read_handled',
     audience: 'staff',
     description:
-      'Download customer artwork / originals and their production copies of orders whose open conversation is assigned to the user (support)',
+      'Download customer artwork / originals and their production copies of orders the user handles: explicit order assignment or an open conversation assigned to them (support)',
     decisionRefs: ['D-444'],
   },
   {
     key: 'customer_file_access_logs.read',
     audience: 'staff',
     description:
-      'Read the access log of customer artwork / originals and production copies (Superadmin only)',
+      'Read the access log of customer artwork / originals and production copies (Superadmin, Auditor); not the files',
+    decisionRefs: ['D-444'],
+  },
+  {
+    key: 'orders.assign_support',
+    audience: 'staff',
+    description:
+      'Assign the support staff member who handles an order (gives `customer_files.read_handled` access to its artwork)',
     decisionRefs: ['D-444'],
   },
   {

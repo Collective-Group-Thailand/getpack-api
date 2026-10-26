@@ -44,6 +44,14 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
   });
 
   const preflight = () => ctx.app.get(PreflightService).runDue();
+  /** Marks an order paid for production (B-API-6: Prepress reviews paid orders only). */
+  const pay = (orderPublicId: string) =>
+    ctx.prisma.withTx(async (tx) => {
+      const row = await tx.order.findUniqueOrThrow({ where: { publicId: orderPublicId } });
+      await ctx.app
+        .get(OrdersService)
+        .applyFact(tx, row.id, { kind: 'paid_for_production' }, systemActor('e2e'));
+    });
 
   it('blocks a wrong size against the template, rejects, then accepts the corrected version', async () => {
     const { token } = await customerToken(ctx, 1);
@@ -335,6 +343,17 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       .post(`/v1/store/orders/${orderId}/artwork-submissions`, { files: [{ fileId: artworkFile }] })
       .expect(201);
     await preflight();
+    // B-API-6: no review before payment, even by direct id.
+    const unpaid = await as(ctx, prepress)
+      .post(`/v1/admin/artwork-submissions/${submission.body.id as string}/actions/accept`)
+      .expect(409);
+    expect(unpaid.body.code).toBe('artwork.order_unpaid');
+    await as(ctx, prepress)
+      .post(`/v1/admin/artwork-submissions/${submission.body.id as string}/actions/reject`, {
+        reason: 'ขนาดไม่ตรง',
+      })
+      .expect(409);
+    await pay(orderId);
     await as(ctx, prepress)
       .post(`/v1/admin/artwork-submissions/${submission.body.id as string}/actions/accept`)
       .expect(200);
@@ -510,6 +529,37 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       data: { status: 'closed', closedAt: new Date() },
     });
     await as(ctx, cs).get(`/v1/admin/files/${artworkFile}/download`).expect(404);
+    // B-API-6: an explicit order assignment by CS Lead also counts; Admin and Auditor never read originals.
+    const csLead = await staffToken(ctx, 'cs_lead');
+    const auditor = await staffToken(ctx, 'auditor');
+    const admin = await staffToken(ctx, 'admin');
+    await as(ctx, cs)
+      .put(`/v1/admin/orders/${orderId}/support-assignment`, { supportUserId: csUser.publicId })
+      .expect(403);
+    const assigned = await as(ctx, csLead)
+      .put(`/v1/admin/orders/${orderId}/support-assignment`, { supportUserId: csUser.publicId })
+      .expect(200);
+    expect(assigned.body).toMatchObject({
+      order: { id: orderId },
+      assignee: { id: csUser.publicId },
+      assignedAt: expect.any(String),
+    });
+    await as(ctx, cs).get(`/v1/admin/files/${artworkFile}/download`).expect(200);
+    expect(
+      (await as(ctx, admin).get(`/v1/admin/orders/${orderId}/support-assignment`).expect(200)).body.assignee,
+    ).toMatchObject({ id: csUser.publicId });
+    await as(ctx, csLead)
+      .put(`/v1/admin/orders/${orderId}/support-assignment`, { supportUserId: null })
+      .expect(200);
+    await as(ctx, cs).get(`/v1/admin/files/${artworkFile}/download`).expect(404);
+    expect(
+      await ctx.prisma.auditLog.count({
+        where: { action: 'order.support_assigned', resourcePublicId: orderId },
+      }),
+    ).toBe(2);
+    await as(ctx, admin).get(`/v1/admin/files/${artworkFile}/download`).expect(404);
+    await as(ctx, auditor).get(`/v1/admin/files/${artworkFile}/download`).expect(404);
+    await as(ctx, auditor).get(`/v1/admin/customer-file-access-logs?orderId=${orderId}`).expect(200);
     const accessLog = await as(ctx, superadmin)
       .get(`/v1/admin/customer-file-access-logs?orderId=${orderId}&limit=100`)
       .expect(200);
@@ -570,6 +620,7 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       .post(`/v1/store/orders/${orderId}/artwork-submissions`, { files: [{ fileId: artworkFile }] })
       .expect(201);
     await preflight();
+    await pay(orderId);
     await as(ctx, prepress)
       .post(`/v1/admin/artwork-submissions/${submission.body.id as string}/actions/accept`)
       .expect(200);

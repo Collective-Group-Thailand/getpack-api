@@ -19,6 +19,7 @@ import {
   bootFulfilmentApp,
   factoryToken,
   type FulfilmentApp,
+  payDue,
 } from '../support/fulfilment-e2e';
 
 type FakeRenderer = { rendered: string[] };
@@ -28,6 +29,7 @@ describe('packaging spec sheet (e2e, U2.6)', () => {
   let ctx: FulfilmentApp;
   let fixture: DevFolding;
   let token: string;
+  let groupId: string;
   let orderId: string;
 
   beforeAll(async () => {
@@ -51,6 +53,7 @@ describe('packaging spec sheet (e2e, U2.6)', () => {
       .set('Idempotency-Key', randomUUID())
       .expect(201);
     orderId = (placed.body.orders as { id: string }[])[0]!.id;
+    groupId = placed.body.id as string;
   });
 
   afterAll(async () => {
@@ -64,6 +67,8 @@ describe('packaging spec sheet (e2e, U2.6)', () => {
   });
 
   it('gives the customer, staff and the order’s factory the same sheet, Thai or English (D-287)', async () => {
+    // B-API-6: Prepress reviews paid orders only.
+    await payDue(ctx, token, groupId);
     await approveArtwork(ctx, token, await staffToken(ctx, 'prepress'), orderId);
     const renderer = ctx.app.get<FakeRenderer>(PDF_RENDERER);
     const before = renderer.rendered.length;

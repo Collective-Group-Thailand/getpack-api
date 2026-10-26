@@ -1,5 +1,6 @@
 import { DomainException } from '@common/errors/domain.exception';
-import { formatMoney } from '@common/money/money';
+import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
+import { computeVat } from '@common/money/vat';
 import { PrismaService } from '@database/prisma.service';
 import { Injectable } from '@nestjs/common';
 
@@ -27,7 +28,31 @@ export interface ServicePriceInput {
   basisAsSent?: string;
 }
 
-const money = (n: number) => formatMoney(n);
+const money = (n: number | MoneyValue) => formatMoney(n);
+
+/**
+ * Net, VAT and gross of `quantity` units through the shared VAT helper (B-API-6, GLOBAL-RULES §5): from a net buy
+ * price the net sell amount is VAT-exclusive (VAT = rate % of it, half-up); from a VAT-inclusive sell price the gross
+ * stays as entered and VAT = rate % of its ex-VAT amount (2 dp), net = gross − VAT. The legacy service maths (margin,
+ * buy price, freelancer payable) is unchanged; only the VAT split goes through `computeVat`.
+ */
+export function serviceVatAmounts(
+  unit: Pick<ServiceAmounts, 'net' | 'gross'>,
+  quantity: number,
+  basis: ServiceAmountBasis,
+  vatPct: number | string,
+): { net: MoneyValue; vat: MoneyValue; gross: MoneyValue } {
+  if (basis === 'buy_price_net') {
+    const { net, vat } = computeVat(
+      [{ amount: new MoneyDecimal(unit.net).mul(quantity), inclusive: false }],
+      String(vatPct),
+    );
+    return { net, vat, gross: net.add(vat) };
+  }
+  const gross = new MoneyDecimal(unit.gross).mul(quantity).toDecimalPlaces(2);
+  const { vat } = computeVat([{ amount: gross, inclusive: true }], String(vatPct));
+  return { net: gross.sub(vat), vat, gross };
+}
 
 /**
  * A service priced from the amount CS enters (U-B6 service, D-194): legacy `cs/service` (`cs.vue:381-429`) computed in
@@ -72,13 +97,15 @@ export class CsServicePricingService {
     const showCost = body.basis === 'buy_price_net' || grants.cost;
     const amounts = (a: ServiceAmounts, n: number): ServiceAmountsDto => {
       const buy = showCost ? money(a.cost * n) : null;
+      const taxed = serviceVatAmounts(a, n, body.basis, sell.snapshot.vatPct);
       return {
         buyAmount: buy,
         costAmount: buy,
-        netAmount: money(a.net * n),
-        vatAmount: money(a.vat * n),
-        grossAmount: money(a.gross * n),
-        marginAmount: grants.margin ? money(a.margin * n) : null,
+        netAmount: money(taxed.net),
+        vatAmount: money(taxed.vat),
+        grossAmount: money(taxed.gross),
+        // The margin is the net sell amount less the buy price (legacy), on the net the VAT helper leaves.
+        marginAmount: grants.margin ? money(taxed.net.sub(new MoneyDecimal(a.cost).mul(n))) : null,
       };
     };
     const payable =

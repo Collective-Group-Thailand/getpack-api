@@ -148,7 +148,8 @@ describe('corrugate quotes (e2e, U-B6)', () => {
       })
       .expect(422);
     expect(noArea.body.errors[0].path).toBe('parts[0].printFront[0]');
-    // D-443: one print choice per side — the CMYK set twice (or CMYK + a spot colour such as ดำ) is refused.
+    // D-443 + B-API-6: one print choice per side — the CMYK set twice (or CMYK + a spot colour such as ดำ) is not
+    // offered: the store calculation answers with the quote path, not an error.
     const twice = await request(server)
       .post('/v1/store/quotes/actions/calculate')
       .send({
@@ -164,12 +165,10 @@ describe('corrugate quotes (e2e, U-B6)', () => {
           ],
         }),
       })
-      .expect(422);
-    expect(twice.body.code).toBe('pricing.print_combination_invalid');
-    expect(twice.body.errors[0]).toMatchObject({
-      path: 'configuration.parts[0].printFront',
-      code: 'process_repeated',
-    });
+      .expect(200);
+    expect(twice.body.steps.length).toBeGreaterThan(0);
+    for (const step of twice.body.steps as { instant: boolean; reason: string | null }[])
+      expect(step).toMatchObject({ instant: false, reason: 'rfq_required' });
     const noProduct = await request(server)
       .post('/v1/store/quotes/actions/calculate')
       .send({ ...body, configuration: configuration({ catalogProductId: undefined }) })
