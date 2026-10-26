@@ -80595,8 +80595,8 @@
             ],
             "description": "The same spec as one string (D-441); show it with the price",
             "example": {
-              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
             }
           },
           "quantity": {
@@ -85496,8 +85496,8 @@
             ],
             "description": "The same spec as one string (D-441), to show next to every price",
             "example": {
-              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
             }
           },
           "specs": {
@@ -85528,8 +85528,8 @@
                 "key": "print_front",
                 "labelEn": "Print (outside)",
                 "labelTh": "พิมพ์ด้านนอก",
-                "valueEn": "Black",
-                "valueTh": "ดำ"
+                "valueEn": "1 spot colour (ดำ)",
+                "valueTh": "สีพิเศษ 1 สี (ดำ)"
               }
             ],
             "items": {
@@ -98574,7 +98574,7 @@
       "SpecLineDto": {
         "properties": {
           "key": {
-            "description": "Stable key of the line (`style`, `size` — ยาว × กว้าง × สูง in mm (D-441), `material`, `print_front`, `print_back`, `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)",
+            "description": "Stable key of the line (`style`, `size` — ยาว × กว้าง × สูง in mm (D-441), `material`, `print_front`, `print_back` — the method of the side: CMYK, สีพิเศษ n สี (…), CMYK + สีพิเศษ n สี (…) (B-API-3), `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)",
             "example": "material",
             "type": "string"
           },
@@ -100341,8 +100341,8 @@
             ],
             "description": "The same spec as one string (D-441); show it with the price",
             "example": {
-              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
             }
           },
           "quantity": {
@@ -101758,8 +101758,8 @@
             ],
             "description": "One string (D-441)",
             "example": {
-              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
             }
           },
           "specs": {
@@ -101789,8 +101789,8 @@
                 "key": "print_front",
                 "labelEn": "Print (outside)",
                 "labelTh": "พิมพ์ด้านนอก",
-                "valueEn": "Black",
-                "valueTh": "ดำ"
+                "valueEn": "1 spot colour (ดำ)",
+                "valueTh": "สีพิเศษ 1 สี (ดำ)"
               }
             ],
             "items": {
@@ -107126,8 +107126,8 @@
             ],
             "description": "The spec this price is for, as one string (D-441)",
             "example": {
-              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+              "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+              "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
             }
           },
           "quantity": {
@@ -545895,8 +545895,8 @@
                     }
                   },
                   "specLabel": {
-                    "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-                    "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                    "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+                    "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
                   },
                   "specs": [
                     {
@@ -545924,8 +545924,8 @@
                       "key": "print_front",
                       "labelEn": "Print (outside)",
                       "labelTh": "พิมพ์ด้านนอก",
-                      "valueEn": "Black",
-                      "valueTh": "ดำ"
+                      "valueEn": "1 spot colour (ดำ)",
+                      "valueTh": "สีพิเศษ 1 สี (ดำ)"
                     }
                   ],
                   "steps": [
@@ -564284,8 +564284,8 @@
                       }
                     },
                     "specLabel": {
-                      "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-                      "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                      "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+                      "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
                     },
                     "specs": [
                       {
@@ -564313,8 +564313,8 @@
                         "key": "print_front",
                         "labelEn": "Print (outside)",
                         "labelTh": "พิมพ์ด้านนอก",
-                        "valueEn": "Black",
-                        "valueTh": "ดำ"
+                        "valueEn": "1 spot colour (ดำ)",
+                        "valueTh": "สีพิเศษ 1 สี (ดำ)"
                       }
                     ],
                     "steps": [
@@ -566274,8 +566274,8 @@
                         "computedAt": "2026-10-03T10:00:00+07:00",
                         "currency": "THB",
                         "label": {
-                          "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-                          "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                          "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+                          "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
                         },
                         "quantity": 1000,
                         "unitPrice": "4.85"
@@ -566875,8 +566875,8 @@
                         "computedAt": "2026-10-03T10:00:00+07:00",
                         "currency": "THB",
                         "label": {
-                          "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-                          "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                          "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+                          "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
                         },
                         "quantity": 1000,
                         "unitPrice": "4.85"
@@ -567138,8 +567138,8 @@
                       "computedAt": "2026-10-03T10:00:00+07:00",
                       "currency": "THB",
                       "label": {
-                        "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-                        "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                        "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+                        "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
                       },
                       "quantity": 1000,
                       "unitPrice": "4.85"
@@ -567707,8 +567707,8 @@
                     "computedAt": "2026-10-03T10:00:00+07:00",
                     "currency": "THB",
                     "label": {
-                      "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black",
-                      "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ"
+                      "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+                      "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
                     },
                     "quantity": 1000,
                     "unitPrice": "4.85"

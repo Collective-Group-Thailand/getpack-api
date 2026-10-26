@@ -4,7 +4,7 @@ import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
 import { type QuoteDimensions } from '@modules/specs/specs.service';
 
 import { type LineSummaryDto, type SpecLineDto } from './line-summary.dto';
-import { sizeText } from './spec-label';
+import { BASIS_TEXT, PRINT_SIDE_TEXT, type PrintInk, printMethodText, sizeValue } from './spec-label';
 
 export { sizeText, type SpecLabel, specLabel } from './spec-label';
 
@@ -49,8 +49,8 @@ const LABELS = {
   style_code: ['รหัสแบบ', 'Style code'],
   size: ['ขนาด (ยาว × กว้าง × สูง)', 'Size (L × W × H)'],
   material: ['วัสดุ', 'Material'],
-  print_front: ['พิมพ์ด้านนอก', 'Print (outside)'],
-  print_back: ['พิมพ์ด้านใน', 'Print (inside)'],
+  print_front: [PRINT_SIDE_TEXT.outside.th, PRINT_SIDE_TEXT.outside.en],
+  print_back: [PRINT_SIDE_TEXT.inside.th, PRINT_SIDE_TEXT.inside.en],
   coating_front: ['เคลือบด้านนอก', 'Coating (outside)'],
   coating_back: ['เคลือบด้านใน', 'Coating (inside)'],
   special_finish: ['งานพิเศษ', 'Special finishes'],
@@ -62,18 +62,36 @@ type LineKey = keyof typeof LABELS;
 /** A flat blank (tag & sleeve): W × L, printed front and back. */
 const FLAT_LABELS: Partial<Record<LineKey, readonly [string, string]>> = {
   size: ['ขนาด (ยาว × กว้าง)', 'Size (L × W)'],
-  print_front: ['พิมพ์ด้านหน้า', 'Print (front)'],
-  print_back: ['พิมพ์ด้านหลัง', 'Print (back)'],
+  print_front: [PRINT_SIDE_TEXT.front.th, PRINT_SIDE_TEXT.front.en],
+  print_back: [PRINT_SIDE_TEXT.back.th, PRINT_SIDE_TEXT.back.en],
   coating_front: ['เคลือบด้านหน้า', 'Coating (front)'],
   coating_back: ['เคลือบด้านหลัง', 'Coating (back)'],
 };
 
 const mm = (n: number) => String(Number(n));
+/** A catalogue ink with its kind, for the print method of a side (D-443). */
+type Ink = Named & { kind: string };
 const uniq = (ids: (string | undefined)[]) => [...new Set(ids.filter((id): id is string => !!id))];
 
-async function names(ids: string[], find: (ids: string[]) => Promise<Named[]>): Promise<Map<string, Named>> {
+async function names<T extends Named>(ids: string[], find: (ids: string[]) => Promise<T[]>): Promise<Map<string, T>> {
   return new Map((ids.length ? await find(ids) : []).map((r) => [r.publicId, r]));
 }
+
+/** A side's print line value (B-API-3): the method from the per-side model — CMYK / สีพิเศษ n สี / CMYK + สีพิเศษ n สี. */
+function printLine(inks: Map<string, Ink>, ids: string[], push: (th: string, en: string) => void): void {
+  const found = uniq(ids)
+    .map((id) => inks.get(id))
+    .filter((n): n is Ink => !!n)
+    .map((n): PrintInk => ({ name: n.th, kind: n.kind }));
+  const method = printMethodText(found);
+  if (method) push(method.th, method.en);
+}
+const ink = (r: { publicId: string; name: string; colourKind: string }): Ink => ({
+  publicId: r.publicId,
+  th: r.name,
+  en: r.name,
+  kind: r.colourKind,
+});
 
 export async function boxSpecLines(
   db: Tx,
@@ -112,7 +130,7 @@ export async function boxSpecLines(
       (await db.subPattern.findMany(byIds(ids))).map(single),
     ),
     names([cfg.materialId], async (ids) => (await db.material.findMany(byIds(ids))).map(pair)),
-    names(colours, async (ids) => (await db.inkColour.findMany(byIds(ids))).map(single)),
+    names(colours, async (ids) => (await db.inkColour.findMany(byIds(ids))).map(ink)),
     names(finishes, async (ids) => (await db.finish.findMany(byIds(ids))).map(pair)),
     names(uniq(parts.map((p) => p.diecutTypeId)), async (ids) =>
       (await db.diecutType.findMany(byIds(ids))).map(pair),
@@ -149,8 +167,8 @@ export async function boxSpecLines(
   // D-184: the public style code travels with the spec to the cart, order, proof, job sheet and exports.
   const styleCode = pattern?.code;
   if (styleCode) push('style_code', styleCode, styleCode);
-  const size = sizeText({ l: cfg.l, w: cfg.w, d: opts.flat ? null : cfg.d });
-  push('size', `${size} มม.`, `${size} mm`);
+  const size = sizeValue({ l: cfg.l, w: cfg.w, d: opts.flat ? null : cfg.d });
+  push('size', size.th, size.en);
   const material = materials.get(cfg.materialId);
   if (material) push('material', material.th, material.en);
 
@@ -158,12 +176,12 @@ export async function boxSpecLines(
     const sub = p.subPatternId ? subPatterns.get(p.subPatternId) : undefined;
     const part = parts.length > 1 ? { index, name: sub?.th ?? String(index + 1) } : undefined;
     const add = (key: LineKey) => (th: string, en: string) => push(key, th, en, part);
-    list(
+    printLine(
       inks,
       (p.printFront ?? []).map((c) => c.inkColourId),
       add('print_front'),
     );
-    list(
+    printLine(
       inks,
       (p.printBack ?? []).map((c) => c.inkColourId),
       add('print_back'),
@@ -217,8 +235,8 @@ export interface LabelSpecConfiguration {
 const LABEL_LINES = {
   size: ['ขนาด (ยาว × กว้าง)', 'Size (L × W)'],
   material: ['วัสดุ', 'Material'],
-  print_front: ['พิมพ์ด้านหน้า', 'Print (face)'],
-  print_back: ['พิมพ์ด้านหลัง', 'Print (back)'],
+  print_front: [PRINT_SIDE_TEXT.front.th, 'Print (face)'],
+  print_back: [PRINT_SIDE_TEXT.back.th, PRINT_SIDE_TEXT.back.en],
   coating_front: ['เคลือบด้านหน้า', 'Coating (face)'],
   coating_back: ['เคลือบด้านหลัง', 'Coating (back)'],
   diecut: ['ไดคัท', 'Die-cut'],
@@ -236,13 +254,7 @@ export async function labelSpecLines(db: Tx, cfg: LabelSpecConfiguration): Promi
         en: r.nameEn,
       })),
     ),
-    names(colours, async (ids) =>
-      (await db.inkColour.findMany(byIds(ids))).map((r) => ({
-        publicId: r.publicId,
-        th: r.name,
-        en: r.name,
-      })),
-    ),
+    names(colours, async (ids) => (await db.inkColour.findMany(byIds(ids))).map(ink)),
     names(uniq([cfg.finishFrontId, cfg.finishBackId]), async (ids) =>
       (await db.finish.findMany(byIds(ids))).map((r) => ({
         publicId: r.publicId,
@@ -269,11 +281,11 @@ export async function labelSpecLines(db: Tx, cfg: LabelSpecConfiguration): Promi
       .filter((n): n is Named => !!n);
     if (found.length) push(key, found.map((n) => n.th).join(', '), found.map((n) => n.en).join(', '));
   };
-  const size = sizeText({ l: cfg.l, w: cfg.w });
-  push('size', `${size} มม.`, `${size} mm`);
+  const size = sizeValue({ l: cfg.l, w: cfg.w });
+  push('size', size.th, size.en);
   list(materials, [cfg.materialId], 'material');
-  list(inks, cfg.printFront?.inkColourIds ?? [], 'print_front');
-  list(inks, cfg.printBack?.inkColourIds ?? [], 'print_back');
+  printLine(inks, cfg.printFront?.inkColourIds ?? [], (th, en) => push('print_front', th, en));
+  printLine(inks, cfg.printBack?.inkColourIds ?? [], (th, en) => push('print_back', th, en));
   list(finishes, [cfg.finishFrontId], 'coating_front');
   list(finishes, [cfg.finishBackId], 'coating_back');
   list(diecuts, [cfg.diecutTypeId], 'diecut');
@@ -474,15 +486,14 @@ export function rfqSpecLines(
   dims: { lengthMm: number | null; widthMm: number | null; heightMm: number | null },
 ): SpecLineDto[] {
   const lines: SpecLineDto[] = [];
-  const size = [dims.lengthMm, dims.widthMm, dims.heightMm];
-  if (size.some((n) => n !== null)) {
-    const value = size.map((n) => (n === null ? '—' : mm(n))).join(' × ');
+  if ([dims.lengthMm, dims.widthMm, dims.heightMm].some((n) => n !== null)) {
+    const value = sizeValue({ l: dims.lengthMm, w: dims.widthMm, d: dims.heightMm }, null, { missing: '—' });
     lines.push({
       key: 'size',
       labelTh: LABELS.size[0],
       labelEn: LABELS.size[1],
-      valueTh: `${value} มม.`,
-      valueEn: `${value} mm`,
+      valueTh: value.th,
+      valueEn: value.en,
     });
   }
   const properties =
@@ -551,12 +562,7 @@ export function lineSummary(source: SummarySource, unit: LineSummaryDto['unit'])
   };
 }
 
-const BASIS_LABELS: Record<MeasurementBasis, [string, string]> = {
-  internal: ['ด้านใน', 'inside'],
-  external: ['ด้านนอก', 'outside'],
-  over_crease: ['วัดตามรอยพับ', 'over crease'],
-  product: ['ขนาดชิ้นงาน', 'finished size'],
-};
+const BASIS_LABELS = BASIS_TEXT as Readonly<Record<MeasurementBasis, { th: string; en: string }>>;
 
 /**
  * The basis on the size line (D-182), and the inside size priced when the customer measured on another basis — what
@@ -564,22 +570,21 @@ const BASIS_LABELS: Record<MeasurementBasis, [string, string]> = {
  */
 export function withBasisLines(lines: SpecLineDto[], dimensions: QuoteDimensions | null): SpecLineDto[] {
   if (!dimensions) return lines;
-  const [th, en] = BASIS_LABELS[dimensions.basis];
+  const { th, en } = BASIS_LABELS[dimensions.basis];
   const out = lines.map((line) =>
     line.key === 'size'
       ? { ...line, valueTh: `${line.valueTh} (${th})`, valueEn: `${line.valueEn} (${en})` }
       : line,
   );
   if (dimensions.basis !== dimensions.pricedBasis) {
-    const p = dimensions.priced;
-    const size = sizeText(p);
+    const size = sizeValue(dimensions.priced);
     const at = out.findIndex((line) => line.key === 'size');
     out.splice(at + 1, 0, {
       key: 'priced_size',
       labelTh: 'ขนาดด้านในที่ใช้คำนวณ',
       labelEn: 'Inside size priced',
-      valueTh: `${size} มม.`,
-      valueEn: `${size} mm`,
+      valueTh: size.th,
+      valueEn: size.en,
     });
   }
   return out;

@@ -13,9 +13,9 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { FilesService } from '@platform/files/files.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
-import { sizeText } from './line-summary';
 import { type SpecLineDto } from './line-summary.dto';
 import { type QuoteDocument, renderQuoteDocument } from './quote-document';
+import { sizeValue, specLinesText } from './spec-label';
 
 const PDF = 'application/pdf';
 const DOWNLOAD_TTL_SECONDS = 5 * 60;
@@ -84,10 +84,10 @@ export class QuotePdfService {
       productTypeName: `${quote.productType.nameTh} / ${quote.productType.nameEn}`,
       // The spec lines the customer saw (U-B0.1); quotes made before them keep the size and material line.
       specification: Array.isArray(quote.specSummary)
-        ? (quote.specSummary as unknown as SpecLineDto[]).map((l) => `${l.labelTh} ${l.valueTh}`).join(' · ')
+        ? specLinesText(quote.specSummary as unknown as SpecLineDto[])
         : [
             cfg.w && cfg.l
-              ? `ขนาด ${sizeText({ l: Number(cfg.l), w: Number(cfg.w), d: cfg.d ? Number(cfg.d) : null })} มม.`
+              ? `ขนาด ${sizeValue({ l: Number(cfg.l), w: Number(cfg.w), d: cfg.d ? Number(cfg.d) : null }).th}`
               : null,
             material ? `วัสดุ ${material.nameTh}` : null,
           ]

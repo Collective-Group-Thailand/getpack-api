@@ -6,7 +6,7 @@ export class SpecLineDto {
   @ApiProperty({
     example: 'material',
     description:
-      'Stable key of the line (`style`, `size` — ยาว × กว้าง × สูง in mm (D-441), `material`, `print_front`, `print_back`, `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)',
+      'Stable key of the line (`style`, `size` — ยาว × กว้าง × สูง in mm (D-441), `material`, `print_front`, `print_back` — the method of the side: CMYK, สีพิเศษ n สี (…), CMYK + สีพิเศษ n สี (…) (B-API-3), `coating_front`, `coating_back`, `special_finish`, `diecut`, `assembly`, `design_service`; `parts[n].…` for a part of a multi-part product; an RFQ spec field name for RFQ quotes)',
   })
   key!: string;
 
@@ -33,8 +33,9 @@ export class LocalisedLabelDto {
 }
 
 /**
- * One string per spec (GLOBAL-RULES §5, D-441): the values of the spec lines joined by " · " — size as
- * ยาว × กว้าง × สูง in mm, "ไม่พิมพ์" when nothing prints. Every surface shows it next to a price.
+ * One string per spec (GLOBAL-RULES §5, D-441, B-API-3): the values of the spec lines joined by " · " — size as
+ * ยาว × กว้าง × สูง in mm ("(ด้านใน)" for inner dimensions), each printed side as "พิมพ์ด้านนอก: …" / "พิมพ์ด้านใน: …"
+ * (CMYK, สีพิเศษ n สี, CMYK + สีพิเศษ n สี; a side not printed is left out), "ไม่พิมพ์" when nothing prints. Every surface shows it next to a price.
  */
 export const SpecLabelDto = LocalisedLabelDto;
 export type SpecLabelDto = LocalisedLabelDto;
@@ -59,14 +60,14 @@ export const SPEC_LINES_EXAMPLE: SpecLineDto[] = [
     key: 'print_front',
     labelTh: 'พิมพ์ด้านนอก',
     labelEn: 'Print (outside)',
-    valueTh: 'ดำ',
-    valueEn: 'Black',
+    valueTh: 'สีพิเศษ 1 สี (ดำ)',
+    valueEn: '1 spot colour (ดำ)',
   },
 ];
 
 export const SPEC_LABEL_EXAMPLE: SpecLabelDto = {
-  th: 'กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · ดำ',
-  en: 'RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Black',
+  th: 'กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)',
+  en: 'RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)',
 };
 
 export class LineProductDto {

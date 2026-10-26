@@ -112,3 +112,53 @@ Refused (422):
 drops it). No data migration; existing products have no model (only never-valid sets are refused). UAT seed
 (`prisma/seed/uat/uat-catalog.ts`, fake): corrugated products with inks get outside = inside = methods
 `none` + `spot` (N = 1, `uat-black`) + `cmyk` (`dev-cmyk`, add-on off). Real values: business team in the back office.
+
+## B-API-3 Spec label
+
+One helper owns every spec string (GLOBAL-RULES §5, D-441, D-443): `src/modules/quotes/spec-label.ts` —
+`sizeText` / `sizeValue` (ยาว × กว้าง × สูง, mm, the basis in brackets: "(ด้านใน)" for inner dimensions; RFQ blanks
+as "—"), `BASIS_TEXT`, `PRINT_SIDE_TEXT`, `printMethodText` / `printSideText` (method of a side from the per-side
+model of B-API-2: `CMYK`, `สีพิเศษ n สี (…)`, `CMYK + สีพิเศษ n สี (…)`; an unprinted side gives nothing and is left
+out), `specLabel` (one string) and `specLinesText` (quotation PDF). No endpoint, path or schema changes; only wording
+of new values and the OpenAPI examples.
+
+### Fields whose wording changes
+
+| Field | Where | Change |
+|---|---|---|
+| `specs[].valueTh/valueEn` of `print_front`, `print_back`, `parts[n].print_*` | every calculation and new quote / cart / order line (folding, corrugate, tag & sleeve, label) | ink names → method of the side |
+| `specLabel` / `label` (`th`, `en`) | store calculations, configurator default spec, cards, styles, price hints, Studio | each print value prefixed by its side: "พิมพ์ด้านนอก: …" / "พิมพ์ด้านใน: …" (flat items: "พิมพ์ด้านหน้า/หลัง: …") |
+| quotation PDF `specification` | quote PDF rendered on issue | print lines as "พิมพ์ด้านนอก: …" (other lines unchanged: "label value") |
+| order spec sheet sizes table | spec-sheet PDF | header "ยาว × กว้าง × สูง" in Thai (was "L × W × H"); values from the helper (same text) |
+| designer PDF title (dieline downloads) | PDF metadata | `100×80×50 mm (inside)` → `100 × 80 × 50 mm (inside)` |
+
+### Examples
+
+Corrugate, CMYK outside, ดำ inside, inner dimensions:
+
+```text
+before  th: กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · KA125 ลอน B · CMYK · ดำ
+after   th: กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · KA125 ลอน B · พิมพ์ด้านนอก: CMYK · พิมพ์ด้านใน: สีพิเศษ 1 สี (ดำ)
+after   en: RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute · Print (outside): CMYK · Print (inside): 1 spot colour (ดำ)
+```
+
+Spec line `print_front` with CMYK + add-on: before `{"valueTh":"CMYK, ทอง"}` → after
+`{"valueTh":"CMYK + สีพิเศษ 1 สี (ทอง)","valueEn":"CMYK + 1 spot colour (ทอง)"}`. Outside only: no `print_back`
+line and nothing about the inside in the label. Unprinted: `… · ไม่พิมพ์` (unchanged).
+
+### History
+
+Saved quotes, carts and orders read `quotes.spec_summary` as stored: their lines keep the words they were made with
+(not rewritten). Issued PDFs are stored files and are not re-rendered. A label computed from stored lines (price hints)
+shows old values with the side prefix ("พิมพ์ด้านนอก: ดำ").
+
+### Not changed
+
+- Pouch: size stays `กว้าง × สูง` (a pouch has no ยาว) and `print` keeps the colour-set name; open question.
+- Preflight messages (artwork page / trim `w×h`) and dieline file names are not spec labels.
+- Web-only labels: none found in this repo; `getpack-web` must show `specLabel` / `specs` as given.
+
+### e2e specs to run locally (not changed: none asserts a print value)
+
+`line-summary`, `price-consistency`, `studio-quotes`, `spec-model`, `rfqs`, `spec-sheet`, `dieline-downloads`,
+`corrugate-quotes`.

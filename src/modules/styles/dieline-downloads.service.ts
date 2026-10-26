@@ -20,6 +20,7 @@ import {
   type StoredRecipe,
 } from '@integrations/dieline/dieline-engine.port';
 import { canonical } from '@modules/catalog/imports/import-engine';
+import { sizeText, sizeValue } from '@modules/quotes/spec-label';
 import { BasisError, constructionFamily, convertSize } from '@modules/specs/dimension-conversion';
 import { Inject, Injectable } from '@nestjs/common';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -296,9 +297,11 @@ export class DielineDownloadsService {
     at: Date,
   ): Promise<DesignerPdfOptions> {
     const rules = (await this.settings.at('artwork.preflight_rules', { at })).value;
-    const size = `${sizes.length}×${sizes.width}×${sizes.height} mm`;
+    // The one size string (D-441, B-API-3): ยาว × กว้าง × สูง, mm, inner dimensions.
+    const inside = sizeValue({ l: sizes.length, w: sizes.width, d: sizes.height }, 'internal').en;
+    const size = `${sizeText({ l: sizes.length, w: sizes.width, d: sizes.height })} mm`;
     return {
-      title: `${variant.code} ${variant.base.nameEn} ${size} (inside)`,
+      title: `${variant.code} ${variant.base.nameEn} ${inside}`,
       styleCode: variant.code,
       bleedMm: Number(rules.bleedMm),
       safeMm: Number(rules.safeZoneMm),

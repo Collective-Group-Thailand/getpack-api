@@ -1,3 +1,4 @@
+import { sizeText } from '@modules/quotes/spec-label';
 import Handlebars from 'handlebars';
 
 /**
@@ -34,6 +35,7 @@ const LABELS = {
     reference: 'รหัสอ้างอิงสากล',
     sizes: 'ขนาด (มม.)',
     basis: 'ฐานการวัด',
+    dims: 'ยาว × กว้าง × สูง',
     priced: 'ขนาดที่ใช้คิดราคา',
     material: 'วัสดุ',
     caliper: 'ความหนา',
@@ -53,6 +55,7 @@ const LABELS = {
     reference: 'Industry reference',
     sizes: 'Sizes (mm)',
     basis: 'Basis',
+    dims: 'L × W × H',
     priced: 'Size priced',
     material: 'Material',
     caliper: 'Caliper',
@@ -101,8 +104,8 @@ const TEMPLATE = Handlebars.compile(
 </div>
 {{#if sizes.length}}<h2>{{l.sizes}}</h2>
 <table>
-  <tr><th>{{l.basis}}</th><td>L × W × H</td></tr>
-  {{#each sizes}}<tr><th>{{basis}}{{#if priced}} ({{../l.priced}}){{/if}}</th><td>{{length}} × {{width}}{{#if height}} × {{height}}{{/if}}</td></tr>{{/each}}
+  <tr><th>{{l.basis}}</th><td>{{l.dims}}</td></tr>
+  {{#each sizes}}<tr><th>{{basis}}{{#if priced}} ({{../l.priced}}){{/if}}</th><td>{{text}}</td></tr>{{/each}}
 </table>{{/if}}
 {{#if specLines.length}}<h2>{{l.spec}}</h2>
 <table>{{#each specLines}}<tr><th>{{label}}</th><td>{{value}}</td></tr>{{/each}}</table>{{/if}}
@@ -120,7 +123,9 @@ const TEMPLATE = Handlebars.compile(
 );
 
 export function renderSpecSheet(doc: SpecSheetDocument): string {
-  return TEMPLATE({ ...doc, l: LABELS[doc.lang] });
+  // The one size string (D-441, B-API-3): ยาว × กว้าง × สูง in mm, a flat item without the height.
+  const sizes = doc.sizes.map((s) => ({ ...s, text: sizeText({ l: s.length, w: s.width, d: s.height }) }));
+  return TEMPLATE({ ...doc, sizes, l: LABELS[doc.lang] });
 }
 
 export const specSheetLabels = (lang: 'th' | 'en') => LABELS[lang];
