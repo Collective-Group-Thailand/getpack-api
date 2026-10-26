@@ -17,6 +17,8 @@ import {
   type FileAccessLogRow,
   type SupportAssignmentView,
 } from './customer-file-access.service';
+import { DownloadUrlDto } from './files.dto';
+import { StudioRenderPreviewService } from './studio-render-preview.service';
 
 const FILE_KINDS = ['customer_original', 'production_copy', 'approved_proof_copy'] as const;
 // Alphabetical (the RUM zone enum lists the same surfaces in another order and means something else).
@@ -309,5 +311,49 @@ export class OrderSupportAssignmentsController {
   ): Promise<OrderSupportAssignmentDto> {
     if (actor.type !== 'user' || actor.audience !== 'staff') throw new DomainException('auth.forbidden');
     return toSupportAssignmentDto(await this.access.assignSupport(actor, orderId, body.supportUserId));
+  }
+}
+
+// ------------------------------------------------------------------------------------------------ B-API-7
+
+/** B-API-7 (D-446): the low-resolution preview of a Studio render for the staff handling its order. */
+@ApiSurface('admin', 'files')
+@Controller('files')
+export class StudioRenderPreviewsController {
+  constructor(private readonly previews: StudioRenderPreviewService) {}
+
+  @Get(':fileId/preview')
+  @ApiParam({
+    name: 'fileId',
+    format: 'uuid',
+    description: 'The Studio render (`design_version_renders.file_id`).',
+  })
+  @ApiEndpoint({
+    id: 'admin.files.preview',
+    summary: 'Short-lived URL of a Studio render preview',
+    description:
+      'D-446 (B-API-7): a signed URL (5 minutes) for the low-resolution, metadata-free preview (WebP thumbnail) of a ' +
+      'Studio render, for Prepress (`customer_files.read`) and for support (`customer_files.read_handled`) handling an ' +
+      "order made from the render's design version — an explicit support assignment or an open order conversation. " +
+      'The preview is made with the upload thumbnail pipeline when the render has none. The full-resolution render, ' +
+      'customer artwork and originals stay restricted (D-444): every other staff role, or a file that is not a ' +
+      'Studio render, gets 404. Every URL is logged in the customer file access log (purpose `thumbnail`).',
+    implements: ['D-444', 'D-446'],
+  })
+  @ApiSuccess(200, {
+    description: 'Signed URL of the preview',
+    type: DownloadUrlDto,
+    example: {
+      url: 'https://getpack-files.s3.example.com/…thumb.webp?X-Amz-Expires=300',
+      expiresAt: '2026-10-26T10:20:00+07:00',
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'file.not_ready')
+  async preview(
+    @CurrentActor() actor: Actor,
+    @Param('fileId', ParseUUIDPipe) fileId: string,
+  ): Promise<DownloadUrlDto> {
+    const { url, expiresAt } = await this.previews.previewUrl(actor, fileId);
+    return { url, expiresAt: toBangkokIso(expiresAt) };
   }
 }

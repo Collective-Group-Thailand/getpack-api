@@ -260,6 +260,27 @@ export class FileProcessingJobs {
     await this.thumbnail(file, Buffer.concat(chunks));
   }
 
+  /**
+   * B-API-7: the thumbnail of a clean image, made now from its stored bytes with the same pipeline (WebP,
+   * `THUMBNAIL_WIDTH`, no metadata — sharp writes none, D-442) when the upload did not get one. Null when the file is
+   * not a clean image within the sample size.
+   */
+  async ensureThumbnail(file: FileObject): Promise<FileObject | null> {
+    const existing = await this.prisma.fileObject.findFirst({ where: { thumbnailOfFileId: file.id } });
+    if (existing) return existing;
+    if (
+      !IMAGE_TYPES.has(file.mimeType) ||
+      file.uploadStatus !== 'uploaded' ||
+      file.scanStatus !== 'clean' ||
+      file.purgedAt ||
+      Number(file.sizeBytes) > SAMPLE_BYTES
+    )
+      return null;
+    // A concurrent request may make it first (unique storage key): then that one is used.
+    await this.thumbnail(file, await this.readAll(file.storageKey)).catch(() => undefined);
+    return this.prisma.fileObject.findFirst({ where: { thumbnailOfFileId: file.id } });
+  }
+
   private async thumbnail(file: FileObject, sample: Buffer): Promise<void> {
     if (Number(file.sizeBytes) > SAMPLE_BYTES) return;
     const image = await sharp(sample)

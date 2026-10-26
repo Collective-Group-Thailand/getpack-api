@@ -64,6 +64,7 @@ import { FeatureFlagsController } from '@platform/feature-flags/feature-flags.co
 import {
   CustomerFileAccessLogsController,
   OrderSupportAssignmentsController,
+  StudioRenderPreviewsController,
 } from '@platform/files/customer-file-access.controller';
 import { AdminFilesController } from '@platform/files/files.controllers';
 import { AdminDeepLinksController } from '@platform/notifications/deep-links.controller';
@@ -115,6 +116,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     AuditLogsController,
     CustomerFileAccessLogsController,
     OrderSupportAssignmentsController,
+    StudioRenderPreviewsController,
     DocumentSeriesController,
 
     ...CATALOG_ADMIN_CONTROLLERS,

@@ -484,3 +484,74 @@ approving the artwork). Run unchanged: `rfqs`, `rfq-baskets`, `service-quotes`, 
 2. Studio design renders and thumbnails are now hidden from staff other than Prepress (they are customer artwork);
    confirm no back-office screen needs them for non-Prepress roles.
 3. A support assignment does not end automatically when the order closes; CS Lead ends it.
+
+## B-API-7 Previews and assignment end
+
+Product-owner decisions (DECISIONS-STAGE-A §7 rows "(B-API-7)", decision **D-446**; amends D-444 / D-445 (4)).
+Answers B-API-6 open questions 1–3. Not breaking: one new admin endpoint, one new worker job, one new audit action /
+event; **no migration, no new setting or env var**.
+
+### 1. Print limits
+
+`catalog.print_limits` stays the seeded placeholder (`pending_business`) until the business sets it in the back office
+(Admin, effective-dated, audited). No code change.
+
+### 2. Studio render previews
+
+A **preview** is the render's upload thumbnail (`file_objects.thumbnail_of_file_id`): WebP, `THUMBNAIL_WIDTH` (640 px,
+the existing pipeline constant in `file-processing.jobs.ts`), no metadata (sharp writes none; the render was scrubbed
+at upload, D-442). When the render has none, `FileProcessingJobs.ensureThumbnail` makes it on the first request with
+the same pipeline.
+
+| Who | Render preview | Full-resolution render, artwork, originals |
+|---|---|---|
+| Prepress (`customer_files.read`) | ✓ | ✓ (unchanged) |
+| CS, CS Lead (`customer_files.read_handled`) handling an order made from the render's design version (explicit assignment or open order conversation) | ✓ | ✗ 404 (unchanged) |
+| CS not handling it; Admin, Auditor, Superadmin, Finance, Logistics… | ✗ 404 | ✗ 404 |
+
+"Made from the render's design version" = a `studio_print_jobs` row of that version with `order_id` set.
+
+| Endpoint | Change |
+|---|---|
+| `GET /v1/admin/files/{fileId}/preview` — **new** `admin.files.preview` (`fileId` = the render) | `DownloadUrlDto { url, expiresAt }` (5 min) of the preview; 404 `http.not_found` when the file is not a Studio render or the caller may not preview it (checked before anything is generated); 409 `file.not_ready` while the render is not scanned clean or no preview can be made |
+| `GET /v1/admin/files/{thumbnailId}` and `…/download` | the preview's own id also works for these staff (description unchanged) |
+
+Every preview URL writes a `customer_file_access_logs` row: `file_object_id` = the preview, `file_kind`
+`customer_original`, `purpose` **`thumbnail`**, `order_id` = the order it was read for, `channel` `admin`.
+
+```json
+{ "url": "https://getpack-files.s3.example.com/…thumb.webp?X-Amz-Expires=300", "expiresAt": "2026-10-26T10:20:00+07:00" }
+```
+
+### 3. Support assignment ends with the claim window
+
+- **Job** `orders.support_assignment_end` (worker, every 15 min, same cadence as `orders.auto_complete`): ends each live
+  `order_support_assignments` row whose order has `claim_window_ends_at ≤ now` (set at delivery from the
+  `claims.window_days` setting) and **no open claim** (status not `rejected` / `resolved` / `closed`; an open claim keeps
+  the window open, D-437). Re-checked under the order lock; `ended_at` = now, `ended_by` null (system).
+- One transaction per order: audit `order.support_unassigned` (category `iam`, system actor
+  `orders.support_assignment_end`) and outbox event **`order.support_unassigned`**, payload
+  `{ orderId, userId, assignmentId, reason: "claim_window_ended" }`.
+- CS Lead / Admin may still end it earlier: `PUT /v1/admin/orders/{orderId}/support-assignment` with
+  `{ "supportUserId": null }` (unchanged, event `order.support_assigned`).
+- A cancelled or undelivered order has no claim window: its assignment stays until CS Lead ends it.
+
+### Tests
+
+Unit: `src/platform/files/customer-file-access.spec.ts` (previews: CS handling → preview allowed, render denied; CS not
+handling → both denied, nothing generated or logged; other staff → denied; Prepress both; log row `thumbnail` with the
+order. Assignment end: ends after the window with audit + event; kept while a claim is open, also when one opens before
+the lock; kept before the window / without one; manual end by CS Lead still works). `storefront-factory-confidentiality`
+green.
+
+### e2e specs to run locally
+
+Changed: `studio-print` (Studio render preview: CS 404 before the assignment, 200 on `…/preview` once CS Lead assigns
+them and still 404 on the render; Admin 404; one log row `thumbnail` for the order; the job ends the assignment after
+the claim window, audit `order.support_unassigned`, preview 404 again). Run unchanged: `artwork`, `files`, `designs`,
+`studio-documents`, `production-release`, `admin-platform`, `acceptance`.
+
+### Open questions
+
+1. A cancelled or never-delivered order has no claim window, so its assignment does not end automatically.
+2. The preview is served with the thumbnail's file name (`<original name>.thumb.webp`), as other thumbnails are.
