@@ -27,6 +27,7 @@ import { CsServicePricingService } from './quotes/cs-service-pricing.service';
 import { FoldingInputDataService } from './quotes/folding-input-data.service';
 import { LabelInputDataService } from './quotes/label-input-data.service';
 import { PouchInputDataService } from './quotes/pouch-input-data.service';
+import { QuoteBatchService } from './quotes/quote-batch.service';
 import { QuoteEngineService } from './quotes/quote-engine.service';
 import { ServiceInputDataService } from './quotes/service-input-data.service';
 import { StandardProductInputDataService } from './quotes/standard-product-input-data.service';
@@ -51,6 +52,7 @@ const SERVICES = [
   ServiceQuoteAdapter,
   QuoteEngineService,
   StorePricingService,
+  QuoteBatchService,
   SpecsService,
   ToleranceService,
   FoldingInputDataService,

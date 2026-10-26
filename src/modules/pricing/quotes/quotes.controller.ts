@@ -3,6 +3,7 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { DomainException } from '@common/errors/domain.exception';
+import { resolveLanguage } from '@common/i18n/language';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
@@ -13,6 +14,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   HttpCode,
   Param,
   ParseUUIDPipe,
@@ -52,6 +54,13 @@ import {
   QuoteCalculationDto,
   STORE_CALCULATION_EXAMPLE,
 } from './quote.dto';
+import {
+  CALCULATE_BATCH_EXAMPLE,
+  CalculateQuoteBatchDto,
+  QuoteBatchCalculationDto,
+  STORE_CALCULATION_BATCH_EXAMPLE,
+} from './quote-batch.dto';
+import { QuoteBatchService } from './quote-batch.service';
 import { QuoteEngineService, type QuoteView } from './quote-engine.service';
 import {
   CORRUGATE_INPUT_DATA_EXAMPLE,
@@ -89,6 +98,10 @@ import { StorePricingService } from './store-pricing.service';
 import { TAG_SLEEVE_CONFIGURATION_EXAMPLE, TagSleeveConfigurationDto } from './tag-sleeve.dto';
 import { toolingView } from './tooling-view';
 
+/** The batch prices up to 24 variants a request, so it is stricter than `calculate`: 20 a minute per client (env `CALCULATE_BATCH_THROTTLE_LIMIT`). */
+const CALCULATE_BATCH_THROTTLE = {
+  default: { limit: () => Number(process.env.CALCULATE_BATCH_THROTTLE_LIMIT ?? 20), ttl: 60_000 },
+};
 const CALCULATION = ['D-100', 'D-043', 'D-050', 'D-051', 'D-101'];
 
 /** The customer view: the staff-only part never leaves the store surface (D-050). */
@@ -160,6 +173,7 @@ export class StoreQuotesController {
     private readonly hero: HeroPresetsService,
     private readonly settings: SettingsService,
     private readonly storePricing: StorePricingService,
+    private readonly batch: QuoteBatchService,
   ) {}
 
   @Post('actions/calculate')
@@ -209,6 +223,45 @@ export class StoreQuotesController {
     @Body() body: CalculateQuoteDto,
   ): Promise<QuoteCalculationDto> {
     return this.priceForStore(actor, body);
+  }
+
+  @Post('actions/calculate-batch')
+  @HttpCode(200)
+  @Public()
+  @Throttle(CALCULATE_BATCH_THROTTLE)
+  @ApiEndpoint({
+    id: 'store.quotes.calculateBatch',
+    summary: 'Calculate instant prices for up to 24 option variants',
+    description:
+      'The configurator’s option cards (sizes, materials, print choices, quantities) priced in ONE request instead ' +
+      'of one `store.quotes.calculate` per card (D-441, D-043). Each variant is a full configuration of the product ' +
+      'type’s calculator and goes through the very path `calculate` uses (no formula of its own); `quantities`, when ' +
+      'sent, replaces `configuration.quantities` of every variant. `results` follow the request order, keyed by the ' +
+      'client `key` (unique, 1 to 64 characters, 1 to 24 variants). A variant that fails (for example ' +
+      '`validation.failed`, `pricing.print_combination_invalid`) does not fail the batch: its entry has ' +
+      '`calculation: null` and a `problem` with the code `calculate` would raise. Variants are priced at most four at a ' +
+      'time. Writes what `calculate` writes per priced variant (one calculate log row and its `quote.calculated` ' +
+      'event) and nothing else: no quote, cart, order or customer. Anonymous, 20 requests per minute per client. ' +
+      'No factory data (D-050). 422 `validation.failed` for more than 24 variants, a duplicate key or a malformed body, ' +
+      '`pricing.not_instant` when the product type has no instant price.',
+    implements: [...CALCULATION, 'D-441', 'D-043'],
+  })
+  @ApiBody({
+    type: CalculateQuoteBatchDto,
+    examples: { folding: { value: CALCULATE_BATCH_EXAMPLE } },
+  })
+  @ApiSuccess(200, {
+    description: 'One result per variant, in request order',
+    type: QuoteBatchCalculationDto,
+    example: STORE_CALCULATION_BATCH_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'pricing.not_instant')
+  calculateBatch(
+    @OptionalActor() actor: Actor | undefined,
+    @Body() body: CalculateQuoteBatchDto,
+    @Headers('accept-language') acceptLanguage?: string,
+  ): Promise<QuoteBatchCalculationDto> {
+    return this.batch.calculate(actor, body, resolveLanguage(acceptLanguage));
   }
 
   @Post('actions/preview')
@@ -278,18 +331,10 @@ export class StoreQuotesController {
     actor: Actor | undefined,
     body: CalculateQuoteDto,
   ): Promise<QuoteCalculationDto> {
-    const type = await this.prisma.productType.findFirst({
-      where: { code: body.productTypeCode, status: 'active' },
-    });
-    if (
-      !type?.calculatorKey ||
-      type.quoteMode !== 'instant' ||
-      !this.engine.hasCalculator(type.calculatorKey)
-    )
-      throw new DomainException('pricing.not_instant');
+    const calculatorKey = await this.storePricing.calculatorKeyOf(body.productTypeCode);
     // D-441: the one store pricing path (validation, store rules, engine, spec lines).
     const priced = await this.storePricing.price(
-      type.calculatorKey,
+      calculatorKey,
       body.configuration,
       {
         actorUserId: actor?.type === 'user' ? actor.userId : undefined,

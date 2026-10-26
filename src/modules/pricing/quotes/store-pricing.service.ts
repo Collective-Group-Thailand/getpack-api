@@ -1,3 +1,4 @@
+import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
 import { type CalculatorKey } from '@generated/prisma/client';
 import { specLinesFor } from '@modules/quotes/line-summary';
@@ -71,6 +72,20 @@ export class StorePricingService {
     private readonly engine: QuoteEngineService,
     private readonly specs: SpecsService,
   ) {}
+
+  /** The calculator of an active, instant product type — or `pricing.not_instant` (shared by every store price request). */
+  async calculatorKeyOf(productTypeCode: string): Promise<CalculatorKey> {
+    const type = await this.prisma.productType.findFirst({
+      where: { code: productTypeCode, status: 'active' },
+    });
+    if (
+      !type?.calculatorKey ||
+      type.quoteMode !== 'instant' ||
+      !this.engine.hasCalculator(type.calculatorKey)
+    )
+      throw new DomainException('pricing.not_instant');
+    return type.calculatorKey;
+  }
 
   async price(
     calculatorKey: CalculatorKey,

@@ -11,7 +11,7 @@ import { type MeasurementBasis } from '@modules/specs/dimension-conversion';
 import { QUOTE_DIMENSIONS_EXAMPLE, QuoteDimensionsDto } from '@modules/specs/specs.dto';
 import { BasisField } from '@modules/specs/specs.dto';
 import { StyleVariantField } from '@modules/styles/style-variant-field';
-import { ApiProperty, ApiPropertyOptional, getSchemaPath } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional, type ApiPropertyOptions, getSchemaPath } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -251,6 +251,25 @@ export class FoldingConfigurationDto {
   design?: DesignOptionsDto;
 }
 
+/** The polymorphic `configuration` schema of every store price request (`calculate`, `calculate-batch`). */
+export const CONFIGURATION_SCHEMA: ApiPropertyOptions = {
+  anyOf: [
+    { $ref: getSchemaPath(FoldingConfigurationDto) },
+    { $ref: getSchemaPath('CorrugateConfigurationDto') },
+    { $ref: getSchemaPath('LabelConfigurationDto') },
+    { $ref: getSchemaPath('TagSleeveConfigurationDto') },
+    { $ref: getSchemaPath('PouchConfigurationDto') },
+    { $ref: getSchemaPath('StandardProductConfigurationDto') },
+    { $ref: getSchemaPath('ServiceConfigurationDto') },
+  ],
+  description:
+    "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, " +
+    '`CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, ' +
+    '`TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, ' +
+    '`StandardProductConfigurationDto` for standard products, `ServiceConfigurationDto` for services (validated ' +
+    'against it; paths under `configuration`)',
+};
+
 export class CalculateQuoteDto {
   @ApiProperty({ example: 'folding_carton', pattern: '^[a-z][a-z0-9_]*$' })
   @IsString()
@@ -258,23 +277,7 @@ export class CalculateQuoteDto {
   @Matches(/^[a-z][a-z0-9_]*$/)
   productTypeCode!: string;
 
-  @ApiProperty({
-    anyOf: [
-      { $ref: getSchemaPath(FoldingConfigurationDto) },
-      { $ref: getSchemaPath('CorrugateConfigurationDto') },
-      { $ref: getSchemaPath('LabelConfigurationDto') },
-      { $ref: getSchemaPath('TagSleeveConfigurationDto') },
-      { $ref: getSchemaPath('PouchConfigurationDto') },
-      { $ref: getSchemaPath('StandardProductConfigurationDto') },
-      { $ref: getSchemaPath('ServiceConfigurationDto') },
-    ],
-    description:
-      "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, " +
-      '`CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, ' +
-      '`TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, ' +
-      '`StandardProductConfigurationDto` for standard products, `ServiceConfigurationDto` for services (validated ' +
-      'against it; paths under `configuration`)',
-  })
+  @ApiProperty(CONFIGURATION_SCHEMA)
   @IsObject()
   configuration!: Record<string, unknown>;
 
