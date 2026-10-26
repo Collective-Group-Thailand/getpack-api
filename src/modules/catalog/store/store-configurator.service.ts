@@ -17,6 +17,13 @@ import { Injectable } from '@nestjs/common';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { CONTENT_INCLUDE } from '../crud/option-content';
+import {
+  type InkKind,
+  PRINT_MODEL_CALCULATORS,
+  printModelOf,
+  storePrintModel,
+} from '../print-model/print-model';
+import { type StorePrintModelDto } from '../print-model/print-model.dto';
 import { pouchShapeOf, sizeRulesOf } from './size-rules';
 import { imageUrl, StoreCatalogService } from './store-catalog.service';
 import { type StoreConfiguratorDto } from './store-configurator.dto';
@@ -92,6 +99,7 @@ export class StoreConfiguratorService {
     const sizeIndex = defaultSizeIndex(sizes, spec);
     const specQuantity = defaultSpecQuantity(spec);
     const described = spec ? await this.storePricing.describe(calculator, spec).catch(() => null) : null;
+    const printModel = await this.printModel(calculator, p.printModel, p.options, spec);
     return {
       slug: p.slug,
       catalogProductId: p.publicId,
@@ -131,6 +139,7 @@ export class StoreConfiguratorService {
             }
           : null,
       printAreas: calculator === 'corrugate' ? ['top', 'side', 'top_side', 'all_round'] : [],
+      printModel,
       quoteValidityDays: Number(validity.value),
       unit: CALCULATOR_SALES_UNIT[calculator] ?? 'piece',
       quantity: {
@@ -144,5 +153,28 @@ export class StoreConfiguratorService {
       // hired design is priced by quoting with `design.graphic` (D-071); `free_design` needs a promotion (D-181).
       design: { options: ['own_file', 'online_designer', 'hired_design'], default: 'own_file' },
     };
+  }
+
+  /**
+   * D-443: the admin's per-side print model over the ink colours the product offers (active), with each side's
+   * default from the default spec (D-441) — a side the spec does not print opens on `none`.
+   */
+  private async printModel(
+    calculator: string,
+    stored: unknown,
+    options: { optionKind: string; optionId: bigint; isDefault: boolean }[],
+    spec: Record<string, unknown> | null,
+  ): Promise<StorePrintModelDto | null> {
+    const model = printModelOf(stored);
+    if (!model || !PRINT_MODEL_CALCULATORS.has(calculator)) return null;
+    const offered = options.filter((o) => o.optionKind === 'ink_colour');
+    const inks = await this.prisma.inkColour.findMany({
+      where: { id: { in: offered.map((o) => o.optionId) }, status: ACTIVE },
+      select: { id: true, publicId: true, colourKind: true },
+    });
+    const kinds = new Map<string, InkKind>(inks.map((i) => [i.publicId, i.colourKind]));
+    const flagged = offered.find((o) => o.isDefault);
+    const defaultInk = inks.find((i) => i.id === flagged?.optionId)?.publicId ?? null;
+    return storePrintModel(model, spec, (id) => kinds.get(id), defaultInk);
   }
 }

@@ -3675,6 +3675,17 @@
           "type": "https://errors.getpack/pricing.not_instant"
         }
       },
+      "problem.pricing.print_combination_invalid": {
+        "summary": "pricing.print_combination_invalid",
+        "value": {
+          "code": "pricing.print_combination_invalid",
+          "detail": "แต่ละด้านเลือกได้หนึ่งแบบ: ไม่พิมพ์ สีพิเศษ หรือพิมพ์ 4 สี (CMYK) ตามที่สินค้านี้เปิดให้เลือก",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "เลือกการพิมพ์ไม่ถูกต้อง",
+          "type": "https://errors.getpack/pricing.print_combination_invalid"
+        }
+      },
       "problem.pricing.vat_rate_missing": {
         "summary": "pricing.vat_rate_missing",
         "value": {
@@ -23230,6 +23241,18 @@
             },
             "type": "array"
           },
+          "printModel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrintModelDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-443: the per-side print model (outside / inside) the configurator offers and `store.quotes.calculate` enforces; set through `PUT …/print-model`; null = not configured",
+            "example": null
+          },
           "productTypeId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
             "format": "uuid",
@@ -23343,6 +23366,7 @@
           "quantityDefault",
           "quantityPresets",
           "referenceConfiguration",
+          "printModel",
           "sort",
           "status",
           "patterns",
@@ -81666,6 +81690,45 @@
         ],
         "type": "object"
       },
+      "PrintCmykAddOnDto": {
+        "properties": {
+          "enabled": {
+            "description": "\"+ สีพิเศษ\" beside CMYK is offered",
+            "example": false,
+            "type": "boolean"
+          },
+          "maxColours": {
+            "description": "M: the most spot colours beside CMYK (0 when disabled); colours come from the side’s `spot` list",
+            "example": 0,
+            "maximum": 8,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enabled",
+          "maxColours"
+        ],
+        "type": "object"
+      },
+      "PrintCmykConfigDto": {
+        "properties": {
+          "addOn": {
+            "$ref": "#/components/schemas/PrintCmykAddOnDto"
+          },
+          "inkColourId": {
+            "description": "The process ink colour (an offered `ink_colour` option of kind process) that prints CMYK",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e103",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inkColourId",
+          "addOn"
+        ],
+        "type": "object"
+      },
       "PrintColourDto": {
         "properties": {
           "inkColourId": {
@@ -81695,6 +81758,31 @@
           "none"
         ],
         "type": "string"
+      },
+      "PrintModelDto": {
+        "properties": {
+          "inside": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintSideConfigDto"
+              }
+            ],
+            "description": "Inside (`printBack` of each part)"
+          },
+          "outside": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintSideConfigDto"
+              }
+            ],
+            "description": "Outside (`printFront` of each part)"
+          }
+        },
+        "required": [
+          "outside",
+          "inside"
+        ],
+        "type": "object"
       },
       "PrintRuleDto": {
         "properties": {
@@ -81784,6 +81872,68 @@
         ],
         "type": "string"
       },
+      "PrintSideConfigDto": {
+        "properties": {
+          "cmyk": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrintCmykConfigDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required when `cmyk` is offered"
+          },
+          "methods": {
+            "description": "`none` ไม่พิมพ์ · `spot` สีพิเศษ · `cmyk` พิมพ์ 4 สี (CMYK); one choice per side",
+            "example": [
+              "none",
+              "spot",
+              "cmyk"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PrintSideMethod"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "spot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrintSpotConfigDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Required when `spot` is offered"
+          }
+        },
+        "required": [
+          "methods",
+          "spot",
+          "cmyk"
+        ],
+        "type": "object"
+      },
+      "PrintSideField": {
+        "description": "The configuration field of each part this side fills",
+        "enum": [
+          "printFront",
+          "printBack"
+        ],
+        "type": "string"
+      },
+      "PrintSideMethod": {
+        "description": "`none` ไม่พิมพ์ · `spot` สีพิเศษ · `cmyk` พิมพ์ 4 สี (CMYK); one choice per side",
+        "enum": [
+          "none",
+          "spot",
+          "cmyk"
+        ],
+        "type": "string"
+      },
       "PrintSides": {
         "enum": [
           "outside",
@@ -81792,6 +81942,36 @@
           "none"
         ],
         "type": "string"
+      },
+      "PrintSpotConfigDto": {
+        "properties": {
+          "inkColourIds": {
+            "description": "The spot ink colours (offered `ink_colour` options of kind spot / white / metallic) the customer picks from; at least `maxColours` of them",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
+              "0192f3a0-7c1e-7d2a-9b1f-00000000e102"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "minItems": 1,
+            "type": "array"
+          },
+          "maxColours": {
+            "description": "N: the most spot colours on this side (ดำ counts as one spot colour); at least 1",
+            "example": 2,
+            "maximum": 8,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "maxColours",
+          "inkColourIds"
+        ],
+        "type": "object"
       },
       "PrintTypeDto": {
         "properties": {
@@ -95662,6 +95842,25 @@
         ],
         "type": "object"
       },
+      "SetPrintModelDto": {
+        "properties": {
+          "printModel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrintModelDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The per-side print model; `null` removes it (then only never-valid combinations are refused)"
+          }
+        },
+        "required": [
+          "printModel"
+        ],
+        "type": "object"
+      },
       "SetRouteEnabledDto": {
         "properties": {
           "enabled": {
@@ -101715,6 +101914,17 @@
             },
             "type": "array"
           },
+          "printModel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorePrintModelDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Corrugate, D-443: the per-side print model (outside → `printFront`, inside → `printBack` of each part) — method radios (`none` ไม่พิมพ์ · `spot` สีพิเศษ · `cmyk` พิมพ์ 4 สี), the spot-colour counter 1..N with the allowed colours, the \"+ สีพิเศษ\" counter beside CMYK when enabled, and each side’s default (inside: `none` unless the default spec prints inside). Back-office data; null until an admin sets it (then send at most one ink kind per side: no CMYK together with a spot colour)"
+          },
           "productTypeCode": {
             "example": "corrugated",
             "type": "string"
@@ -101759,6 +101969,7 @@
           "standardSizes",
           "optionGroups",
           "printAreas",
+          "printModel",
           "quoteValidityDays",
           "unit",
           "quantity",
@@ -102894,6 +103105,192 @@
           "maxSMm",
           "minCsMm",
           "maxCsMm"
+        ],
+        "type": "object"
+      },
+      "StorePrintAddOnDto": {
+        "properties": {
+          "enabled": {
+            "description": "Show the \"+ สีพิเศษ\" counter beside CMYK",
+            "example": true,
+            "type": "boolean"
+          },
+          "maxColours": {
+            "description": "M (0 when disabled)",
+            "example": 1,
+            "type": "integer"
+          },
+          "minColours": {
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "enabled",
+          "minColours",
+          "maxColours"
+        ],
+        "type": "object"
+      },
+      "StorePrintCmykDto": {
+        "properties": {
+          "addOn": {
+            "$ref": "#/components/schemas/StorePrintAddOnDto"
+          },
+          "inkColourId": {
+            "description": "The process ink sent for CMYK",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e103",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "inkColourId",
+          "addOn"
+        ],
+        "type": "object"
+      },
+      "StorePrintModelDto": {
+        "properties": {
+          "inside": {
+            "$ref": "#/components/schemas/StorePrintSideDto"
+          },
+          "outside": {
+            "$ref": "#/components/schemas/StorePrintSideDto"
+          }
+        },
+        "required": [
+          "outside",
+          "inside"
+        ],
+        "type": "object"
+      },
+      "StorePrintSelectionDto": {
+        "properties": {
+          "cmykAddOnInkColourIds": {
+            "description": "`cmyk`: the \"+ สีพิเศษ\" colours chosen (empty without the add-on)",
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "method": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintSideMethod"
+              }
+            ],
+            "example": "none"
+          },
+          "spotInkColourIds": {
+            "description": "`spot`: the spot colours chosen",
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "method",
+          "spotInkColourIds",
+          "cmykAddOnInkColourIds"
+        ],
+        "type": "object"
+      },
+      "StorePrintSideDto": {
+        "properties": {
+          "cmyk": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorePrintCmykDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "default": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StorePrintSelectionDto"
+              }
+            ],
+            "description": "What the configurator opens on: the default spec’s print on this side; inside defaults to `none`"
+          },
+          "field": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PrintSideField"
+              }
+            ],
+            "description": "The configuration field of each part this side fills",
+            "example": "printFront"
+          },
+          "methods": {
+            "description": "`none` ไม่พิมพ์ · `spot` สีพิเศษ · `cmyk` พิมพ์ 4 สี (CMYK); one choice per side",
+            "example": [
+              "none",
+              "spot",
+              "cmyk"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PrintSideMethod"
+            },
+            "type": "array"
+          },
+          "spot": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorePrintSpotDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "field",
+          "methods",
+          "spot",
+          "cmyk",
+          "default"
+        ],
+        "type": "object"
+      },
+      "StorePrintSpotDto": {
+        "properties": {
+          "inkColourIds": {
+            "description": "Allowed spot colours, ids of the `ink_colour` option group (names and swatches there)",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
+              "0192f3a0-7c1e-7d2a-9b1f-00000000e102"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "maxColours": {
+            "description": "Counter maximum N (back-office data)",
+            "example": 2,
+            "type": "integer"
+          },
+          "minColours": {
+            "description": "Counter minimum (always 1)",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "minColours",
+          "maxColours",
+          "inkColourIds"
         ],
         "type": "object"
       },
@@ -147662,6 +148059,7 @@
                           "sort": 0
                         }
                       ],
+                      "printModel": null,
                       "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                       "quantityDefault": null,
                       "quantityMax": null,
@@ -147908,6 +148306,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -148172,6 +148571,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -148428,6 +148828,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -148770,6 +149171,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -149091,6 +149493,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -149401,6 +149804,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -149703,6 +150107,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -150029,6 +150434,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -150271,6 +150677,404 @@
         ]
       }
     },
+    "/v1/admin/catalog/catalog-products/{id}/print-model": {
+      "put": {
+        "description": "D-443: per side (outside = `printFront`, inside = `printBack`) the methods offered — `none` ไม่พิมพ์, `spot` สีพิเศษ, `cmyk` พิมพ์ 4 สี — the most spot colours N and the allowed spot colours, the process ink of CMYK and the \"+ สีพิเศษ\" add-on beside CMYK (enabled, at most M). Every ink must be an active `ink_colour` option of the product (spot colours of kind spot / white / metallic, CMYK of kind process). Corrugate products only. `store.catalog.getConfigurator` exposes it as `printModel` and `store.quotes.calculate` refuses any other combination (`pricing.print_combination_invalid`); the reference configuration (D-441) must remain a valid choice. `null` removes the model. The price hint is recomputed. Guarded by the product ETag; audited.\n\nImplements: D-443, D-441.",
+        "operationId": "admin.catalogProducts.setPrintModel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "clear": {
+                  "value": {
+                    "printModel": null
+                  }
+                },
+                "default": {
+                  "value": {
+                    "printModel": {
+                      "inside": {
+                        "cmyk": null,
+                        "methods": [
+                          "none",
+                          "spot"
+                        ],
+                        "spot": {
+                          "inkColourIds": [
+                            "0192f3a0-7c1e-7d2a-9b1f-00000000e101"
+                          ],
+                          "maxColours": 1
+                        }
+                      },
+                      "outside": {
+                        "cmyk": {
+                          "addOn": {
+                            "enabled": true,
+                            "maxColours": 1
+                          },
+                          "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000e103"
+                        },
+                        "methods": [
+                          "none",
+                          "spot",
+                          "cmyk"
+                        ],
+                        "spot": {
+                          "inkColourIds": [
+                            "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
+                            "0192f3a0-7c1e-7d2a-9b1f-00000000e102"
+                          ],
+                          "maxColours": 2
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetPrintModelDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "defaultDifficultyLevelId": null,
+                  "descriptionEn": "Reverse tuck-end folding box",
+                  "descriptionTh": "กล่องพับฝาเสียบบน-ล่าง",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c004",
+                  "images": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c012",
+                      "sort": 0,
+                      "variant": {
+                        "material": "art-card-350"
+                      }
+                    }
+                  ],
+                  "isCombination": false,
+                  "nameEn": "Tuck-end box",
+                  "nameTh": "กล่องฝาเสียบ",
+                  "options": [
+                    {
+                      "isDefault": true,
+                      "kind": "material",
+                      "optionId": "0192f3a0-7c1e-7d2a-9b1f-00000000c010",
+                      "sort": 0
+                    }
+                  ],
+                  "patterns": [
+                    {
+                      "factorNd": 1,
+                      "factorNl": 1,
+                      "factorNw": 1,
+                      "patternCode": "RTE-01",
+                      "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000c006",
+                      "sort": 0
+                    }
+                  ],
+                  "printModel": {
+                    "inside": {
+                      "cmyk": null,
+                      "methods": [
+                        "none",
+                        "spot"
+                      ],
+                      "spot": {
+                        "inkColourIds": [
+                          "0192f3a0-7c1e-7d2a-9b1f-00000000e101"
+                        ],
+                        "maxColours": 1
+                      }
+                    },
+                    "outside": {
+                      "cmyk": {
+                        "addOn": {
+                          "enabled": true,
+                          "maxColours": 1
+                        },
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000e103"
+                      },
+                      "methods": [
+                        "none",
+                        "spot",
+                        "cmyk"
+                      ],
+                      "spot": {
+                        "inkColourIds": [
+                          "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
+                          "0192f3a0-7c1e-7d2a-9b1f-00000000e102"
+                        ],
+                        "maxColours": 2
+                      }
+                    }
+                  },
+                  "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
+                  "quantityDefault": null,
+                  "quantityMax": null,
+                  "quantityMin": null,
+                  "quantityPresets": [],
+                  "referenceConfiguration": null,
+                  "seoPageId": null,
+                  "slug": "tuck-end-box",
+                  "sort": 10,
+                  "status": "active",
+                  "templateAvailability": "drawing",
+                  "updatedAt": "2026-09-25T10:00:00+07:00",
+                  "videoUrl": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogProductDto"
+                }
+              }
+            },
+            "description": "The catalogue product",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.print_combination_invalid": {
+                    "$ref": "#/components/examples/problem.pricing.print_combination_invalid"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.print_combination_invalid`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Set the per-side print model of a catalogue product",
+        "tags": [
+          "admin.catalogProducts"
+        ],
+        "x-required-permissions": [
+          "catalog.manage"
+        ]
+      }
+    },
     "/v1/admin/catalog/catalog-products/{id}/reference-configuration": {
       "delete": {
         "description": "The product then has no \"starting from\" price (D-220). Guarded by the product ETag; audited.\n\nImplements: D-220.",
@@ -150331,6 +151135,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -150550,7 +151355,7 @@
         ]
       },
       "put": {
-        "description": "D-220: the calculator configuration (one quantity) a product card's starting price is quoted at, validated as a store request of the product type's calculator. The price hint is recomputed at once and shown by `store.catalog.listPriceHints`; no hint while nothing can price it. Guarded by the product ETag; audited.\n\nImplements: D-220, D-181.",
+        "description": "D-220: the calculator configuration (one quantity) a product card's starting price is quoted at, validated as a store request of the product type's calculator (and one valid print choice per side, D-443). The price hint is recomputed at once and shown by `store.catalog.listPriceHints`; no hint while nothing can price it. Guarded by the product ETag; audited.\n\nImplements: D-220, D-181, D-443.",
         "operationId": "admin.catalogProducts.setReferenceConfiguration",
         "parameters": [
           {
@@ -150638,6 +151443,7 @@
                       "sort": 0
                     }
                   ],
+                  "printModel": null,
                   "productTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c002",
                   "quantityDefault": null,
                   "quantityMax": null,
@@ -150786,6 +151592,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "pricing.print_combination_invalid": {
+                    "$ref": "#/components/examples/problem.pricing.print_combination_invalid"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -150795,7 +151604,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `pricing.print_combination_invalid`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -501608,6 +502417,57 @@
                     "top_side",
                     "all_round"
                   ],
+                  "printModel": {
+                    "inside": {
+                      "cmyk": null,
+                      "default": {
+                        "cmykAddOnInkColourIds": [],
+                        "method": "none",
+                        "spotInkColourIds": []
+                      },
+                      "field": "printBack",
+                      "methods": [
+                        "none",
+                        "spot"
+                      ],
+                      "spot": {
+                        "inkColourIds": [
+                          "0192f3a0-7c1e-7d2a-9b1f-00000000e101"
+                        ],
+                        "maxColours": 1,
+                        "minColours": 1
+                      }
+                    },
+                    "outside": {
+                      "cmyk": {
+                        "addOn": {
+                          "enabled": true,
+                          "maxColours": 1,
+                          "minColours": 0
+                        },
+                        "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000e103"
+                      },
+                      "default": {
+                        "cmykAddOnInkColourIds": [],
+                        "method": "cmyk",
+                        "spotInkColourIds": []
+                      },
+                      "field": "printFront",
+                      "methods": [
+                        "none",
+                        "spot",
+                        "cmyk"
+                      ],
+                      "spot": {
+                        "inkColourIds": [
+                          "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
+                          "0192f3a0-7c1e-7d2a-9b1f-00000000e102"
+                        ],
+                        "maxColours": 2,
+                        "minColours": 1
+                      }
+                    }
+                  },
                   "productTypeCode": "corrugated",
                   "quantity": {
                     "default": 300,

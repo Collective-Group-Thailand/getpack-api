@@ -12,6 +12,7 @@ import { type Response } from 'express';
 import { staffActor } from '../crud/catalog-crud.controller';
 import { CatalogCrudService, rowEtag } from '../crud/catalog-crud.service';
 import { type CrudRow } from '../crud/catalog-resource';
+import { PRINT_MODEL_EXAMPLE, SetPrintModelDto } from '../print-model/print-model.dto';
 import {
   AddImageDto,
   CatalogProductDto,
@@ -141,9 +142,9 @@ export class CatalogProductRelationsController {
     summary: 'Set the reference configuration of the "starting from" price',
     description:
       "D-220: the calculator configuration (one quantity) a product card's starting price is quoted at, validated " +
-      "as a store request of the product type's calculator. The price hint is recomputed at once and shown by " +
+      "as a store request of the product type's calculator (and one valid print choice per side, D-443). The price hint is recomputed at once and shown by " +
       '`store.catalog.listPriceHints`; no hint while nothing can price it. Guarded by the product ETag; audited.',
-    implements: ['D-220', 'D-181'],
+    implements: ['D-220', 'D-181', 'D-443'],
   })
   @ApiConcurrency()
   @ApiBody({
@@ -170,7 +171,7 @@ export class CatalogProductRelationsController {
     type: CatalogProductDto,
     example: CATALOG_PRODUCT_EXAMPLE,
   })
-  @ApiStandardErrors(...COLLECTION_ERRORS)
+  @ApiStandardErrors(...COLLECTION_ERRORS, 'pricing.print_combination_invalid')
   async setReferenceConfiguration(
     @CurrentActor() actor: Actor,
     @Param('id', ParseUUIDPipe) id: string,
@@ -211,6 +212,47 @@ export class CatalogProductRelationsController {
     @Res({ passthrough: true }) res: Response,
   ): Promise<object> {
     const row = await this.service.setReferenceConfiguration(staffActor(actor), id, ifMatch, null);
+    await this.hints.refresh((row as unknown as { id: bigint }).id);
+    return this.respond(row, res);
+  }
+
+  @Put(':id/print-model')
+  @Can('catalog.manage')
+  @ApiEndpoint({
+    id: 'admin.catalogProducts.setPrintModel',
+    summary: 'Set the per-side print model of a catalogue product',
+    description:
+      'D-443: per side (outside = `printFront`, inside = `printBack`) the methods offered — `none` ไม่พิมพ์, `spot` ' +
+      'สีพิเศษ, `cmyk` พิมพ์ 4 สี — the most spot colours N and the allowed spot colours, the process ink of CMYK and ' +
+      'the "+ สีพิเศษ" add-on beside CMYK (enabled, at most M). Every ink must be an active `ink_colour` option of the ' +
+      'product (spot colours of kind spot / white / metallic, CMYK of kind process). Corrugate products only. ' +
+      '`store.catalog.getConfigurator` exposes it as `printModel` and `store.quotes.calculate` refuses any other ' +
+      'combination (`pricing.print_combination_invalid`); the reference configuration (D-441) must remain a valid ' +
+      'choice. `null` removes the model. The price hint is recomputed. Guarded by the product ETag; audited.',
+    implements: ['D-443', 'D-441'],
+  })
+  @ApiConcurrency()
+  @ApiBody({
+    type: SetPrintModelDto,
+    examples: {
+      default: { value: { printModel: PRINT_MODEL_EXAMPLE } },
+      clear: { value: { printModel: null } },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'The catalogue product',
+    type: CatalogProductDto,
+    example: { ...CATALOG_PRODUCT_EXAMPLE, printModel: PRINT_MODEL_EXAMPLE },
+  })
+  @ApiStandardErrors(...COLLECTION_ERRORS, 'pricing.print_combination_invalid')
+  async setPrintModel(
+    @CurrentActor() actor: Actor,
+    @Param('id', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+    @Body() body: SetPrintModelDto,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<object> {
+    const row = await this.service.setPrintModel(staffActor(actor), id, ifMatch, body.printModel);
     await this.hints.refresh((row as unknown as { id: bigint }).id);
     return this.respond(row, res);
   }

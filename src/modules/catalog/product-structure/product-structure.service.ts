@@ -12,6 +12,9 @@ import { CatalogCrudService, rowEtag } from '../crud/catalog-crud.service';
 import { jsonField } from '../crud/compact';
 import { orderedImages, uploadedPhotoVariant } from '../crud/image-order';
 import { RefResolver } from '../crud/ref-resolver';
+import { type InkKind, PRINT_MODEL_CALCULATORS, validatePrintModel } from '../print-model/print-model';
+import { type PrintModelDto } from '../print-model/print-model.dto';
+import { assertPrintCombination } from '../print-model/print-rules';
 import { resolveOptionIds } from './option-refs';
 import {
   type AddImageDto,
@@ -162,6 +165,60 @@ export class ProductStructureService {
         where: { id: product.id },
         data: { referenceConfiguration: value === null ? Prisma.DbNull : (value as Prisma.InputJsonValue) },
       });
+    });
+  }
+
+  /**
+   * D-443: the per-side print model (outside / inside), checked against the inks the product offers — spot colours
+   * of kind spot / white / metallic, the CMYK ink of kind process — or cleared with `null`. Corrugate products only
+   * (the calculator the model maps to today). The reference configuration must still be a valid choice.
+   */
+  async setPrintModel(
+    actor: UserActor,
+    publicId: string,
+    ifMatch: string | undefined,
+    model: PrintModelDto | null,
+  ) {
+    return this.onCatalogProduct(actor, publicId, ifMatch, 'printModel', async (tx, product) => {
+      if (model !== null) {
+        const type = await tx.productType.findFirstOrThrow({
+          where: { catalogProducts: { some: { id: product.id } } },
+          select: { calculatorKey: true },
+        });
+        if (!type.calculatorKey || !PRINT_MODEL_CALCULATORS.has(type.calculatorKey)) {
+          throw new DomainException('validation.failed', {
+            errors: [
+              {
+                path: 'printModel',
+                code: 'invalid',
+                message: 'a print model is supported for corrugate products only',
+              },
+            ],
+          });
+        }
+        const inkIds = product.options.filter((o) => o.optionKind === 'ink_colour').map((o) => o.optionId);
+        const inks = await tx.inkColour.findMany({
+          where: { id: { in: inkIds }, status: 'active' },
+          select: { publicId: true, colourKind: true },
+        });
+        const errors = validatePrintModel(
+          model,
+          new Map<string, InkKind>(inks.map((i) => [i.publicId, i.colourKind])),
+        );
+        if (errors.length > 0) throw new DomainException('validation.failed', { errors });
+      }
+      await tx.catalogProduct.update({
+        where: { id: product.id },
+        data: {
+          printModel:
+            model === null ? Prisma.DbNull : (JSON.parse(JSON.stringify(model)) as Prisma.InputJsonValue),
+        },
+      });
+      // The default spec must stay one valid choice per side (D-441 + D-443).
+      const reference = product.referenceConfiguration as Record<string, unknown> | null;
+      if (model !== null && reference) {
+        await assertPrintCombination(tx, 'corrugate', { ...reference, catalogProductId: publicId });
+      }
     });
   }
 

@@ -400,6 +400,8 @@ model CatalogProduct {
   quantityPresets          Int[]                @default([]) @map("quantity_presets")
   /// D-220 the configuration its "starting from" price is quoted at (calculator input, one quantity); null = no price hint.
   referenceConfiguration   Json?                @map("reference_configuration")
+  /// D-443 the per-side print model (outside / inside: methods none / spot / cmyk, N spot colours, CMYK add-on M); null = not configured.
+  printModel               Json?                @map("print_model")
   sort                     Int                  @default(0)
   status                   CatalogStatus        @default(draft)
   createdAt                DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)

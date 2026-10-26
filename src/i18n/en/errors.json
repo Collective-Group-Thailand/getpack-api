@@ -429,6 +429,10 @@
     "not_instant": {
       "title": "Not quoted instantly",
       "detail": "This product type is not quoted instantly yet; send a request for quote instead (D-100)."
+    },
+    "print_combination_invalid": {
+      "title": "Print choice not offered",
+      "detail": "Each side takes one choice the product offers: no print, spot colours or CMYK (with spot colours only where offered)."
     }
   },
   "specs": {

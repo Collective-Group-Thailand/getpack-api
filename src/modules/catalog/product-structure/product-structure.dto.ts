@@ -1,4 +1,5 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { PrintModelDto } from '@modules/catalog/print-model/print-model.dto';
 import { CORRUGATE_FORMULAS } from '@modules/pricing/calculators/corrugate/formulas';
 import { GEOMETRY_FORMULAS } from '@modules/pricing/calculators/folding/geometry/types';
 import { ApiProperty, ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger';
@@ -462,6 +463,16 @@ export class CatalogProductDto {
       'D-220: the calculator configuration (one quantity) its "starting from" price is quoted at; set through `PUT …/reference-configuration`',
   })
   referenceConfiguration!: Record<string, unknown> | null;
+
+  @ApiProperty({
+    type: PrintModelDto,
+    nullable: true,
+    example: null,
+    description:
+      'D-443: the per-side print model (outside / inside) the configurator offers and `store.quotes.calculate` ' +
+      'enforces; set through `PUT …/print-model`; null = not configured',
+  })
+  printModel!: PrintModelDto | null;
 
   @ApiProperty({ type: 'integer', example: 10 })
   sort!: number;

@@ -148,6 +148,28 @@ describe('corrugate quotes (e2e, U-B6)', () => {
       })
       .expect(422);
     expect(noArea.body.errors[0].path).toBe('parts[0].printFront[0]');
+    // D-443: one print choice per side — the CMYK set twice (or CMYK + a spot colour such as ดำ) is refused.
+    const twice = await request(server)
+      .post('/v1/store/quotes/actions/calculate')
+      .send({
+        ...body,
+        configuration: configuration({
+          parts: [
+            {
+              printFront: [
+                { inkColourId: fixture.inkColourPublicId, area: 'top' },
+                { inkColourId: fixture.inkColourPublicId, area: 'top' },
+              ],
+            },
+          ],
+        }),
+      })
+      .expect(422);
+    expect(twice.body.code).toBe('pricing.print_combination_invalid');
+    expect(twice.body.errors[0]).toMatchObject({
+      path: 'configuration.parts[0].printFront',
+      code: 'process_repeated',
+    });
     const noProduct = await request(server)
       .post('/v1/store/quotes/actions/calculate')
       .send({ ...body, configuration: configuration({ catalogProductId: undefined }) })

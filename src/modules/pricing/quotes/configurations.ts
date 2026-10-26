@@ -3,6 +3,7 @@ import { type ProblemFieldError } from '@common/errors/problem-details.dto';
 import { validateAs } from '@common/validation/validation';
 import { type Tx } from '@database/prisma.service';
 import { type CalculatorKey, type ProductUnit } from '@generated/prisma/client';
+import { assertPrintCombination } from '@modules/catalog/print-model/print-rules';
 import { gussetViolation, sizeRulesOf, sizeViolation } from '@modules/catalog/store/size-rules';
 import { type Type } from '@nestjs/common';
 import { getMetadataStorage, ValidationTypes } from 'class-validator';
@@ -67,6 +68,7 @@ export async function validateConfiguration(
  * - the catalogue product's fixed difficulty level (legacy's customer path hard-coded it, port map quirk C9): a
  *   product with a default difficulty is priced at that level only; a corrugate request names its catalogue product,
  *   which the configurator gives.
+ * - the product's per-side print model (D-443): one valid print choice per side (`pricing.print_combination_invalid`).
  * A missing pattern is left to the calculator's own validation.
  */
 export async function assertStoreRules(
@@ -101,6 +103,7 @@ export async function assertStoreRules(
   ) {
     fail('configuration.catalogProductId', 'required', 'the catalogue product is required');
   }
+  await assertPrintCombination(db, key, configuration);
   if (typeof configuration['patternId'] !== 'string') return;
   const pattern = await db.pattern.findUnique({
     where: { publicId: configuration['patternId'] },

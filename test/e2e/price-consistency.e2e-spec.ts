@@ -84,6 +84,13 @@ describe('price consistency (e2e, D-441)', () => {
       // The configurator opens on the default spec at the reference quantity.
       expect(configurator.quantity.default).toBe(hint.basis!.quantity);
       expect(spec.quantity).toBe(hint.basis!.quantity);
+      // D-443: with a per-side print model, the inside opens on ไม่พิมพ์ unless the default spec prints inside.
+      const printsInside = ((spec.configuration.parts ?? []) as { printBack?: unknown[] }[]).some(
+        (p) => (p.printBack?.length ?? 0) > 0,
+      );
+      if (configurator.printModel && !printsInside) {
+        expect(configurator.printModel.inside.default.method).toBe('none');
+      }
 
       const calc = (
         await request(ctx.server)

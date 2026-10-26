@@ -7,6 +7,7 @@ import { defineResource } from '../crud/catalog-resource';
 import { compact, jsonField } from '../crud/compact';
 import { num } from '../crud/dto-fields';
 import { CONTENT_INCLUDE, contentImage, contentView } from '../crud/option-content';
+import { printModelOf } from '../print-model/print-model';
 import { optionKey, type OptionPublicIds, optionPublicIds } from './option-refs';
 import {
   CatalogProductDto,
@@ -324,6 +325,7 @@ export function catalogProductDto(row: CatalogProductRow, optionIds: OptionPubli
     quantityDefault: row.quantityDefault,
     quantityPresets: [...(row.quantityPresets ?? [])].sort((a, b) => a - b),
     referenceConfiguration: (row.referenceConfiguration as Record<string, unknown> | null) ?? null,
+    printModel: printModelOf(row.printModel),
     sort: row.sort,
     status: row.status,
     patterns: row.patterns.map((p) => ({
@@ -370,6 +372,7 @@ export const CATALOG_PRODUCT_EXAMPLE: CatalogProductDto = {
   quantityDefault: null,
   quantityPresets: [],
   referenceConfiguration: null,
+  printModel: null,
   sort: 10,
   status: 'active',
   patterns: [

@@ -103,6 +103,7 @@ export const ERROR_CODES = {
   'partners.price_line_conflict': HttpStatus.CONFLICT,
   'pricing.vat_rate_missing': HttpStatus.SERVICE_UNAVAILABLE,
   'pricing.not_instant': HttpStatus.UNPROCESSABLE_ENTITY,
+  'pricing.print_combination_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
   'configurations.incomplete': HttpStatus.UNPROCESSABLE_ENTITY,
   'configurations.converted': HttpStatus.CONFLICT,
   'advisory.not_supported': HttpStatus.UNPROCESSABLE_ENTITY,

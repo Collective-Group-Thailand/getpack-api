@@ -8,6 +8,7 @@ import {
 } from '@modules/quotes/line-summary.dto';
 import { ApiProperty } from '@nestjs/swagger';
 
+import { STORE_PRINT_MODEL_EXAMPLE, StorePrintModelDto } from '../print-model/print-model.dto';
 import { CALCULATOR_KEYS } from '../product-structure/product-structure.dto';
 import { PRODUCT_UNITS } from '../stock/stock.dto';
 import { StoreOptionGroupDto } from './store-catalog.dto';
@@ -341,6 +342,18 @@ export class StoreConfiguratorDto {
   })
   printAreas!: string[];
 
+  @ApiProperty({
+    type: StorePrintModelDto,
+    nullable: true,
+    description:
+      'Corrugate, D-443: the per-side print model (outside → `printFront`, inside → `printBack` of each part) — ' +
+      'method radios (`none` ไม่พิมพ์ · `spot` สีพิเศษ · `cmyk` พิมพ์ 4 สี), the spot-colour counter 1..N with the ' +
+      'allowed colours, the "+ สีพิเศษ" counter beside CMYK when enabled, and each side’s default (inside: `none` ' +
+      'unless the default spec prints inside). Back-office data; null until an admin sets it (then send at most one ' +
+      'ink kind per side: no CMYK together with a spot colour)',
+  })
+  printModel!: StorePrintModelDto | null;
+
   @ApiProperty({ example: 15, description: 'Days a saved price holds (D-051)' })
   quoteValidityDays!: number;
 
@@ -434,6 +447,7 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
     },
   ],
   printAreas: ['top', 'side', 'top_side', 'all_round'],
+  printModel: STORE_PRINT_MODEL_EXAMPLE,
   quoteValidityDays: 15,
   unit: 'piece',
   quantity: { min: 100, max: 50000, default: 300, presets: [100, 300, 500, 1000], maxTiers: 10 },

@@ -383,6 +383,28 @@ async function seedMasterData(tx: Tx): Promise<Map<string, string[]>> {
   return alike;
 }
 
+/**
+ * D-443 per-side print model of a corrugated rehearsal product — FAKE values for UAT only (N = 1 spot colour, the
+ * CMYK add-on off, the same choices inside and outside); the business team sets the real N, M and colours in the
+ * back office (`PUT …/print-model`). Null when the product offers no ink.
+ */
+async function printModel(tx: Tx, p: ProductSeed): Promise<Prisma.InputJsonValue | null> {
+  const inks = await tx.inkColour.findMany({
+    where: { code: { in: [...(p.inks ?? [])] } },
+    select: { code: true, publicId: true, colourKind: true },
+  });
+  if (inks.length === 0) return null;
+  const ordered = (p.inks ?? []).map((code) => inks.find((i) => i.code === code)!).filter(Boolean);
+  const spots = ordered.filter((i) => i.colourKind !== 'process').map((i) => i.publicId);
+  const process = ordered.find((i) => i.colourKind === 'process')?.publicId;
+  const side = {
+    methods: ['none', ...(spots.length > 0 ? ['spot'] : []), ...(process ? ['cmyk'] : [])],
+    spot: spots.length > 0 ? { maxColours: 1, inkColourIds: spots } : null,
+    cmyk: process ? { inkColourId: process, addOn: { enabled: false, maxColours: 0 } } : null,
+  };
+  return { outside: side, inside: side };
+}
+
 /** The calculator configuration a product's starting price is computed from (D-220), or null. */
 async function referenceConfiguration(tx: Tx, p: ProductSeed): Promise<Prisma.InputJsonValue | null> {
   const id = async (where: Promise<{ publicId: string } | null>) => (await where)?.publicId;
@@ -583,6 +605,7 @@ async function seedProducts(tx: Tx): Promise<number> {
         ...(instantCapable && {
           referenceConfiguration: (await referenceConfiguration(tx, p)) ?? undefined,
         }),
+        ...(p.type === 'corrugated' && { printModel: (await printModel(tx, p)) ?? undefined }),
         patterns: { create: patterns },
         options: { create: options },
         standardSizes: {
