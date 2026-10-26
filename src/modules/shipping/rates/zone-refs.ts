@@ -54,7 +54,7 @@ export class ZoneRefs {
   async zoneOf(schemeId: bigint, postcode: string, db: Tx = this.prisma) {
     const row = await db.zonePostcode.findUnique({
       where: { schemeId_postcode: { schemeId, postcode } },
-      select: { zone: { select: { id: true, publicId: true, code: true } } },
+      select: { zone: { select: { id: true, publicId: true, code: true, nameTh: true, nameEn: true } } },
     });
     return row?.zone ?? null;
   }

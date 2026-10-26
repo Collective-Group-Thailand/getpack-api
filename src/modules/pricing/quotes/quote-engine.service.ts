@@ -161,6 +161,10 @@ export interface QuoteView {
   };
   /** The configuration's sizes on every basis and the size priced (D-182); null for products without a size. */
   dimensions: QuoteDimensions | null;
+  /** The VAT rate in force the amounts used, in percent (approved `vat_standard` version); null when nothing was priced. */
+  vatRatePct?: string | null;
+  /** The customer-facing name of the destination zone the shipping estimate used (C4-API-2); null when not priced. */
+  shippingZone?: { th: string; en: string } | null;
   /** The analytics row of this calculation (null when it could not be written); internal only. */
   calculateLog?: { id: bigint; occurredAt: Date; publicId: string } | null;
 }
@@ -313,6 +317,7 @@ export class QuoteEngineService {
     // A service ships nothing (U-B6 service): no shipment is prepared and the quote carries no shipping line.
     const nothingToShip = shipParts.length === 0;
     let customerRateVersionId: string | null = null;
+    let shippingZone: { th: string; en: string } | null = null;
     const payoutVersionIds: Record<string, string> = {};
 
     const steps: QuoteStepView[] = [];
@@ -326,6 +331,8 @@ export class QuoteEngineService {
           customerRateVersionId = prepared.customer.versionId.toString();
       }
       const shippingPriced = prepared?.customer.priced ?? false;
+      if (prepared?.customer.priced)
+        shippingZone = { th: prepared.customer.zoneNameTh, en: prepared.customer.zoneNameEn };
       // Effective cost to Collective Group: buy price + delivery cost (fleet payout or carrier), then
       // lead time; an option without a delivery path to the postcode is skipped (fail closed).
       const deliveries = new Map<string, Delivery>();
@@ -502,6 +509,8 @@ export class QuoteEngineService {
         calculatorVersion: adapter.version,
       },
       dimensions: measured.dimensions,
+      vatRatePct: vatPct ? vatPct.toString() : null,
+      shippingZone,
     };
     view.calculateLog =
       ctx.log === false ? null : await this.log(adapter, cfg, resolved, view, ctx, at, Date.now() - started);

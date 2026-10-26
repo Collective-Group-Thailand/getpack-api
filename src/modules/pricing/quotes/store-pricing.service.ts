@@ -1,3 +1,4 @@
+import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
 import { type CalculatorKey } from '@generated/prisma/client';
 import { specLinesFor } from '@modules/quotes/line-summary';
@@ -9,6 +10,7 @@ import { Injectable } from '@nestjs/common';
 import { assertStoreRules, validateConfiguration } from './configurations';
 import { type QuoteCalculationDto } from './quote.dto';
 import { type QuoteContext, QuoteEngineService, type QuoteView } from './quote-engine.service';
+import { storeStepFields } from './store-step-fields';
 import { targetGap, targetString } from './target-price';
 
 /** What a store calculation priced and how it reads (D-441). */
@@ -29,23 +31,26 @@ export const storeView = (
   view: QuoteView,
   described: DescribedSpec,
   target?: string,
-): QuoteCalculationDto => ({
-  calculatorVersion: view.calculatorVersion,
-  calculationId: view.calculateLog?.publicId ?? null,
-  steps: view.steps.map(({ internal: _internal, ...step }) => step),
-  dimensions: view.dimensions,
-  // D-247: the gap of each instant quantity against the customer's target (nothing is stored).
-  target: target
-    ? {
-        targetPricePerUnit: targetString(target)!,
-        steps: view.steps
-          .filter((s) => s.instant && s.unitPrice !== null)
-          .map((s) => ({ quantity: s.quantity, ...targetGap(s.unitPrice, target)! })),
-      }
-    : null,
-  specs: described.specs,
-  specLabel: described.label,
-});
+): QuoteCalculationDto => {
+  const extra = storeStepFields(view);
+  return {
+    calculatorVersion: view.calculatorVersion,
+    calculationId: view.calculateLog?.publicId ?? null,
+    steps: view.steps.map(({ internal: _internal, ...step }, i) => ({ ...step, ...extra[i]! })),
+    dimensions: view.dimensions,
+    // D-247: the gap of each instant quantity against the customer's target (nothing is stored).
+    target: target
+      ? {
+          targetPricePerUnit: targetString(target)!,
+          steps: view.steps
+            .filter((s) => s.instant && s.unitPrice !== null)
+            .map((s) => ({ quantity: s.quantity, ...targetGap(s.unitPrice, target)! })),
+        }
+      : null,
+    specs: described.specs,
+    specLabel: described.label,
+  };
+};
 
 /** The engine context of a store calculation: a print combination not offered routes every quantity to RFQ (B-API-6). */
 export const storeQuoteContext = (
@@ -71,6 +76,20 @@ export class StorePricingService {
     private readonly engine: QuoteEngineService,
     private readonly specs: SpecsService,
   ) {}
+
+  /** The calculator of an active, instant product type — or `pricing.not_instant` (shared by every store price request). */
+  async calculatorKeyOf(productTypeCode: string): Promise<CalculatorKey> {
+    const type = await this.prisma.productType.findFirst({
+      where: { code: productTypeCode, status: 'active' },
+    });
+    if (
+      !type?.calculatorKey ||
+      type.quoteMode !== 'instant' ||
+      !this.engine.hasCalculator(type.calculatorKey)
+    )
+      throw new DomainException('pricing.not_instant');
+    return type.calculatorKey;
+  }
 
   async price(
     calculatorKey: CalculatorKey,

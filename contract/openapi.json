@@ -11071,6 +11071,17 @@
       },
       "AdminQuoteStepDto": {
         "properties": {
+          "arrival": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteArrivalDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C4-API-2 (D-101): arrival window — the earliest ship date plus the zone’s extra lead days or the carrier’s transit days, counted in working days of the business calendar (holidays excluded); null when unknown"
+          },
           "designFeeAmount": {
             "example": "0.00",
             "type": [
@@ -11149,6 +11160,14 @@
             ],
             "description": "Why there is no instant price (staff: `capacity_unavailable` names the capacity gap)",
             "example": null
+          },
+          "savingPercent": {
+            "description": "C4-API-2: \"ประหยัด x%\" against the smallest priced quantity of this calculation — (1 − unitPrice ÷ that tier’s unitPrice) × 100, rounded half-up to a whole number; null for that tier itself, a tier without an instant price, or a result ≤ 0",
+            "example": 12,
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "shippingAmount": {
             "description": "Shipping incl. VAT, its own line (D-013); null while not priced",
@@ -11264,6 +11283,25 @@
               "string",
               "null"
             ]
+          },
+          "vatRate": {
+            "description": "C4-API-2 (D-441, GLOBAL-RULES §5): the VAT rate `vatAmount` used, as a fraction (decimal string) — the approved `vat_standard` rate in force, the same rate as the shared VAT helper; null when `vatAmount` is null",
+            "example": "0.07",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "zoneName": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C4-API-2: the customer-facing name of the destination zone the shipping estimate used (from the delivery postcode); null while shipping is not priced. Never an origin or factory location (GLOBAL-RULES §1)"
           }
         },
         "required": [
@@ -11280,6 +11318,10 @@
           "shippingNetAmount",
           "shippingVatAmount",
           "vatAmount",
+          "vatRate",
+          "savingPercent",
+          "zoneName",
+          "arrival",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -20703,6 +20745,50 @@
         "required": [
           "min",
           "max"
+        ],
+        "type": "object"
+      },
+      "CalculateQuoteBatchDto": {
+        "properties": {
+          "baselineKey": {
+            "description": "Key of the variant the others are compared with (must equal one `variants[].key`); when sent every result carries `deltas`",
+            "example": "size:s1",
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "maxLength": 64,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          },
+          "quantities": {
+            "description": "Replaces `configuration.quantities` of every variant (1 to 10 quantities); omit to price each as sent",
+            "example": [
+              500,
+              1000
+            ],
+            "items": {
+              "maximum": 10000000,
+              "minimum": 1,
+              "type": "number"
+            },
+            "minItems": 1,
+            "type": "array"
+          },
+          "variants": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteBatchVariantDto"
+            },
+            "maxItems": 24,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "productTypeCode",
+          "variants"
         ],
         "type": "object"
       },
@@ -85662,6 +85748,29 @@
         ],
         "type": "object"
       },
+      "QuoteArrivalDto": {
+        "properties": {
+          "from": {
+            "description": "Earliest arrival (Asia/Bangkok)",
+            "example": "2026-10-10",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          },
+          "to": {
+            "description": "Latest arrival (Asia/Bangkok); equals `from` while no maximum transit is recorded",
+            "example": "2026-10-10",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
       "QuoteAssemblyInputDto": {
         "properties": {
           "amount": {
@@ -85703,6 +85812,159 @@
         },
         "required": [
           "assemblyId"
+        ],
+        "type": "object"
+      },
+      "QuoteBatchCalculationDto": {
+        "properties": {
+          "results": {
+            "description": "One entry per variant, in request order",
+            "items": {
+              "$ref": "#/components/schemas/QuoteBatchResultDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "QuoteBatchDeltaDto": {
+        "properties": {
+          "quantity": {
+            "example": 1000,
+            "type": "number"
+          },
+          "totalDelta": {
+            "description": "`productAmount` (pieces incl. VAT, excluding shipping) minus the baseline variant's for the same quantity; same rules as `unitPriceDelta`",
+            "example": "1200.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPriceDelta": {
+            "description": "Unit price incl. VAT minus the baseline variant's for the same quantity; signed 2-decimal string; null when either side is not an instant price or lacks the quantity",
+            "example": "-0.86",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "quantity",
+          "unitPriceDelta",
+          "totalDelta"
+        ],
+        "type": "object"
+      },
+      "QuoteBatchProblemDto": {
+        "properties": {
+          "code": {
+            "description": "The error code `calculate` would raise",
+            "example": "pricing.print_combination_invalid",
+            "type": "string"
+          },
+          "message": {
+            "example": "The print combination is not offered for this product.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "QuoteBatchResultDto": {
+        "properties": {
+          "calculation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteCalculationDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when the variant failed"
+          },
+          "deltas": {
+            "description": "Per quantity of this variant against `baselineKey` (all zero for the baseline itself); null without `baselineKey` or without a calculation",
+            "items": {
+              "$ref": "#/components/schemas/QuoteBatchDeltaDto"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "key": {
+            "example": "size:s2",
+            "type": "string"
+          },
+          "problem": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteBatchProblemDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null when the variant was priced"
+          }
+        },
+        "required": [
+          "key",
+          "calculation",
+          "deltas",
+          "problem"
+        ],
+        "type": "object"
+      },
+      "QuoteBatchVariantDto": {
+        "properties": {
+          "configuration": {
+            "additionalProperties": true,
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoldingConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/CorrugateConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/LabelConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/TagSleeveConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/PouchConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/StandardProductConfigurationDto"
+              },
+              {
+                "$ref": "#/components/schemas/ServiceConfigurationDto"
+              }
+            ],
+            "description": "The configuration of the product type's calculator: `FoldingConfigurationDto` for folding cartons, `CorrugateConfigurationDto` for corrugated boxes, `LabelConfigurationDto` for labels, `TagSleeveConfigurationDto` for tags & sleeves, `PouchConfigurationDto` for pouches, `StandardProductConfigurationDto` for standard products, `ServiceConfigurationDto` for services (validated against it; paths under `configuration`)"
+          },
+          "key": {
+            "description": "Client id of the variant, echoed in `results`; unique within the request",
+            "example": "size:s2",
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "configuration"
         ],
         "type": "object"
       },
@@ -86728,6 +86990,17 @@
       },
       "QuoteStepDto": {
         "properties": {
+          "arrival": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteArrivalDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C4-API-2 (D-101): arrival window — the earliest ship date plus the zone’s extra lead days or the carrier’s transit days, counted in working days of the business calendar (holidays excluded); null when unknown"
+          },
           "designFeeAmount": {
             "example": "0.00",
             "type": [
@@ -86796,6 +87069,14 @@
             ],
             "description": "Why there is no instant price; `envelope_not_covered`: only tier-B paths priced it, outside their envelopes (D-234); `style_variant_not_publishable`: the named style variant is not published (D-243); `rfq_required`: the variant is published but priced through RFQ — calculator not signed or an option not priced (D-266); `not_instant`: no instant price now — request a quotation (D-440)",
             "example": null
+          },
+          "savingPercent": {
+            "description": "C4-API-2: \"ประหยัด x%\" against the smallest priced quantity of this calculation — (1 − unitPrice ÷ that tier’s unitPrice) × 100, rounded half-up to a whole number; null for that tier itself, a tier without an instant price, or a result ≤ 0",
+            "example": 12,
+            "type": [
+              "number",
+              "null"
+            ]
           },
           "shippingAmount": {
             "description": "Shipping incl. VAT, its own line (D-013); null while not priced",
@@ -86911,6 +87192,25 @@
               "string",
               "null"
             ]
+          },
+          "vatRate": {
+            "description": "C4-API-2 (D-441, GLOBAL-RULES §5): the VAT rate `vatAmount` used, as a fraction (decimal string) — the approved `vat_standard` rate in force, the same rate as the shared VAT helper; null when `vatAmount` is null",
+            "example": "0.07",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "zoneName": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C4-API-2: the customer-facing name of the destination zone the shipping estimate used (from the delivery postcode); null while shipping is not priced. Never an origin or factory location (GLOBAL-RULES §1)"
           }
         },
         "required": [
@@ -86927,6 +87227,10 @@
           "shippingNetAmount",
           "shippingVatAmount",
           "vatAmount",
+          "vatRate",
+          "savingPercent",
+          "zoneName",
+          "arrival",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -102156,6 +102460,14 @@
             ],
             "example": "own_file"
           },
+          "freeRevisions": {
+            "description": "C4-API-2 (D-071): free revision rounds included with `hired_design` (\"แก้ฟรี {n} ครั้ง\") — the setting `design.free_revision_rounds` in force (effective-dated, audited; the same value the design service charges by); null when not set",
+            "example": 3,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "options": {
             "example": [
               "own_file",
@@ -102170,7 +102482,8 @@
         },
         "required": [
           "options",
-          "default"
+          "default",
+          "freeRevisions"
         ],
         "type": "object"
       },
@@ -212914,6 +213227,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -212954,6 +213271,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -212967,7 +213285,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -213536,6 +213859,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -213576,6 +213903,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -213589,7 +213917,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -214132,6 +214465,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -214172,6 +214509,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -214185,7 +214523,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -214658,6 +215001,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -214698,6 +215045,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -214711,7 +215059,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -215430,6 +215783,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -215470,6 +215827,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -215483,7 +215841,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -215920,6 +216283,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -215960,6 +216327,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -215973,7 +216341,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -216445,6 +216818,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -216485,6 +216862,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -216498,7 +216876,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ]
                 },
@@ -503690,6 +504073,7 @@
                   },
                   "design": {
                     "default": "own_file",
+                    "freeRevisions": 3,
                     "options": [
                       "own_file",
                       "online_designer",
@@ -547279,6 +547663,10 @@
                   ],
                   "steps": [
                     {
+                      "arrival": {
+                        "from": "2026-10-10",
+                        "to": "2026-10-10"
+                      },
                       "designFeeAmount": "0.00",
                       "earliestDeliveryDate": "2026-10-10",
                       "earliestShipDate": "2026-10-09",
@@ -547288,6 +547676,7 @@
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
+                      "savingPercent": null,
                       "shippingAmount": "128.40",
                       "shippingNetAmount": "120.00",
                       "shippingPending": false,
@@ -547301,7 +547690,12 @@
                       "toolingAmount": "0.00",
                       "toolingWaiver": null,
                       "unitPrice": "13.38",
-                      "vatAmount": "883.73"
+                      "vatAmount": "883.73",
+                      "vatRate": "0.07",
+                      "zoneName": {
+                        "en": "Bangkok and vicinity",
+                        "th": "กรุงเทพฯ และปริมณฑล"
+                      }
                     }
                   ],
                   "target": {
@@ -547452,6 +547846,403 @@
         },
         "security": [],
         "summary": "Calculate an instant price for a configuration",
+        "tags": [
+          "store.quotes"
+        ]
+      }
+    },
+    "/v1/store/quotes/actions/calculate-batch": {
+      "post": {
+        "description": "The configurator’s option cards (sizes, materials, print choices, quantities) priced in ONE request instead of one `store.quotes.calculate` per card (D-441, D-043). Each variant is a full configuration of the product type’s calculator and goes through the very path `calculate` uses (no formula of its own); `quantities`, when sent, replaces `configuration.quantities` of every variant. `results` follow the request order, keyed by the client `key` (unique, 1 to 64 characters, 1 to 24 variants). A variant that fails (for example `validation.failed`, `pricing.print_combination_invalid`) does not fail the batch: its entry has `calculation: null` and a `problem` with the code `calculate` would raise. Variants are priced at most four at a time. Writes what `calculate` writes per priced variant (one calculate log row and its `quote.calculated` event) and nothing else: no quote, cart, order or customer. Anonymous, 20 requests per minute per client. No factory data (D-050). 422 `validation.failed` for more than 24 variants, a duplicate key or a malformed body, `pricing.not_instant` when the product type has no instant price.\n\nImplements: D-100, D-043, D-050, D-051, D-101, D-441, D-043.",
+        "operationId": "store.quotes.calculateBatch",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "accept-language",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "folding": {
+                  "value": {
+                    "baselineKey": "size:s1",
+                    "productTypeCode": "folding_carton",
+                    "quantities": [
+                      1000
+                    ],
+                    "variants": [
+                      {
+                        "configuration": {
+                          "d": 120,
+                          "design": {
+                            "graphic": false,
+                            "structure": false
+                          },
+                          "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                          "l": 40,
+                          "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                          "parts": [
+                            {
+                              "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                              "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                              "printFront": [
+                                {
+                                  "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                  "percent": 100
+                                },
+                                {
+                                  "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                  "percent": 100
+                                },
+                                {
+                                  "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                  "percent": 100
+                                },
+                                {
+                                  "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                  "percent": 100
+                                }
+                              ]
+                            }
+                          ],
+                          "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                          "quantities": [
+                            1000
+                          ],
+                          "w": 60
+                        },
+                        "key": "size:s1"
+                      },
+                      {
+                        "configuration": {
+                          "d": 120,
+                          "design": {
+                            "graphic": false,
+                            "structure": false
+                          },
+                          "difficultyLevelId": "0192f3a0-7c1e-7d2a-9b1f-00000000a103",
+                          "l": 40,
+                          "materialId": "0192f3a0-7c1e-7d2a-9b1f-00000000a102",
+                          "parts": [
+                            {
+                              "diecutTypeId": "0192f3a0-7c1e-7d2a-9b1f-00000000a106",
+                              "finish1FrontId": "0192f3a0-7c1e-7d2a-9b1f-00000000a105",
+                              "printFront": [
+                                {
+                                  "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                  "percent": 100
+                                },
+                                {
+                                  "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                  "percent": 100
+                                },
+                                {
+                                  "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                  "percent": 100
+                                },
+                                {
+                                  "inkColourId": "0192f3a0-7c1e-7d2a-9b1f-00000000a104",
+                                  "percent": 100
+                                }
+                              ]
+                            }
+                          ],
+                          "patternId": "0192f3a0-7c1e-7d2a-9b1f-00000000a101",
+                          "quantities": [
+                            1000
+                          ],
+                          "w": 80
+                        },
+                        "key": "size:s2"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CalculateQuoteBatchDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "results": [
+                    {
+                      "calculation": {
+                        "calculationId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1001",
+                        "calculatorVersion": "1.0.0",
+                        "dimensions": {
+                          "bases": [
+                            "internal",
+                            "external",
+                            "over_crease"
+                          ],
+                          "basis": "internal",
+                          "basisAssumed": false,
+                          "caliperMm": 0.5,
+                          "conversionVersion": "1.0.0",
+                          "entered": {
+                            "d": 50,
+                            "l": 150,
+                            "w": 100
+                          },
+                          "family": "box",
+                          "priced": {
+                            "d": 50,
+                            "l": 150,
+                            "w": 100
+                          },
+                          "pricedBasis": "internal",
+                          "sizes": {
+                            "external": {
+                              "d": 51,
+                              "l": 151,
+                              "w": 101
+                            },
+                            "internal": {
+                              "d": 50,
+                              "l": 150,
+                              "w": 100
+                            },
+                            "overCrease": {
+                              "d": 51,
+                              "l": 150.5,
+                              "w": 100.5
+                            },
+                            "product": null
+                          }
+                        },
+                        "specLabel": {
+                          "en": "RSC · 140 × 97.5 × 60 mm (inside) · KA125 B-flute (3-ply) · Print (outside): 1 spot colour (ดำ)",
+                          "th": "กล่องฝาชน · 140 × 97.5 × 60 มม. (ด้านใน) · ลูกฟูก KA125 ลอน B (3 ชั้น) · พิมพ์ด้านนอก: สีพิเศษ 1 สี (ดำ)"
+                        },
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "RSC",
+                            "valueTh": "กล่องฝาชน"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                            "valueEn": "140 × 97.5 × 60 mm (inside)",
+                            "valueTh": "140 × 97.5 × 60 มม. (ด้านใน)"
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "KA125 B-flute (3-ply)",
+                            "valueTh": "ลูกฟูก KA125 ลอน B (3 ชั้น)"
+                          },
+                          {
+                            "key": "print_front",
+                            "labelEn": "Print (outside)",
+                            "labelTh": "พิมพ์ด้านนอก",
+                            "valueEn": "1 spot colour (ดำ)",
+                            "valueTh": "สีพิเศษ 1 สี (ดำ)"
+                          }
+                        ],
+                        "steps": [
+                          {
+                            "arrival": {
+                              "from": "2026-10-10",
+                              "to": "2026-10-10"
+                            },
+                            "designFeeAmount": "0.00",
+                            "earliestDeliveryDate": "2026-10-10",
+                            "earliestShipDate": "2026-10-09",
+                            "grossAmount": "13508.40",
+                            "instant": true,
+                            "leadTimeDays": 7,
+                            "productAmount": "13380.00",
+                            "quantity": 1000,
+                            "reason": null,
+                            "savingPercent": null,
+                            "shippingAmount": "128.40",
+                            "shippingNetAmount": "120.00",
+                            "shippingPending": false,
+                            "shippingPendingReason": null,
+                            "shippingVatAmount": "8.40",
+                            "structureDesignFeeAmount": "0.00",
+                            "toleranceColourDeltaE": "3.00",
+                            "toleranceDimensionalMm": "1.00",
+                            "toleranceOveragePct": "5.0000",
+                            "toleranceShortagePct": "5.0000",
+                            "toolingAmount": "0.00",
+                            "toolingWaiver": null,
+                            "unitPrice": "13.38",
+                            "vatAmount": "883.73",
+                            "vatRate": "0.07",
+                            "zoneName": {
+                              "en": "Bangkok and vicinity",
+                              "th": "กรุงเทพฯ และปริมณฑล"
+                            }
+                          }
+                        ],
+                        "target": {
+                          "steps": [
+                            {
+                              "gapPct": "16.35",
+                              "gapPerUnit": "1.88",
+                              "meetsTarget": false,
+                              "quantity": 1000
+                            }
+                          ],
+                          "targetPricePerUnit": "11.50"
+                        }
+                      },
+                      "deltas": [
+                        {
+                          "quantity": 1000,
+                          "totalDelta": "0.00",
+                          "unitPriceDelta": "0.00"
+                        }
+                      ],
+                      "key": "size:s1",
+                      "problem": null
+                    },
+                    {
+                      "calculation": null,
+                      "deltas": null,
+                      "key": "size:s2",
+                      "problem": {
+                        "code": "validation.failed",
+                        "message": "The request has invalid fields."
+                      }
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteBatchCalculationDto"
+                }
+              }
+            },
+            "description": "One result per variant, in request order",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pricing.not_instant`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Calculate instant prices for up to 24 option variants",
         "tags": [
           "store.quotes"
         ]
@@ -565668,6 +566459,10 @@
                     ],
                     "steps": [
                       {
+                        "arrival": {
+                          "from": "2026-10-10",
+                          "to": "2026-10-10"
+                        },
                         "designFeeAmount": "0.00",
                         "earliestDeliveryDate": "2026-10-10",
                         "earliestShipDate": "2026-10-09",
@@ -565677,6 +566472,7 @@
                         "productAmount": "13380.00",
                         "quantity": 1000,
                         "reason": null,
+                        "savingPercent": null,
                         "shippingAmount": "128.40",
                         "shippingNetAmount": "120.00",
                         "shippingPending": false,
@@ -565690,7 +566486,12 @@
                         "toolingAmount": "0.00",
                         "toolingWaiver": null,
                         "unitPrice": "13.38",
-                        "vatAmount": "883.73"
+                        "vatAmount": "883.73",
+                        "vatRate": "0.07",
+                        "zoneName": {
+                          "en": "Bangkok and vicinity",
+                          "th": "กรุงเทพฯ และปริมณฑล"
+                        }
                       }
                     ],
                     "target": {
