@@ -35714,6 +35714,14 @@
         ],
         "type": "string"
       },
+      "CustomerFileKind": {
+        "enum": [
+          "customer_original",
+          "production_copy",
+          "approved_proof_copy"
+        ],
+        "type": "string"
+      },
       "CustomerOrderStatus": {
         "description": "THE status to show a customer (D-437), derived by the API from payment, artwork, production, shipment, receipt, claims and cancellation; every customer surface (overview, list, detail, e-mail, LINE) uses it. `status` is the stored fact status (staff)",
         "enum": [
@@ -64323,6 +64331,155 @@
           }
         },
         "type": "object"
+      },
+      "FileAccessActorDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "เตรียมพิมพ์ ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "type": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileAccessActorType"
+              }
+            ],
+            "example": "user"
+          }
+        },
+        "required": [
+          "type",
+          "id",
+          "name"
+        ],
+        "type": "object"
+      },
+      "FileAccessActorType": {
+        "enum": [
+          "user",
+          "api_client"
+        ],
+        "type": "string"
+      },
+      "FileAccessChannel": {
+        "enum": [
+          "admin",
+          "partner",
+          "store"
+        ],
+        "type": "string"
+      },
+      "FileAccessLogEntryDto": {
+        "properties": {
+          "actor": {
+            "$ref": "#/components/schemas/FileAccessActorDto"
+          },
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileAccessChannel"
+              }
+            ],
+            "example": "admin"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+            "format": "uuid",
+            "type": "string"
+          },
+          "fileKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CustomerFileKind"
+              }
+            ],
+            "example": "customer_original"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000ac01",
+            "format": "uuid",
+            "type": "string"
+          },
+          "occurredAt": {
+            "example": "2026-10-26T10:15:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "order": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FileAccessOrderDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null for an upload not yet in a submission"
+          },
+          "purpose": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FileAccessPurpose"
+              }
+            ],
+            "example": "download"
+          },
+          "requestId": {
+            "example": "req-3f2a9c1d",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "occurredAt",
+          "actor",
+          "fileId",
+          "fileKind",
+          "order",
+          "channel",
+          "purpose",
+          "requestId"
+        ],
+        "type": "object"
+      },
+      "FileAccessOrderDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "orderCode": {
+            "example": "DEVOR-2610-00001",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "orderCode"
+        ],
+        "type": "object"
+      },
+      "FileAccessPurpose": {
+        "enum": [
+          "download",
+          "thumbnail"
+        ],
+        "type": "string"
       },
       "FileDto": {
         "properties": {
@@ -218993,6 +219150,275 @@
         ]
       }
     },
+    "/v1/admin/customer-file-access-logs": {
+      "get": {
+        "description": "D-444: every download URL issued for a customer's artwork / original, a production copy of one or an approved proof copy — who, when, which file and order, through which surface (store / admin / partner) and for what (download / thumbnail). Newest first; filter by order, file, user and period. Append-only; no URL or token is stored. Superadmin only (`customer_file_access_logs.read`).\n\nImplements: D-444.",
+        "operationId": "admin.customerFileAccessLogs.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Order id",
+            "in": "query",
+            "name": "orderId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "File id",
+            "in": "query",
+            "name": "fileId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Acting user (or API client)",
+            "in": "query",
+            "name": "userId",
+            "required": false,
+            "schema": {
+              "example": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-10-01T00:00:00+07:00",
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Exclusive",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-01T00:00:00+07:00",
+              "format": "date-time",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "actor": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                        "name": "เตรียมพิมพ์ ทดสอบ",
+                        "type": "user"
+                      },
+                      "channel": "admin",
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+                      "fileKind": "customer_original",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ac01",
+                      "occurredAt": "2026-10-26T10:15:00+07:00",
+                      "order": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001",
+                        "orderCode": "DEVOR-2610-00001"
+                      },
+                      "purpose": "download",
+                      "requestId": "req-3f2a9c1d"
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/FileAccessLogEntryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Search the customer file access log",
+        "tags": [
+          "admin.customerFileAccessLogs"
+        ],
+        "x-required-permissions": [
+          "customer_file_access_logs.read"
+        ]
+      }
+    },
     "/v1/admin/customer-wht-certificates": {
       "get": {
         "description": "50 ทวิ to collect for every receipt the customer withheld on (§2); `status=pending` with `olderThanDays` is the missing-certificate report.\n\nImplements: D-033, D-174.",
@@ -253435,7 +253861,7 @@
     },
     "/v1/admin/files/{fileId}": {
       "get": {
-        "description": "Visible to the uploader, their factory/company scope, staff with `files.read`, or through an attachment of a record the caller can see; otherwise 404.\n\nImplements: ADR-0003, D-142.",
+        "description": "Visible to the uploader, their factory/company scope, staff with `files.read`, or through an attachment of a record the caller can see; otherwise 404. D-444: customer artwork / originals and their production copies need `customer_files.read` or `customer_files.read_handled` on staff instead of `files.read`.\n\nImplements: ADR-0003, D-142, D-444.",
         "operationId": "admin.files.get",
         "parameters": [
           {
@@ -254314,7 +254740,7 @@
     },
     "/v1/admin/files/{fileId}/download": {
       "get": {
-        "description": "A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served.\n\nImplements: ADR-0003.",
+        "description": "A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served. D-444: a customer's artwork / original or its production copy is read on staff only with `customer_files.read` (Prepress) or `customer_files.read_handled` for an order whose open conversation is assigned to the caller (support); every URL issued for one of these, a production copy or an approved proof copy is logged in the customer file access log (no URL stored).\n\nImplements: ADR-0003, D-444.",
         "operationId": "admin.files.download",
         "parameters": [
           {
@@ -475357,7 +475783,7 @@
     },
     "/v1/partner/files/{fileId}": {
       "get": {
-        "description": "Visible to the uploader, their factory/company scope, staff with `files.read`, or through an attachment of a record the caller can see; otherwise 404.\n\nImplements: ADR-0003, D-142.",
+        "description": "Visible to the uploader, their factory/company scope, staff with `files.read`, or through an attachment of a record the caller can see; otherwise 404. D-444: customer artwork / originals and their production copies need `customer_files.read` or `customer_files.read_handled` on staff instead of `files.read`.\n\nImplements: ADR-0003, D-142, D-444.",
         "operationId": "partner.files.get",
         "parameters": [
           {
@@ -476236,7 +476662,7 @@
     },
     "/v1/partner/files/{fileId}/download": {
       "get": {
-        "description": "A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served.\n\nImplements: ADR-0003.",
+        "description": "A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served. D-444: a customer's artwork / original or its production copy is read on staff only with `customer_files.read` (Prepress) or `customer_files.read_handled` for an order whose open conversation is assigned to the caller (support); every URL issued for one of these, a production copy or an approved proof copy is logged in the customer file access log (no URL stored).\n\nImplements: ADR-0003, D-444.",
         "operationId": "partner.files.download",
         "parameters": [
           {
@@ -528068,7 +528494,7 @@
     },
     "/v1/store/files/{fileId}": {
       "get": {
-        "description": "Visible to the uploader, their factory/company scope, staff with `files.read`, or through an attachment of a record the caller can see; otherwise 404.\n\nImplements: ADR-0003, D-142.",
+        "description": "Visible to the uploader, their factory/company scope, staff with `files.read`, or through an attachment of a record the caller can see; otherwise 404. D-444: customer artwork / originals and their production copies need `customer_files.read` or `customer_files.read_handled` on staff instead of `files.read`.\n\nImplements: ADR-0003, D-142, D-444.",
         "operationId": "store.files.get",
         "parameters": [
           {
@@ -528947,7 +529373,7 @@
     },
     "/v1/store/files/{fileId}/download": {
       "get": {
-        "description": "A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served.\n\nImplements: ADR-0003.",
+        "description": "A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served. D-444: a customer's artwork / original or its production copy is read on staff only with `customer_files.read` (Prepress) or `customer_files.read_handled` for an order whose open conversation is assigned to the caller (support); every URL issued for one of these, a production copy or an approved proof copy is logged in the customer file access log (no URL stored).\n\nImplements: ADR-0003, D-444.",
         "operationId": "store.files.download",
         "parameters": [
           {
@@ -571858,6 +572284,10 @@
     {
       "description": "Tax invoices, invoices, receipts, credit and debit notes issued by the entity under the getpack brand (D-010, D-092): PDFs, voids, credit notes under maker-checker (D-169).",
       "name": "admin.customerDocuments"
+    },
+    {
+      "description": "D-444 the append-only log of every download of customer artwork / originals, production copies and approved proof copies (Superadmin).",
+      "name": "admin.customerFileAccessLogs"
     },
     {
       "description": "The customer shipping rate card: effective-dated versions approved by C-Level (D-013).",

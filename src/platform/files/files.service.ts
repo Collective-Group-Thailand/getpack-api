@@ -8,6 +8,7 @@ import { PrismaService, type Tx } from '@database/prisma.service';
 import {
   type Attachment,
   type AttachmentSubject,
+  type FileAccessChannel,
   type FileObject,
   type FileRetentionClass,
 } from '@generated/prisma/client';
@@ -19,6 +20,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
+import { CustomerFileAccessService } from './customer-file-access.service';
 import {
   FILE_PURPOSES,
   type FilePurpose,
@@ -76,6 +78,7 @@ export class FilesService {
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    private readonly customerFiles: CustomerFileAccessService,
   ) {}
 
   registerAttachmentPolicy(subject: AttachmentSubject, policy: AttachmentAccessPolicy): void {
@@ -419,7 +422,15 @@ export class FilesService {
     return file;
   }
 
-  async downloadUrl(actor: Actor, publicId: string): Promise<{ url: string; expiresAt: Date }> {
+  /**
+   * D-444: a URL for a customer's artwork / original, a production copy or an approved proof copy (or a thumbnail of
+   * one) is logged in `customer_file_access_logs` in this request, after the URL is signed and before it is returned.
+   */
+  async downloadUrl(
+    actor: Actor,
+    publicId: string,
+    channel: FileAccessChannel = channelOf(actor),
+  ): Promise<{ url: string; expiresAt: Date }> {
     const file = await this.get(actor, publicId);
     if (file.uploadStatus !== 'uploaded') throw new DomainException('file.not_ready');
     if (file.scanStatus === 'infected') throw new DomainException('file.infected');
@@ -429,6 +440,19 @@ export class FilesService {
       fileName: file.originalName,
       contentType: file.mimeType,
     });
+    const subject =
+      file.thumbnailOfFileId === null
+        ? file
+        : await this.prisma.fileObject.findUnique({ where: { id: file.thumbnailOfFileId } });
+    const ref = subject ? await this.customerFiles.classify(subject) : null;
+    if (ref) {
+      await this.customerFiles.record(actor, {
+        fileObjectId: file.id,
+        ref,
+        channel,
+        purpose: file.thumbnailOfFileId === null ? 'download' : 'thumbnail',
+      });
+    }
     if (file.retentionClass === 'financial_record') {
       await this.audit.recordStandalone({
         category: 'data_access',
@@ -457,6 +481,8 @@ export class FilesService {
   /**
    * Owner (uploader), staff with `files.read`, principals whose factory/company scope owns the
    * file, or an attachment policy of the owning module. A thumbnail follows its original.
+   * D-444: a customer's artwork / original or a production copy of one is read on staff only by Prepress
+   * (`customer_files.read`) and by support handling the order (`customer_files.read_handled`), not by `files.read`.
    */
   async canRead(actor: Actor, file: FileObject): Promise<boolean> {
     if (file.thumbnailOfFileId !== null) {
@@ -466,8 +492,11 @@ export class FilesService {
     if (actor.type === 'system') return true;
     if (actor.type === 'user') {
       if (file.ownerUserId === actor.userId) return true;
-      if (actor.audience === 'staff')
+      if (actor.audience === 'staff') {
+        const ref = await this.customerFiles.classify(file);
+        if (ref) return this.customerFiles.staffMayRead(actor.userId, ref);
         return (await this.permissions.forUser(actor.userId)).permissions.has('files.read');
+      }
     }
     if (actor.type === 'user' || actor.type === 'api_client') {
       if (file.ownerFactoryId !== null && (await this.inScope(actor, 'factory', file.ownerFactoryId)))
@@ -526,4 +555,11 @@ export class FilesService {
     if (file.uploadStatus !== 'pending') throw new DomainException('http.conflict');
     return file;
   }
+}
+
+/** The surface a URL is issued through when the caller does not say (the actor's own zone). */
+function channelOf(actor: Actor): FileAccessChannel {
+  if (actor.type === 'user')
+    return actor.audience === 'staff' ? 'admin' : actor.audience === 'customer' ? 'store' : 'partner';
+  return 'partner';
 }

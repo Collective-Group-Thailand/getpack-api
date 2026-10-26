@@ -882,6 +882,10 @@ model FileObject {
   productionCopy        ArtworkProductionCopy?  @relation("ArtworkProductionCopyFile")
   // --- end D-442
 
+  // --- D-444 customer file access log (back-relations)
+  customerFileAccessLogs CustomerFileAccessLog[] @relation("CustomerFileAccessLogFile")
+  // --- end D-444
+
   // --- Fulfilment B4.3 (generated back-relations)
   shipmentLabels       Shipment[]        @relation("ShipmentLabelFile")
   shipmentPackingLists Shipment[]        @relation("ShipmentPackingListFile")
@@ -1034,6 +1038,66 @@ model AuditLog {
   @@index([actorUserId, occurredAt], map: "ix_audit_logs__actor_user_id__occurred_at")
   @@index([category, occurredAt], map: "ix_audit_logs__category__occurred_at")
   @@map("audit_logs")
+}
+
+/// B-API-5 (D-444) customer artwork / original file kinds whose reads are logged.
+enum CustomerFileKind {
+  /// A customer's own upload (purpose `artwork`, or a file of an artwork submission).
+  customer_original
+  /// D-442 the metadata-stripped copy of an original that production downloads.
+  production_copy
+  /// The locked copy of an approved proof (what production prints).
+  approved_proof_copy
+
+  @@map("customer_file_kind")
+}
+
+/// B-API-5 (D-444) the surface a customer file was read through.
+enum FileAccessChannel {
+  store
+  admin
+  partner
+
+  @@map("file_access_channel")
+}
+
+/// B-API-5 (D-444) what was issued: a download URL of the file, or of its thumbnail.
+enum FileAccessPurpose {
+  download
+  thumbnail
+
+  @@map("file_access_purpose")
+}
+
+/// B-API-5 (D-444) every download URL issued for customer artwork / originals, production copies and approved proof
+/// copies: who, when, which file, which order, through which surface. Append-only (trigger); never the URL or a token.
+model CustomerFileAccessLog {
+  id               BigInt            @id(map: "pk_customer_file_access_logs") @default(autoincrement())
+  publicId         String            @unique(map: "ux_customer_file_access_logs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  occurredAt       DateTime          @default(now()) @map("occurred_at") @db.Timestamptz(6)
+  actorType        ActorType         @map("actor_type")
+  actorUserId      BigInt?           @map("actor_user_id")
+  actorApiClientId BigInt?           @map("actor_api_client_id")
+  /// The file the URL was issued for (a thumbnail's own row when `purpose = thumbnail`).
+  fileObjectId     BigInt            @map("file_object_id")
+  fileKind         CustomerFileKind  @map("file_kind")
+  /// The order the file belongs to; null for an upload not yet in a submission.
+  orderId          BigInt?           @map("order_id")
+  channel          FileAccessChannel
+  purpose          FileAccessPurpose
+  requestId        String?           @map("request_id")
+
+  actorUser      User?      @relation("CustomerFileAccessLogActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_file_access_logs__actor_user_id")
+  actorApiClient ApiClient? @relation("CustomerFileAccessLogApiClient", fields: [actorApiClientId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_file_access_logs__actor_api_client_id")
+  fileObject     FileObject @relation("CustomerFileAccessLogFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_file_access_logs__file_object_id")
+  order          Order?     @relation("CustomerFileAccessLogOrder", fields: [orderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_file_access_logs__order_id")
+
+  @@index([occurredAt(sort: Desc), id(sort: Desc)], map: "ix_customer_file_access_logs__occurred_at")
+  @@index([orderId, occurredAt], map: "ix_customer_file_access_logs__order_id__occurred_at")
+  @@index([fileObjectId, occurredAt], map: "ix_customer_file_access_logs__file_object_id__occurred_at")
+  @@index([actorUserId, occurredAt], map: "ix_customer_file_access_logs__actor_user_id__occurred_at")
+  @@index([actorApiClientId], map: "ix_customer_file_access_logs__actor_api_client_id")
+  @@map("customer_file_access_logs")
 }
 
 /// Human-readable timeline (CLAUDE.md "audit/activity row"). Partitioned monthly; append-only.

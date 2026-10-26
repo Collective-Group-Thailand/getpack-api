@@ -207,6 +207,7 @@ model User {
   filesCreated                          FileObject[]                  @relation("FileObjectCreatedBy")
   attachmentsCreated                    Attachment[]                  @relation("AttachmentCreatedBy")
   auditLogs                             AuditLog[]                    @relation("AuditLogActor")
+  customerFileAccessLogs                CustomerFileAccessLog[]       @relation("CustomerFileAccessLogActor")
   auditLogsOnBehalf                     AuditLog[]                    @relation("AuditLogOnBehalfOf")
   activityLogs                          ActivityLog[]                 @relation("ActivityLogActor")
   activityLogsOnBehalf                  ActivityLog[]                 @relation("ActivityLogOnBehalfOf")
@@ -1042,15 +1043,16 @@ model ApiClient {
   updatedById     BigInt?         @map("updated_by")
   rowVersion      Int             @default(1) @map("row_version")
 
-  factory              Factory?              @relation("ApiClientFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__factory_id")
-  company              Company?              @relation("ApiClientCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__company_id")
-  owner                User?                 @relation("ApiClientOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__owner_user_id")
-  webhookSubscriptions WebhookSubscription[] @relation("WebhookSubscriptionCreatedBy")
-  createdBy            User?                 @relation("ApiClientCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__created_by")
-  updatedBy            User?                 @relation("ApiClientUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__updated_by")
+  factory              Factory?                @relation("ApiClientFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__factory_id")
+  company              Company?                @relation("ApiClientCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__company_id")
+  owner                User?                   @relation("ApiClientOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__owner_user_id")
+  webhookSubscriptions WebhookSubscription[]   @relation("WebhookSubscriptionCreatedBy")
+  createdBy            User?                   @relation("ApiClientCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__created_by")
+  updatedBy            User?                   @relation("ApiClientUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_api_clients__updated_by")
   auditLogs            AuditLog[]
   activityLogs         ActivityLog[]
   domainEvents         DomainEvent[]
+  fileAccessLogs       CustomerFileAccessLog[] @relation("CustomerFileAccessLogApiClient")
 
   // --- Fulfilment B4.2 (generated back-relations)
   milestonesReported JobMilestone[] @relation("JobMilestoneReportedByClient")

@@ -181,7 +181,7 @@ describe('files (e2e, contract §3 Files)', () => {
     expect(key).toMatch(/^customer_content\/\d{4}\/\d{2}\/[0-9a-f-]{36}$/); // no personal data in keys
   });
 
-  it('hides files from other customers and factories (404) but not from staff with files.read', async () => {
+  it('hides customer artwork from other customers, factories and staff without customer file access (D-444)', async () => {
     const file = await upload('customer-1', FAKE_PDF, {
       purpose: 'artwork',
       fileName: 'private.pdf',
@@ -190,7 +190,23 @@ describe('files (e2e, contract §3 Files)', () => {
     await get('customer-2', file.id).expect(404);
     await get('customer-2', file.id, '/download').expect(404);
     await get('files-a', file.id).expect(404);
-    await get('cs', file.id).expect(200);
+    // D-444: Prepress reads customer artwork; CS only for orders it handles (this upload is in no order yet).
+    await get('cs', file.id).expect(404);
+    await get('cs', file.id, '/download').expect(404);
+    await get('prepress', file.id).expect(200);
+    await app.get(FileProcessingJobs).processUploaded();
+    await get('prepress', file.id, '/download').expect(200);
+    const logged = await prisma.customerFileAccessLog.findMany({
+      where: { fileObject: { publicId: file.id } },
+    });
+    expect(logged).toEqual([
+      expect.objectContaining({
+        fileKind: 'customer_original',
+        orderId: null,
+        channel: 'admin',
+        purpose: 'download',
+      }),
+    ]);
   });
 
   it('scopes factory uploads to the factory: other factories get 404', async () => {

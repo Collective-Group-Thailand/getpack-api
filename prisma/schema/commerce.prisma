@@ -511,7 +511,6 @@ model OrderGroup {
   customerDocuments CustomerDocument[] @relation("CustomerDocumentOrderGroup")
   // --- end Finance B5.2
 
-
   // --- Sales agents D-416 (generated back-relations)
   salesAgentCommissions SalesAgentCommission[] @relation("SalesAgentCommissionOrderGroup")
   // --- end Sales agents
@@ -659,6 +658,10 @@ model Order {
   productionJobs ProductionJob[] @relation("ProductionJobOrder")
   // --- end Fulfilment B4.2
 
+  // --- D-444 customer file access log (back-relations)
+  customerFileAccessLogs CustomerFileAccessLog[] @relation("CustomerFileAccessLogOrder")
+  // --- end D-444
+
   // --- Fulfilment B4.3 (generated back-relations)
   shipmentItems          ShipmentItem[]          @relation("ShipmentItemOrder")
   deliveryReconciliation DeliveryReconciliation? @relation("DeliveryReconciliationOrder")
@@ -701,7 +704,6 @@ model Order {
   reorderSuggestions ReorderSuggestion[] @relation("ReorderSuggestionLastOrder")
 
   callOffRelease CallOffRelease? @relation("CallOffReleaseOrder")
-
 
   // --- Sales agents D-416 (generated back-relations)
   salesAgentCommissions SalesAgentCommission[] @relation("SalesAgentCommissionOrder")
@@ -2023,7 +2025,6 @@ model Company {
 
   apiClients           ApiClient[]           @relation("ApiClientCompany")
   webhookSubscriptions WebhookSubscription[] @relation("WebhookSubscriptionCompany")
-
 
   // --- Sales agents D-416 (generated back-relations)
   salesAgentLinks          SalesAgentLink[] @relation("SalesAgentLinkCompany")

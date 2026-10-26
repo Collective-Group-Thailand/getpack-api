@@ -15,6 +15,14 @@ export interface RoleDefinition {
 }
 
 const ALL_STAFF = PERMISSIONS.filter((p) => p.audience === 'staff').map((p) => p.key);
+/**
+ * D-444: customer artwork / originals are read only by the roles that work on them — Prepress (any order) and support
+ * (orders they handle). Not part of Superadmin's "everything", who reads the access log instead.
+ */
+export const CUSTOMER_FILE_READ: readonly PermissionKey[] = [
+  'customer_files.read',
+  'customer_files.read_handled',
+];
 
 const EVERY_STAFF_MEMBER: PermissionKey[] = [
   'files.upload',
@@ -35,7 +43,7 @@ export const ROLES: readonly RoleDefinition[] = [
     scopeType: 'platform',
     nameTh: 'ซูเปอร์แอดมิน',
     nameEn: 'Superadmin',
-    permissions: ALL_STAFF,
+    permissions: ALL_STAFF.filter((p) => !CUSTOMER_FILE_READ.includes(p)),
   },
   {
     key: 'c_level',
@@ -237,6 +245,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายบริการลูกค้า',
     nameEn: 'CS',
     permissions: [
+      'customer_files.read_handled',
       'receivables.read',
       ...EVERY_STAFF_MEMBER,
       'conversations.read',
@@ -285,6 +294,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'หัวหน้าฝ่ายบริการลูกค้า',
     nameEn: 'CS Lead',
     permissions: [
+      'customer_files.read_handled',
       'settings.read',
       'settings.change',
       'reports.export',
@@ -355,6 +365,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ฝ่ายเตรียมพิมพ์',
     nameEn: 'Prepress',
     permissions: [
+      'customer_files.read',
       'settings.read',
       'settings.change',
       'studio_catalog.manage',

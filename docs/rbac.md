@@ -33,6 +33,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `audit_logs.export` — Export the audit log (itself audited) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  | ● |  |
 | `files.upload` — Upload files | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |  | ● |
 | `files.read` — Download files of records the user can see | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
+| `customer_files.read` — Download customer artwork / originals and their production copies of any order (Prepress); `files.read` no longer covers them (D-444) |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
+| `customer_files.read_handled` — Download customer artwork / originals and their production copies of orders whose open conversation is assigned to the user (support) (D-444) |  |  |  |  |  | ● | ● |  |  |  |  |  |  |  |  |  |
+| `customer_file_access_logs.read` — Read the access log of customer artwork / originals and production copies (Superadmin only) (D-444) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `notification_templates.manage` — Edit and publish notification templates | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |
 | `notification_routes.manage` — Edit the notification routing matrix (D-143) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `outbox.manage` — List dead-lettered domain events and replay them | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |

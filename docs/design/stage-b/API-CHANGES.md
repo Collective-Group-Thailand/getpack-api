@@ -211,3 +211,119 @@ Run unchanged: `artwork`, `designs`, `orders`, `payments`, `company-orders`.
 
 1. Upload before payment is offered for own-file orders (same rule as online designs, `assertTakesArtwork` accepts
    `waiting_payment`). Should "ส่งไฟล์งาน" wait for payment instead? Kept as the existing rule.
+
+## B-API-5 Customer file access
+
+Decision **D-444** (`DECISIONS-STAGE-A.md` §7 "Customer file access"; closes A5 `upload-redesign/FINDINGS.md` G3,
+refines D-442 (3) "readable by staff"). Not breaking for the storefront or partner zones; **breaking for staff
+roles other than Prepress** (they now get 404 on customer artwork). One new admin endpoint, three new permissions,
+one reversible migration, no new setting or env var.
+
+### What counts as a customer file
+
+| Kind (`CustomerFileKind`) | Which files | Staff access |
+|---|---|---|
+| `customer_original` | uploads of purpose `artwork` (also before they are in a submission) and every file of an artwork submission (`artwork_submission_files`) | **D-444 rule below** |
+| `production_copy` | the metadata-stripped copy of an original (`artwork_production_copies.copy_file_id`, D-442) | **D-444 rule below** |
+| `approved_proof_copy` | an approved proof's locked copy (`proofs.approved_file_id`) — staff-made | unchanged (`files.read`); downloads are logged |
+
+A thumbnail follows its original (access and log, `purpose = thumbnail`). Every other file keeps its current rules.
+
+### Access matrix (`GET /v1/{store|admin|partner}/files/{fileId}` and `…/download`)
+
+| Who | Original | Production copy | Approved proof copy |
+|---|---|---|---|
+| Prepress (`customer_files.read`) | ✓ any order | ✓ | ✓ |
+| CS, CS Lead (`customer_files.read_handled`) | ✓ only orders they **handle** | ✓ same | ✓ |
+| Every other staff role, Superadmin included (`files.read` only) | ✗ 404 | ✗ 404 | ✓ |
+| Uploader (e.g. CS uploading for a customer) | ✓ own upload | – | – |
+| Factory user / machine client (production) | ✗ 404 (unchanged) | ✓ live jobs of its approved proof (unchanged) | ✓ live jobs (unchanged) |
+| Order's customer, company members of a company-scoped upload | ✓ (unchanged) | ✗ (unchanged) | ✓ (unchanged) |
+
+**"Handles an order"** = the user is `assigned_user_id` of a conversation with `subject_type = 'order'`,
+`subject_id = <order>` and `status ≠ closed`. An upload not yet in a submission has no order: support gets no access.
+`orders.prepress_assignee_id` is not used (Prepress already reads every order).
+
+### Permissions (`src/modules/iam/permissions.catalog.ts`, `roles.catalog.ts`; `docs/rbac.md` regenerated)
+
+| Permission | Granted to |
+|---|---|
+| `customer_files.read` | `prepress` |
+| `customer_files.read_handled` | `cs`, `cs_lead` |
+| `customer_file_access_logs.read` | `superadmin` only |
+
+Superadmin keeps "every staff permission" **except** the two customer-file reads (`CUSTOMER_FILE_READ`). Existing
+databases get the grants with the next `pnpm db:seed` (reference seed writes permissions and role grants).
+
+### Access log
+
+Table `customer_file_access_logs` (append-only: trigger `tg_customer_file_access_logs__append_only` →
+`forbid_mutation()` refuses UPDATE / DELETE). One row per download URL issued for a customer file, written by
+`FilesService.downloadUrl` in the same request **after** the URL is signed and **before** it is returned — if the
+insert fails the request fails and no URL is returned. Columns: `public_id`, `occurred_at`, `actor_type`
+(`user` / `api_client`, check `ck_customer_file_access_logs__actor`), `actor_user_id` / `actor_api_client_id`,
+`file_object_id`, `file_kind`, `order_id` (null for an unsubmitted upload), `channel` (`store` / `admin` / `partner`),
+`purpose` (`download` / `thumbnail`), `request_id`. **Never** the URL, a token, the storage key or the file name.
+Metadata reads (`…/files/{fileId}`) issue no URL and are not logged.
+
+### New endpoint
+
+`GET /v1/admin/customer-file-access-logs` — `admin.customerFileAccessLogs.list`, `customer_file_access_logs.read`
+(403 `auth.forbidden` otherwise), cursor-paginated (`cursor`, `limit` ≤ 100), newest first. Filters: `orderId`,
+`fileId`, `userId` (user or API client public id), `from`, `to` (exclusive), all optional.
+
+```json
+{
+  "data": [
+    {
+      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000ac01",
+      "occurredAt": "2026-10-26T10:15:00+07:00",
+      "actor": { "type": "user", "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b", "name": "เตรียมพิมพ์ ทดสอบ" },
+      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1014",
+      "fileKind": "customer_original",
+      "order": { "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a001", "orderCode": "DEVOR-2610-00001" },
+      "channel": "admin",
+      "purpose": "download",
+      "requestId": "req-3f2a9c1d"
+    }
+  ],
+  "meta": { "nextCursor": null }
+}
+```
+
+Changed descriptions only: `{store,admin,partner}.files.get` and `.download` (D-444 rule and log; same schemas).
+
+### Migration (reversible)
+
+`prisma/migrations/20261218000001_customer_file_access_logs/` — enums `customer_file_kind`, `file_access_channel`,
+`file_access_purpose`; table, indexes (time, order, file, actor), FKs, actor check, append-only trigger. `down.sql`
+drops the trigger, table and enums (the log rows are lost: export first). Applied locally with
+`pnpm prisma migrate deploy`; `down.sql` run inside a rolled-back transaction; UPDATE / DELETE refused by the trigger.
+
+### Tests
+
+Unit: `src/platform/files/customer-file-access.spec.ts` (allow / deny matrix over the real role grants: Prepress,
+CS handling vs not, CS Lead, Admin, Finance, Logistics, Superadmin, factory user and machine client, customer and
+stranger; thumbnails; uploader rule; one log row per URL with no URL / token; no row and no URL when denied; a failed
+insert fails the request; the list endpoint requires `customer_file_access_logs.read`, held by Superadmin only).
+`roles.catalog`, `rbac-doc`, `storefront-factory-confidentiality` green.
+
+### e2e specs to run locally
+
+Changed: `files` (CS 404, Prepress 200 + one log row), `artwork` (Prepress / CS / Superadmin on original and production
+copy, CS while assigned to an open order conversation then closed, log endpoint 200 for Superadmin and 403 for
+Prepress), `production-release` (factory download of the approved proof copy logged on `partner`).
+Run unchanged (they download customer or proof files): `production-milestones`, `production-oversight`, `designs`,
+`design-services`, `companies-store`, `conversations-v2`, `timeline`, `admin-platform`, `acceptance`.
+
+### Open questions
+
+1. **"Handles"** is taken from conversations only (assignee of an open conversation about the order). There is no
+   other order owner for support (`support_tickets.order_ref` is free text, not resolved). Should support also read
+   after the conversation closes, or via a ticket / an explicit order assignment?
+2. **Superadmin** has no customer-file read (only the log). Confirm, or grant `customer_files.read` to Superadmin.
+3. **Admin / CS Lead / Partner manager / Auditor** lost access to originals; production copies follow the same rule.
+   Confirm no other role (e.g. Auditor for claims) needs them.
+4. **Design-studio assets** (`design_asset` uploads, studio designs) and hired-design briefs are not classified as
+   customer artwork yet (their own readers decide; staff still read them with `files.read`).
+5. Approved proof copies stay readable by every staff role with `files.read` (staff-made proof); only logged.

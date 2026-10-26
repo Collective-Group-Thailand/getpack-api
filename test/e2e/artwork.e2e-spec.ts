@@ -461,8 +461,52 @@ describe('artwork submissions and preflight (e2e, B4.1)', () => {
       expect(c.copyFile!.ownerUserId).toBeNull();
       expect(c.copyFile!.metadataStrippedAt).not.toBeNull();
     }
-    // The customer cannot read the production copy (it is not theirs); staff can.
+    // The customer cannot read the production copy (it is not theirs); Prepress can.
     await as(ctx, token).get(`/v1/store/files/${made[0]!.copyFile!.publicId}/download`).expect(404);
+    // D-444: customer originals and production copies — Prepress reads them; other staff (CS not handling the order,
+    // Superadmin) get 404; CS reads them while assigned to an open conversation about the order. Every URL is logged.
+    const cs = await staffToken(ctx, 'cs');
+    const superadmin = await staffToken(ctx, 'superadmin');
+    const copyId = made[0]!.copyFile!.publicId;
+    await as(ctx, prepress).get(`/v1/admin/files/${artworkFile}/download`).expect(200);
+    await as(ctx, prepress).get(`/v1/admin/files/${copyId}/download`).expect(200);
+    await as(ctx, cs).get(`/v1/admin/files/${artworkFile}/download`).expect(404);
+    await as(ctx, cs).get(`/v1/admin/files/${copyId}/download`).expect(404);
+    await as(ctx, superadmin).get(`/v1/admin/files/${artworkFile}/download`).expect(404);
+    const csUser = await ctx.prisma.user.findFirstOrThrow({ where: { email: 'cs@example.invalid' } });
+    const thread = await ctx.prisma.conversation.create({
+      data: {
+        channel: 'web',
+        customerUserId: orderRow.customerUserId,
+        subjectType: 'order',
+        subjectId: orderRow.id,
+        assignedUserId: csUser.id,
+      },
+    });
+    await as(ctx, cs).get(`/v1/admin/files/${artworkFile}/download`).expect(200);
+    await ctx.prisma.conversation.update({
+      where: { id: thread.id },
+      data: { status: 'closed', closedAt: new Date() },
+    });
+    await as(ctx, cs).get(`/v1/admin/files/${artworkFile}/download`).expect(404);
+    const accessLog = await as(ctx, superadmin)
+      .get(`/v1/admin/customer-file-access-logs?orderId=${orderId}&limit=100`)
+      .expect(200);
+    expect(accessLog.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fileId: artworkFile,
+          fileKind: 'customer_original',
+          channel: 'admin',
+          purpose: 'download',
+          order: { id: orderId, orderCode: orderRow.orderCode },
+          actor: expect.objectContaining({ type: 'user', id: csUser.publicId }),
+        }),
+        expect.objectContaining({ fileId: copyId, fileKind: 'production_copy', channel: 'admin' }),
+      ]),
+    );
+    expect(JSON.stringify(accessLog.body)).not.toMatch(/X-Amz|https?:/);
+    await as(ctx, prepress).get('/v1/admin/customer-file-access-logs').expect(403);
     const row = await ctx.prisma.proof.findUniqueOrThrow({ where: { publicId: p2.body.id as string } });
     expect(row.decisionIp).not.toBeNull();
     await as(ctx, token)

@@ -78,6 +78,27 @@ export const PERMISSIONS = [
   { key: 'files.upload', audience: 'staff', description: 'Upload files' },
   { key: 'files.read', audience: 'staff', description: 'Download files of records the user can see' },
   {
+    key: 'customer_files.read',
+    audience: 'staff',
+    description:
+      'Download customer artwork / originals and their production copies of any order (Prepress); `files.read` no longer covers them',
+    decisionRefs: ['D-444'],
+  },
+  {
+    key: 'customer_files.read_handled',
+    audience: 'staff',
+    description:
+      'Download customer artwork / originals and their production copies of orders whose open conversation is assigned to the user (support)',
+    decisionRefs: ['D-444'],
+  },
+  {
+    key: 'customer_file_access_logs.read',
+    audience: 'staff',
+    description:
+      'Read the access log of customer artwork / originals and production copies (Superadmin only)',
+    decisionRefs: ['D-444'],
+  },
+  {
     key: 'notification_templates.manage',
     audience: 'staff',
     description: 'Edit and publish notification templates',

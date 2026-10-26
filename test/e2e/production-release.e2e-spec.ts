@@ -128,6 +128,13 @@ describe('production release and acceptance (e2e, B4.2)', () => {
     await as(ctx, owner)
       .get(`/v1/partner/files/${seen.body.approvedFileId as string}/download`)
       .expect(200);
+    // D-444: the factory's download of the approved proof copy is in the customer file access log (partner surface).
+    const downloaded = await ctx.prisma.customerFileAccessLog.findMany({
+      where: { fileObject: { publicId: seen.body.approvedFileId as string }, channel: 'partner' },
+    });
+    expect(downloaded).toEqual([
+      expect.objectContaining({ fileKind: 'approved_proof_copy', purpose: 'download', actorType: 'user' }),
+    ]);
     await as(ctx, owner).post(`/v1/partner/production-jobs/${job!.id}/actions/accept`).expect(400);
     const accepted = await as(ctx, owner)
       .post(`/v1/partner/production-jobs/${job!.id}/actions/accept`)

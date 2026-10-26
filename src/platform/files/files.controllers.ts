@@ -214,8 +214,9 @@ function filesController(surface: ZoneSurface): Type<unknown> {
       id: `${surface}.files.get`,
       summary: 'File metadata',
       description:
-        'Visible to the uploader, their factory/company scope, staff with `files.read`, or through an attachment of a record the caller can see; otherwise 404.',
-      implements: ['ADR-0003', 'D-142'],
+        'Visible to the uploader, their factory/company scope, staff with `files.read`, or through an attachment of a record the caller can see; otherwise 404. ' +
+        'D-444: customer artwork / originals and their production copies need `customer_files.read` or `customer_files.read_handled` on staff instead of `files.read`.',
+      implements: ['ADR-0003', 'D-142', 'D-444'],
     })
     @ApiSuccess(200, { description: 'The file', type: FileDto, example: FILE_EXAMPLE })
     @ApiStandardErrors('http.not_found', 'validation.failed')
@@ -228,8 +229,11 @@ function filesController(surface: ZoneSurface): Type<unknown> {
       id: `${surface}.files.download`,
       summary: 'Short-lived download URL',
       description:
-        'A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served.',
-      implements: ['ADR-0003'],
+        'A signed URL valid 5 minutes, after the access check. Files still scanning are `file.not_ready`; infected files are never served. ' +
+        "D-444: a customer's artwork / original or its production copy is read on staff only with `customer_files.read` (Prepress) or " +
+        '`customer_files.read_handled` for an order whose open conversation is assigned to the caller (support); every URL issued for ' +
+        'one of these, a production copy or an approved proof copy is logged in the customer file access log (no URL stored).',
+      implements: ['ADR-0003', 'D-444'],
     })
     @ApiSuccess(200, {
       description: 'Signed URL',
@@ -244,7 +248,7 @@ function filesController(surface: ZoneSurface): Type<unknown> {
       @CurrentActor() actor: Actor,
       @Param('fileId', ParseUUIDPipe) id: string,
     ): Promise<DownloadUrlDto> {
-      const { url, expiresAt } = await this.files.downloadUrl(actor, id);
+      const { url, expiresAt } = await this.files.downloadUrl(actor, id, surface);
       return { url, expiresAt: toBangkokIso(expiresAt) };
     }
   }
