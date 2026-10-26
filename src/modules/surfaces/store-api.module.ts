@@ -32,6 +32,7 @@ import { PAYMENT_SCHEDULES_STORE_CONTROLLERS } from '@modules/payment-schedules/
 import { PAYMENTS_STORE_CONTROLLERS } from '@modules/payments/payments.registry';
 import { PRICING_STORE_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { HeroPresetsService } from '@modules/pricing/quotes/hero-presets.service';
+import { QuoteBatchService } from '@modules/pricing/quotes/quote-batch.service';
 import { StoreQuotePathController } from '@modules/pricing/quotes/store-quote-path.controller';
 import { PROMOTIONS_STORE_CONTROLLERS } from '@modules/promotions/promotions.registry';
 import { QUOTES_STORE_CONTROLLERS } from '@modules/quotes/quotes.registry';
@@ -55,7 +56,8 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
 @Module({
   imports: [RealtimeModule],
   // API-only: the hero presets read the catalogue's store configurator, which the worker does not load (D-310).
-  providers: [HeroPresetsService],
+  // HTTP-only: QuoteBatchService needs I18nService, which the worker process does not load.
+  providers: [HeroPresetsService, QuoteBatchService],
   controllers: [
     ...OPS_STORE_CONTROLLERS,
     StoreFilesController,
