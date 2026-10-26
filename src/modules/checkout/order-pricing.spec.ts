@@ -1,4 +1,5 @@
 import { MoneyDecimal } from '@common/money/money';
+import { computeVat } from '@common/money/vat';
 import fc from 'fast-check';
 
 import {
@@ -95,7 +96,7 @@ describe('priceOrderLines', () => {
     expect(goods[0]).toMatchObject({ whtCategory: 'none', whtAmount: '0.00' });
   });
 
-  it('property: lines always add up and the product side keeps the quotation’s gross and VAT', () => {
+  it('property: lines always add up and the product side keeps the quotation’s gross and VAT is the shared calculation (DECISIONS-STAGE-A §7)', () => {
     const cents = (min: number, max: number) =>
       fc.integer({ min, max }).map((n) => new MoneyDecimal(n).div(100));
     fc.assert(
@@ -127,7 +128,17 @@ describe('priceOrderLines', () => {
           const gross = productSide.reduce((a, l) => a.add(l.grossAmount), new MoneyDecimal(0));
           const vat = productSide.reduce((a, l) => a.add(l.vatAmount), new MoneyDecimal(0));
           expect(gross.toFixed(2)).toBe(productSideGross.toFixed(2));
-          expect(vat.toFixed(2)).toBe(productSideVat.toFixed(2));
+          const allVat = lines.reduce((a, l) => a.add(l.vatAmount), new MoneyDecimal(0));
+          const expected = computeVat(
+            [
+              { amount: pieces, inclusive: true },
+              ...(fee.gt(0) ? [{ amount: fee, inclusive: true }] : []),
+              ...(newShip.gt(0) ? [{ amount: newShip, inclusive: false }] : []),
+            ],
+            '7',
+          ).vat;
+          expect(allVat.toFixed(2)).toBe(expected.toFixed(2));
+          expect(vat.lte(productSideGross)).toBe(true);
           for (const l of lines) {
             expect(new MoneyDecimal(l.netAmount).gte(0)).toBe(true);
             expect(new MoneyDecimal(l.netAmount).add(l.vatAmount).toFixed(2)).toBe(l.grossAmount);

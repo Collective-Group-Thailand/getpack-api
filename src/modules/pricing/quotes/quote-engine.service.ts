@@ -1,6 +1,7 @@
 import { isIP } from 'node:net';
 
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
+import { computeVat } from '@common/money/vat';
 import { bangkokDate } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type CalculatorKey, type SalesChannel } from '@generated/prisma/client';
@@ -409,7 +410,22 @@ export class QuoteEngineService {
         shippingAmount: shipGross ? formatMoney(shipGross) : null,
         shippingNetAmount: shipNet ? formatMoney(shipNet) : null,
         shippingVatAmount: shipVat ? formatMoney(shipVat) : null,
-        vatAmount: formatMoney(new MoneyDecimal(formatMoney(s.vatAmount)).add(shipVat ?? 0)),
+        vatAmount: formatMoney(
+          computeVat(
+            [
+              {
+                amount: new MoneyDecimal(formatMoney(s.total))
+                  .sub(formatMoney(s.designFee))
+                  .sub(formatMoney(s.structureDesignFee)),
+                inclusive: true,
+              },
+              { amount: formatMoney(s.designFee), inclusive: true },
+              { amount: formatMoney(s.structureDesignFee), inclusive: true },
+              ...(shipNet ? [{ amount: shipNet, inclusive: false }] : []),
+            ],
+            vatPct!,
+          ).vat,
+        ),
         grossAmount: formatMoney(new MoneyDecimal(formatMoney(s.total)).add(shipGross ?? 0)),
         leadTimeDays: s.leadTimeDays,
         earliestShipDate: chosen.shipDate,

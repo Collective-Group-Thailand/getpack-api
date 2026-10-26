@@ -1,4 +1,5 @@
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
+import { computeVat } from '@common/money/vat';
 
 /**
  * Order lines of one configuration at checkout (B3.1, schema-design §2.9, accounting-design §2).
@@ -119,40 +120,48 @@ export function priceOrderLines(
       : quoteShipGross.sub(quoteShipNet);
 
   if (shippedPerDestination(option.source)) {
+    // One VAT over all taxable lines (DECISIONS-STAGE-A §7): goods and design fees are VAT-inclusive,
+    // shipping per destination is VAT-exclusive; each line's VAT is its own net's VAT, the rounding
+    // remainder sits on the product line so the lines sum to the shared calculation exactly.
     const productSideGross = D(option.grossAmount).sub(quoteShipGross);
-    const productSideVat = D(option.vatAmount).sub(quoteShipVat);
-    const candidates: { type: LineType; gross: MoneyValue }[] = [
-      { type: 'design_fee', gross: D(option.result.designFeeAmount) },
-      { type: 'structure_design_fee', gross: D(option.result.structureDesignFeeAmount) },
-    ];
-    const fees = candidates.filter((f) => f.gross.gt(0));
-    let feeGross = D(0);
-    let feeVat = D(0);
-    const feeDrafts = fees.map((f) => {
-      const vat = productSideGross.gt(0) ? round2(productSideVat.mul(f.gross).div(productSideGross)) : D(0);
-      feeGross = feeGross.add(f.gross);
-      feeVat = feeVat.add(vat);
-      return { type: f.type, quantity: 1, net: f.gross.sub(vat), vat };
+    const fees = (
+      [
+        { type: 'design_fee', gross: D(option.result.designFeeAmount) },
+        { type: 'structure_design_fee', gross: D(option.result.structureDesignFeeAmount) },
+      ] as { type: LineType; gross: MoneyValue }[]
+    ).filter((f) => f.gross.gt(0));
+    const productGross = productSideGross.sub(fees.reduce((a, f) => a.add(f.gross), D(0)));
+    const shipNet = shippingNet ?? D(0);
+    const shared = computeVat(
+      [
+        { amount: productGross, inclusive: true },
+        ...fees.map((f) => ({ amount: f.gross, inclusive: true })),
+        ...(shipNet.gt(0) ? [{ amount: shipNet, inclusive: false }] : []),
+      ],
+      ctx.vatPct,
+    );
+    // Inclusive lines keep their gross (the price the customer saw); shipping gets its own net's VAT.
+    const others = shared.lineNets.slice(1).map((net, i) => {
+      const fee = fees[i];
+      return fee
+        ? { type: fee.type, quantity: 1, net, vat: fee.gross.sub(net) }
+        : { type: 'shipping', quantity: 1, net, vat: vatOf(net, ctx.vatPct) };
     });
-    const productGross = productSideGross.sub(feeGross);
-    const productVat = productSideVat.sub(feeVat);
+    const productVat = shared.vat.sub(others.reduce((a, o) => a.add(o.vat), D(0)));
     drafts.push({
       type: 'product',
       quantity: option.quantity,
       net: productGross.sub(productVat),
       vat: productVat,
     });
-    drafts.push(...feeDrafts);
+    drafts.push(...others);
   } else {
     const net = D(option.netAmount).sub(quoteShipNet);
     const vat = D(option.vatAmount).sub(quoteShipVat);
     drafts.push({ type: 'product', quantity: option.quantity, net, vat });
+    if (quoteShipNet.gt(0))
+      drafts.push({ type: 'shipping', quantity: 1, net: quoteShipNet, vat: quoteShipVat });
   }
-
-  const perDestination = shippedPerDestination(option.source);
-  const shipNet = perDestination ? (shippingNet ?? D(0)) : quoteShipNet;
-  const shipVat = perDestination ? vatOf(shipNet, ctx.vatPct) : quoteShipVat;
-  if (shipNet.gt(0)) drafts.push({ type: 'shipping', quantity: 1, net: shipNet, vat: shipVat });
 
   return drafts.map((d) => {
     const whtCategory = whtCategoryOf(d.type, ctx.nature);
