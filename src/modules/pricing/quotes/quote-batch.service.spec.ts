@@ -9,8 +9,11 @@ const variant = (key: string, extra: Record<string, unknown> = {}) => ({
   key,
   configuration: { w: 60, quantities: [1000], ...extra },
 });
-const body = (variants: ReturnType<typeof variant>[], quantities?: number[]): CalculateQuoteBatchDto =>
-  ({ productTypeCode: 'folding_carton', variants, ...(quantities && { quantities }) });
+const body = (variants: ReturnType<typeof variant>[], quantities?: number[]): CalculateQuoteBatchDto => ({
+  productTypeCode: 'folding_carton',
+  variants,
+  ...(quantities && { quantities }),
+});
 
 const setup = (price: jest.Mock) => {
   const pricing = {
@@ -57,6 +60,7 @@ describe('QuoteBatchService', () => {
     expect(out.results[1]).toEqual({
       key: 'b',
       calculation: null,
+      deltas: null,
       problem: {
         code: 'pricing.print_combination_invalid',
         message: 't:errors.pricing.print_combination_invalid.detail',
@@ -117,5 +121,62 @@ describe('QuoteBatchService', () => {
     expect(price).toHaveBeenCalledTimes(24);
     expect(peak).toBeLessThanOrEqual(BATCH_CONCURRENCY);
     expect(peak).toBeGreaterThan(1);
+  });
+
+  describe('baselineKey deltas', () => {
+    const step = (quantity: number, unit: string | null, total: string | null, instant = true) => ({
+      quantity,
+      instant,
+      unitPrice: unit,
+      productAmount: total,
+    });
+    const prices: Record<number, ReturnType<typeof step>[]> = {
+      1: [step(500, '2.00', '1000.00'), step(1000, '1.50', '1500.00')],
+      2: [step(500, '2.86', '1430.00'), step(1000, '1.49', '1490.00', true)],
+      3: [step(500, null, null, false)],
+      4: [step(1000, '1.20', '1200.00')],
+    };
+    const run = (variants: ReturnType<typeof variant>[], baselineKey?: string) => {
+      const price = jest.fn((_k: string, cfg: { w: number }) => ({
+        calculation: { calculatorVersion: 'x', steps: prices[cfg.w] },
+      }));
+      return setup(price).service.calculate(undefined, { ...body(variants), baselineKey }, 'en');
+    };
+
+    it('is null without baselineKey, zero for the baseline, signed for the others', async () => {
+      const plain = await run([variant('a', { w: 1 })]);
+      expect(plain.results[0]!.deltas).toBeNull();
+      const out = await run([variant('a', { w: 1 }), variant('b', { w: 2 })], 'a');
+      expect(out.results[0]!.deltas).toEqual([
+        { quantity: 500, unitPriceDelta: '0.00', totalDelta: '0.00' },
+        { quantity: 1000, unitPriceDelta: '0.00', totalDelta: '0.00' },
+      ]);
+      expect(out.results[1]!.deltas).toEqual([
+        { quantity: 500, unitPriceDelta: '0.86', totalDelta: '430.00' },
+        { quantity: 1000, unitPriceDelta: '-0.01', totalDelta: '-10.00' },
+      ]);
+    });
+
+    it('is null for non-instant sides, missing quantities and failed variants', async () => {
+      const out = await run([variant('a', { w: 1 }), variant('c', { w: 3 }), variant('d', { w: 4 })], 'a');
+      expect(out.results[1]!.deltas).toEqual([{ quantity: 500, unitPriceDelta: null, totalDelta: null }]);
+      expect(out.results[2]!.deltas).toEqual([
+        { quantity: 1000, unitPriceDelta: '-0.30', totalDelta: '-300.00' },
+      ]);
+      const failing = setup(jest.fn().mockRejectedValue(new DomainException('validation.failed')));
+      const r = await failing.service.calculate(
+        undefined,
+        { ...body([variant('a')]), baselineKey: 'a' },
+        'en',
+      );
+      expect(r.results[0]).toMatchObject({ calculation: null, deltas: null });
+    });
+
+    it('refuses a baselineKey that is not a variant key', async () => {
+      await expect(run([variant('a', { w: 1 })], 'zzz')).rejects.toMatchObject({
+        code: 'validation.failed',
+        errors: [expect.objectContaining({ path: 'baselineKey' })],
+      });
+    });
   });
 });

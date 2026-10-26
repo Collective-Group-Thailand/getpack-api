@@ -164,3 +164,14 @@ Migration: none. Env: none required (optional `CALCULATE_BATCH_THROTTLE_LIMIT`).
   (they exercise `calculate`, whose gate/pricing path was refactored into `calculatorKeyOf`) and `phase4-contract`.
   Suggested follow-up: an e2e asserting batch result == calculate result for the same configuration.
 - Contract: `contract/openapi.json` regenerated with `pnpm contract:build` (+527 lines, one path).
+
+### Addendum: `baselineKey` price deltas (backwards-compatible)
+- Optional request field `baselineKey` (1..64 chars; must equal one `variants[].key`, else 422 `validation.failed` at `baselineKey`).
+- When sent, every result gets `deltas: [{ quantity, unitPriceDelta, totalDelta }] | null`, per quantity of that variant:
+  `unitPrice` (incl. VAT, as in calculate) minus the baseline's `unitPrice` for the same quantity, and `productAmount`
+  (pieces incl. VAT, excluding shipping/tooling, so it does not depend on postcode) minus the baseline's. Computed server-side
+  with `MoneyDecimal`/`formatMoney`; signed 2-dp strings (`"-0.86"`, `"1.20"`, `"0.00"`).
+- `null` delta values when either side is `instant:false` or the quantity is missing on the baseline. The baseline's own deltas are
+  all `"0.00"`. `deltas` is `null` without `baselineKey`, or when the variant has no calculation (also when the baseline failed: all of that
+  batch's instant deltas are then null per quantity).
+- No new writes; same pricing path. Unit tests in `quote-batch.service.spec.ts`.

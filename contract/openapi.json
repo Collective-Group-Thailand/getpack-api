@@ -20708,6 +20708,13 @@
       },
       "CalculateQuoteBatchDto": {
         "properties": {
+          "baselineKey": {
+            "description": "Key of the variant the others are compared with (must equal one `variants[].key`); when sent every result carries `deltas`",
+            "example": "size:s1",
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
           "productTypeCode": {
             "example": "folding_carton",
             "maxLength": 64,
@@ -85758,6 +85765,36 @@
         ],
         "type": "object"
       },
+      "QuoteBatchDeltaDto": {
+        "properties": {
+          "quantity": {
+            "example": 1000,
+            "type": "number"
+          },
+          "totalDelta": {
+            "description": "`productAmount` (pieces incl. VAT, excluding shipping) minus the baseline variant's for the same quantity; same rules as `unitPriceDelta`",
+            "example": "1200.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unitPriceDelta": {
+            "description": "Unit price incl. VAT minus the baseline variant's for the same quantity; signed 2-decimal string; null when either side is not an instant price or lacks the quantity",
+            "example": "-0.86",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "quantity",
+          "unitPriceDelta",
+          "totalDelta"
+        ],
+        "type": "object"
+      },
       "QuoteBatchProblemDto": {
         "properties": {
           "code": {
@@ -85789,6 +85826,16 @@
             ],
             "description": "Null when the variant failed"
           },
+          "deltas": {
+            "description": "Per quantity of this variant against `baselineKey` (all zero for the baseline itself); null without `baselineKey` or without a calculation",
+            "items": {
+              "$ref": "#/components/schemas/QuoteBatchDeltaDto"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
           "key": {
             "example": "size:s2",
             "type": "string"
@@ -85808,6 +85855,7 @@
         "required": [
           "key",
           "calculation",
+          "deltas",
           "problem"
         ],
         "type": "object"
@@ -547629,6 +547677,7 @@
               "examples": {
                 "folding": {
                   "value": {
+                    "baselineKey": "size:s1",
                     "productTypeCode": "folding_carton",
                     "quantities": [
                       1000
@@ -547853,11 +547902,19 @@
                           "targetPricePerUnit": "11.50"
                         }
                       },
+                      "deltas": [
+                        {
+                          "quantity": 1000,
+                          "totalDelta": "0.00",
+                          "unitPriceDelta": "0.00"
+                        }
+                      ],
                       "key": "size:s1",
                       "problem": null
                     },
                     {
                       "calculation": null,
+                      "deltas": null,
                       "key": "size:s2",
                       "problem": {
                         "code": "validation.failed",

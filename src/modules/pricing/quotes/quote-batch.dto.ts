@@ -68,6 +68,17 @@ export class CalculateQuoteBatchDto {
   @Max(10_000_000, { each: true })
   quantities?: number[];
 
+  @ApiProperty({
+    required: false,
+    example: 'size:s1',
+    description:
+      'Key of the variant the others are compared with (must equal one `variants[].key`); when sent every result carries `deltas`',
+  })
+  @IsOptional()
+  @IsString()
+  @Length(1, 64)
+  baselineKey?: string;
+
   @ApiProperty({ type: [QuoteBatchVariantDto], minItems: 1, maxItems: MAX_BATCH_VARIANTS })
   @IsArray()
   @ArrayMinSize(1)
@@ -88,6 +99,29 @@ export class QuoteBatchProblemDto {
   message!: string;
 }
 
+export class QuoteBatchDeltaDto {
+  @ApiProperty({ example: 1000 })
+  quantity!: number;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '-0.86',
+    description:
+      "Unit price incl. VAT minus the baseline variant's for the same quantity; signed 2-decimal string; null when either side is not an instant price or lacks the quantity",
+  })
+  unitPriceDelta!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1200.00',
+    description:
+      "`productAmount` (pieces incl. VAT, excluding shipping) minus the baseline variant's for the same quantity; same rules as `unitPriceDelta`",
+  })
+  totalDelta!: string | null;
+}
+
 export class QuoteBatchResultDto {
   @ApiProperty({ example: 'size:s2' })
   key!: string;
@@ -98,6 +132,14 @@ export class QuoteBatchResultDto {
     description: 'Null when the variant failed',
   })
   calculation!: QuoteCalculationDto | null;
+
+  @ApiProperty({
+    type: () => [QuoteBatchDeltaDto],
+    nullable: true,
+    description:
+      'Per quantity of this variant against `baselineKey` (all zero for the baseline itself); null without `baselineKey` or without a calculation',
+  })
+  deltas!: QuoteBatchDeltaDto[] | null;
 
   @ApiProperty({
     type: () => QuoteBatchProblemDto,
@@ -115,6 +157,7 @@ export class QuoteBatchCalculationDto {
 export const CALCULATE_BATCH_EXAMPLE = {
   productTypeCode: 'folding_carton',
   quantities: [1000],
+  baselineKey: 'size:s1',
   variants: [
     { key: 'size:s1', configuration: CONFIGURATION_EXAMPLE },
     { key: 'size:s2', configuration: { ...CONFIGURATION_EXAMPLE, w: 80 } },
@@ -123,10 +166,16 @@ export const CALCULATE_BATCH_EXAMPLE = {
 
 export const STORE_CALCULATION_BATCH_EXAMPLE: QuoteBatchCalculationDto = {
   results: [
-    { key: 'size:s1', calculation: STORE_CALCULATION_EXAMPLE, problem: null },
+    {
+      key: 'size:s1',
+      calculation: STORE_CALCULATION_EXAMPLE,
+      deltas: [{ quantity: 1000, unitPriceDelta: '0.00', totalDelta: '0.00' }],
+      problem: null,
+    },
     {
       key: 'size:s2',
       calculation: null,
+      deltas: null,
       problem: {
         code: 'validation.failed',
         message: 'The request has invalid fields.',
