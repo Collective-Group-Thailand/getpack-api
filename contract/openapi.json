@@ -104430,6 +104430,13 @@
               "null"
             ]
           },
+          "styles": {
+            "description": "C1 (products Phase 2): the published styles of its patterns (product ↔ style mapping, D-184), in pattern order; empty while unmapped",
+            "items": {
+              "$ref": "#/components/schemas/StoreProductStyleDto"
+            },
+            "type": "array"
+          },
           "templateAvailability": {
             "allOf": [
               {
@@ -104463,11 +104470,41 @@
           "descriptionEn",
           "isCombination",
           "patterns",
+          "styles",
           "optionGroups",
           "standardSizes",
           "images",
           "videos",
           "seo"
+        ],
+        "type": "object"
+      },
+      "StoreProductStyleDto": {
+        "properties": {
+          "category": {
+            "description": "The style's library category (the /styles category facet)",
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "description": "Style code (the /styles quick view)",
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "category"
         ],
         "type": "object"
       },
@@ -107438,6 +107475,13 @@
               "null"
             ]
           },
+          "products": {
+            "description": "C1 (products Phase 2): active catalogue products whose pattern is this style (product ↔ style mapping), cheapest \"starting from\" first, products without a price last; empty while unmapped",
+            "items": {
+              "$ref": "#/components/schemas/StyleProductDto"
+            },
+            "type": "array"
+          },
           "recyclable": {
             "description": "As entered by the business; null = unknown",
             "example": null,
@@ -107531,6 +107575,7 @@
           "leadTime",
           "useCases",
           "assets",
+          "products",
           "recyclable",
           "plasticFree",
           "certifications"
@@ -108428,6 +108473,41 @@
           "option"
         ],
         "type": "string"
+      },
+      "StyleProductDto": {
+        "properties": {
+          "nameEn": {
+            "example": "Tuck end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          },
+          "slug": {
+            "description": "Catalogue product slug (`/products/{slug}`)",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "startingPrice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StylePriceDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its own \"starting from\" price (D-220, D-441); null for a product without an instant price"
+          }
+        },
+        "required": [
+          "slug",
+          "nameTh",
+          "nameEn",
+          "startingPrice"
+        ],
+        "type": "object"
       },
       "StylePublishReason": {
         "enum": [
@@ -504664,6 +504744,14 @@
                     ]
                   },
                   "startingPricePerPiece": "4.50",
+                  "styles": [
+                    {
+                      "category": "folding_carton",
+                      "code": "PK-TE-01",
+                      "nameEn": "Tuck end box",
+                      "nameTh": "กล่องฝาเสียบ"
+                    }
+                  ],
                   "templateAvailability": "drawing",
                   "videos": [
                     {
@@ -570106,6 +570194,7 @@
                     "plasticFree": null,
                     "pricePath": "instant",
                     "productTypeCode": "folding_carton",
+                    "products": [],
                     "recyclable": null,
                     "referenceCode": null,
                     "sizeRanges": [
@@ -570682,6 +570771,7 @@
                   "plasticFree": null,
                   "pricePath": "instant",
                   "productTypeCode": "folding_carton",
+                  "products": [],
                   "recyclable": null,
                   "referenceCode": null,
                   "sizeRanges": [

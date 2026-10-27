@@ -259,6 +259,9 @@ export class StoreCatalogController {
           dielineKey: 'rte',
         },
       ],
+      styles: [
+        { code: 'PK-TE-01', nameTh: 'กล่องฝาเสียบ', nameEn: 'Tuck end box', category: 'folding_carton' },
+      ],
       optionGroups: [
         {
           kind: 'material',

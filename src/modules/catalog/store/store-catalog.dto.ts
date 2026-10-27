@@ -316,6 +316,24 @@ export class StoreSeoDto {
   noindex!: boolean;
 }
 
+/** C1 (products Phase 2): a published box style this product can be produced in (`/styles?style={code}`). */
+export class StoreProductStyleDto {
+  @ApiProperty({ example: 'PK-TE-01', description: 'Style code (the /styles quick view)' })
+  code!: string;
+
+  @ApiProperty({ example: 'กล่องฝาเสียบ' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Tuck end box' })
+  nameEn!: string;
+
+  @ApiProperty({
+    example: 'folding_carton',
+    description: "The style's library category (the /styles category facet)",
+  })
+  category!: string;
+}
+
 export class StoreProductDetailDto extends StoreProductCardDto {
   @ApiProperty({ type: String, nullable: true, example: 'กล่องพับฝาเสียบบน-ล่าง' })
   descriptionTh!: string | null;
@@ -328,6 +346,14 @@ export class StoreProductDetailDto extends StoreProductCardDto {
 
   @ApiProperty({ type: [StorePatternDto] })
   patterns!: StorePatternDto[];
+
+  @ApiProperty({
+    type: [StoreProductStyleDto],
+    description:
+      'C1 (products Phase 2): the published styles of its patterns (product ↔ style mapping, D-184), in pattern order; ' +
+      'empty while unmapped',
+  })
+  styles!: StoreProductStyleDto[];
 
   @ApiProperty({ type: [StoreOptionGroupDto] })
   optionGroups!: StoreOptionGroupDto[];

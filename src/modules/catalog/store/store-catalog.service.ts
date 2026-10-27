@@ -247,7 +247,24 @@ export class StoreCatalogService {
         productType: { select: { code: true } },
         patterns: {
           where: { pattern: { status: ACTIVE } },
-          include: { pattern: true },
+          include: {
+            pattern: {
+              include: {
+                // C1: the pattern's published style (D-184, D-243, D-245) — the product ↔ style mapping.
+                styleBase: {
+                  select: {
+                    code: true,
+                    nameTh: true,
+                    nameEn: true,
+                    category: true,
+                    status: true,
+                    hidden: true,
+                    variants: { where: { publishable: true, status: ACTIVE }, select: { id: true }, take: 1 },
+                  },
+                },
+              },
+            },
+          },
           orderBy: { sort: 'asc' },
         },
         options: { orderBy: [{ sort: 'asc' }] },
@@ -281,6 +298,11 @@ export class StoreCatalogService {
         constraints: pattern.constraints as Record<string, unknown>,
         dielineKey: pattern.dielineKey,
       })),
+      styles: p.patterns.flatMap(({ pattern: { styleBase: b } }) =>
+        b && b.status === ACTIVE && !b.hidden && b.variants.length > 0
+          ? [{ code: b.code, nameTh: b.nameTh, nameEn: b.nameEn, category: b.category }]
+          : [],
+      ),
       // D-441: the default spec's options are the defaults the product page shows.
       optionGroups: withSpecDefaults(
         await this.optionGroups(p.options),
