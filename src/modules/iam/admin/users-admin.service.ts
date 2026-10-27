@@ -10,6 +10,7 @@ import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 import { PermissionResolver } from '../permission-resolver.service';
+import { CUSTOMER_FILE_READ } from '../roles.catalog';
 import { ScopeDirectory, type ScopedType } from '../scope-directory';
 import { SodService } from '../sod.service';
 
@@ -294,8 +295,14 @@ export class UsersAdminService {
     });
   }
 
+  /**
+   * The actor must hold every permission of the role. D-444 withholds customer-file reads from Superadmin (and
+   * Admin) on purpose, not as a privilege ceiling, so they do not count here: otherwise no one could grant CS,
+   * CS Lead or Prepress. The grant itself is audited and SoD-checked; it gives the actor no file access.
+   */
   private async assertNoEscalation(actor: UserActor, rolePermissions: string[]): Promise<void> {
     const held = (await this.resolver.forUser(actor.userId)).permissions;
-    if (rolePermissions.some((p) => !held.has(p))) throw new DomainException('iam.role_escalation');
+    const counted = rolePermissions.filter((p) => !(CUSTOMER_FILE_READ as readonly string[]).includes(p));
+    if (counted.some((p) => !held.has(p))) throw new DomainException('iam.role_escalation');
   }
 }

@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**116 settings** — 65 confirmed · 22 proposed · 4 pending the CPA (⚖) · 2 pending the business · 23 defined without a value (not set until their owner sets them).
+**117 settings** — 65 confirmed · 22 proposed · 4 pending the CPA (⚖) · 3 pending the business · 23 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -47,6 +47,7 @@
 | `calloff.max_months` | `6` | confirmed | superadmin | D-206, D-290 | D-206 / D-290 longest a call-off agreement may hold a quotation’s unit price (months, from the factory’s acceptance) |
 | `campaigns.budget_alert_pct` | `80` | confirmed | superadmin | D-154 | D-154 Marketing is alerted when a campaign has used this share of its budget |
 | `catalog.hero_presets` | `{"shapes":[{"id":"mailer","labelTh":"ไปรษณีย์","styleCode":"PK-CF-01"},{"id":"lid","labelTh":"ฝาครอบ","styleCode":"PK-CT-02"},{"id":"tuck","labelTh":"ฝาเสียบ","styleCode":"PK-TE-01"}],"sizesMm":[{"w":180,"d":120,"h":50},{"w":250,"d":180,"h":80},{"w":100,"d":100,"h":180}],"materials":[{"id":"kraft350","labelTh":"คราฟท์ 350g"},{"id":"art350","labelTh":"อาร์ตการ์ด 350g"},{"id":"corrE","labelTh":"ลูกฟูก E"}],"prints":[{"id":"none","labelTh":"ไม่พิมพ์"},{"id":"one","labelTh":"1 สี"},{"id":"full","labelTh":"เต็มสี"}],"quantities":[300,500,1000,2000],"default":{"shape":"mailer","size":0,"material":"corrE","print":"one","qty":500}}` | confirmed | admin | D-310, D-043 | D-310 the homepage Studio hero (product owner, 2026-10-08): shapes (by style code or catalogue product), inside sizes W×D×H mm, boards and prints with their labels, quantities and the default selection. Which product a shape opens (`productSlug` / `styleCode`) and which material / ink options a board or print means (`optionCodes`) are mapped by Admin per catalogue; an entry the catalogue cannot price is dropped on read. Priced by store.quotes.calculate |
+| `catalog.print_limits` | `{"maxSpotColoursPerSide":1,"cmykSpotAddOnEnabled":false}` | pending_business | admin | D-443 | D-443 / B-API-6: what the engine can price per print side — the most spot colours on a side and whether CMYK + spot colour is offered. Caps every catalogue print model; beyond it the configurator offers nothing and a store calculation gets the quote path |
 | `claims.window_days` | `7` | confirmed | superadmin | D-082 | D-082 claim window after receipt (days) |
 | `close.unmatched_items_threshold` | `0` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 1: unmatched bank / gateway items allowed at close before each must be explained (proposed: none) |
 | `configurations.draft_retention_days` | `90` | confirmed | superadmin | D-185 | D-185 days a draft configuration is kept after its last change, then deleted |
