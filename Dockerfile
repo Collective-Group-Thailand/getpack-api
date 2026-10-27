@@ -47,6 +47,7 @@ COPY prisma.deploy.config.ts ./prisma.config.ts
 # --- runtime ------------------------------------------------------------------------------------
 FROM ${NODE_IMAGE} AS runtime
 RUN apt-get update \
+  && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends tini ca-certificates openssl chromium fonts-thai-tlwg fonts-noto-core \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production PDF_CHROMIUM_PATH=/usr/bin/chromium
