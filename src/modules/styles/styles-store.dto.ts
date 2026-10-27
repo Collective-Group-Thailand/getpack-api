@@ -78,6 +78,17 @@ export class StyleListQuery extends CursorQuery {
   @IsOptional()
   @IsIn(STYLE_SORTS)
   sort?: (typeof STYLE_SORTS)[number];
+
+  @ApiPropertyOptional({
+    example: '200x150x80',
+    description:
+      "Size search (styles redesign C0, DECISIONS-STAGE-A §4): the outside size of the customer's product, " +
+      'length × width × height in mm. Keeps the styles whose entered inside range takes it plus 5 mm per dimension ' +
+      '(length and width may swap); styles without a complete range are left out. Each card then carries `fit`.',
+  })
+  @IsOptional()
+  @Matches(/^\d{1,4}(\.\d)?[xX]\d{1,4}(\.\d)?[xX]\d{1,4}(\.\d)?$/)
+  size?: string;
 }
 
 export class CompareQuery {
@@ -126,6 +137,39 @@ export class StylePriceDto {
     description: 'The spec this price is for, as one string (D-441)',
   })
   label!: SpecLabelDto;
+}
+
+/** The inside size range a product must fit (styles redesign C0), mm — only when all six bounds are entered. */
+export class StyleFitRangeDto {
+  @ApiProperty({ type: 'integer', example: 50, description: 'Inside length, minimum. Unit: mm.' })
+  minLMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 300 })
+  maxLMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 40 })
+  minWMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 200 })
+  maxWMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 20 })
+  minHMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 150 })
+  maxHMm!: number;
+}
+
+/** What the size search worked out for one card: the inside size it recommends (product + 5 mm, maybe turned). */
+export class StyleFitDto {
+  @ApiProperty({ type: Number, example: 205, description: 'Recommended inside length. Unit: mm.' })
+  insideLMm!: number;
+
+  @ApiProperty({ type: Number, example: 155 })
+  insideWMm!: number;
+
+  @ApiProperty({ type: Number, example: 85 })
+  insideHMm!: number;
 }
 
 /** The style's photo (D-426): what the card shows, with its alt text. */
@@ -198,6 +242,41 @@ export class StyleCardDto {
 
   @ApiProperty({ type: StylePhotoDto, nullable: true, example: null })
   photo!: StylePhotoDto | null;
+
+  @ApiProperty({
+    type: StyleFitRangeDto,
+    nullable: true,
+    example: null,
+    description:
+      'The inside size range for the card spec row and the size search; null until all six bounds are entered',
+  })
+  fitRange!: StyleFitRangeDto | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: null,
+    description: 'Minimum order quantity in pieces as entered by the business; null = not shown',
+  })
+  moqUnits!: number | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description:
+      "Short-lived signed URL of the style's own rendered flat dieline (`dieline_svg` asset, D-270) for the card's " +
+      'hover view; null when the style has none',
+  })
+  dielineUrl!: string | null;
+
+  @ApiProperty({
+    type: StyleFitDto,
+    nullable: true,
+    example: null,
+    description: 'Only with the `size` search: the inside size recommended for the product; null otherwise',
+  })
+  fit!: StyleFitDto | null;
 }
 
 export class StyleFacetValueDto {
@@ -231,6 +310,16 @@ export class StyleFacetsDto {
   pricePath!: StyleFacetValueDto[];
 }
 
+export class StyleListMeta extends CursorMeta {
+  @ApiProperty({
+    type: 'integer',
+    example: 0,
+    description:
+      'Published styles with a complete inside size range — the size search is offered only when this is above 0',
+  })
+  sizeSearchStyles!: number;
+}
+
 export class StyleListDto {
   @ApiProperty({ type: [StyleCardDto] })
   data!: StyleCardDto[];
@@ -238,8 +327,8 @@ export class StyleListDto {
   @ApiProperty({ type: StyleFacetsDto, description: 'Counts over the styles matching the query and filters' })
   facets!: StyleFacetsDto;
 
-  @ApiProperty({ type: CursorMeta })
-  meta!: CursorMeta;
+  @ApiProperty({ type: StyleListMeta })
+  meta!: StyleListMeta;
 }
 
 export class StyleAxisDto {
@@ -409,6 +498,25 @@ export class StyleDetailDto extends StyleCardDto {
 
   @ApiProperty({ type: [StyleAssetDto] })
   assets!: StyleAssetDto[];
+
+  @ApiProperty({
+    type: Boolean,
+    nullable: true,
+    example: null,
+    description: 'As entered by the business; null = unknown',
+  })
+  recyclable!: boolean | null;
+
+  @ApiProperty({
+    type: Boolean,
+    nullable: true,
+    example: null,
+    description: 'As entered by the business; null = unknown',
+  })
+  plasticFree!: boolean | null;
+
+  @ApiProperty({ type: [String], example: [], description: 'Certification codes as entered by the business' })
+  certifications!: string[];
 }
 
 export class StyleFavouriteDto {
@@ -442,6 +550,10 @@ export const CARD_EXAMPLE: StyleCardDto = {
   options: ['tuck_bottom:crash_lock', 'window:front_window'],
   thumbnailUrl: null,
   photo: null,
+  fitRange: null,
+  moqUnits: null,
+  dielineUrl: null,
+  fit: null,
 };
 
 export const LIST_EXAMPLE: StyleListDto = {
@@ -455,7 +567,7 @@ export const LIST_EXAMPLE: StyleListDto = {
     materialClass: [{ value: 'paperboard', count: 1 }],
     pricePath: [{ value: 'instant', count: 1 }],
   },
-  meta: { nextCursor: null },
+  meta: { nextCursor: null, sizeSearchStyles: 0 },
 };
 
 export const DETAIL_EXAMPLE: StyleDetailDto = {
@@ -489,6 +601,9 @@ export const DETAIL_EXAMPLE: StyleDetailDto = {
   leadTime: null,
   useCases: [],
   assets: [],
+  recyclable: null,
+  plasticFree: null,
+  certifications: [],
 };
 
 export const VARIANT_SORTS = ['popular', 'instant_first', 'name'] as const;
