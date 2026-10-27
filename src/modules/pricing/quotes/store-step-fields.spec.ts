@@ -69,6 +69,22 @@ describe('C4-API-2 store step fields', () => {
     ]);
   });
 
+  it('C4-API-3: arrival is the engine window when set, else the single C4-API-2 date', () => {
+    const fields = storeStepFields({
+      vatRatePct: '7',
+      shippingZone: null,
+      arrivals: [{ from: '2026-11-03', to: '2026-11-05' }, null],
+      steps: [
+        step(500, '10.00', { earliestDeliveryDate: '2026-11-02' }),
+        step(1000, '9.00', { earliestDeliveryDate: '2026-11-02' }),
+      ],
+    });
+    expect(fields.map((f) => f.arrival)).toEqual([
+      { from: '2026-11-03', to: '2026-11-05' },
+      { from: '2026-11-02', to: '2026-11-02' },
+    ]);
+  });
+
   it('never carries a factory or origin field', () => {
     const [f] = storeStepFields({ vatRatePct: '7', shippingZone: null, steps: [step(1, '1.00')] });
     expect(Object.keys(f!).sort()).toEqual(['arrival', 'savingPercent', 'vatRate', 'zoneName']);
