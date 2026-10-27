@@ -63,7 +63,9 @@ describe('carrier booking sender (D-442, GLOBAL-RULES §1)', () => {
     }
     expect(error).toBeInstanceOf(DomainException);
     expect((error as DomainException).code).toBe('shipments.carrier_unavailable');
-    expect(JSON.stringify((error as DomainException).params)).toContain('entity.phone, entity.return_address');
+    expect(JSON.stringify((error as DomainException).params)).toContain(
+      'entity.phone, entity.return_address',
+    );
   });
 
   /** The service with only what `bookCarrier` touches; the carrier call is captured, then stopped. */

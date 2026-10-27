@@ -503,9 +503,15 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     );
     const ref = booked.body.carrierBookingRef as string;
     // D-442: the carrier got getpack as the sender (entity settings) — never the factory's name, contact or address.
-    const fakeFlash = ctx.app.get<CarrierAdapters>(CARRIER_ADAPTERS).get('flash_express') as FakeCarrierAdapter;
+    const fakeFlash = ctx.app
+      .get<CarrierAdapters>(CARRIER_ADAPTERS)
+      .get('flash_express') as FakeCarrierAdapter;
     const sent = fakeFlash.booked.get(ref)!;
-    expect(sent.from).toMatchObject({ name: DEV_ENTITY.displayName, phone: DEV_ENTITY.phone, postcode: '10000' });
+    expect(sent.from).toMatchObject({
+      name: DEV_ENTITY.displayName,
+      phone: DEV_ENTITY.phone,
+      postcode: '10000',
+    });
     const factoryRow = await ctx.prisma.factory.findUniqueOrThrow({
       where: { publicId: fixture.factoryPublicId },
       include: { addresses: true, contacts: true },

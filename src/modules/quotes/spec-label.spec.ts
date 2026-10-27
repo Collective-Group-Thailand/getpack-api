@@ -61,7 +61,12 @@ describe('the one spec label (D-441, GLOBAL-RULES §5)', () => {
     const red = { name: 'แดง', kind: 'spot' };
     const cmyk = { name: 'CMYK', kind: 'process' };
     const box = (...extra: SpecLineDto[]) => [
-      { key: 'size', labelTh: 'ขนาด', labelEn: 'Size', ...toLine(sizeValue({ l: 140, w: 97.5, d: 60 }, 'internal')) },
+      {
+        key: 'size',
+        labelTh: 'ขนาด',
+        labelEn: 'Size',
+        ...toLine(sizeValue({ l: 140, w: 97.5, d: 60 }, 'internal')),
+      },
       ...extra,
     ];
     const toLine = (v: { th: string; en: string } | null) => ({ valueTh: v!.th, valueEn: v!.en });
@@ -74,13 +79,19 @@ describe('the one spec label (D-441, GLOBAL-RULES §5)', () => {
 
     it('describes the method of a side: CMYK, สีพิเศษ n สี, CMYK + สีพิเศษ n สี; nothing for an unprinted side', () => {
       expect(printMethodText([cmyk])).toEqual({ th: 'CMYK', en: 'CMYK' });
-      expect(printMethodText([black, red])).toEqual({ th: 'สีพิเศษ 2 สี (ดำ, แดง)', en: '2 spot colours (ดำ, แดง)' });
+      expect(printMethodText([black, red])).toEqual({
+        th: 'สีพิเศษ 2 สี (ดำ, แดง)',
+        en: '2 spot colours (ดำ, แดง)',
+      });
       expect(printMethodText([cmyk, black])).toEqual({
         th: 'CMYK + สีพิเศษ 1 สี (ดำ)',
         en: 'CMYK + 1 spot colour (ดำ)',
       });
       expect(printMethodText([])).toBeNull();
-      expect(printSideText('outside', [cmyk])).toEqual({ th: 'พิมพ์ด้านนอก: CMYK', en: 'Print (outside): CMYK' });
+      expect(printSideText('outside', [cmyk])).toEqual({
+        th: 'พิมพ์ด้านนอก: CMYK',
+        en: 'Print (outside): CMYK',
+      });
       expect(printSideText('inside', [black])?.th).toBe('พิมพ์ด้านใน: สีพิเศษ 1 สี (ดำ)');
       expect(printSideText('inside', [])).toBeNull();
     });

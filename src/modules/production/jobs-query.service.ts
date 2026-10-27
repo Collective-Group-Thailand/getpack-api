@@ -38,7 +38,10 @@ export class JobsQueryService implements OnModuleInit {
           submissionFile: {
             select: {
               submission: {
-                select: { orderId: true, proofs: { where: { status: 'approved' }, select: { publicId: true } } },
+                select: {
+                  orderId: true,
+                  proofs: { where: { status: 'approved' }, select: { publicId: true } },
+                },
               },
             },
           },

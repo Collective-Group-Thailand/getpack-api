@@ -73,7 +73,10 @@ const mm = (n: number) => String(Number(n));
 type Ink = Named & { kind: string };
 const uniq = (ids: (string | undefined)[]) => [...new Set(ids.filter((id): id is string => !!id))];
 
-async function names<T extends Named>(ids: string[], find: (ids: string[]) => Promise<T[]>): Promise<Map<string, T>> {
+async function names<T extends Named>(
+  ids: string[],
+  find: (ids: string[]) => Promise<T[]>,
+): Promise<Map<string, T>> {
   return new Map((ids.length ? await find(ids) : []).map((r) => [r.publicId, r]));
 }
 

@@ -100,12 +100,14 @@ export class ProductionCopiesService {
     const source = copy.sourceFile;
     if (source.uploadStatus !== 'uploaded' || source.scanStatus !== 'clean' || source.purgedAt)
       return this.unsupported(copy.id, copy.publicId, 'source_unavailable');
-    if (Number(source.sizeBytes) > MAX_SCRUB_BYTES) return this.unsupported(copy.id, copy.publicId, 'too_large');
+    if (Number(source.sizeBytes) > MAX_SCRUB_BYTES)
+      return this.unsupported(copy.id, copy.publicId, 'too_large');
     let body: Buffer;
     try {
       body = await this.readAll(source.storageKey);
     } catch (error) {
-      if (copy.attempts >= MAX_ATTEMPTS) return this.unsupported(copy.id, copy.publicId, 'source_unavailable');
+      if (copy.attempts >= MAX_ATTEMPTS)
+        return this.unsupported(copy.id, copy.publicId, 'source_unavailable');
       throw error; // retried after the lease
     }
     const { submission } = copy.submissionFile;
@@ -158,7 +160,12 @@ export class ProductionCopiesService {
     await this.prisma.withTx(async (tx) => {
       const updated = await tx.artworkProductionCopy.updateMany({
         where: { id, status: 'pending' },
-        data: { status: 'unsupported', failureReason: reason, lockedUntil: null, rowVersion: { increment: 1 } },
+        data: {
+          status: 'unsupported',
+          failureReason: reason,
+          lockedUntil: null,
+          rowVersion: { increment: 1 },
+        },
       });
       if (updated.count > 0)
         await this.record(tx, publicId, 'artwork.production_copy_unsupported', { reason });
@@ -191,7 +198,7 @@ export class ProductionCopiesService {
 
   private async readAll(key: string): Promise<Buffer> {
     const chunks: Buffer[] = [];
-    for await (const chunk of (await this.storage.getStream(key)))
+    for await (const chunk of await this.storage.getStream(key))
       chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array));
     return Buffer.concat(chunks);
   }

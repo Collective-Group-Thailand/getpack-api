@@ -24,7 +24,8 @@ export type ScrubFormat = 'jpeg' | 'png' | 'webp' | 'pdf';
 
 export type ScrubFailure = 'unsupported_format' | 'encrypted' | 'signed' | 'unreadable' | 'too_large';
 
-export type ScrubResult = { ok: true; format: ScrubFormat; body: Buffer } | { ok: false; reason: ScrubFailure };
+export type ScrubResult =
+  { ok: true; format: ScrubFormat; body: Buffer } | { ok: false; reason: ScrubFailure };
 
 /**
  * Technical ceiling for an in-memory scrub (the preflight's own limit, `MAX_PREFLIGHT_BYTES`): above it the file is

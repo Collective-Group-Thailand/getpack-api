@@ -152,7 +152,13 @@ async function ensureEntitySettings(
     const { key, description } = ENTITY_SETTING_KEYS[field];
     await ensureSetting(
       tx,
-      { key, valueType: 'string', value, description, decisions: field === 'displayName' ? ['D-442'] : ['D-092'] },
+      {
+        key,
+        valueType: 'string',
+        value,
+        description,
+        decisions: field === 'displayName' ? ['D-442'] : ['D-092'],
+      },
       'entity',
       entityId,
       count,

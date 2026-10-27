@@ -29,7 +29,8 @@ export class PuppeteerPdfRenderer implements PdfRenderer {
       const pdf = await page.pdf({ format: 'A4', printBackground: true, preferCSSPageSize: true });
       // D-442: no Title (the page's <title>), Creator (HeadlessChrome) or Producer (Skia) on any document we hand out.
       const scrubbed = await scrubMetadata(Buffer.from(pdf));
-      if (!scrubbed.ok) throw new ProviderUnavailableError('pdf', `metadata scrub failed: ${scrubbed.reason}`);
+      if (!scrubbed.ok)
+        throw new ProviderUnavailableError('pdf', `metadata scrub failed: ${scrubbed.reason}`);
       return scrubbed.body;
     } finally {
       await page.close().catch(() => undefined);

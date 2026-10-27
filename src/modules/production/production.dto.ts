@@ -353,13 +353,7 @@ export class ProductionOriginalFileDto {
     description: 'Why an `unsupported` file is not offered',
   })
   reason!:
-    | 'unsupported_format'
-    | 'encrypted'
-    | 'signed'
-    | 'unreadable'
-    | 'too_large'
-    | 'source_unavailable'
-    | null;
+    'unsupported_format' | 'encrypted' | 'signed' | 'unreadable' | 'too_large' | 'source_unavailable' | null;
 }
 
 export class JobArtworkDto {

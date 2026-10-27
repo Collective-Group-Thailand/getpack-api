@@ -176,7 +176,9 @@ describe('metadata scrub (D-442, GLOBAL-RULES §1)', () => {
 
     const out = await scrubPdf(pdf);
     noLeak(out);
-    expect(out.toString('latin1')).not.toMatch(/\/Producer|\/Creator|\/Author|\/Title|\/Metadata|\/PieceInfo/);
+    expect(out.toString('latin1')).not.toMatch(
+      /\/Producer|\/Creator|\/Author|\/Title|\/Metadata|\/PieceInfo/,
+    );
     const again = await PDFDocument.load(out, { updateMetadata: false });
     expect(again.getPageCount()).toBe(1);
     expect(again.getTitle()).toBeUndefined();
@@ -223,7 +225,10 @@ describe('metadata scrub (D-442, GLOBAL-RULES §1)', () => {
       ok: false,
       reason: 'unsupported_format',
     });
-    expect(await scrubMetadata(Buffer.from('PK\x03\x04 zip'))).toEqual({ ok: false, reason: 'unsupported_format' });
+    expect(await scrubMetadata(Buffer.from('PK\x03\x04 zip'))).toEqual({
+      ok: false,
+      reason: 'unsupported_format',
+    });
     expect(await scrubMetadata(Buffer.from('%PDF-1.4\n% not really a pdf\n%%EOF\n'))).toEqual({
       ok: false,
       reason: 'unreadable',

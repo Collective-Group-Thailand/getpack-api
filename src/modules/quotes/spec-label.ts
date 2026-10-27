@@ -76,7 +76,10 @@ export function printMethodText(inks: readonly PrintInk[]): SpecLabel | null {
   const n = spots.length;
   const spot =
     n > 0
-      ? { th: `สีพิเศษ ${n} สี (${spots.join(', ')})`, en: `${n} spot colour${n > 1 ? 's' : ''} (${spots.join(', ')})` }
+      ? {
+          th: `สีพิเศษ ${n} สี (${spots.join(', ')})`,
+          en: `${n} spot colour${n > 1 ? 's' : ''} (${spots.join(', ')})`,
+        }
       : null;
   if (!cmyk) return spot;
   return spot ? { th: `CMYK + ${spot.th}`, en: `CMYK + ${spot.en}` } : { th: 'CMYK', en: 'CMYK' };
@@ -149,7 +152,9 @@ export function specLabel(lines: readonly SpecLineDto[], calculatorKey?: string 
 export function specLinesText(lines: readonly SpecLineDto[], lang: 'th' | 'en' = 'th'): string {
   return lines
     .map((l) =>
-      PRINT_LINE.test(l.key) ? labelValue(l, lang) : `${lang === 'th' ? l.labelTh : l.labelEn} ${lang === 'th' ? l.valueTh : l.valueEn}`,
+      PRINT_LINE.test(l.key)
+        ? labelValue(l, lang)
+        : `${lang === 'th' ? l.labelTh : l.labelEn} ${lang === 'th' ? l.valueTh : l.valueEn}`,
     )
     .join(' · ');
 }
