@@ -54,6 +54,7 @@ describe('seed data (B1.2 step 3)', () => {
       'shipping.carton_spec': 'pending_business',
       'shipping.pallet_spec': 'pending_business',
       'shipping.target_margin_pct': 'pending_business',
+      'shipping.transit_days': 'pending_business',
       // B2.5: no decision gives the RFQ SLA.
       'rfq.sla_business_hours': 'pending_business',
       // B3.1: D-060's legacy value is a secret not in the repository — its 7-day fallback, proposed.

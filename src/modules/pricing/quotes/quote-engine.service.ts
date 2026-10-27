@@ -18,7 +18,7 @@ import { type QuoteDimensions, SpecsService } from '@modules/specs/specs.service
 import { Injectable, Logger } from '@nestjs/common';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
-import { SettingsService } from '@platform/settings/settings.service';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import {
   type AnyCalculatorAdapter,
@@ -31,6 +31,7 @@ import {
 import { CalculatorRegistry } from '../calculators/calculator';
 import { type ToolingAmounts, type ToolingWaive } from '../calculators/shared/tooling';
 import { ToleranceService } from './tolerance.service';
+import { type ArrivalWindow, arrivalWindow, type TransitDaysValue, transitFor } from './transit-days';
 
 /**
  * Prices a configuration for a channel (B2.3) with the calculator adapter of its `calculator_key`:
@@ -165,6 +166,11 @@ export interface QuoteView {
   vatRatePct?: string | null;
   /** The customer-facing name of the destination zone the shipping estimate used (C4-API-2); null when not priced. */
   shippingZone?: { th: string; en: string } | null;
+  /**
+   * C4-API-3: per step (same order), the arrival window from the ready date plus the zone's transit days
+   * (`shipping.transit_days`, national business calendar); null where shipping is not priced or no transit is set.
+   */
+  arrivals?: (ArrivalWindow | null)[];
   /** The analytics row of this calculation (null when it could not be written); internal only. */
   calculateLog?: { id: bigint; occurredAt: Date; publicId: string } | null;
 }
@@ -491,6 +497,7 @@ export class QuoteEngineService {
       });
     }
 
+    const arrivals = await this.arrivals(steps, at, settingVersionIds);
     const view: QuoteView = {
       calculatorVersion: adapter.version,
       steps,
@@ -511,6 +518,7 @@ export class QuoteEngineService {
       dimensions: measured.dimensions,
       vatRatePct: vatPct ? vatPct.toString() : null,
       shippingZone,
+      arrivals,
     };
     view.calculateLog =
       ctx.log === false ? null : await this.log(adapter, cfg, resolved, view, ctx, at, Date.now() - started);
@@ -749,6 +757,35 @@ export class QuoteEngineService {
   private async vatPct(versionId: bigint, db: Tx): Promise<MoneyValue> {
     const version = await db.taxRateVersion.findUniqueOrThrow({ where: { id: versionId } });
     return new MoneyDecimal(version.ratePct.toString());
+  }
+
+  /**
+   * C4-API-3: arrival.from / arrival.to of each step = ready date (earliest ship date) + the destination zone's
+   * min / max transit working days (`shipping.transit_days`, effective-dated; holidays of the national business
+   * calendar skipped). The setting version used is snapshotted with the other setting versions.
+   */
+  private async arrivals(
+    steps: readonly QuoteStepView[],
+    at: Date,
+    settingVersionIds: Record<string, string>,
+  ): Promise<(ArrivalWindow | null)[]> {
+    const zoneOf = (s: QuoteStepView): string | null =>
+      s.earliestShipDate ? (s.internal?.shipping?.zoneCode ?? null) : null;
+    if (!steps.some((s) => zoneOf(s) !== null)) return steps.map(() => null);
+    let setting: { value: TransitDaysValue; versionId: bigint };
+    try {
+      setting = await this.settings.at('shipping.transit_days', { at });
+    } catch (error) {
+      if (error instanceof SettingNotFoundError) return steps.map(() => null);
+      throw error;
+    }
+    settingVersionIds['shipping.transit_days'] = String(setting.versionId);
+    const calendar = await this.calendars.calendar();
+    return steps.map((s) => {
+      const zoneCode = zoneOf(s);
+      const transit = zoneCode ? transitFor(setting.value, zoneCode) : null;
+      return transit ? arrivalWindow(calendar, s.earliestShipDate!, transit) : null;
+    });
   }
 
   private async addWorkingDays(factoryId: bigint, date: string, days: number, db: Tx): Promise<string> {

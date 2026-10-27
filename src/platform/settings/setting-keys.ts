@@ -40,6 +40,11 @@ export interface SettingValues {
   'shipping.pallet_spec': { lengthCm: number; widthCm: number; maxHeightCm: number; maxWeightKg: number };
   /** Not seeded (B2.4): no D-040 group-5 suggestion until set. */
   'shipping.target_margin_pct': string;
+  /** C4-API-3 (ADR-0005): carrier transit working days per shipping zone code, `default` for unlisted zones. */
+  'shipping.transit_days': {
+    default: { min: number; max: number };
+    zones: Record<string, { min: number; max: number }>;
+  };
   /** D-060 calendar days until an unpaid order group is cancelled (proposed, B3.1). */
   'orders.unpaid_expiry_days': number;
   /** accounting-design §2 nature of the sale per product type code (⚖ pending CPA). */

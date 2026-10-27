@@ -339,14 +339,14 @@ export const QUOTE_NO_PRICE_REASONS = [
   'rfq_required',
 ] as const;
 
-/** C4-API-2: the arrival window, Asia/Bangkok dates. */
+/** C4-API-2 / C4-API-3: the arrival window, Asia/Bangkok dates. */
 export class QuoteArrivalDto {
   @ApiProperty({
     type: String,
     format: 'date',
     pattern: '^\\d{4}-\\d{2}-\\d{2}$',
     example: '2026-10-10',
-    description: 'Earliest arrival (Asia/Bangkok)',
+    description: 'Earliest arrival (Asia/Bangkok): ready date + the zone’s minimum transit working days',
   })
   from!: string;
 
@@ -355,7 +355,9 @@ export class QuoteArrivalDto {
     format: 'date',
     pattern: '^\\d{4}-\\d{2}-\\d{2}$',
     example: '2026-10-10',
-    description: 'Latest arrival (Asia/Bangkok); equals `from` while no maximum transit is recorded',
+    description:
+      'Latest arrival (Asia/Bangkok): ready date + the zone’s maximum transit working days; equals `from` when they ' +
+      'are equal (or, without `shipping.transit_days`, the C4-API-2 single date)',
   })
   to!: string;
 }
@@ -471,8 +473,9 @@ export class QuoteStepDto {
     type: QuoteArrivalDto,
     nullable: true,
     description:
-      'C4-API-2 (D-101): arrival window — the earliest ship date plus the zone’s extra lead days or the carrier’s ' +
-      'transit days, counted in working days of the business calendar (holidays excluded); null when unknown',
+      'C4-API-3 (D-101, ADR-0005): arrival window — the ready date (earliest ship date) plus the destination zone’s ' +
+      'min / max transit working days from the effective-dated setting `shipping.transit_days`, national business ' +
+      'calendar (holidays excluded). Without that setting: the C4-API-2 single date. Null when shipping is not priced',
   })
   arrival!: QuoteArrivalDto | null;
 
@@ -845,7 +848,7 @@ export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
       vatRate: '0.07',
       savingPercent: null,
       zoneName: { th: 'กรุงเทพฯ และปริมณฑล', en: 'Bangkok and vicinity' },
-      arrival: { from: '2026-10-10', to: '2026-10-10' },
+      arrival: { from: '2026-10-12', to: '2026-10-14' },
       grossAmount: '13508.40',
       leadTimeDays: 7,
       earliestShipDate: '2026-10-09',

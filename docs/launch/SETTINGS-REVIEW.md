@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**117 settings** — 65 confirmed · 22 proposed · 4 pending the CPA (⚖) · 3 pending the business · 23 defined without a value (not set until their owner sets them).
+**118 settings** — 65 confirmed · 22 proposed · 4 pending the CPA (⚖) · 4 pending the business · 23 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -114,6 +114,7 @@
 | `shipping.carton_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 shipping carton used by the packing helper (legacy parcel logic: square footprint grid, stack height, weight limit); not seeded — no carton count until set |
 | `shipping.pallet_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 pallet used to count cartons per pallet (no legacy rule exists); not seeded — no pallet count until set |
 | `shipping.target_margin_pct` | `— (not set)` | not set | superadmin | D-040, D-013 | D-040 group 5 target shipping margin: suggested factory payout = customer rate × (1 − margin); not seeded — no group-5 suggestion until set |
+| `shipping.transit_days` | `{"default":{"min":3,"max":5},"zones":{}}` | pending_business | admin | D-013 | C4-API-3 / D-013 carrier transit working days per shipping zone (keyed by zone code; unlisted zones use `default`): arrival from = ready date + min, to = ready date + max, national business calendar. Proposed defaults: Bangkok & vicinity 1–2, Central & East 2–3, all other zones 3–5 — to be confirmed by Logistics |
 | `storefront.support_channels` | `— (not set)` | not set | cs_lead | D-221, D-005 | D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it |
 | `storefront.support_hours` | `— (not set)` | not set | cs_lead | D-309, D-221 | D-309 hours CS answers on the storefront (Asia/Bangkok): which days and the opening and closing time; not seeded — null until the CS Lead sets it |
 | `studio.funnel_targets` | `{"medianMinutesToCart":10,"artworkToCartPct":"25","preflightPassPct":"90","priceParityPct":"100"}` | confirmed | marketing | D-286 | D-286 studio launch targets of the spec §1: median minutes from studio start to first add-to-cart, % of sessions adding artwork that add to cart, % of studio print files passing preflight, % of studio orders whose checkout equals the studio price |

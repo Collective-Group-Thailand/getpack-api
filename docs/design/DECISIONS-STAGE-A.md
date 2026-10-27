@@ -92,3 +92,18 @@ Decided by the product owner after the Stage A API review (`STAGE-A-REPORT-API.m
 | Print limits (B-API-7) | `catalog.print_limits` stays a placeholder (`pending_business`: 1 spot colour per side, CMYK + spot add-on off) until the business sets the real values in the back office (Admin, effective-dated, audited). No code change. |
 | Studio render previews (B-API-7) | CS and the roles handling the order (support through an explicit assignment or an open order conversation, plus Prepress) may read the low-resolution, metadata-free preview of a Studio render (`GET /v1/admin/files/{fileId}/preview`, logged as `thumbnail`). Full-resolution renders, customer artwork and originals stay restricted as before (D-444). |
 | Support assignment end (B-API-7) | An explicit order support assignment ends automatically when the order's claim window ends (an open claim keeps it open); CS Lead / Admin may still end it earlier (`PUT …/support-assignment` with `null`). |
+
+---
+
+## 8. Material descriptions (approved)
+
+Approved customer-facing descriptions of the four corrugated materials shown on the configurator's material cards.
+Entered through the back-office admin API (`PATCH /v1/admin/catalog/materials/{id}`), never by direct SQL. On UAT an
+admin enters the same text in the back office.
+
+| Material | TH | EN |
+|---|---|---|
+| KA125 ลอน B (3 ชั้น) | ผิวคราฟท์ เกรดมาตรฐาน เหมาะกับกล่องไปรษณีย์ทั่วไป | Standard kraft finish, ideal for everyday mailer boxes |
+| KT125 ลอน B (3 ชั้น) | ผิวคราฟท์ น้ำหนักเบา ราคาประหยัด สำหรับสินค้าน้ำหนักไม่มาก | Lightweight kraft at a lower price, for lighter products |
+| KA185 ลอน B (3 ชั้น) | ผิวหนาขึ้น แข็งแรงกว่า สำหรับสินค้าหนักหรือซ้อนหลายชั้น | Heavier liner and stronger, for heavy or stacked goods |
+| KA125 ลอน E (3 ชั้น) | ลอนเล็ก ผิวเรียบ พิมพ์คมสวย เหมาะกับกล่องโชว์สินค้า | Fine flute with a smooth surface for sharp print, great for display boxes |
