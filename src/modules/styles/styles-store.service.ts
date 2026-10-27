@@ -11,6 +11,7 @@ import { Injectable } from '@nestjs/common';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
 import { StyleAssetsService } from './style-assets.service';
+import { fitOf, hasFitRange, parseProductSize } from './style-fit';
 import { StyleMakeabilityService } from './style-makeability.service';
 import { MULTI_SELECT_AXES } from './style-master';
 import {
@@ -26,6 +27,7 @@ import {
   type StyleVariantListDto,
   type StyleVariantListQuery,
 } from './styles-store.dto';
+import { matchesUseCaseGroups, useCaseGroupsOf } from './use-case-groups';
 
 /** Option axes shown as the closure facet; every other axis is a feature (`none` values are never facets). */
 const CLOSURE_AXES: ReadonlySet<string> = new Set([
@@ -125,6 +127,18 @@ export class StylesStoreService {
     // D-274: one search log per search (its first page), the zero-result ones feed the "next styles" report.
     if (q && !query.cursor) await this.logSearch(q, matched.length, userId);
     const facetsOf = (list: LibraryRow[]): StyleFacetsDto => facets(list);
+    // C0 size search (DECISIONS-STAGE-A §4): the fit of each style for the product, when a size is asked.
+    const product = query.size ? parseProductSize(query.size) : null;
+    if (query.size && !product) {
+      throw new DomainException('validation.failed', {
+        errors: [
+          { path: 'size', code: 'matches', message: 'size is length x width x height in mm, each above 0' },
+        ],
+      });
+    }
+    const useCaseGroups = useCaseGroupsOf(query.useCase);
+    const fits = new Map<bigint, ReturnType<typeof fitOf>>();
+    if (product) for (const r of matched) fits.set(r.id, fitOf(r, product));
     matched = matched.filter((r) => {
       const opts = optionValues(r);
       return (
@@ -132,9 +146,13 @@ export class StylesStoreService {
         (!query.family || r.family === query.family) &&
         (!query.closure || opts.closure.has(query.closure)) &&
         (!query.feature || opts.feature.has(query.feature)) &&
-        (!query.useCase || r.useCases.some((u) => u.code === query.useCase)) &&
+        matchesUseCaseGroups(
+          r.useCases.map((u) => u.code),
+          useCaseGroups,
+        ) &&
         (!query.materialClass || r.materialClass === query.materialClass) &&
-        (!query.pricePath || pricePath(r) === query.pricePath)
+        (!query.pricePath || pricePath(r) === query.pricePath) &&
+        (!product || fits.get(r.id) !== null)
       );
     });
     const sort = query.sort ?? (q ? 'relevance' : 'popular');
@@ -164,11 +182,14 @@ export class StylesStoreService {
       page.map((r) => r.id),
     );
     return {
-      data: await Promise.all(page.map((r) => this.card(r, favourites))),
+      data: await Promise.all(
+        page.map(async (r) => ({ ...(await this.card(r, favourites)), fit: fits.get(r.id) ?? null })),
+      ),
       facets: facetsOf(matched),
       meta: {
         nextCursor:
           offset + query.limit < matched.length ? encodeCursor({ o: offset + query.limit, s: sort }) : null,
+        sizeSearchStyles: rows.filter(hasFitRange).length,
       },
     };
   }
@@ -416,6 +437,9 @@ export class StylesStoreService {
       sizeRanges: sizeRanges(row),
       leadTime,
       useCases: row.useCases.map((u) => u.code),
+      recyclable: row.recyclable,
+      plasticFree: row.plasticFree,
+      certifications: row.certifications,
       assets: await Promise.all(
         row.assets.map(async (a) => ({
           kind: a.kind,
@@ -440,10 +464,13 @@ export class StylesStoreService {
       r.assets.find((a) => a.kind === 'thumbnail_3d') ??
       r.assets.find((a) => a.kind === 'thumbnail_2d') ??
       null;
+    // The style's own flat dieline (not a variant's): the card's hover view, only when it was rendered (C0).
+    const dieline = r.assets.find((a) => a.kind === 'dieline_svg' && a.variant === null) ?? null;
     return {
       ...card(r, favourites),
       thumbnailUrl: photo?.url ?? (thumb ? await this.assets.url(thumb) : null),
       photo,
+      dielineUrl: dieline ? await this.assets.url(dieline) : null,
     };
   }
 
@@ -520,7 +547,10 @@ function productHints(r: LibraryRow) {
     .sort((a, b) => a.unitPrice.comparedTo(b.unitPrice) || a.slug.localeCompare(b.slug));
 }
 
-function card(r: LibraryRow, favourites: Set<bigint>): Omit<StyleCardDto, 'thumbnailUrl' | 'photo'> {
+function card(
+  r: LibraryRow,
+  favourites: Set<bigint>,
+): Omit<StyleCardDto, 'thumbnailUrl' | 'photo' | 'dielineUrl'> {
   const hint = productHints(r)[0];
   return {
     code: r.code,
@@ -548,6 +578,18 @@ function card(r: LibraryRow, favourites: Set<bigint>): Omit<StyleCardDto, 'thumb
       : null,
     referenceCode: r.referenceVerifiedAt ? r.referenceCode : null,
     favourite: favourites === NOT_SIGNED_IN ? null : favourites.has(r.id),
+    fitRange: hasFitRange(r)
+      ? {
+          minLMm: r.fitMinLMm!,
+          maxLMm: r.fitMaxLMm!,
+          minWMm: r.fitMinWMm!,
+          maxWMm: r.fitMaxWMm!,
+          minHMm: r.fitMinHMm!,
+          maxHMm: r.fitMaxHMm!,
+        }
+      : null,
+    moqUnits: r.moqUnits,
+    fit: null,
     options: (() => {
       const { closure, feature } = optionValues(r);
       return [...[...closure].sort(), ...[...feature].sort()];

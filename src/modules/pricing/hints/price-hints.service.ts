@@ -17,6 +17,17 @@ import { type PriceHintDto, type PriceHintQuery } from './price-hints.dto';
 /** Every calculator a hint can be priced with (D-220). */
 const HINTED = new Set(['folding', 'corrugate', 'label', 'tag_sleeve', 'pouch', 'service']);
 
+/**
+ * Settings whose change moves a store price (C0): the print limits the default spec is priced under (print config,
+ * ADR-0005), the margin floor of the store rules and the VAT rounding mode. A version dated in the future is picked
+ * up by the hourly refresh once it is in force.
+ */
+export const PRICE_SETTING_KEYS: ReadonlySet<string> = new Set([
+  'catalog.print_limits',
+  'pricing.margin_floor_pct',
+  'tax.rounding_mode',
+]);
+
 /** Up to the next satang: a "starting from" figure never undercuts the price a quote gives (D-181). */
 const ceilMoney = (value: string) =>
   new MoneyDecimal(value).toDecimalPlaces(2, MoneyDecimal.ROUND_CEIL).toFixed(2);
@@ -200,6 +211,24 @@ export class PriceHintsService {
   )
   async onPricesChanged(): Promise<void> {
     await this.refresh();
+  }
+
+  /**
+   * Print config and product-type changes (C0): a product type's calculator / options, or a catalogue import (inks,
+   * finishes, materials) can change what the default spec costs, so every hint is recomputed.
+   */
+  @OnDomainEvent(['catalog.product_type.updated', 'catalog.import_applied'], {
+    consumer: 'pricing.price_hints.config',
+  })
+  async onConfigChanged(): Promise<void> {
+    await this.refresh();
+  }
+
+  /** A price-moving setting (`PRICE_SETTING_KEYS`) changed or its approved version landed. */
+  @OnDomainEvent(['setting.changed'], { consumer: 'pricing.price_hints.settings' })
+  async onSettingChanged(event: DomainEventEnvelope): Promise<void> {
+    const key = event.payload['key'];
+    if (typeof key === 'string' && PRICE_SETTING_KEYS.has(key)) await this.refresh();
   }
 
   @OnDomainEvent(['catalog.catalog_product.updated', 'catalog.catalog_product.created'], {

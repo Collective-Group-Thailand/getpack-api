@@ -46,7 +46,11 @@ export class StoreStylesController {
       'makeable by a partner (D-243). Facets with counts over the matching styles (category, family, closure, ' +
       'feature, use case, material class, price path), Thai / English search over names, codes and synonyms with ' +
       'typo tolerance, sorts `relevance` (with `q`), `popular`, `new`, `instant_first`, `name`, cursor pages (D-245). ' +
-      '`favourite` is filled for a signed-in customer. No factory identity (D-050).',
+      '`favourite` is filled for a signed-in customer. No factory identity (D-050). Styles redesign C0 ' +
+      '(DECISIONS-STAGE-A §4): `size` keeps the styles a product of that outside size fits (inside = product + 5 mm ' +
+      'per dimension, length/width may swap, within the entered inside range; incomplete ranges never match) and ' +
+      "fills each card's `fit`; `meta.sizeSearchStyles` says how many styles have a range at all. Cards carry the " +
+      'entered `fitRange` and `moqUnits` and the rendered flat dieline (`dielineUrl`) when they exist.',
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'A page of styles with facets', type: StyleListDto, example: LIST_EXAMPLE })

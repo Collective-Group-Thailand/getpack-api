@@ -104,8 +104,10 @@ export class AdminStylesController {
     summary: 'Curate a style-library base',
     description:
       'Marketing / Admin curation (D-246): featured, hidden (never published, D-243), order, Thai / English names and ' +
-      'descriptions, the getpack product type, search synonyms and use cases. Changing a name clears both name ' +
-      'approvals (D-212). Needs `If-Match` from `admin.styles.get`. Audited; publishability recomputed.',
+      'descriptions, the getpack product type, search synonyms and use cases, and the commercial data /styles shows ' +
+      '(`commercial`: inside size range for the size search, MOQ, sustainability facts — styles redesign C0, ' +
+      'DECISIONS-STAGE-A §4). Changing a name clears both name approvals (D-212). Needs `If-Match` from ' +
+      '`admin.styles.get`. Audited; publishability recomputed.',
     implements: [...DECISIONS, 'D-246', 'D-212'],
   })
   @ApiBody({

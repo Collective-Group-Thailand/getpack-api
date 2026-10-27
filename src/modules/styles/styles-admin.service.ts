@@ -17,6 +17,7 @@ import {
   type AdminStylePhotoDto,
   type AdminStyleVariantDto,
   type SetStylePhotoDto,
+  type StyleCommercialDto,
   type StyleImportRunDto,
   type UpdateStyleDto,
 } from './styles-admin.dto';
@@ -135,6 +136,18 @@ export class StylesAdminService {
         const hit = reasons.find((r) => r.reason === reason);
         return hit ? [{ reason, count: Number(hit.count) }] : [];
       }),
+      commercial: {
+        fitMinLMm: row.fitMinLMm,
+        fitMaxLMm: row.fitMaxLMm,
+        fitMinWMm: row.fitMinWMm,
+        fitMaxWMm: row.fitMaxWMm,
+        fitMinHMm: row.fitMinHMm,
+        fitMaxHMm: row.fitMaxHMm,
+        moqUnits: row.moqUnits,
+        recyclable: row.recyclable,
+        plasticFree: row.plasticFree,
+        certifications: row.certifications,
+      },
     };
   }
 
@@ -280,6 +293,7 @@ export class StylesAdminService {
           productTypeId = type.id;
         }
       }
+      if (input.commercial) assertCommercial(input.commercial);
       const renamed =
         (input.nameTh !== undefined && input.nameTh.trim() !== base.nameTh) ||
         (input.nameEn !== undefined && input.nameEn.trim() !== base.nameEn);
@@ -294,6 +308,18 @@ export class StylesAdminService {
           ...(input.descriptionTh !== undefined && { descriptionTh: input.descriptionTh?.trim() || null }),
           ...(input.descriptionEn !== undefined && { descriptionEn: input.descriptionEn?.trim() || null }),
           ...(productTypeId !== undefined && { productTypeId }),
+          ...(input.commercial && {
+            fitMinLMm: input.commercial.fitMinLMm ?? null,
+            fitMaxLMm: input.commercial.fitMaxLMm ?? null,
+            fitMinWMm: input.commercial.fitMinWMm ?? null,
+            fitMaxWMm: input.commercial.fitMaxWMm ?? null,
+            fitMinHMm: input.commercial.fitMinHMm ?? null,
+            fitMaxHMm: input.commercial.fitMaxHMm ?? null,
+            moqUnits: input.commercial.moqUnits ?? null,
+            recyclable: input.commercial.recyclable ?? null,
+            plasticFree: input.commercial.plasticFree ?? null,
+            certifications: [...new Set(input.commercial.certifications)],
+          }),
           ...(renamed && {
             namesApprovedMarketingAt: null,
             namesApprovedMarketingBy: null,
@@ -500,4 +526,21 @@ function runDto(r: Prisma.StyleImportRunGetPayload<{ include: typeof RUN_INCLUDE
     createdAt: toBangkokIso(r.createdAt),
     decidedAt: iso(r.decidedAt),
   };
+}
+
+/** Each entered minimum must not exceed its maximum (the database checks it too). */
+export function assertCommercial(c: StyleCommercialDto): void {
+  const pairs = [
+    ['fitMinLMm', c.fitMinLMm, c.fitMaxLMm],
+    ['fitMinWMm', c.fitMinWMm, c.fitMaxWMm],
+    ['fitMinHMm', c.fitMinHMm, c.fitMaxHMm],
+  ] as const;
+  const errors = pairs
+    .filter(([, min, max]) => typeof min === 'number' && typeof max === 'number' && min > max)
+    .map(([path]) => ({
+      path: `commercial.${path}`,
+      code: 'max',
+      message: 'the minimum is above the maximum',
+    }));
+  if (errors.length > 0) throw new DomainException('validation.failed', { errors });
 }

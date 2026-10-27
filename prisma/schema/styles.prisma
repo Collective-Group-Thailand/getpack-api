@@ -71,6 +71,22 @@ model StyleBase {
   /// engine's thumbnails; `{ source, alt }` of it lives in `photoMeta`.
   photoFileId              BigInt?     @map("photo_file_id")
   photoMeta                Json?       @map("photo_meta")
+  /// Styles redesign C0 (catalogue commercial fields): the inside size range (mm) a customer's product must fit for the
+  /// size search (DECISIONS-STAGE-A §4: product + 5 mm per dimension, L/W may rotate). Business data, entered by
+  /// curation; null = unknown, and a style with any bound null is left out of the size search.
+  fitMinLMm                Int?        @map("fit_min_l_mm")
+  fitMaxLMm                Int?        @map("fit_max_l_mm")
+  fitMinWMm                Int?        @map("fit_min_w_mm")
+  fitMaxWMm                Int?        @map("fit_max_w_mm")
+  fitMinHMm                Int?        @map("fit_min_h_mm")
+  fitMaxHMm                Int?        @map("fit_max_h_mm")
+  /// Minimum order quantity shown on the card and in the quick view (pieces); null = not shown.
+  moqUnits                 Int?        @map("moq_units")
+  /// Sustainability facts as entered by the business (never derived from the material); null = unknown.
+  recyclable               Boolean?
+  plasticFree              Boolean?    @map("plastic_free")
+  /// Certification codes the style's material holds (e.g. `fsc`, `food_grade`), as entered by the business.
+  certifications           String[]    @default([])
   /// First time a variant became publishable (D-184: the code is frozen from then).
   publishedAt              DateTime?   @map("published_at") @db.Timestamptz(6)
   /// sha256 of the imported fields, so a re-import of the same data changes nothing.
