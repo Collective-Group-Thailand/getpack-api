@@ -12,6 +12,7 @@ import {
   postcodes,
   saveQuote,
   seedShipping,
+  setFlag,
   staffToken,
 } from '../support/commerce-e2e';
 import {
@@ -37,6 +38,7 @@ describe('packaging spec sheet (e2e, U2.6)', () => {
     fixture = await foldingReady(ctx);
     const [code] = postcodes(ctx, 1) as [string];
     await seedShipping(ctx, fixture.factoryPublicId, [code]);
+    await setFlag(ctx, 'payments.scb', true);
     token = (await customerToken(ctx, 111)).token;
     const address = await addAddress(ctx, token, code);
     const quote = await saveQuote(ctx, token, fixture, [1000]);
@@ -57,6 +59,7 @@ describe('packaging spec sheet (e2e, U2.6)', () => {
   });
 
   afterAll(async () => {
+    await setFlag(ctx, 'payments.scb', false);
     await foldingBackToRfq(ctx);
     await ctx?.app.close();
   });
