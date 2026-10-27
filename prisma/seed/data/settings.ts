@@ -42,6 +42,17 @@ export interface SettingSeed {
   fillIfUnset?: true;
 }
 
+/** One `shipping.transit_days` window: working days, `max` ≥ `min` (a lower `max` is read as `min`). */
+const TRANSIT_WINDOW_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['min', 'max'],
+  properties: {
+    min: { type: 'integer', minimum: 0, maximum: 30 },
+    max: { type: 'integer', minimum: 0, maximum: 30 },
+  },
+} as const;
+
 export const SETTINGS: readonly SettingSeed[] = [
   // --- Pricing & selling
   {
@@ -782,6 +793,27 @@ export const SETTINGS: readonly SettingSeed[] = [
       'D-040 group 5 target shipping margin: suggested factory payout = customer rate × (1 − margin); not seeded — no group-5 suggestion until set',
     decisions: ['D-040', 'D-013'],
     confirmation: 'pending_business',
+  },
+  {
+    key: 'shipping.transit_days',
+    valueType: 'json',
+    value: { default: { min: 3, max: 5 }, zones: {} },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['default', 'zones'],
+      properties: {
+        default: TRANSIT_WINDOW_SCHEMA,
+        zones: { type: 'object', additionalProperties: TRANSIT_WINDOW_SCHEMA },
+      },
+    },
+    description:
+      'C4-API-3 / D-013 carrier transit working days per shipping zone (keyed by zone code; unlisted zones use `default`): ' +
+      'arrival from = ready date + min, to = ready date + max, national business calendar. Proposed defaults: ' +
+      'Bangkok & vicinity 1–2, Central & East 2–3, all other zones 3–5 — to be confirmed by Logistics',
+    decisions: ['D-013'],
+    confirmation: 'pending_business',
+    ownerRole: 'admin',
   },
   // --- Launch monitoring (B6.3, D-113). Operational thresholds, not business values: proposed, superadmin.
   {

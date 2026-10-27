@@ -37,12 +37,13 @@ export const vatRateOf = (ratePct: string | null | undefined): string | null =>
 
 /**
  * The store fields of every tier: `vatRate` beside each `vatAmount`, the destination zone's name and the arrival
- * window where shipping is priced. Arrival is the engine's `earliestDeliveryDate` (ship date plus the zone's extra
- * lead days or the carrier's transit days, in working days of the business calendar with its holidays); no maximum
- * transit is recorded, so `to` equals `from`. Never an origin or factory location (GLOBAL-RULES §1).
+ * window where shipping is priced. Arrival (C4-API-3) is the engine's window: ready date + the zone's min / max transit
+ * working days (`shipping.transit_days`, national business calendar with its holidays). Without a transit setting it
+ * falls back to C4-API-2: the engine's `earliestDeliveryDate` as both ends. Never an origin or factory location
+ * (GLOBAL-RULES §1).
  */
 export function storeStepFields(
-  view: Pick<QuoteView, 'steps' | 'vatRatePct' | 'shippingZone'>,
+  view: Pick<QuoteView, 'steps' | 'vatRatePct' | 'shippingZone' | 'arrivals'>,
 ): StoreStepFields[] {
   const savings = savingPercents(view.steps);
   const vatRate = vatRateOf(view.vatRatePct);
@@ -50,6 +51,8 @@ export function storeStepFields(
     savingPercent: savings[i]!,
     vatRate: s.vatAmount !== null ? vatRate : null,
     zoneName: s.shippingAmount !== null ? (view.shippingZone ?? null) : null,
-    arrival: s.earliestDeliveryDate ? { from: s.earliestDeliveryDate, to: s.earliestDeliveryDate } : null,
+    arrival:
+      view.arrivals?.[i] ??
+      (s.earliestDeliveryDate ? { from: s.earliestDeliveryDate, to: s.earliestDeliveryDate } : null),
   }));
 }

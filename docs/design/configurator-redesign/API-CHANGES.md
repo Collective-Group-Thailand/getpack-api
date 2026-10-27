@@ -225,3 +225,40 @@ option (`optionGroups[].options[].descriptionTh/descriptionEn`).
 - Contract: `contract/openapi.json` regenerated (`QuoteArrivalDto`; `zoneName` reuses `LocalisedLabelDto`).
 - e2e to run locally (docker DB): `pnpm test:e2e -- folding-quotes price-consistency studio-quotes target-price phase4-contract`
   (+ the configurator read e2e) — they assert existing step fields; new fields are additive.
+
+
+---
+
+# Stage C (C4-API-3) — API changes: arrival range from transit days per zone
+
+Branch `design/configurator-redesign`. No endpoint, DTO shape or migration change; one new setting and a new meaning
+for `arrival.to`.
+
+## Setting `shipping.transit_days` (ADR-0005, effective-dated, audited)
+
+- JSON, owner **Admin** (Logistics' figures entered by Admin — Logistics has no `settings.change`), `pending_business`
+  until Logistics confirms. Value:
+  ```json
+  { "default": { "min": 3, "max": 5 },
+    "zones": { "<shipping zone code>": { "min": 1, "max": 2 } } }
+  ```
+  Working days (integers 0–30). A zone not listed uses `default`; a `max` below `min` is read as `min`.
+- Reference seed: `default` 3–5, no zones (zone codes are data Logistics enters). UAT seed adds a version with the
+  rehearsal zones: `uat_bkk_metro` (กรุงเทพฯ และปริมณฑล) 1–2, `uat_central_east` (ภาคกลางและภาคตะวันออก) 2–3; the
+  other zones use the default 3–5. Proposed values — **to be confirmed by Logistics**.
+- Admin edits it like every setting: `PUT`/propose a new version in the back office (settings screen).
+
+## `arrival` on calculate / calculate-batch steps
+
+- `arrival.from` = ready date + `min`, `arrival.to` = ready date + `max` working days. Ready date = the step's
+  `earliestShipDate`; working days of the national business calendar (`th_public`, weekends and holidays skipped).
+- The zone is the destination zone of the customer rate card the shipping estimate used (needs a postcode). No priced
+  shipping → `arrival: null` (unchanged).
+- Without any version of the setting the C4-API-2 behaviour stays: `from = to = earliestDeliveryDate`.
+- The setting version used is snapshotted in `configRefs.settingVersionIds['shipping.transit_days']`.
+- `earliestDeliveryDate` is unchanged (factory/zone extra lead days); the web shows `arrival`.
+- Code: `src/modules/pricing/quotes/transit-days.ts` (pure, unit-tested), `QuoteEngineService.arrivals`,
+  `store-step-fields.ts`. Contract: descriptions and examples of `QuoteArrivalDto` / `arrival` only.
+
+Gates: typecheck · lint · unit (`transit-days.spec.ts`, `store-step-fields.spec.ts`, seed data, settings review) ·
+`contract:build` + `contract:lint`. Integration and e2e need Docker — run locally.

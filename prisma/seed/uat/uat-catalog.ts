@@ -18,6 +18,7 @@ import {
   UAT_SHIPPING_BANDS,
   UAT_STOCK_PRODUCTS,
   UAT_ZONES,
+  type UatZoneCode,
 } from './uat-data';
 import { cloneFactoryPriceLines, newLine, UAT_EFFECTIVE_FROM } from './uat-prices';
 
@@ -741,6 +742,38 @@ async function seedHeroPresets(tx: Tx): Promise<number> {
   return 1;
 }
 
+/**
+ * C4-API-3: `shipping.transit_days` with the rehearsal zones as Logistics would enter them (proposed values, to be
+ * confirmed): Bangkok & vicinity 1–2, Central & East 2–3 working days; every other zone keeps the default 3–5.
+ * Adds a version only when the one in force lists no zone yet, so re-running the seed adds nothing.
+ */
+const UAT_TRANSIT_ZONES: Partial<Record<UatZoneCode, { min: number; max: number }>> = {
+  uat_bkk_metro: { min: 1, max: 2 },
+  uat_central_east: { min: 2, max: 3 },
+};
+
+async function seedTransitDays(tx: Tx): Promise<number> {
+  const setting = await tx.setting.findFirst({
+    where: { key: 'shipping.transit_days', scopeType: 'platform', scopeId: null },
+    include: { versions: { orderBy: { versionNo: 'desc' }, take: 1 } },
+  });
+  if (!setting) return 0;
+  const latest = setting.versions[0]?.value as { zones?: Record<string, unknown> } | undefined;
+  if (latest?.zones && Object.keys(latest.zones).length > 0) return 0;
+  await tx.settingVersion.create({
+    data: {
+      settingId: setting.id,
+      versionNo: (setting.versions[0]?.versionNo ?? 0) + 1,
+      effectiveFrom: UAT_EFFECTIVE_FROM,
+      status: 'approved',
+      value: { default: { min: 3, max: 5 }, zones: UAT_TRANSIT_ZONES },
+      reason: 'UAT rehearsal: transit days per zone (C4-API-3, proposed — Logistics confirms)',
+      decidedAt: new Date(),
+    },
+  });
+  return 1;
+}
+
 async function seedFaqs(tx: Tx): Promise<number> {
   let n = 0;
   for (const [ci, group] of UAT_FAQS.entries()) {
@@ -862,6 +895,7 @@ export async function seedUatCatalog(
   for (const [type, n] of Object.entries(added)) report[`uat_price_lines_${type}`] = n;
   report['uat_faqs'] = await seedFaqs(tx);
   report['uat_hero_presets'] = await seedHeroPresets(tx);
+  report['uat_transit_days'] = await seedTransitDays(tx);
   report['uat_people'] = await seedPeople(
     tx,
     opts.password ? await new PasswordService().hash(opts.password) : undefined,
