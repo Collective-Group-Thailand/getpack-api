@@ -11137,6 +11137,14 @@
               "null"
             ]
           },
+          "netAmount": {
+            "description": "C1-API-1 (D-441, GLOBAL-RULES §5): the total before VAT — `grossAmount` minus `vatAmount`, both as sent (decimal maths in the API), so pages show \"ก่อน VAT · VAT · รวม\" without computing money; null when either is null",
+            "example": "12624.67",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "productAmount": {
             "description": "Pieces incl. VAT",
             "example": "13380.00",
@@ -11322,6 +11330,7 @@
           "savingPercent",
           "zoneName",
           "arrival",
+          "netAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -81932,6 +81941,62 @@
         ],
         "type": "object"
       },
+      "PriceTiersDto": {
+        "properties": {
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceHintBasisDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The default spec the tiers are priced at (D-441) — the spec the configurator opens on; `quantity` is the reference quantity of the \"starting from\" price. Null when the product has no instant default spec"
+          },
+          "computedAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "example": "THB"
+          },
+          "key": {
+            "description": "Catalogue product slug",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "tiers": {
+            "description": "One entry per configurator quantity preset (ascending, ≤ 10), each exactly as `store.quotes.calculate` answers it for the default spec without a delivery postcode (shipping pending). Empty when the product has no instant default spec",
+            "items": {
+              "$ref": "#/components/schemas/QuoteStepDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "productTypeCode",
+          "currency",
+          "basis",
+          "tiers",
+          "computedAt"
+        ],
+        "type": "object"
+      },
       "PriceVersionOrigin": {
         "enum": [
           "factory_proposal",
@@ -87055,6 +87120,14 @@
               "null"
             ]
           },
+          "netAmount": {
+            "description": "C1-API-1 (D-441, GLOBAL-RULES §5): the total before VAT — `grossAmount` minus `vatAmount`, both as sent (decimal maths in the API), so pages show \"ก่อน VAT · VAT · รวม\" without computing money; null when either is null",
+            "example": "12624.67",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "productAmount": {
             "description": "Pieces incl. VAT",
             "example": "13380.00",
@@ -87240,6 +87313,7 @@
           "savingPercent",
           "zoneName",
           "arrival",
+          "netAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -213593,6 +213667,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -214225,6 +214300,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -214831,6 +214907,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -215367,6 +215444,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -216149,6 +216227,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -216649,6 +216728,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -217184,6 +217264,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -503662,6 +503743,178 @@
         ]
       }
     },
+    "/v1/store/catalog/price-hints/{slug}/tiers": {
+      "get": {
+        "description": "C1-API-2 (products R2, DECISIONS-STAGE-A §4): the product's default spec (D-441, the reference configuration the configurator opens on) priced at every quantity preset of its configurator (ascending, ≤ 10) through the one store pricing path — each tier exactly as `store.quotes.calculate` answers it for that configuration with no delivery postcode (shipping pending), including `netAmount` and `vatRate`. Pure calculation: no calculate log, no quote, cart or customer record. Reused for 60 s. `tiers` is empty (and `basis` null) when the product has no instant default spec — the page then offers the quotation route, never an estimate (D-181). No factory named (D-050).\n\nImplements: D-441, D-220, D-181, D-050.",
+        "operationId": "store.catalog.getPriceTiers",
+        "parameters": [
+          {
+            "description": "Catalogue product slug",
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "tuck-end-box",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basis": {
+                    "includesDelivery": false,
+                    "includesVat": true,
+                    "label": {
+                      "en": "60 × 60 × 150 mm",
+                      "th": "60 × 60 × 150 มม."
+                    },
+                    "quantity": 1000,
+                    "sizeCode": null,
+                    "specs": [
+                      {
+                        "key": "size",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      }
+                    ]
+                  },
+                  "computedAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "key": "tuck-end-box",
+                  "productTypeCode": "folding_carton",
+                  "tiers": [
+                    {
+                      "arrival": null,
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": null,
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13380.00",
+                      "instant": true,
+                      "leadTimeDays": 7,
+                      "netAmount": "12504.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "savingPercent": null,
+                      "shippingAmount": null,
+                      "shippingNetAmount": null,
+                      "shippingPending": true,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "toolingWaiver": null,
+                      "unitPrice": "13.38",
+                      "vatAmount": "875.33",
+                      "vatRate": "0.07",
+                      "zoneName": null
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PriceTiersDto"
+                }
+              }
+            },
+            "description": "Tier table",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the tier table of a product's default spec",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/catalog/product-categories": {
       "get": {
         "description": "Active categories that hold at least one active product type, directly or through a sub-category, in admin sort order; `parentCode` builds the menu tree. Filter products by `category` (includes sub-categories, D-228).\n\nImplements: D-100, D-228.",
@@ -548082,6 +548335,7 @@
                       "grossAmount": "13508.40",
                       "instant": true,
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -548481,6 +548735,7 @@
                             "grossAmount": "13508.40",
                             "instant": true,
                             "leadTimeDays": 7,
+                            "netAmount": "12624.67",
                             "productAmount": "13380.00",
                             "quantity": 1000,
                             "reason": null,
@@ -566878,6 +567133,7 @@
                         "grossAmount": "13508.40",
                         "instant": true,
                         "leadTimeDays": 7,
+                        "netAmount": "12624.67",
                         "productAmount": "13380.00",
                         "quantity": 1000,
                         "reason": null,

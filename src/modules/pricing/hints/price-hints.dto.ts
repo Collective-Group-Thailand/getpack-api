@@ -4,6 +4,8 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
 import { ArrayMaxSize, IsArray, IsOptional, IsString, Matches, MaxLength } from 'class-validator';
 
+import { QuoteStepDto, STORE_CALCULATION_EXAMPLE } from '../quotes/quote.dto';
+
 const list = ({ value }: { value: unknown }) =>
   (Array.isArray(value) ? value : [value])
     .flatMap((v) => String(v).split(','))
@@ -148,5 +150,64 @@ export const PRICE_HINT_EXAMPLE: PriceHintDto = {
     label: { th: '60 × 60 × 150 มม.', en: '60 × 60 × 150 mm' },
   },
   leadTimeBusinessDays: { min: 7, max: 7 },
+  computedAt: '2026-10-01T09:00:00+07:00',
+};
+
+/**
+ * C1-API-2 (products R2, approved in DECISIONS-STAGE-A §4): the default spec of one product priced at every quantity
+ * preset of its configurator — the quick calculator's tier table, cacheable, no calculate log.
+ */
+export class PriceTiersDto {
+  @ApiProperty({ example: 'tuck-end-box', description: 'Catalogue product slug' })
+  key!: string;
+
+  @ApiProperty({ example: 'folding_carton' })
+  productTypeCode!: string;
+
+  @ApiProperty({ enum: ['THB'], enumName: 'Currency', example: 'THB' })
+  currency!: 'THB';
+
+  @ApiProperty({
+    type: PriceHintBasisDto,
+    nullable: true,
+    description:
+      'The default spec the tiers are priced at (D-441) — the spec the configurator opens on; `quantity` is the ' +
+      'reference quantity of the "starting from" price. Null when the product has no instant default spec',
+  })
+  basis!: PriceHintBasisDto | null;
+
+  @ApiProperty({
+    type: [QuoteStepDto],
+    description:
+      'One entry per configurator quantity preset (ascending, ≤ 10), each exactly as `store.quotes.calculate` ' +
+      'answers it for the default spec without a delivery postcode (shipping pending). Empty when the product has ' +
+      'no instant default spec',
+  })
+  tiers!: QuoteStepDto[];
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-01T09:00:00+07:00' })
+  computedAt!: string | null;
+}
+
+export const PRICE_TIERS_EXAMPLE: PriceTiersDto = {
+  key: 'tuck-end-box',
+  productTypeCode: 'folding_carton',
+  currency: 'THB',
+  basis: PRICE_HINT_EXAMPLE.basis,
+  // Without a delivery postcode: shipping pending, so the totals are the goods (13,380.00 incl. 875.33 VAT).
+  tiers: STORE_CALCULATION_EXAMPLE.steps.map((s) => ({
+    ...s,
+    shippingAmount: null,
+    shippingNetAmount: null,
+    shippingVatAmount: null,
+    shippingPending: true,
+    shippingPendingReason: null,
+    zoneName: null,
+    arrival: null,
+    earliestDeliveryDate: null,
+    vatAmount: '875.33',
+    netAmount: '12504.67',
+    grossAmount: '13380.00',
+  })),
   computedAt: '2026-10-01T09:00:00+07:00',
 };

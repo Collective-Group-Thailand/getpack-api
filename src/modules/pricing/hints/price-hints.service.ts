@@ -1,3 +1,4 @@
+import { DomainException } from '@common/errors/domain.exception';
 import { MoneyDecimal } from '@common/money/money';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
@@ -9,10 +10,11 @@ import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
+import { MAX_QUANTITY_TIERS } from '../quotes/quote.dto';
 import { QuoteEngineService } from '../quotes/quote-engine.service';
 import { StorePricingService } from '../quotes/store-pricing.service';
 import { defaultSpecConfiguration, defaultSpecQuantity } from './default-spec';
-import { type PriceHintDto, type PriceHintQuery } from './price-hints.dto';
+import { type PriceHintDto, type PriceHintQuery, type PriceTiersDto } from './price-hints.dto';
 
 /** Every calculator a hint can be priced with (D-220). */
 const HINTED = new Set(['folding', 'corrugate', 'label', 'tag_sleeve', 'pouch', 'service']);
@@ -27,6 +29,26 @@ export const PRICE_SETTING_KEYS: ReadonlySet<string> = new Set([
   'pricing.margin_floor_pct',
   'tax.rounding_mode',
 ]);
+
+/** C1-API-2: how long a product's tier table is reused (the response is also `Cache-Control: max-age=60`). */
+export const TIERS_TTL_MS = 60_000;
+/** Never more tier tables kept in memory than this (the catalogue holds a few hundred products at most). */
+const TIERS_CACHE_MAX = 500;
+
+/**
+ * The quantities of the tier table (C1-API-2): the configurator's presets, ascending and distinct, at most
+ * `MAX_QUANTITY_TIERS`; the reference quantity alone when the product has no presets.
+ */
+export function tierQuantities(
+  presets: readonly number[] | null | undefined,
+  reference: number | null,
+): number[] {
+  const list = [...new Set((presets ?? []).filter((q) => Number.isInteger(q) && q > 0))].sort(
+    (a, b) => a - b,
+  );
+  if (list.length) return list.slice(0, MAX_QUANTITY_TIERS);
+  return reference !== null ? [reference] : [];
+}
 
 /** Up to the next satang: a "starting from" figure never undercuts the price a quote gives (D-181). */
 const ceilMoney = (value: string) =>
@@ -43,6 +65,7 @@ const ceilMoney = (value: string) =>
 @Injectable()
 export class PriceHintsService {
   private readonly logger = new Logger(PriceHintsService.name);
+  private readonly tierCache = new Map<string, { until: number; value: PriceTiersDto }>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -189,6 +212,88 @@ export class PriceHintsService {
         computedAt: null,
       })),
     ];
+  }
+
+  /**
+   * C1-API-2: the default spec (D-441) priced at every quantity preset through the one store pricing path
+   * (`StorePricingService`, GLOBAL-RULES §5) — the numbers `store.quotes.calculate` gives for the same configuration,
+   * without a calculate log. Kept for `TIERS_TTL_MS`; a product without an instant default spec has no tiers.
+   */
+  async tiers(slug: string): Promise<PriceTiersDto> {
+    const now = Date.now();
+    const hit = this.tierCache.get(slug);
+    if (hit && hit.until > now) return hit.value;
+    const p = await this.prisma.catalogProduct.findFirst({
+      where: { slug, status: 'active', productType: { status: 'active' } },
+      select: {
+        publicId: true,
+        status: true,
+        referenceConfiguration: true,
+        quantityPresets: true,
+        productType: { select: { code: true, status: true, quoteMode: true, calculatorKey: true } },
+      },
+    });
+    if (!p) throw new DomainException('http.not_found');
+    const value = await this.priceTiers(slug, p);
+    if (this.tierCache.size >= TIERS_CACHE_MAX) this.tierCache.clear();
+    this.tierCache.set(slug, { until: now + TIERS_TTL_MS, value });
+    return value;
+  }
+
+  private async priceTiers(
+    slug: string,
+    p: {
+      publicId: string;
+      referenceConfiguration: Prisma.JsonValue;
+      quantityPresets: number[];
+      productType: { code: string; quoteMode: string; calculatorKey: string | null };
+    },
+  ): Promise<PriceTiersDto> {
+    const empty: PriceTiersDto = {
+      key: slug,
+      productTypeCode: p.productType.code,
+      currency: 'THB',
+      basis: null,
+      tiers: [],
+      computedAt: null,
+    };
+    const key = p.productType.calculatorKey;
+    const configuration = defaultSpecConfiguration(p.referenceConfiguration, p.publicId);
+    if (
+      !configuration ||
+      p.productType.quoteMode !== 'instant' ||
+      !key ||
+      !HINTED.has(key) ||
+      !this.engine.hasCalculator(key as never)
+    )
+      return empty;
+    const reference = defaultSpecQuantity(configuration);
+    const quantities = tierQuantities(p.quantityPresets, reference);
+    if (!quantities.length) return empty;
+    const at = new Date();
+    try {
+      const { calculation } = await this.storePricing.price(
+        key as never,
+        { ...configuration, quantities },
+        { at, log: false },
+      );
+      return {
+        ...empty,
+        basis: {
+          quantity: reference ?? quantities[0]!,
+          sizeCode: null,
+          includesVat: true,
+          includesDelivery: false,
+          specs: calculation.specs,
+          label: calculation.specLabel,
+        },
+        tiers: calculation.steps,
+        computedAt: toBangkokIso(at),
+      };
+    } catch (error) {
+      this.logger.warn({ err: error, slug }, 'price tiers not computed');
+      return empty;
+    }
   }
 
   /** Effective-dated price lists and capacity change with time: refresh hourly. */
