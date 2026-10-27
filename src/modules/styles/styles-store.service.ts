@@ -27,6 +27,7 @@ import {
   type StyleVariantListDto,
   type StyleVariantListQuery,
 } from './styles-store.dto';
+import { matchesUseCaseGroups, useCaseGroupsOf } from './use-case-groups';
 
 /** Option axes shown as the closure facet; every other axis is a feature (`none` values are never facets). */
 const CLOSURE_AXES: ReadonlySet<string> = new Set([
@@ -135,6 +136,7 @@ export class StylesStoreService {
         ],
       });
     }
+    const useCaseGroups = useCaseGroupsOf(query.useCase);
     const fits = new Map<bigint, ReturnType<typeof fitOf>>();
     if (product) for (const r of matched) fits.set(r.id, fitOf(r, product));
     matched = matched.filter((r) => {
@@ -144,7 +146,10 @@ export class StylesStoreService {
         (!query.family || r.family === query.family) &&
         (!query.closure || opts.closure.has(query.closure)) &&
         (!query.feature || opts.feature.has(query.feature)) &&
-        (!query.useCase || r.useCases.some((u) => u.code === query.useCase)) &&
+        matchesUseCaseGroups(
+          r.useCases.map((u) => u.code),
+          useCaseGroups,
+        ) &&
         (!query.materialClass || r.materialClass === query.materialClass) &&
         (!query.pricePath || pricePath(r) === query.pricePath) &&
         (!product || fits.get(r.id) !== null)

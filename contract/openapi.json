@@ -569373,11 +569373,14 @@
             }
           },
           {
+            "description": "One use case, or groups of them (styles redesign C0, the \"ช่วยเลือกให้หน่อย\" wizard): values joined by `,` are alternatives, groups joined by `;` must all hold — `food,snack;shipping,ecommerce` = (food or snack) and (shipping or e-commerce). A single value works as before.",
             "in": "query",
             "name": "useCase",
             "required": false,
             "schema": {
               "example": "cosmetics",
+              "maxLength": 400,
+              "pattern": "^[a-z0-9_]+(,[a-z0-9_]+)*(;[a-z0-9_]+(,[a-z0-9_]+)*){0,4}$",
               "type": "string"
             }
           },

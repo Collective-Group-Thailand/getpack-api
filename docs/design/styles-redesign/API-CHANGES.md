@@ -23,6 +23,7 @@ CSV import/export of these columns: **not done** (the owner's CSV is not ready).
   + 5 mm per dimension; within the style's entered range; L/W may swap, H may not; any missing bound → no match.
   Facets count over the size-filtered set. Malformed → 422.
 - `meta.sizeSearchStyles`: published styles with a complete range (the web offers the size tab only when > 0).
+- query `useCase` also takes groups for the wizard: `a,b;c` = (a or b) and c (≤ 5 groups); one value as before.
 - card: `fitRange` (all six bounds or null), `moqUnits`, `dielineUrl` (the style's own `dieline_svg`, signed URL),
   `fit` (`insideL/W/HMm`, only with `size`).
 `GET /v1/store/styles/{code}`: also `recyclable`, `plasticFree`, `certifications`.

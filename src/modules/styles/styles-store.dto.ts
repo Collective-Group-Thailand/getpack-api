@@ -54,9 +54,16 @@ export class StyleListQuery extends CursorQuery {
   @Matches(FACET_VALUE)
   feature?: string;
 
-  @ApiPropertyOptional({ example: 'cosmetics' })
+  @ApiPropertyOptional({
+    example: 'cosmetics',
+    description:
+      'One use case, or groups of them (styles redesign C0, the "ช่วยเลือกให้หน่อย" wizard): values joined by `,` ' +
+      'are alternatives, groups joined by `;` must all hold — `food,snack;shipping,ecommerce` = (food or snack) ' +
+      'and (shipping or e-commerce). A single value works as before.',
+  })
   @IsOptional()
-  @Matches(FACET_VALUE)
+  @MaxLength(400)
+  @Matches(/^[a-z0-9_]+(,[a-z0-9_]+)*(;[a-z0-9_]+(,[a-z0-9_]+)*){0,4}$/)
   useCase?: string;
 
   @ApiPropertyOptional({ example: 'paperboard' })
