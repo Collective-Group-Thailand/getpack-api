@@ -8,6 +8,7 @@ import { imageUrl } from '@modules/catalog/store/store-catalog.service';
 import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { specLabel } from '@modules/quotes/spec-label';
 import { Injectable } from '@nestjs/common';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
 import { StyleAssetsService } from './style-assets.service';
@@ -112,6 +113,7 @@ export class StylesStoreService {
     private readonly prisma: PrismaService,
     private readonly makeability: StyleMakeabilityService,
     private readonly assets: StyleAssetsService,
+    private readonly settings: SettingsService,
   ) {}
 
   async list(query: StyleListQuery, userId: bigint | null): Promise<StyleListDto> {
@@ -471,7 +473,39 @@ export class StylesStoreService {
       thumbnailUrl: photo?.url ?? (thumb ? await this.assets.url(thumb) : null),
       photo,
       dielineUrl: dieline ? await this.assets.url(dieline) : null,
+      quoteResponseBusinessDays: await this.quoteResponseDays(r.productTypeId),
     };
+  }
+
+  /** Product type id → working days, kept a minute (settings are effective-dated; a minute late is harmless). */
+  private readonly responseDays = new Map<string, { days: number | null; until: number }>();
+
+  /**
+   * C0b (DECISIONS-STAGE-A §9.3): the quotation first-response time in working days — `rfq.sla_business_hours` at the
+   * style's product type (platform fallback, D-100) over 24 h, rounded up: the RFQ due time counts every hour of a
+   * working day (`WorkingDayCalendar.addWorkingMinutes`). Null without a product type or a setting value.
+   */
+  private async quoteResponseDays(productTypeId: bigint | null): Promise<number | null> {
+    if (productTypeId === null) return null;
+    const key = productTypeId.toString();
+    const now = Date.now();
+    const cached = this.responseDays.get(key);
+    if (cached && cached.until > now) return cached.days;
+    let days: number | null = null;
+    try {
+      const hours = Number(
+        (
+          await this.settings.at('rfq.sla_business_hours', {
+            scope: { type: 'product_type', id: productTypeId },
+          })
+        ).value,
+      );
+      days = Number.isFinite(hours) && hours > 0 ? Math.ceil(hours / 24) : null;
+    } catch (error) {
+      if (!(error instanceof SettingNotFoundError)) throw error;
+    }
+    this.responseDays.set(key, { days, until: now + 60_000 });
+    return days;
   }
 
   /** Never fails the search (analytics, D-274). */
@@ -550,7 +584,7 @@ function productHints(r: LibraryRow) {
 function card(
   r: LibraryRow,
   favourites: Set<bigint>,
-): Omit<StyleCardDto, 'thumbnailUrl' | 'photo' | 'dielineUrl'> {
+): Omit<StyleCardDto, 'thumbnailUrl' | 'photo' | 'dielineUrl' | 'quoteResponseBusinessDays'> {
   const hint = productHints(r)[0];
   return {
     code: r.code,

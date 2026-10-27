@@ -13099,6 +13099,18 @@
             "example": false,
             "type": "boolean"
           },
+          "fitRangeSource": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StyleFitRangeSource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / the CSV (never overwritten by the backfill); null = no range. Read-only.",
+            "example": null
+          },
           "hidden": {
             "example": false,
             "type": "boolean"
@@ -13301,7 +13313,8 @@
           "useCases",
           "recipes",
           "reasonCounts",
-          "commercial"
+          "commercial",
+          "fitRangeSource"
         ],
         "type": "object"
       },
@@ -65310,6 +65323,81 @@
         ],
         "type": "object"
       },
+      "FitRangeBackfillDto": {
+        "properties": {
+          "dryRun": {
+            "default": false,
+            "description": "Report what would change without writing",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "FitRangeBackfillResult": {
+        "properties": {
+          "considered": {
+            "description": "Styles with an approved recipe",
+            "example": 122,
+            "type": "integer"
+          },
+          "dryRun": {
+            "example": false,
+            "type": "boolean"
+          },
+          "filled": {
+            "description": "Codes whose empty range was filled from the recipe (source `recipe`)",
+            "example": [
+              "PK-CB-01"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "keptBusiness": {
+            "description": "Codes left alone because the business entered their range",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "noRecipeRange": {
+            "description": "Codes whose recipe states no complete size range (stay out of the size search)",
+            "example": [
+              "PK-CB-02"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "refreshed": {
+            "description": "Codes whose earlier recipe range followed a newer approved recipe",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "unchanged": {
+            "description": "Recipe ranges already in place",
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "dryRun",
+          "considered",
+          "filled",
+          "refreshed",
+          "unchanged",
+          "keptBusiness",
+          "noRecipeRange"
+        ],
+        "type": "object"
+      },
       "FixedAssetDto": {
         "properties": {
           "accumulatedDepreciation": {
@@ -103817,6 +103905,25 @@
         ],
         "type": "object"
       },
+      "StorePrintQuoteDto": {
+        "properties": {
+          "cmykAddOnMaxColours": {
+            "description": "Spot colours that may stand beside CMYK on this side (quote beyond `cmyk.addOn.maxColours`)",
+            "example": 2,
+            "type": "integer"
+          },
+          "spotMaxColours": {
+            "description": "Spot colours that may be chosen on this side (quote beyond `spot.maxColours`)",
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "spotMaxColours",
+          "cmykAddOnMaxColours"
+        ],
+        "type": "object"
+      },
       "StorePrintSelectionDto": {
         "properties": {
           "cmykAddOnInkColourIds": {
@@ -103894,6 +104001,17 @@
             },
             "type": "array"
           },
+          "quote": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StorePrintQuoteDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C0b (owner decision 2026-10-28; D-443, B-API-6): colours a customer may still choose on this side beyond the instantly priced counts (`spot.maxColours`, `cmyk.addOn.maxColours`), up to the side’s offered spot inks. Never refused or trimmed: `store.quotes.calculate` answers `instant: false` with `reason: rfq_required` and the configurator offers the quotation request with the spec. Null when nothing lies beyond."
+          },
           "spot": {
             "anyOf": [
               {
@@ -103910,7 +104028,8 @@
           "methods",
           "spot",
           "cmyk",
-          "default"
+          "default",
+          "quote"
         ],
         "type": "object"
       },
@@ -106896,6 +107015,14 @@
             ],
             "example": "instant"
           },
+          "quoteResponseBusinessDays": {
+            "description": "C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style has no product type: then no timing is shown. Never a price or an estimate.",
+            "example": 2,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "referenceCode": {
             "description": "Only once Prepress verified it (D-211)",
             "example": null,
@@ -106948,7 +107075,8 @@
           "fitRange",
           "moqUnits",
           "dielineUrl",
-          "fit"
+          "fit",
+          "quoteResponseBusinessDays"
         ],
         "type": "object"
       },
@@ -107264,6 +107392,14 @@
               "null"
             ]
           },
+          "quoteResponseBusinessDays": {
+            "description": "C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style has no product type: then no timing is shown. Never a price or an estimate.",
+            "example": 2,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "recyclable": {
             "description": "As entered by the business; null = unknown",
             "example": null,
@@ -107347,6 +107483,7 @@
           "moqUnits",
           "dielineUrl",
           "fit",
+          "quoteResponseBusinessDays",
           "construction",
           "productTypeCode",
           "descriptionTh",
@@ -107515,6 +107652,14 @@
           "maxHMm"
         ],
         "type": "object"
+      },
+      "StyleFitRangeSource": {
+        "description": "Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / the CSV (never overwritten by the backfill); null = no range. Read-only.",
+        "enum": [
+          "recipe",
+          "business"
+        ],
+        "type": "string"
       },
       "StyleImportFileDto": {
         "properties": {
@@ -345241,6 +345386,214 @@
         ]
       }
     },
+    "/v1/admin/styles/actions/backfill-fit-ranges": {
+      "post": {
+        "description": "C0b (owner decision 2026-10-28, DECISIONS-STAGE-A §9.1; curation D-246): each style whose inside fit range is empty gets the approved recipe’s size range (D-241, mm, inside basis; the style’s own material class, else what every complete class allows), through the same path as `admin.styles.update` — audited per style as `style_base.curated` with source `recipe`. A range the business entered is never overwritten; a range filled here earlier follows a newer approved recipe. Idempotent (a second run changes nothing); `dryRun` reports without writing.\n\nImplements: D-241, D-242, D-243, D-246.",
+        "operationId": "admin.styles.backfillFitRanges",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "dryRun": true
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/FitRangeBackfillDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "considered": 122,
+                  "dryRun": true,
+                  "filled": [
+                    "PK-CB-01"
+                  ],
+                  "keptBusiness": [],
+                  "noRecipeRange": [
+                    "PK-CB-02"
+                  ],
+                  "refreshed": [],
+                  "unchanged": 0
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/FitRangeBackfillResult"
+                }
+              }
+            },
+            "description": "What was (or, with `dryRun`, would be) filled",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Fill empty fit ranges from approved recipes",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.curate"
+        ]
+      }
+    },
     "/v1/admin/styles/{styleId}": {
       "get": {
         "description": "A base with its construction, axes, recipes (newest first), synonyms, use cases and why its active variants are not publishable (reason counts, D-243).\n\nImplements: D-241, D-242, D-243.",
@@ -345284,6 +345637,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
                   "materialClass": "paperboard",
@@ -345566,6 +345920,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
                   "materialClass": "paperboard",
@@ -345906,6 +346261,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
                   "materialClass": "paperboard",
@@ -346206,6 +346562,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
                   "materialClass": "paperboard",
@@ -346509,6 +346866,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
                   "materialClass": "paperboard",
@@ -346827,6 +347185,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
                   "materialClass": "paperboard",
@@ -347159,6 +347518,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
                   "materialClass": "paperboard",
@@ -504564,6 +504924,7 @@
                         "none",
                         "spot"
                       ],
+                      "quote": null,
                       "spot": {
                         "inkColourIds": [
                           "0192f3a0-7c1e-7d2a-9b1f-00000000e101"
@@ -504592,6 +504953,10 @@
                         "spot",
                         "cmyk"
                       ],
+                      "quote": {
+                        "cmykAddOnMaxColours": 2,
+                        "spotMaxColours": 2
+                      },
                       "spot": {
                         "inkColourIds": [
                           "0192f3a0-7c1e-7d2a-9b1f-00000000e101",
@@ -568831,6 +569196,7 @@
                       ],
                       "photo": null,
                       "pricePath": "instant",
+                      "quoteResponseBusinessDays": null,
                       "referenceCode": null,
                       "startingPrice": {
                         "catalogProductSlug": "dev-tuck-end-box",
@@ -569450,6 +569816,7 @@
                       ],
                       "photo": null,
                       "pricePath": "instant",
+                      "quoteResponseBusinessDays": null,
                       "referenceCode": null,
                       "startingPrice": {
                         "catalogProductSlug": "dev-tuck-end-box",
@@ -569708,6 +570075,7 @@
                     "plasticFree": null,
                     "pricePath": "instant",
                     "productTypeCode": "folding_carton",
+                    "quoteResponseBusinessDays": null,
                     "recyclable": null,
                     "referenceCode": null,
                     "sizeRanges": [
@@ -570284,6 +570652,7 @@
                   "plasticFree": null,
                   "pricePath": "instant",
                   "productTypeCode": "folding_carton",
+                  "quoteResponseBusinessDays": null,
                   "recyclable": null,
                   "referenceCode": null,
                   "sizeRanges": [

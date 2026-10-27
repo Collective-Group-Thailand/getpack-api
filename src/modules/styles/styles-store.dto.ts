@@ -284,6 +284,18 @@ export class StyleCardDto {
     description: 'Only with the `size` search: the inside size recommended for the product; null otherwise',
   })
   fit!: StyleFitDto | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 2,
+    description:
+      'C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in ' +
+      'working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the ' +
+      'way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style ' +
+      'has no product type: then no timing is shown. Never a price or an estimate.',
+  })
+  quoteResponseBusinessDays!: number | null;
 }
 
 export class StyleFacetValueDto {
@@ -561,6 +573,7 @@ export const CARD_EXAMPLE: StyleCardDto = {
   moqUnits: null,
   dielineUrl: null,
   fit: null,
+  quoteResponseBusinessDays: null,
 };
 
 export const LIST_EXAMPLE: StyleListDto = {

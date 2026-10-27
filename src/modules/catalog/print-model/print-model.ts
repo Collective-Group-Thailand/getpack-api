@@ -351,6 +351,12 @@ export interface StorePrintSide {
   spot: { minColours: number; maxColours: number; inkColourIds: string[] } | null;
   cmyk: { inkColourId: string; addOn: { enabled: boolean; minColours: number; maxColours: number } } | null;
   default: PrintSelection;
+  /**
+   * C0b (owner decision 2026-10-28, DECISIONS-STAGE-A §9.5): how many colours a customer may still choose on this side
+   * beyond what is priced instantly — up to the side's offered spot inks. Such a choice is never refused or trimmed:
+   * `calculate` answers `rfq_required` (the quote path, B-API-6). Null when nothing lies beyond the priced counts.
+   */
+  quote: { spotMaxColours: number; cmykAddOnMaxColours: number } | null;
 }
 
 /**
@@ -385,9 +391,23 @@ export function storePrintModel(
       spot,
       cmyk: cmyk && { inkColourId: cmyk.inkColourId, addOn: { enabled: addOnMax > 0, maxColours: addOnMax } },
     };
+    // C0b: more colours than priced (up to the offered spot inks) are a quote, not a refusal (`catalog.print_limits`
+    // stays as set; nothing here is priced).
+    const quoteSpot =
+      spot && methods.includes('spot') && spotIds.length > spot.maxColours ? spotIds.length : null;
+    const quoteAddOn =
+      effective.cmyk && methods.includes('cmyk') && spotIds.length > addOnMax ? spotIds.length : null;
+    const quote =
+      quoteSpot !== null || quoteAddOn !== null
+        ? {
+            spotMaxColours: quoteSpot ?? spot?.maxColours ?? 0,
+            cmykAddOnMaxColours: quoteAddOn ?? addOnMax,
+          }
+        : null;
     return {
       field: PRINT_SIDE_FIELD[side],
       methods,
+      quote,
       spot: spot && { minColours: 1, ...spot },
       cmyk: effective.cmyk && {
         inkColourId: effective.cmyk.inkColourId,

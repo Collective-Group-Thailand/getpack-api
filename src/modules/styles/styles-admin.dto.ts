@@ -364,6 +364,70 @@ export class AdminStyleBaseDetailDto extends AdminStyleBaseDto {
     description: 'Commercial data shown on /styles (styles redesign C0)',
   })
   commercial!: StyleCommercialDto;
+
+  @ApiProperty({
+    enum: ['recipe', 'business'],
+    enumName: 'StyleFitRangeSource',
+    nullable: true,
+    example: null,
+    description:
+      'Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the ' +
+      'approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / ' +
+      'the CSV (never overwritten by the backfill); null = no range. Read-only.',
+  })
+  fitRangeSource!: 'recipe' | 'business' | null;
+}
+
+/** C0b: `POST /v1/admin/styles/actions/backfill-fit-ranges`. */
+export class FitRangeBackfillDto {
+  @ApiPropertyOptional({
+    type: Boolean,
+    default: false,
+    example: true,
+    description: 'Report what would change without writing',
+  })
+  @IsOptional()
+  @IsBoolean()
+  dryRun?: boolean;
+}
+
+export class FitRangeBackfillResult {
+  @ApiProperty({ example: false })
+  dryRun!: boolean;
+
+  @ApiProperty({ type: 'integer', example: 122, description: 'Styles with an approved recipe' })
+  considered!: number;
+
+  @ApiProperty({
+    type: [String],
+    example: ['PK-CB-01'],
+    description: 'Codes whose empty range was filled from the recipe (source `recipe`)',
+  })
+  filled!: string[];
+
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'Codes whose earlier recipe range followed a newer approved recipe',
+  })
+  refreshed!: string[];
+
+  @ApiProperty({ type: 'integer', example: 0, description: 'Recipe ranges already in place' })
+  unchanged!: number;
+
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'Codes left alone because the business entered their range',
+  })
+  keptBusiness!: string[];
+
+  @ApiProperty({
+    type: [String],
+    example: ['PK-CB-02'],
+    description: 'Codes whose recipe states no complete size range (stay out of the size search)',
+  })
+  noRecipeRange!: string[];
 }
 
 export class AdminStyleVariantDto {
@@ -552,6 +616,7 @@ export const ADMIN_STYLE_DETAIL_EXAMPLE: AdminStyleBaseDetailDto = {
     plasticFree: null,
     certifications: [],
   },
+  fitRangeSource: null,
 };
 
 export const ADMIN_VARIANT_EXAMPLE: AdminStyleVariantDto = {
