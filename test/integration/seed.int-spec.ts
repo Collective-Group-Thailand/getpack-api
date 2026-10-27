@@ -32,7 +32,7 @@ describe('seeds (PostgreSQL 18)', () => {
       entities: 1,
       roles: ROLES.length,
       permissions: PERMISSIONS.length,
-      settings: SETTINGS.length + 6,
+      settings: SETTINGS.length + 8,
       approval_policies: APPROVAL_POLICIES.length,
       dev_staff_users: 16,
       dev_customer_users: 1,
@@ -60,7 +60,7 @@ describe('seeds (PostgreSQL 18)', () => {
         FROM settings s JOIN setting_versions v ON v.setting_id = s.id
        GROUP BY s.id`);
     // Definition-only settings (no decided value, e.g. D-172) have no version yet.
-    expect(rows).toHaveLength(SETTINGS.filter((setting) => !setting.unset).length + 6);
+    expect(rows).toHaveLength(SETTINGS.filter((setting) => !setting.unset).length + 8);
     for (const row of rows) {
       expect([row.key, row.versions, row.status]).toEqual([row.key, '1', 'approved']);
       expect(row.refs.every((ref) => /^D-\d{3}$/.test(ref))).toBe(true);
@@ -163,9 +163,11 @@ describe('seeds (PostgreSQL 18)', () => {
     expect(rows.map((r) => r.key)).toEqual([
       'entity.address_th',
       'entity.branch_code',
+      'entity.display_name',
       'entity.legal_name_en',
       'entity.legal_name_th',
       'entity.phone',
+      'entity.return_address',
       'entity.tax_id',
     ]);
   });
