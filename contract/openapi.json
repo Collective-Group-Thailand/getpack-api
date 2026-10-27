@@ -91797,6 +91797,23 @@
             "format": "uuid",
             "type": "string"
           },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue or stock product the line is for (`catalogProductSlug` / `stockProductSku` of the item); null for a line asked from a category form",
+            "example": {
+              "key": "mailer-box-b",
+              "kind": "catalog_product",
+              "nameEn": "Mailer box (B flute)",
+              "nameTh": "กล่องไปรษณีย์ ฝาชน (ลอน B)"
+            }
+          },
           "productType": {
             "$ref": "#/components/schemas/CodeNameRefDto"
           },
@@ -91836,12 +91853,20 @@
           "productType",
           "specification",
           "design",
+          "product",
           "rfq"
         ],
         "type": "object"
       },
       "RfqBasketItemInputDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "design": {
             "allOf": [
               {
@@ -91926,6 +91951,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -92180,6 +92211,17 @@
             "example": "Logo on both sides (fake)",
             "type": "string"
           },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1: the catalogue or stock product the request was asked from; null for a category request"
+          },
           "productTypeCode": {
             "example": "paper_bag",
             "type": "string"
@@ -92303,6 +92345,7 @@
           "targetDate",
           "targetPricePerUnit",
           "style",
+          "product",
           "design",
           "deliveryPostcode",
           "notes",
@@ -92570,6 +92613,38 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "RfqProductRefDto": {
+        "properties": {
+          "key": {
+            "description": "Catalogue product slug or stock product SKU",
+            "example": "mailer-box-b",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PriceHintKind"
+              }
+            ],
+            "example": "catalog_product"
+          },
+          "nameEn": {
+            "example": "Mailer box (B flute)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องไปรษณีย์ ฝาชน (ลอน B)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "nameTh",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -100057,6 +100132,17 @@
             "example": false,
             "type": "boolean"
           },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1: the catalogue or stock product the request was asked from; null for a category request"
+          },
           "productTypeCode": {
             "example": "paper_bag",
             "type": "string"
@@ -100204,6 +100290,7 @@
           "targetDate",
           "targetPricePerUnit",
           "style",
+          "product",
           "design",
           "deliveryPostcode",
           "notes",
@@ -100534,6 +100621,13 @@
       },
       "StaffSubmitRfqDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "customerUserId": {
             "description": "The customer the RFQ is for (CS on behalf)",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e705",
@@ -100634,6 +100728,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -109292,6 +109392,13 @@
       },
       "SubmitRfqDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "deliveryPostcode": {
             "example": "10110",
             "pattern": "^[0-9]{5}$",
@@ -109386,6 +109493,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -315110,6 +315223,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -315546,6 +315660,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -315916,6 +316031,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -316304,6 +316420,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -316807,6 +316924,7 @@
                       ],
                       "notes": "Logo on both sides (fake)",
                       "overdue": false,
+                      "product": null,
                       "productTypeCode": "paper_bag",
                       "productTypeName": "ถุงกระดาษ",
                       "quantities": [
@@ -317163,6 +317281,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -317548,6 +317667,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -317895,6 +318015,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -318289,6 +318410,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -318688,6 +318810,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -319061,6 +319184,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -319633,6 +319757,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -320036,6 +320161,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -320435,6 +320561,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -554476,6 +554603,7 @@
                       {
                         "design": null,
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "product": null,
                         "productType": {
                           "code": "paper_bag",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -554646,6 +554774,7 @@
                     {
                       "design": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -554828,6 +554957,7 @@
                     {
                       "design": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -555185,6 +555315,7 @@
                     {
                       "design": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -555482,6 +555613,7 @@
                     {
                       "design": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -555956,6 +556088,7 @@
                     {
                       "design": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -556197,6 +556330,7 @@
                     {
                       "design": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -556439,6 +556573,7 @@
                       {
                         "design": null,
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "product": null,
                         "productType": {
                           "code": "paper_bag",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -557070,6 +557205,7 @@
                         }
                       ],
                       "notes": "Logo on both sides (fake)",
+                      "product": null,
                       "productTypeCode": "paper_bag",
                       "productTypeName": "ถุงกระดาษ",
                       "quantities": [
@@ -557352,6 +557488,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -557653,6 +557790,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -557938,6 +558076,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -558295,6 +558434,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -558617,6 +558757,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -567904,6 +568045,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [

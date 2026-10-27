@@ -19,7 +19,8 @@ import {
   type RfqBasketItemInputDto,
   type SetBasketDetailsDto,
 } from './rfq-baskets.dto';
-import { rfqDto } from './rfq-views';
+import { productOf, rfqDto } from './rfq-views';
+import { type RfqProductRefDto } from './rfqs.dto';
 import { type RfqPlan, RfqsService, type SubmitRfqInput } from './rfqs.service';
 
 const INCLUDE = {
@@ -349,7 +350,43 @@ export class RfqBasketsService {
     return db.rfqBasket.findUniqueOrThrow({ where: { id }, include: INCLUDE });
   }
 
+  /** C1: the products the lines name (by slug / SKU in the item), read once per basket. */
+  private async productsOf(
+    b: BasketRow,
+  ): Promise<(i: BasketRow['items'][number]) => RfqProductRefDto | null> {
+    const spec = (i: BasketRow['items'][number]) =>
+      i.specification as { catalogProductSlug?: string; stockProductSku?: string };
+    const slugs = [
+      ...new Set(b.items.map((i) => spec(i).catalogProductSlug).filter((v): v is string => !!v)),
+    ];
+    const skus = [...new Set(b.items.map((i) => spec(i).stockProductSku).filter((v): v is string => !!v))];
+    const [catalog, stock] = await Promise.all([
+      slugs.length
+        ? this.prisma.catalogProduct.findMany({
+            where: { slug: { in: slugs } },
+            select: { slug: true, nameTh: true, nameEn: true },
+          })
+        : [],
+      skus.length
+        ? this.prisma.stockProduct.findMany({
+            where: { sku: { in: skus } },
+            select: { sku: true, nameTh: true, nameEn: true },
+          })
+        : [],
+    ]);
+    const bySlug = new Map(catalog.map((p) => [p.slug, p]));
+    const bySku = new Map(stock.map((p) => [p.sku, p]));
+    return (i) => {
+      const { catalogProductSlug, stockProductSku } = spec(i);
+      return productOf({
+        catalogProduct: (catalogProductSlug && bySlug.get(catalogProductSlug)) || null,
+        stockProduct: (stockProductSku && bySku.get(stockProductSku)) || null,
+      });
+    };
+  }
+
   private async view(b: BasketRow): Promise<RfqBasketDto> {
+    const productOfItem = await this.productsOf(b);
     return {
       id: b.publicId,
       basketCode: b.basketCode,
@@ -378,6 +415,7 @@ export class RfqBasketsService {
                   versionNo: i.designDocumentVersion.versionNo,
                 }
               : null,
+            product: productOfItem(i),
             rfq: rfq ? rfqDto(rfq, await this.rfqs.attachments(rfq)) : null,
           };
         }),

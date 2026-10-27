@@ -17,7 +17,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
-import { RfqDto, SubmitRfqDto } from './rfqs.dto';
+import { RFQ_PRODUCT_EXAMPLE, RfqDto, RfqProductRefDto, SubmitRfqDto } from './rfqs.dto';
 
 /** D-301 technical limit of one basket. */
 export const MAX_BASKET_ITEMS = 20;
@@ -101,6 +101,16 @@ export class RfqBasketItemDto {
   design!: BasketDesignRefDto | null;
 
   @ApiProperty({
+    type: RfqProductRefDto,
+    nullable: true,
+    example: RFQ_PRODUCT_EXAMPLE,
+    description:
+      'C1 (DECISIONS-STAGE-A §4): the catalogue or stock product the line is for (`catalogProductSlug` / ' +
+      '`stockProductSku` of the item); null for a line asked from a category form',
+  })
+  product!: RfqProductRefDto | null;
+
+  @ApiProperty({
     type: RfqDto,
     nullable: true,
     description: 'Its RFQ once submitted — status, getpack’s quotations per quantity, acceptance',
@@ -167,6 +177,7 @@ export const BASKET_EXAMPLE: RfqBasketDto = {
       productType: { id: IDS.type, code: 'paper_bag', nameTh: 'ถุงกระดาษ', nameEn: 'Paper bag' },
       specification: { spec: { material: 'kraft 150 gsm (fake)' }, quantities: [500, 1000] },
       design: null,
+      product: null,
       rfq: null,
     },
   ],

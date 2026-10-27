@@ -466,6 +466,8 @@ model CatalogProduct {
 
   advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationCatalogProduct")
 
+  rfqs Rfq[] @relation("RfqCatalogProduct")
+
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_th_trgm")
@@ -1275,6 +1277,8 @@ model StockProduct {
 
   // --- end Quotes & RFQ
   orders Order[] @relation("OrderStockProduct")
+
+  rfqs Rfq[] @relation("RfqStockProduct")
 
   @@index([productTypeId], map: "ix_stock_products__product_type_id")
   @@index([seoPageId], map: "ix_stock_products__seo_page_id")
