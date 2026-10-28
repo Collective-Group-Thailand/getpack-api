@@ -93,6 +93,40 @@ const PLATFORM_TEMPLATES: readonly NotificationTemplateSeed[] = [
     },
   },
   {
+    key: 'approval.self_approval_digest:assignee',
+    channel: 'in_app',
+    category: 'transactional',
+    description:
+      'Superadmins: the daily digest of requests approved by their own requester under solo-owner mode (D-449 A)',
+    versions: {
+      th: {
+        subject: 'สรุปรายการอนุมัติด้วยตนเอง {{payload.day}}',
+        body: 'เมื่อวาน ({{payload.day}}) มีคำขอที่อนุมัติด้วยตนเองในโหมดเจ้าของคนเดียว {{payload.count}} รายการ ดูได้ที่หน้าอนุมัติ',
+      },
+      en: {
+        subject: 'Self-approvals digest {{payload.day}}',
+        body: '{{payload.count}} request(s) were self-approved under solo-owner mode on {{payload.day}}; see Approvals',
+      },
+    },
+  },
+  {
+    key: 'approval.self_approval_digest:assignee',
+    channel: 'email',
+    category: 'transactional',
+    description:
+      'Superadmins: the daily digest of requests approved by their own requester under solo-owner mode (D-449 A)',
+    versions: {
+      th: {
+        subject: 'สรุปรายการอนุมัติด้วยตนเอง {{payload.day}} ({{payload.count}} รายการ)',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>เรียน {{recipient.displayName}}</mj-text><mj-text>วันที่ {{payload.day}} มีคำขอที่ผู้ขออนุมัติด้วยตนเองในโหมดเจ้าของคนเดียว {{payload.count}} รายการ</mj-text><mj-text>ดูรายละเอียดได้ที่หน้าอนุมัติในระบบ getpack</mj-text></mj-column></mj-section></mj-body></mjml>',
+      },
+      en: {
+        subject: 'Self-approvals digest {{payload.day}} ({{payload.count}})',
+        body: '<mjml><mj-body><mj-section><mj-column><mj-text>Dear {{recipient.displayName}}</mj-text><mj-text>On {{payload.day}}, {{payload.count}} request(s) were approved by their own requester under solo-owner mode.</mj-text><mj-text>See Approvals in getpack for the details.</mj-text></mj-column></mj-section></mj-body></mjml>',
+      },
+    },
+  },
+  {
     key: 'report_run.completed:assignee',
     channel: 'in_app',
     category: 'transactional',
@@ -198,6 +232,18 @@ const PLATFORM_ROUTES: readonly NotificationRouteSeed[] = [
     audience: 'assignee',
     templateKey: 'approval.sla_breached:assignee',
     channel: 'in_app',
+  },
+  {
+    eventType: 'approval.self_approval_digest',
+    audience: 'assignee',
+    templateKey: 'approval.self_approval_digest:assignee',
+    channel: 'in_app',
+  },
+  {
+    eventType: 'approval.self_approval_digest',
+    audience: 'assignee',
+    templateKey: 'approval.self_approval_digest:assignee',
+    channel: 'email',
   },
   {
     eventType: 'report_run.completed',

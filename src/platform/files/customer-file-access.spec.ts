@@ -233,7 +233,12 @@ function setup() {
   const storage = {
     presignGet: jest.fn().mockResolvedValue('https://files.example.invalid/x?X-Amz-Signature=fake-secret'),
   };
-  const audit = { recordStandalone: jest.fn() };
+  const audit = { recordStandalone: jest.fn(), record: jest.fn() };
+  const events = { record: jest.fn() };
+  Object.assign(prisma, {
+    withTx: (fn: (tx: unknown) => unknown) => fn(prisma),
+    order: { findUnique: jest.fn().mockResolvedValue({ publicId: 'o-1' }) },
+  });
   const access = new CustomerFileAccessService(
     prisma as never,
     permissions as never,
@@ -247,7 +252,7 @@ function setup() {
     {} as never,
     scoping as never,
     audit as never,
-    {} as never,
+    events as never,
     storage as never,
     access,
   );
@@ -264,7 +269,7 @@ function setup() {
   new JobsQueryService(prisma as never, scoping as never, files).onModuleInit();
   const thumbnails = { ensureThumbnail: jest.fn().mockResolvedValue(FILES.renderPreview) };
   const previews = new StudioRenderPreviewService(prisma as never, access, files, thumbnails as never);
-  return { files, logs, prisma, previews, thumbnails };
+  return { files, logs, prisma, previews, thumbnails, audit, events };
 }
 
 describe('customer file access (D-444, DECISIONS-STAGE-A §7)', () => {
@@ -522,6 +527,7 @@ describe('customer file permissions (D-444)', () => {
       orderId: ORDER,
       channel: 'admin',
       purpose: 'download',
+      reason: null,
       requestId: 'req-1',
       actorUser: { publicId: 'u-1', displayName: 'เตรียมพิมพ์ ทดสอบ (fake)' },
       actorApiClient: null,
@@ -537,6 +543,7 @@ describe('customer file permissions (D-444)', () => {
       order: { id: 'o-1', orderCode: 'DEVOR-2610-00001' },
       channel: 'admin',
       purpose: 'download',
+      reason: null,
       requestId: 'req-1',
     });
   });
@@ -813,5 +820,78 @@ describe('manual end by CS Lead still works (B-API-7)', () => {
         payload: expect.objectContaining({ userId: null }),
       }),
     );
+  });
+});
+
+describe('Superadmin opens customer files with a typed reason (C1d, D-449 (1))', () => {
+  const REASON = 'ลูกค้าแจ้งไฟล์พิมพ์ผิด ตรวจตามคำร้อง (fake)';
+  const user = (key: string) => staff(key) as Extract<Actor, { type: 'user' }>;
+
+  it('grants the permission to Superadmin only', () => {
+    expect(
+      ROLES.filter((r) => r.permissions.includes('customer_files.read_with_reason')).map((r) => r.key),
+    ).toEqual(['superadmin']);
+  });
+
+  it('logs reason, actor, file, order and time in one transaction with an audit row and an event', async () => {
+    const { files, logs, audit, events } = setup();
+    const { url } = await files.downloadWithReason(
+      user('superadmin'),
+      FILES.original.publicId,
+      `  ${REASON}  `,
+    );
+    expect(url).toContain('files.example.invalid');
+    expect(logs).toHaveLength(1);
+    expect(logs[0]).toMatchObject({
+      actorType: 'user',
+      actorUserId: STAFF['superadmin']!.id,
+      fileObjectId: FILES.original.id,
+      fileKind: 'customer_original',
+      orderId: ORDER,
+      channel: 'admin',
+      purpose: 'download',
+      reason: REASON,
+    });
+    expect(Object.values(logs[0]!).map(String).join('|')).not.toContain('fake-secret');
+    expect(audit.record).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ action: 'customer_file.read_with_reason', category: 'data_access' }),
+    );
+    expect(events.record).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        type: 'customer_file.read_with_reason',
+        payload: expect.objectContaining({ orderId: 'o-1', reason: REASON }),
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('covers Studio / design artwork and thumbnails', async () => {
+    const { files, logs } = setup();
+    await files.downloadWithReason(user('superadmin'), FILES.designAsset.publicId, REASON);
+    await files.downloadWithReason(user('superadmin'), FILES.thumbnail.publicId, REASON);
+    expect(logs.map((l) => l['purpose'])).toEqual(['download', 'thumbnail']);
+  });
+
+  it.each(['admin', 'auditor', 'finance', 'prepress'])('refuses %s (no permission)', async (who) => {
+    const { files, logs } = setup();
+    await expect(files.downloadWithReason(user(who), FILES.original.publicId, REASON)).rejects.toMatchObject({
+      code: 'auth.forbidden',
+    });
+    expect(logs).toHaveLength(0);
+  });
+
+  it('refuses a file that is not a customer file', async () => {
+    const { files } = setup();
+    await expect(
+      files.downloadWithReason(user('superadmin'), FILES.evidence.publicId, REASON),
+    ).rejects.toMatchObject({ code: 'validation.failed' });
+  });
+
+  it('leaves the ordinary download closed to Superadmin, Admin and Auditor', async () => {
+    const { files } = setup();
+    for (const who of ['superadmin', 'admin', 'auditor'])
+      expect(await files.canRead(staff(who), FILES.original)).toBe(false);
   });
 });

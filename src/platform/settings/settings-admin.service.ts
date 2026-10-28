@@ -6,6 +6,11 @@ import { type Prisma } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ApprovalsService } from '@platform/approvals/approvals.service';
+import {
+  SOLO_OWNER_MAX_DAYS_SETTING,
+  SOLO_OWNER_SETTING,
+  soloOwnerValueProblem,
+} from '@platform/approvals/solo-owner';
 import { AuditService } from '@platform/audit/audit.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
@@ -80,13 +85,15 @@ export class SettingsAdminService implements OnModuleInit {
     actor: UserActor,
     key: string,
     input: { value: unknown; effectiveFrom: Date; reason: string },
+    /** `checkOwner`: also apply the owner-role check (e.g. Superadmin-only `approvals.solo_owner_mode`, D-449). */
+    options: { checkOwner?: boolean } = {},
   ): Promise<SettingWithVersions> {
     const setting = await this.prisma.setting.findFirst({
       where: { key, scopeType: 'platform', scopeId: null },
       select: { publicId: true },
     });
     if (!setting) throw new DomainException('http.not_found');
-    return this.proposeChange(actor, setting.publicId, input, { ownerChecked: true });
+    return this.proposeChange(actor, setting.publicId, input, { ownerChecked: !options.checkOwner });
   }
 
   async proposeChange(
@@ -114,6 +121,18 @@ export class SettingsAdminService implements OnModuleInit {
     }
     if (input.effectiveFrom.getTime() < Date.now() - BACKDATE_TOLERANCE_MS) {
       throw new DomainException('settings.backdated');
+    }
+    if (setting.key === SOLO_OWNER_SETTING) {
+      // D-449 A: on needs an expiry within the configured maximum (90 days, owner decision 2026-10-28).
+      const maxDays = (await this.settings.at(SOLO_OWNER_MAX_DAYS_SETTING).catch(() => null))?.value;
+      const problem =
+        typeof maxDays === 'number'
+          ? soloOwnerValueProblem(input.value, maxDays, new Date())
+          : 'approvals.solo_owner_mode_max_days is not set';
+      if (problem)
+        throw new DomainException('validation.failed', {
+          errors: [{ path: 'value', code: 'soloOwnerMode', message: problem }],
+        });
     }
 
     const needsApproval = setting.approvalPolicyKey !== null;

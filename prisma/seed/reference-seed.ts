@@ -6,7 +6,7 @@ import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { type EntityReturnAddress } from '../../src/platform/settings/setting-keys';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { AGENT_AGREEMENT_KEY, AGENT_AGREEMENT_V1_TH, AGENT_PLANS } from './data/agents';
-import { APPROVAL_POLICIES } from './data/approval-policies';
+import { APPROVAL_POLICIES, OWNER_APPROVAL_THRESHOLD_REASON } from './data/approval-policies';
 import { PARTNER_KNOWLEDGE_CATEGORIES, PRODUCT_TYPES } from './data/catalog';
 import {
   ORDER_CANCEL_REASONS,
@@ -329,7 +329,11 @@ async function ensureApprovalPolicies(tx: Tx, count: (what: string) => void): Pr
     (await tx.role.findMany({ select: { id: true, key: true } })).map((r) => [r.key, r.id]),
   );
   for (const policy of APPROVAL_POLICIES) {
-    if (await tx.approvalPolicy.findUnique({ where: { key: policy.key } })) continue;
+    const existing = await tx.approvalPolicy.findUnique({ where: { key: policy.key } });
+    if (existing) {
+      await amendAutoApprove(tx, existing.id, policy, count);
+      continue;
+    }
     const created = await tx.approvalPolicy.create({
       data: {
         key: policy.key,
@@ -346,6 +350,7 @@ async function ensureApprovalPolicies(tx: Tx, count: (what: string) => void): Pr
         effectiveFrom: SEED_EFFECTIVE_FROM,
         reason: policy.reason,
         expiryRule: policy.expiryRule ?? undefined,
+        autoApproveMaxAmount: policy.autoApproveMaxAmount ?? null,
       },
     });
     await tx.approvalStep.createMany({
@@ -368,6 +373,68 @@ async function ensureApprovalPolicies(tx: Tx, count: (what: string) => void): Pr
     });
     count('approval_policies');
   }
+}
+
+/**
+ * D-449 B (owner decision 2026-10-28): a database seeded before the decision gets the policy's auto-approve amount once,
+ * as a new version from now copying the steps in force. Skipped when any version of the policy already carries an
+ * amount (also one a Superadmin later removed: the seed never re-adds it).
+ */
+async function amendAutoApprove(
+  tx: Tx,
+  policyId: bigint,
+  policy: (typeof APPROVAL_POLICIES)[number],
+  count: (what: string) => void,
+): Promise<void> {
+  if (!policy.autoApproveMaxAmount) return;
+  const already = await tx.approvalPolicyVersion.count({
+    where: {
+      policyId,
+      OR: [{ autoApproveMaxAmount: { not: null } }, { reason: OWNER_APPROVAL_THRESHOLD_REASON }],
+    },
+  });
+  if (already > 0) return;
+  if (await tx.approvalPolicyVersion.count({ where: { policyId, status: 'proposed' } })) return;
+  const now = new Date();
+  const [last, inForce] = await Promise.all([
+    tx.approvalPolicyVersion.findFirst({ where: { policyId }, orderBy: { versionNo: 'desc' } }),
+    tx.approvalPolicyVersion.findFirst({
+      where: { policyId, status: 'approved', effectiveFrom: { lte: now } },
+      orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+      include: { steps: { orderBy: { stepNo: 'asc' } } },
+    }),
+  ]);
+  if (!inForce) return;
+  const version = await tx.approvalPolicyVersion.create({
+    data: {
+      policyId,
+      versionNo: (last?.versionNo ?? 0) + 1,
+      effectiveFrom: now,
+      reason: OWNER_APPROVAL_THRESHOLD_REASON,
+      expiryRule: inForce.expiryRule ?? undefined,
+      onNoMatch: inForce.onNoMatch,
+      autoApproveMaxAmount: policy.autoApproveMaxAmount,
+    },
+  });
+  await tx.approvalStep.createMany({
+    data: inForce.steps.map((step) => ({
+      policyVersionId: version.id,
+      stepNo: step.stepNo,
+      name: step.name,
+      approverRoleId: step.approverRoleId,
+      approverScope: step.approverScope,
+      condition: step.condition ?? undefined,
+      quorum: step.quorum,
+      slaMinutes: step.slaMinutes,
+      slaCalendar: step.slaCalendar,
+      escalateToRoleId: step.escalateToRoleId,
+    })),
+  });
+  await tx.approvalPolicyVersion.update({
+    where: { id: version.id },
+    data: { status: 'approved', decidedAt: now },
+  });
+  count('approval_policy_amendments');
 }
 
 async function ensureTeamsConsentCalendar(tx: Tx, count: (what: string) => void): Promise<void> {

@@ -228,6 +228,22 @@
       "title": "Already approved by you",
       "detail": "One person approves at most one step of a request."
     },
+    "not_self_approval": {
+      "title": "Not your request",
+      "detail": "A self-approval reason applies only to a request you made."
+    },
+    "solo_owner_mode_off": {
+      "title": "Solo-owner mode is off",
+      "detail": "You can approve your own request only while a Superadmin has turned solo-owner mode on and it has not expired."
+    },
+    "other_approver_exists": {
+      "title": "Another approver exists",
+      "detail": "Another active user can decide this step, so they must approve it, not the requester."
+    },
+    "threshold_superadmin_only": {
+      "title": "Superadmin only",
+      "detail": "Only a Superadmin changes the auto-approve amount of an approval policy."
+    },
     "delegation_invalid": {
       "title": "Invalid delegation",
       "detail": "The delegate must be another active staff member and the period must be valid."

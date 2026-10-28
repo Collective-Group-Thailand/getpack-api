@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**120 settings** — 67 confirmed · 22 proposed · 4 pending the CPA (⚖) · 4 pending the business · 23 defined without a value (not set until their owner sets them).
+**122 settings** — 68 confirmed · 22 proposed · 4 pending the CPA (⚖) · 4 pending the business · 24 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -19,6 +19,8 @@
 | `analytics.prospectus_min_group_size` | `3` | confirmed | superadmin | D-160, D-044 | D-160 minimum factories per breakdown in anonymised exports and the partner prospectus |
 | `analytics.target_price_min_group_size` | `5` | confirmed | superadmin | D-190, D-252 | D-190 / D-252 minimum distinct customers per cell for any figure built from customers’ target prices (prospectus and staff views) |
 | `api.max_keys_per_company` | `5` | confirmed | superadmin | D-207, D-291 | D-207 / D-291 active API clients a company may hold (issued by its Company Admin) |
+| `approvals.solo_owner_mode` | `— (not set)` | not set | superadmin | D-449, D-063 | D-449 A solo-owner mode (owner decision 2026-10-28): while enabled and before expiresAt a Superadmin may approve their own maker-checker request with a typed reason ("อนุมัติด้วยตนเอง", flagged, audited, daily digest); never for a step another active user could approve; off at expiry; only Superadmin changes it; unset = off |
+| `approvals.solo_owner_mode_max_days` | `90` | confirmed | superadmin | D-449 | D-449 A how long solo-owner mode lasts when turned on (the default expiry and the longest one), in days; renewable by turning it on again; owner decision 2026-10-28: 90 days |
 | `artwork.approval_checklist` | `— (not set)` | not set | superadmin | D-073 | D-073 items the customer confirms when approving a proof (spelling, colours, size…), kept as approval evidence; not seeded — no checklist until set |
 | `artwork.first_proof_business_days` | `— (not set)` | not set | prepress | D-309, D-070 | D-309 business days Prepress commits to from an accepted file to the first proof, stated on the storefront; no decision gives it — null on the storefront until Prepress sets it |
 | `artwork.preflight_rules` | `{"severities":{"size_mismatch":"block","missing_bleed":"block","low_resolution":"warn","rgb_colour":"warn","fonts_not_embedded":"info","safe_zone":"info","thin_lines":"info","overprint":"info","ink_coverage":"info"},"bleedMm":"3","sizeToleranceMm":"1","minEffectivePpi":300,"safeZoneMm":"3","minLineWidthPt":"0.25","maxInkCoveragePct":300}` | proposed | superadmin | D-070 | D-070 preflight: block on size mismatch or missing bleed, warn on low resolution or RGB; other checks report only; technical thresholds proposed (ADR-0009) |

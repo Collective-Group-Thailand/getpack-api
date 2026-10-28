@@ -12,6 +12,7 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { EntitiesService } from '@platform/entities/entities.service';
 
 import { type ConditionContext, evaluateCondition } from './conditions';
+import { BELOW_THRESHOLD, belowThreshold, SoloOwnerModeService, TYPED_REASON_MIN_LENGTH } from './solo-owner';
 
 export const APPROVAL_DETAIL_INCLUDE = {
   policy: { select: { key: true } },
@@ -63,6 +64,10 @@ export interface CreateApprovalInput {
  *   through an active delegation.
  * - Controls: the requester never approves (also a DB trigger); one person approves at most one step
  *   of a request (also a unique index); SoD action pairs `<subject>.approve` are checked.
+ * - D-449 (owner decisions 2026-10-28, C1d): a Superadmin may decide a step of any staff role; a Superadmin may approve
+ *   their own request only under solo-owner mode, with a typed reason, flagged ("อนุมัติด้วยตนเอง") and only when no
+ *   other active user could decide the step; a request whose amount is at or below its policy version's
+ *   `autoApproveMaxAmount` is approved at creation ("below threshold").
  */
 @Injectable()
 export class ApprovalsService {
@@ -74,6 +79,7 @@ export class ApprovalsService {
     private readonly events: DomainEvents,
     private readonly entities: EntitiesService,
     private readonly calendars: BusinessCalendarService,
+    private readonly soloOwner: SoloOwnerModeService,
   ) {}
 
   async create(tx: Tx, input: CreateApprovalInput): Promise<ApprovalRequest> {
@@ -108,6 +114,8 @@ export class ApprovalsService {
     const matching = version.steps.filter((step) => evaluateCondition(step.condition, context));
     if (matching.length === 0) throw new DomainException('approval.no_matching_step');
 
+    // D-449 B: at or below the version's auto-approve amount the second approval is skipped.
+    const autoApprove = belowThreshold(input.amount, version.autoApproveMaxAmount);
     let request: ApprovalRequest;
     try {
       request = await tx.approvalRequest.create({
@@ -124,9 +132,11 @@ export class ApprovalsService {
             input.amount !== undefined ? new Prisma.Decimal(parseDecimal(input.amount).toFixed(2)) : null,
           pct: input.pct !== undefined ? new Prisma.Decimal(parseDecimal(input.pct).toFixed(4)) : null,
           flags: input.flags ?? [],
-          status: 'pending',
-          currentStepNo: matching[0]!.stepNo,
+          status: autoApprove ? 'approved' : 'pending',
+          autoApprovedReason: autoApprove ? BELOW_THRESHOLD : null,
+          currentStepNo: autoApprove ? null : matching[0]!.stepNo,
           expiresAt: input.expiresAt ?? null,
+          decidedAt: autoApprove ? now : null,
         },
       });
     } catch (error) {
@@ -156,9 +166,48 @@ export class ApprovalsService {
           approverScopeId: scopeId ?? null,
           quorum: step.quorum,
           // Only the first step's clock starts now; later steps start when they become current.
-          dueAt: index === 0 ? await this.dueAt(now, step.slaMinutes, step.slaCalendar) : null,
+          dueAt:
+            index === 0 && !autoApprove ? await this.dueAt(now, step.slaMinutes, step.slaCalendar) : null,
+          ...(autoApprove && { status: 'skipped' as const, completedAt: now }),
         },
       });
+    }
+
+    if (autoApprove) {
+      const threshold = version.autoApproveMaxAmount!.toFixed(2);
+      await this.audit.record(tx, {
+        category: 'approval',
+        action: 'approval.auto_approved',
+        actor: input.requester,
+        entityId,
+        resourceType: 'approval_request',
+        resourcePublicId: request.publicId,
+        data: {
+          policy: policy.key,
+          subjectType: input.subject.type,
+          subjectId: input.subject.publicId,
+          reason: 'below threshold',
+          amount: request.amount?.toFixed(2) ?? null,
+          threshold,
+          policyVersionNo: version.versionNo,
+        },
+      });
+      await this.events.record(
+        tx,
+        {
+          type: 'approval.approved',
+          aggregateType: 'approval_request',
+          aggregateId: request.publicId,
+          entityId,
+          payload: this.eventPayload(request, policy.key, {
+            autoApproved: true,
+            reason: BELOW_THRESHOLD,
+            threshold,
+          }),
+        },
+        input.requester,
+      );
+      return request;
     }
 
     await this.audit.record(tx, {
@@ -189,9 +238,23 @@ export class ApprovalsService {
     return request;
   }
 
-  async approve(actor: UserActor, requestPublicId: string, comment?: string): Promise<ApprovalDetail> {
+  /**
+   * `selfApprovalReason` (D-449 A): a Superadmin approving their own request under solo-owner mode types why; the
+   * action is flagged `selfApproved` with the reason, audited (`approval.self_approved`) and evented.
+   */
+  async approve(
+    actor: UserActor,
+    requestPublicId: string,
+    comment?: string,
+    selfApprovalReason?: string,
+  ): Promise<ApprovalDetail> {
     await this.prisma.withTx(async (tx) => {
-      const { request, step, onBehalfOf } = await this.lockForDecision(tx, actor, requestPublicId);
+      const { request, step, onBehalfOf, selfApproved } = await this.lockForDecision(
+        tx,
+        actor,
+        requestPublicId,
+        selfApprovalReason,
+      );
       const alreadyApproved = await tx.approvalAction.count({
         where: { requestId: request.id, actorUserId: actor.userId, action: 'approve' },
       });
@@ -209,13 +272,22 @@ export class ApprovalsService {
           actorUserId: actor.userId,
           onBehalfOfUserId: onBehalfOf ?? null,
           comment: comment ?? null,
+          selfApproved,
+          selfApprovalReason: selfApproved ? selfApprovalReason!.trim() : null,
         },
       });
+      const policyKey = (await tx.approvalPolicy.findUniqueOrThrow({ where: { id: request.policyId } })).key;
+      if (selfApproved) {
+        await this.recordDecision(tx, actor, request, policyKey, 'approval.self_approved', {
+          stepNo: step.stepNo,
+          reason: selfApprovalReason!.trim(),
+          mode: 'solo_owner',
+        });
+      }
 
       const approvals = await tx.approvalAction.count({
         where: { requestStepId: step.id, action: 'approve' },
       });
-      const policyKey = (await tx.approvalPolicy.findUniqueOrThrow({ where: { id: request.policyId } })).key;
       if (approvals < step.quorum) {
         await this.recordDecision(
           tx,
@@ -262,6 +334,7 @@ export class ApprovalsService {
         });
         await this.recordDecision(tx, actor, updated, policyKey, 'approval.approved', {
           stepNo: step.stepNo,
+          ...(selfApproved && { selfApproved: true }),
         });
       }
     });
@@ -368,6 +441,27 @@ export class ApprovalsService {
   async inbox(actor: UserActor): Promise<ApprovalDetail[]> {
     const authorities = await this.authorities(actor);
     if (authorities.length === 0) return [];
+    // D-449 A: under solo-owner mode a Superadmin also sees their own pending requests (approving one still needs
+    // a typed reason and no other active approver for the step).
+    const ownToo = authorities.some((a) => a.anyStaffRole) && (await this.soloOwner.isOn());
+    if (authorities.some((a) => a.anyStaffRole)) {
+      const rows = await this.prisma.$queryRaw<{ id: bigint }[]>`
+        SELECT r.id
+          FROM approval_requests r
+          JOIN approval_request_steps s ON s.request_id = r.id AND s.step_no = r.current_step_no AND s.status = 'pending'
+          JOIN roles ro ON ro.id = s.approver_role_id AND ro.audience = 'staff'
+         WHERE r.status = 'pending'
+           AND (r.requester_user_id <> ${actor.userId} OR ${ownToo})
+           AND NOT EXISTS (SELECT 1 FROM approval_actions a
+                            WHERE a.request_id = r.id AND a.actor_user_id = ${actor.userId} AND a.action = 'approve')
+         ORDER BY r.created_at`;
+      if (rows.length === 0) return [];
+      return this.prisma.approvalRequest.findMany({
+        where: { id: { in: rows.map((r) => r.id) } },
+        include: APPROVAL_DETAIL_INCLUDE,
+        orderBy: { createdAt: 'asc' },
+      });
+    }
     const candidates = await this.prisma.$queryRaw<
       { id: bigint; approver_role_id: bigint; approver_scope_id: bigint | null; policy_id: bigint }[]
     >`
@@ -409,21 +503,57 @@ export class ApprovalsService {
   }
 
   /** Locks the request and checks the actor may decide its current step. */
-  private async lockForDecision(tx: Tx, actor: UserActor, requestPublicId: string) {
+  private async lockForDecision(
+    tx: Tx,
+    actor: UserActor,
+    requestPublicId: string,
+    selfApprovalReason?: string,
+  ) {
     const request = await this.lock(tx, requestPublicId);
     if (request.status !== 'pending' || request.currentStepNo === null)
       throw new DomainException('approval.not_pending');
     if (request.expiresAt && request.expiresAt <= new Date()) throw new DomainException('approval.expired');
-    if (request.requesterUserId === actor.userId) throw new DomainException('approval.self_approval');
+    const own = request.requesterUserId === actor.userId;
+    // Only an approval may be a self-approval; a requester ends their own request by withdrawing it.
+    if (own && selfApprovalReason === undefined) throw new DomainException('approval.self_approval');
     const step = await tx.approvalRequestStep.findFirstOrThrow({
       where: { requestId: request.id, stepNo: request.currentStepNo, status: 'pending' },
     });
-    const authority = (await this.authorities(actor)).find((a) =>
-      this.matches(a, step.approverRoleId, step.approverScopeId, request.policyId),
+    const authorities = await this.authorities(actor);
+    const roleAudience = await this.roleAudience(tx, step.approverRoleId);
+    const authority = authorities.find((a) =>
+      this.matches(a, step.approverRoleId, step.approverScopeId, request.policyId, roleAudience),
     );
     if (!authority) throw new DomainException('approval.not_authorised');
     if (authority.onBehalfOf === request.requesterUserId) throw new DomainException('approval.self_approval');
-    return { request, step, onBehalfOf: authority.onBehalfOf };
+    if (!own) {
+      if (selfApprovalReason !== undefined) throw new DomainException('approval.not_self_approval');
+      return { request, step, onBehalfOf: authority.onBehalfOf, selfApproved: false };
+    }
+    // D-449 A: self-approval — a Superadmin, acting as themselves, under solo-owner mode, with a typed reason, and
+    // only while nobody else active could decide this step.
+    if (!authorities.some((a) => a.anyStaffRole) || authority.onBehalfOf !== undefined)
+      throw new DomainException('approval.self_approval');
+    if ((selfApprovalReason ?? '').trim().length < TYPED_REASON_MIN_LENGTH)
+      throw new DomainException('validation.failed', {
+        errors: [
+          {
+            path: 'selfApprovalReason',
+            code: 'minLength',
+            message: `at least ${TYPED_REASON_MIN_LENGTH} characters`,
+          },
+        ],
+      });
+    if (!(await this.soloOwner.isOn(tx))) throw new DomainException('approval.solo_owner_mode_off');
+    if (await this.soloOwner.otherApproverExists(tx, actor.userId, step))
+      throw new DomainException('approval.other_approver_exists');
+    return { request, step, onBehalfOf: undefined, selfApproved: true };
+  }
+
+  private async roleAudience(tx: Tx, roleId: bigint): Promise<string | null> {
+    return (
+      (await tx.role.findUnique({ where: { id: roleId }, select: { audience: true } }))?.audience ?? null
+    );
   }
 
   /** The (role, scope) pairs the actor may approve for: own grants, then active delegations. */
@@ -437,9 +567,12 @@ export class ApprovalsService {
       scopeId: bigint | null;
       onBehalfOf?: bigint;
       policyId?: bigint | null;
+      /** D-449: the actor's own Superadmin grant decides a step of any staff role (never through a delegation). */
+      anyStaffRole?: boolean;
     }[] = own.map((r) => ({
       roleId: roleIds.get(r.key)!,
       scopeId: r.scopeId,
+      ...(r.key === 'superadmin' && { anyStaffRole: true }),
     }));
     const now = new Date();
     const delegations = await this.prisma.approvalDelegation.findMany({
@@ -459,11 +592,13 @@ export class ApprovalsService {
   }
 
   private matches(
-    authority: { roleId: bigint; scopeId: bigint | null; policyId?: bigint | null },
+    authority: { roleId: bigint; scopeId: bigint | null; policyId?: bigint | null; anyStaffRole?: boolean },
     roleId: bigint,
     scopeId: bigint | null,
     policyId: bigint,
+    roleAudience: string | null = null,
   ): boolean {
+    if (authority.anyStaffRole && roleAudience === 'staff') return true;
     if (authority.roleId !== roleId) return false;
     if (scopeId !== null && authority.scopeId !== scopeId) return false;
     return authority.policyId === undefined || authority.policyId === null || authority.policyId === policyId;

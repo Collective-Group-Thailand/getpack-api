@@ -507,6 +507,28 @@
           "type": "https://errors.getpack/approval.not_pending"
         }
       },
+      "problem.approval.not_self_approval": {
+        "summary": "approval.not_self_approval",
+        "value": {
+          "code": "approval.not_self_approval",
+          "detail": "เหตุผลการอนุมัติด้วยตนเองใช้ได้เฉพาะคำขอที่คุณเป็นผู้ขอเท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่ใช่คำขอของคุณ",
+          "type": "https://errors.getpack/approval.not_self_approval"
+        }
+      },
+      "problem.approval.other_approver_exists": {
+        "summary": "approval.other_approver_exists",
+        "value": {
+          "code": "approval.other_approver_exists",
+          "detail": "ขั้นนี้มีผู้ใช้งานคนอื่นที่อนุมัติได้ จึงต้องให้ผู้นั้นอนุมัติ (ผู้ขอไม่อนุมัติเอง)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีผู้อนุมัติคนอื่นแล้ว",
+          "type": "https://errors.getpack/approval.other_approver_exists"
+        }
+      },
       "problem.approval.self_approval": {
         "summary": "approval.self_approval",
         "value": {
@@ -516,6 +538,28 @@
           "status": 403,
           "title": "อนุมัติคำขอของตนเองไม่ได้",
           "type": "https://errors.getpack/approval.self_approval"
+        }
+      },
+      "problem.approval.solo_owner_mode_off": {
+        "summary": "approval.solo_owner_mode_off",
+        "value": {
+          "code": "approval.solo_owner_mode_off",
+          "detail": "อนุมัติคำขอของตนเองได้เฉพาะเมื่อซูเปอร์แอดมินเปิดโหมดเจ้าของคนเดียวและยังไม่หมดอายุ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "โหมดเจ้าของคนเดียวปิดอยู่",
+          "type": "https://errors.getpack/approval.solo_owner_mode_off"
+        }
+      },
+      "problem.approval.threshold_superadmin_only": {
+        "summary": "approval.threshold_superadmin_only",
+        "value": {
+          "code": "approval.threshold_superadmin_only",
+          "detail": "เกณฑ์อนุมัติอัตโนมัติตามยอดเงินเปลี่ยนได้เฉพาะซูเปอร์แอดมิน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "เฉพาะซูเปอร์แอดมิน",
+          "type": "https://errors.getpack/approval.threshold_superadmin_only"
         }
       },
       "problem.artwork.file_not_usable": {
@@ -16847,6 +16891,19 @@
             ],
             "description": "Delegator when acting through a delegation"
           },
+          "selfApprovalReason": {
+            "description": "The typed reason of a self-approval; null otherwise",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "selfApproved": {
+            "description": "D-449 A: a Superadmin approved their own request under solo-owner mode (\"อนุมัติด้วยตนเอง\")",
+            "example": false,
+            "type": "boolean"
+          },
           "stepNo": {
             "example": 1,
             "type": [
@@ -16861,6 +16918,8 @@
           "actor",
           "onBehalfOf",
           "comment",
+          "selfApproved",
+          "selfApprovalReason",
           "at"
         ],
         "type": "object"
@@ -16873,6 +16932,13 @@
           "delegate",
           "comment",
           "escalate"
+        ],
+        "type": "string"
+      },
+      "ApprovalAutoApprovedReason": {
+        "description": "D-449 B: `below_threshold` = approved at creation because the amount is at or below the policy version's auto-approve amount (no second approval); null otherwise",
+        "enum": [
+          "below_threshold"
         ],
         "type": "string"
       },
@@ -16966,6 +17032,18 @@
               "null"
             ]
           },
+          "autoApprovedReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalAutoApprovedReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-449 B: `below_threshold` = approved at creation because the amount is at or below the policy version's auto-approve amount (no second approval); null otherwise",
+            "example": null
+          },
           "createdAt": {
             "example": "2026-09-23T14:05:00+07:00",
             "format": "date-time",
@@ -17040,6 +17118,11 @@
           "requester": {
             "$ref": "#/components/schemas/UserRefDto"
           },
+          "selfApproved": {
+            "description": "D-449 A: at least one step was self-approved by its requester (a Superadmin, solo-owner mode)",
+            "example": false,
+            "type": "boolean"
+          },
           "status": {
             "allOf": [
               {
@@ -17075,6 +17158,8 @@
           "currency",
           "pct",
           "flags",
+          "selfApproved",
+          "autoApprovedReason",
           "currentStepNo",
           "expiresAt",
           "decidedAt",
@@ -17193,6 +17278,13 @@
           "comment": {
             "example": "Verified by phone with the factory",
             "maxLength": 1000,
+            "type": "string"
+          },
+          "selfApprovalReason": {
+            "description": "D-449 A: only for approving your own request as a Superadmin under solo-owner mode — why (at least 10 characters); stored on the action, flagged \"อนุมัติด้วยตนเอง\", audited and listed in the daily digest",
+            "example": "ยังไม่มีผู้อนุมัติคนอื่น ตรวจเอกสารธนาคารครบแล้ว",
+            "maxLength": 1000,
+            "minLength": 10,
             "type": "string"
           }
         },
@@ -40383,6 +40475,21 @@
         "required": [
           "url",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "DownloadWithReasonDto": {
+        "properties": {
+          "reason": {
+            "description": "Why the file is opened; at least 10 characters after trimming; stored with the access-log row",
+            "example": "ลูกค้าแจ้งไฟล์งานพิมพ์ผิด ตรวจสอบตามคำร้องเรียน #C-2610-0012",
+            "maxLength": 500,
+            "minLength": 10,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ],
         "type": "object"
       },
@@ -64683,6 +64790,14 @@
             ],
             "example": "download"
           },
+          "reason": {
+            "description": "D-449 (1): the reason a Superadmin typed before opening the file; null for every other access",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "requestId": {
             "example": "req-3f2a9c1d",
             "type": [
@@ -64700,6 +64815,7 @@
           "order",
           "channel",
           "purpose",
+          "reason",
           "requestId"
         ],
         "type": "object"
@@ -79909,6 +80025,14 @@
               "null"
             ]
           },
+          "autoApproveMaxAmount": {
+            "description": "D-449 B: requests at or below this amount (THB) are approved at creation (\"below threshold\"); null = none",
+            "example": "500000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "createdAt": {
             "example": "2026-10-05T10:00:00+07:00",
             "format": "date-time",
@@ -79965,6 +80089,7 @@
           "status",
           "effectiveFrom",
           "reason",
+          "autoApproveMaxAmount",
           "steps",
           "approvalId",
           "createdBy",
@@ -85198,6 +85323,15 @@
       },
       "ProposePolicyVersionDto": {
         "properties": {
+          "autoApproveMaxAmount": {
+            "description": "D-449 B: requests at or below this amount (THB, 2 decimals) are approved at creation without the second approval; only on a policy whose steps have an amount condition; Superadmin only; omit to keep the value in force, null to remove it",
+            "example": "500000.00",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "effectiveFrom": {
             "description": "Now or later",
             "example": "2026-11-01T00:00:00+07:00",
@@ -97243,6 +97377,31 @@
         ],
         "type": "object"
       },
+      "SetSoloOwnerModeDto": {
+        "properties": {
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "description": "When it turns off; default and latest = now + max days (90); ignored when turning off",
+            "example": "2027-01-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "example": "บริษัทยังมีผู้อนุมัติคนเดียวช่วงเปิดตัว",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "reason"
+        ],
+        "type": "object"
+      },
       "SetStylePhotoDto": {
         "properties": {
           "altEn": {
@@ -99925,6 +100084,63 @@
         "required": [
           "materialClass",
           "transform"
+        ],
+        "type": "object"
+      },
+      "SoloOwnerModeDto": {
+        "properties": {
+          "active": {
+            "description": "On and not expired — self-approval is possible now",
+            "example": true,
+            "type": "boolean"
+          },
+          "changedAt": {
+            "example": "2026-10-28T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enabled": {
+            "description": "The value in force: on or off",
+            "example": true,
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "example": "2027-01-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "maxDays": {
+            "description": "Default and longest duration in days (setting `approvals.solo_owner_mode_max_days`)",
+            "example": 90,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "enabled",
+          "expiresAt",
+          "active",
+          "maxDays",
+          "changedAt",
+          "changedBy"
         ],
         "type": "object"
       },
@@ -134501,6 +134717,7 @@
                   {
                     "current": {
                       "approvalId": null,
+                      "autoApproveMaxAmount": "500000.00",
                       "createdAt": "2026-10-05T10:00:00+07:00",
                       "createdBy": {
                         "displayName": "Dev Superadmin",
@@ -134537,6 +134754,7 @@
                     "key": "credit_limit",
                     "pending": {
                       "approvalId": "0192f3a0-7c1e-7d2a-9b1f-00000000e0a1",
+                      "autoApproveMaxAmount": "500000.00",
                       "createdAt": "2026-10-05T10:00:00+07:00",
                       "createdBy": {
                         "displayName": "Dev Superadmin",
@@ -134719,6 +134937,7 @@
                 "example": [
                   {
                     "approvalId": "0192f3a0-7c1e-7d2a-9b1f-00000000e0a1",
+                    "autoApproveMaxAmount": "500000.00",
                     "createdAt": "2026-10-05T10:00:00+07:00",
                     "createdBy": {
                       "displayName": "Dev Superadmin",
@@ -134913,7 +135132,7 @@
         ]
       },
       "post": {
-        "description": "Its steps (approver roles, scope, conditions, quorum, SLA) from `effectiveFrom` (now or later), with a reason. Routed through `approval_policy_change`: a Superadmin approves and the proposer never approves; once approved it applies from its date, and the running version is never edited (D-063). One proposal per policy at a time (409 `approval.already_pending`). The expiry rule is carried over from the version in force. Requires `Idempotency-Key`. Audited.\n\nImplements: D-063.",
+        "description": "Its steps (approver roles, scope, conditions, quorum, SLA) from `effectiveFrom` (now or later), with a reason. Routed through `approval_policy_change`: a Superadmin approves and the proposer never approves; once approved it applies from its date, and the running version is never edited (D-063). One proposal per policy at a time (409 `approval.already_pending`). The expiry rule is carried over from the version in force. Requires `Idempotency-Key`. Audited. D-449 B: `autoApproveMaxAmount` (THB) approves requests at or below it at creation (\"below threshold\", audited, `approval.approved` with `autoApproved`); only on a policy whose steps have an amount condition (422), set / changed / removed by a Superadmin only (403 `approval.threshold_superadmin_only`); omitted = the value in force is carried over, null = none.\n\nImplements: D-063, D-449.",
         "operationId": "admin.approvalPolicies.proposeVersion",
         "parameters": [
           {
@@ -134976,6 +135195,7 @@
               "application/json": {
                 "example": {
                   "approvalId": "0192f3a0-7c1e-7d2a-9b1f-00000000e0a1",
+                  "autoApproveMaxAmount": "500000.00",
                   "createdAt": "2026-10-05T10:00:00+07:00",
                   "createdBy": {
                     "displayName": "Dev Superadmin",
@@ -135081,6 +135301,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "approval.threshold_superadmin_only": {
+                    "$ref": "#/components/examples/problem.approval.threshold_superadmin_only"
+                  },
                   "auth.forbidden": {
                     "$ref": "#/components/examples/problem.auth.forbidden"
                   },
@@ -135093,7 +135316,7 @@
                 }
               }
             },
-            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `approval.threshold_superadmin_only`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -135224,6 +135447,366 @@
         ]
       }
     },
+    "/v1/admin/approval-solo-owner-mode": {
+      "get": {
+        "description": "D-449 A: whether a Superadmin may approve their own maker-checker request now (on and not expired), its expiry, the longest duration (`approvals.solo_owner_mode_max_days`, 90 days) and who changed it last. Even while on, it never applies to a step another active user could decide.\n\nImplements: D-449.",
+        "operationId": "admin.approvalSoloOwnerMode.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": true,
+                  "changedAt": "2026-10-28T10:00:00+07:00",
+                  "changedBy": {
+                    "displayName": "Dev Superadmin",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000000a01"
+                  },
+                  "enabled": true,
+                  "expiresAt": "2027-01-26T10:00:00+07:00",
+                  "maxDays": 90
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SoloOwnerModeDto"
+                }
+              }
+            },
+            "description": "The mode",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Solo-owner mode of the approvals",
+        "tags": [
+          "admin.approvals"
+        ],
+        "x-required-permissions": [
+          "approvals.read"
+        ]
+      },
+      "put": {
+        "description": "D-449 A: only a Superadmin (owner of the setting `approvals.solo_owner_mode`; anyone else 403 `settings.not_owner`). On: expires at `expiresAt`, default and latest now + `approvals.solo_owner_mode_max_days` (90 days; renew by turning it on again). A new effective-dated version from now, audited (`setting.changed`) and evented; it turns itself off at expiry (worker `approvals.solo_owner_mode_expiry`).\n\nImplements: D-449, D-063.",
+        "operationId": "admin.approvalSoloOwnerMode.set",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "off": {
+                  "value": {
+                    "enabled": false,
+                    "reason": "มีผู้อนุมัติฝ่ายการเงินแล้ว"
+                  }
+                },
+                "on": {
+                  "value": {
+                    "enabled": true,
+                    "reason": "บริษัทยังมีผู้อนุมัติคนเดียวช่วงเปิดตัว"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetSoloOwnerModeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": true,
+                  "changedAt": "2026-10-28T10:00:00+07:00",
+                  "changedBy": {
+                    "displayName": "Dev Superadmin",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000000a01"
+                  },
+                  "enabled": true,
+                  "expiresAt": "2027-01-26T10:00:00+07:00",
+                  "maxDays": 90
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SoloOwnerModeDto"
+                }
+              }
+            },
+            "description": "The mode now",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  },
+                  "settings.not_owner": {
+                    "$ref": "#/components/examples/problem.settings.not_owner"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`, `settings.not_owner`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Turn solo-owner mode on or off (Superadmin)",
+        "tags": [
+          "admin.approvals"
+        ],
+        "x-required-permissions": [
+          "settings.change"
+        ]
+      }
+    },
     "/v1/admin/approvals": {
       "get": {
         "description": "All requests of the generic approval engine (discount memos, credit limits, payout runs, price proposals…), newest first.\n\nImplements: ADR-0006, D-052, D-121, D-022.",
@@ -135328,10 +135911,13 @@
                           "at": "2026-09-23T15:00:00+07:00",
                           "comment": "Verified by phone with the factory",
                           "onBehalfOf": null,
+                          "selfApprovalReason": null,
+                          "selfApproved": false,
                           "stepNo": 1
                         }
                       ],
                       "amount": null,
+                      "autoApprovedReason": null,
                       "createdAt": "2026-09-23T14:05:00+07:00",
                       "currency": "THB",
                       "currentStepNo": 2,
@@ -135349,6 +135935,7 @@
                         "displayName": "ผู้ขอ ทดสอบ",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                       },
+                      "selfApproved": false,
                       "status": "pending",
                       "steps": [
                         {
@@ -135537,7 +136124,7 @@
     },
     "/v1/admin/approvals/inbox": {
       "get": {
-        "description": "Pending requests whose current step I can decide through my roles or an active delegation; my own requests and requests I already approved a step of are excluded (maker-checker, ADR-0006).\n\nImplements: ADR-0006.",
+        "description": "Pending requests whose current step I can decide through my roles or an active delegation; my own requests and requests I already approved a step of are excluded (maker-checker, ADR-0006). D-449: a Superadmin sees every staff role's steps, and also their own requests while solo-owner mode is on.\n\nImplements: ADR-0006, D-449.",
         "operationId": "admin.approvals.inbox",
         "parameters": [
           {
@@ -135560,10 +136147,13 @@
                         "at": "2026-09-23T15:00:00+07:00",
                         "comment": "Verified by phone with the factory",
                         "onBehalfOf": null,
+                        "selfApprovalReason": null,
+                        "selfApproved": false,
                         "stepNo": 1
                       }
                     ],
                     "amount": null,
+                    "autoApprovedReason": null,
                     "createdAt": "2026-09-23T14:05:00+07:00",
                     "currency": "THB",
                     "currentStepNo": 2,
@@ -135581,6 +136171,7 @@
                       "displayName": "ผู้ขอ ทดสอบ",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                     },
+                    "selfApproved": false,
                     "status": "pending",
                     "steps": [
                       {
@@ -135781,10 +136372,13 @@
                       "at": "2026-09-23T15:00:00+07:00",
                       "comment": "Verified by phone with the factory",
                       "onBehalfOf": null,
+                      "selfApprovalReason": null,
+                      "selfApproved": false,
                       "stepNo": 1
                     }
                   ],
                   "amount": null,
+                  "autoApprovedReason": null,
                   "createdAt": "2026-09-23T14:05:00+07:00",
                   "currency": "THB",
                   "currentStepNo": 2,
@@ -135802,6 +136396,7 @@
                     "displayName": "ผู้ขอ ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                   },
+                  "selfApproved": false,
                   "status": "pending",
                   "steps": [
                     {
@@ -135988,7 +136583,7 @@
     },
     "/v1/admin/approvals/{requestId}/actions/approve": {
       "post": {
-        "description": "Needs the step's role (or a delegation from someone who holds it). The requester never approves, one person approves at most one step, and SoD rules are checked. The last step approves the request (`approval.approved`).\n\nImplements: ADR-0006, D-166, D-169.",
+        "description": "Needs the step's role (or a delegation from someone who holds it); a Superadmin may decide a step of any staff role (D-449). The requester never approves, one person approves at most one step, and SoD rules are checked. The last step approves the request (`approval.approved`). D-449 A: a Superadmin may approve their own request only with `selfApprovalReason` (≥ 10 characters) while solo-owner mode is on (409 `approval.solo_owner_mode_off`) and no other active user could decide the step (409 `approval.other_approver_exists`); the action is flagged \"อนุมัติด้วยตนเอง\", audited, evented (`approval.self_approved`) and listed in the daily digest to Superadmins.\n\nImplements: ADR-0006, D-166, D-169, D-449.",
         "operationId": "admin.approvals.approve",
         "parameters": [
           {
@@ -136035,10 +136630,13 @@
                       "at": "2026-09-23T15:00:00+07:00",
                       "comment": "Verified by phone with the factory",
                       "onBehalfOf": null,
+                      "selfApprovalReason": null,
+                      "selfApproved": false,
                       "stepNo": 1
                     }
                   ],
                   "amount": null,
+                  "autoApprovedReason": null,
                   "createdAt": "2026-09-23T14:05:00+07:00",
                   "currency": "THB",
                   "currentStepNo": 2,
@@ -136056,6 +136654,7 @@
                     "displayName": "ผู้ขอ ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                   },
+                  "selfApproved": false,
                   "status": "pending",
                   "steps": [
                     {
@@ -136204,6 +136803,12 @@
                   "approval.not_pending": {
                     "$ref": "#/components/examples/problem.approval.not_pending"
                   },
+                  "approval.other_approver_exists": {
+                    "$ref": "#/components/examples/problem.approval.other_approver_exists"
+                  },
+                  "approval.solo_owner_mode_off": {
+                    "$ref": "#/components/examples/problem.approval.solo_owner_mode_off"
+                  },
                   "iam.sod_conflict": {
                     "$ref": "#/components/examples/problem.iam.sod_conflict"
                   }
@@ -136213,7 +136818,7 @@
                 }
               }
             },
-            "description": "Problem: `approval.already_acted`, `approval.expired`, `approval.not_pending`, `iam.sod_conflict`",
+            "description": "Problem: `approval.already_acted`, `approval.expired`, `approval.not_pending`, `approval.other_approver_exists`, `approval.solo_owner_mode_off`, `iam.sod_conflict`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -136224,6 +136829,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "approval.not_self_approval": {
+                    "$ref": "#/components/examples/problem.approval.not_self_approval"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -136233,7 +136841,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `approval.not_self_approval`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -136347,10 +136955,13 @@
                       "at": "2026-09-23T15:00:00+07:00",
                       "comment": "Verified by phone with the factory",
                       "onBehalfOf": null,
+                      "selfApprovalReason": null,
+                      "selfApproved": false,
                       "stepNo": 1
                     }
                   ],
                   "amount": null,
+                  "autoApprovedReason": null,
                   "createdAt": "2026-09-23T14:05:00+07:00",
                   "currency": "THB",
                   "currentStepNo": 2,
@@ -136368,6 +136979,7 @@
                     "displayName": "ผู้ขอ ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                   },
+                  "selfApproved": false,
                   "status": "rejected",
                   "steps": [
                     {
@@ -136653,10 +137265,13 @@
                       "at": "2026-09-23T15:00:00+07:00",
                       "comment": "Verified by phone with the factory",
                       "onBehalfOf": null,
+                      "selfApprovalReason": null,
+                      "selfApproved": false,
                       "stepNo": 1
                     }
                   ],
                   "amount": null,
+                  "autoApprovedReason": null,
                   "createdAt": "2026-09-23T14:05:00+07:00",
                   "currency": "THB",
                   "currentStepNo": 2,
@@ -136674,6 +137289,7 @@
                     "displayName": "ผู้ขอ ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                   },
+                  "selfApproved": false,
                   "status": "withdrawn",
                   "steps": [
                     {
@@ -221552,6 +222168,7 @@
                         "orderCode": "DEVOR-2610-00001"
                       },
                       "purpose": "download",
+                      "reason": null,
                       "requestId": "req-3f2a9c1d"
                     }
                   ],
@@ -256808,6 +257425,256 @@
         "summary": "Finish an upload",
         "tags": [
           "admin.files"
+        ]
+      }
+    },
+    "/v1/admin/files/{fileId}/actions/download-with-reason": {
+      "post": {
+        "description": "D-449 (1): a Superadmin may open a customer's original, its production copy or Studio / design artwork (or a thumbnail of one) only after typing a reason (at least 10 characters). The customer file access log row (reason, actor, file, order, time), an audit row and the `customer_file.read_with_reason` event are written in one transaction before the 5-minute signed URL is returned. Other files: `admin.files.download`. Admin and Auditor have no access to originals (D-444 / D-445 unchanged).\n\nImplements: D-449, D-444.",
+        "operationId": "admin.files.downloadWithReason",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้าแจ้งไฟล์งานพิมพ์ผิด ตรวจสอบตามคำร้องเรียน #C-2610-0012"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DownloadWithReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-28T14:10:00+07:00",
+                  "url": "https://getpack-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Signed URL (the access is logged with the reason)",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.infected`, `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Open a customer's original with a typed reason (Superadmin)",
+        "tags": [
+          "admin.files"
+        ],
+        "x-required-permissions": [
+          "customer_files.read_with_reason"
         ]
       }
     },

@@ -123,6 +123,15 @@ export class FileAccessLogEntryDto {
   @ApiProperty({ enum: PURPOSES, enumName: 'FileAccessPurpose', example: 'download' })
   purpose!: (typeof PURPOSES)[number];
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description:
+      'D-449 (1): the reason a Superadmin typed before opening the file; null for every other access',
+  })
+  reason!: string | null;
+
   @ApiProperty({ type: String, nullable: true, example: 'req-3f2a9c1d' })
   requestId!: string | null;
 }
@@ -136,6 +145,7 @@ const EXAMPLE: FileAccessLogEntryDto = {
   order: { id: '0192f3a0-7c1e-7d2a-9b1f-00000000a001', orderCode: 'DEVOR-2610-00001' },
   channel: 'admin',
   purpose: 'download',
+  reason: null,
   requestId: 'req-3f2a9c1d',
 };
 
@@ -152,6 +162,7 @@ export const toFileAccessLogDto = (r: FileAccessLogRow): FileAccessLogEntryDto =
   order: r.order ? { id: r.order.publicId, orderCode: r.order.orderCode } : null,
   channel: r.channel,
   purpose: r.purpose,
+  reason: r.reason,
   requestId: r.requestId,
 });
 

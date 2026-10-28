@@ -1362,6 +1362,36 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'marketing',
   },
   {
+    key: 'approvals.solo_owner_mode',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['enabled', 'expiresAt'],
+      properties: {
+        enabled: { type: 'boolean' },
+        expiresAt: { type: ['string', 'null'], maxLength: 40 },
+      },
+    },
+    description:
+      'D-449 A solo-owner mode (owner decision 2026-10-28): while enabled and before expiresAt a Superadmin may approve their own maker-checker request with a typed reason ("อนุมัติด้วยตนเอง", flagged, audited, daily digest); never for a step another active user could approve; off at expiry; only Superadmin changes it; unset = off',
+    decisions: ['D-449', 'D-063'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'approvals.solo_owner_mode_max_days',
+    valueType: 'integer',
+    value: 90,
+    valueSchema: { minimum: 1, maximum: 366 },
+    description:
+      'D-449 A how long solo-owner mode lasts when turned on (the default expiry and the longest one), in days; renewable by turning it on again; owner decision 2026-10-28: 90 days',
+    decisions: ['D-449'],
+    ownerRole: 'superadmin',
+    fillIfUnset: true,
+  },
+  {
     key: 'support.reply_minutes',
     valueType: 'integer',
     value: null,
