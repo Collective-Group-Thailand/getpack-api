@@ -140,6 +140,8 @@ model User {
   locale            LocaleCode  @default(th)
   /// D-183: the unit the web shows sizes in; the API is millimetre-only.
   displayUnit       DisplayUnit @default(mm) @map("display_unit")
+  /// D-456: the Studio editor's mode the person last chose (`easy` / `pro`); null until they choose.
+  editorMode        EditorMode? @map("editor_mode")
   /// argon2id; never set for customers (passwordless).
   passwordHash      String?     @map("password_hash")
   passwordChangedAt DateTime?   @map("password_changed_at") @db.Timestamptz(6)
@@ -1347,4 +1349,12 @@ enum DisplayUnit {
   in
 
   @@map("display_unit")
+}
+
+/// D-456: the Studio editor's two modes — one document model, so switching never changes the design.
+enum EditorMode {
+  easy
+  pro
+
+  @@map("editor_mode")
 }
