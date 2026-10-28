@@ -4,6 +4,7 @@ import sharp from 'sharp';
 import { writeDesignerPdf } from './designer-pdf';
 import {
   type DesignerPdfOptions,
+  type DielineBlank,
   type DielineDrawing,
   type DielineEngine,
   type DielineFormat,
@@ -188,6 +189,15 @@ export class FakeDielineEngine implements DielineEngine {
     const caliper: Record<string, number> = { paperboard: 0.45, corrugated: 3, rigid: 2, label_stock: 0.1 };
     const c = caliper[materialClass];
     return Promise.resolve(c === undefined ? null : { kind: materialClass, caliperMm: c });
+  }
+
+  /** The same obviously fake (2L + 2W) × (H + W) blank as {@link draw}. */
+  blank(request: Omit<DielineRequest, 'format'>): Promise<DielineBlank> {
+    return Promise.resolve({
+      widthMm: 2 * request.lengthMm + 2 * request.widthMm,
+      heightMm: request.heightMm + request.widthMm,
+      engineVersion: 'fake-dieline@0',
+    });
   }
 
   async draw(request: DielineRequest): Promise<DielineDrawing> {

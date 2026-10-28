@@ -382,6 +382,8 @@ model CartItem {
   destinations          CartItemDestination[]
 
   studioPrintJob StudioPrintJob? @relation("StudioPrintJobCartItem")
+  /// C9 (D-457): the checked own file this line orders.
+  fileCheckVersion FileCheckVersion? @relation("FileCheckVersionCartItem")
 
   @@index([cartId], map: "ix_cart_items__cart_id")
   @@index([quoteId], map: "ix_cart_items__quote_id")

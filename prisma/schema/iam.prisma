@@ -704,6 +704,7 @@ model User {
   designCheckAcks DesignCheckAcknowledgement[] @relation("DesignCheckAckUser")
 
   studioPrintJobs StudioPrintJob[] @relation("StudioPrintJobCustomer")
+  fileChecks      FileCheck[]      @relation("FileCheckCustomer")
 
   brandKitsCreated        BrandKit[]                @relation("BrandKitCreatedBy")
   studioTemplatesCreated  StudioTemplate[]          @relation("StudioTemplateCreatedBy")

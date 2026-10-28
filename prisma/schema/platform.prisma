@@ -947,6 +947,7 @@ model FileObject {
 
   designRenders       DesignVersionRender[] @relation("DesignVersionRenderFile")
   studioPrintFiles    StudioPrintJob[]      @relation("StudioPrintJobPrintFile")
+  fileCheckVersions   FileCheckVersion[]    @relation("FileCheckVersionFile")
   studioProofFiles    StudioPrintJob[]      @relation("StudioPrintJobProofFile")
   studioSnapshotFiles StudioPrintJob[]      @relation("StudioPrintJobSnapshotFile")
 

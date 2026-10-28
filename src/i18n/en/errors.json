@@ -2078,5 +2078,27 @@
       "title": "No e-Tax e-mail to send",
       "detail": "This document has no failed e-Tax e-mail (give an address to send a sent one again)."
     }
+  },
+  "file_checks": {
+    "not_ready": {
+      "title": "The file is still being checked",
+      "detail": "Wait for the check to finish, then try again"
+    },
+    "blocking": {
+      "title": "The file has something to fix",
+      "detail": "Fix the items marked \"must fix\" and upload the corrected file before adding it to the cart"
+    },
+    "spec_missing": {
+      "title": "No product and size chosen",
+      "detail": "Choose the product and size you order before adding to the cart"
+    },
+    "quote_mismatch": {
+      "title": "The price is not for the chosen product",
+      "detail": "Price the chosen product again and retry"
+    },
+    "in_cart": {
+      "title": "This file is already in the cart",
+      "detail": "Remove the cart line first to change the file or the spec"
+    }
   }
 }

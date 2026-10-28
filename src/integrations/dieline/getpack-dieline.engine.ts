@@ -8,6 +8,7 @@ import sharp from 'sharp';
 import { type Segment, writeDesignerPdf } from './designer-pdf';
 import {
   type DesignerPdfOptions,
+  type DielineBlank,
   DielineBuildError,
   type DielineDrawing,
   type DielineEngine,
@@ -187,6 +188,25 @@ export class GetpackDielineEngine implements DielineEngine {
       fileName: `dieline-${request.dielineKey}-${request.lengthMm}x${request.widthMm}x${request.heightMm}.${request.format}`,
       engineVersion: version,
     };
+  }
+
+  async blank(request: Omit<DielineRequest, 'format'>): Promise<DielineBlank> {
+    const { pkg, version } = await this.engine();
+    const recipe = recipesOf(pkg).find((r) => r.legacy?.patternKeys.includes(request.dielineKey));
+    if (!recipe)
+      throw new DielineBuildError('variant_not_in_recipe', `no recipe for pattern key ${request.dielineKey}`);
+    const material = Object.values(pkg.REFERENCE_MATERIALS).find((m) =>
+      (recipe.materials ?? []).includes(pkg.materialClassOf(m)),
+    );
+    if (!material)
+      throw new DielineBuildError('material_not_supported', 'no reference material for the recipe');
+    const { dieline } = pkg.buildFromRecipe(
+      recipe,
+      { length: request.lengthMm, width: request.widthMm, height: request.heightMm },
+      material,
+    );
+    const q = this.quantities(pkg, dieline);
+    return { widthMm: q.blankWidthMm, heightMm: q.blankHeightMm, engineVersion: version };
   }
 
   async build(
