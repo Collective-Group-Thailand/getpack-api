@@ -95,7 +95,6 @@ describe('seed data (B1.2 step 3)', () => {
       'ops.alert_thresholds': 'proposed',
       // UX r2 Phase 4 (D-309): storefront figures CS / Prepress have not given yet.
       'artwork.first_proof_business_days': 'pending_business',
-      'storefront.support_hours': 'pending_business',
       'support.reply_minutes': 'pending_business',
     });
   });

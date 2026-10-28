@@ -18,7 +18,18 @@ export interface PolicySeed {
   reason: string;
   expiryRule?: unknown;
   steps: StepSeed[];
+  /**
+   * D-449 B (owner decision 2026-10-28): requests at or below this amount (THB) are approved at creation. Only on
+   * policies whose steps already have an amount condition. An existing database gets it once as a new version
+   * (`ensureApprovalPolicyAmendments`); afterwards only a Superadmin changes it in the policy editor.
+   */
+  autoApproveMaxAmount?: string;
 }
+
+/** Owner decision 2026-10-28 (C1d B): the approval threshold, ฿500,000.00. */
+export const OWNER_APPROVAL_THRESHOLD = '500000.00';
+export const OWNER_APPROVAL_THRESHOLD_REASON =
+  'Owner decision 2026-10-28 (D-449 B, DECISIONS-STAGE-A §12): requests of ≤ THB 500,000.00 skip the second approval';
 
 const pct = (op: string, value: string) => ({ field: 'pct', op, value });
 const notBelowFloor = { field: 'flags', op: 'excludes', value: 'below_margin_floor' };
@@ -72,6 +83,7 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     description: 'B2B credit limits: up to THB 100,000 by Finance, above by C-Level (D-121)',
     decisions: ['D-121'],
     reason: 'Seed from D-121',
+    autoApproveMaxAmount: OWNER_APPROVAL_THRESHOLD,
     steps: [
       {
         name: 'Finance (≤ THB 100,000)',

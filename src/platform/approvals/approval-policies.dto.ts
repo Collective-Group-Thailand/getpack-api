@@ -14,6 +14,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 
@@ -108,6 +109,20 @@ export class ProposePolicyVersionDto {
   @MaxLength(500)
   reason!: string;
 
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '500000.00',
+    description:
+      'D-449 B: requests at or below this amount (THB, 2 decimals) are approved at creation without the second ' +
+      'approval; only on a policy whose steps have an amount condition; Superadmin only; omit to keep the value in ' +
+      'force, null to remove it',
+  })
+  @IsOptional()
+  @ValidateIf((_o, v) => v !== null)
+  @Matches(/^\d{1,12}\.\d{2}$/)
+  autoApproveMaxAmount?: string | null;
+
   @ApiProperty({ type: [PolicyStepInputDto], minItems: 1, maxItems: 10 })
   @IsArray()
   @ArrayMinSize(1)
@@ -164,6 +179,15 @@ export class PolicyVersionDto {
 
   @ApiProperty({ example: 'Raise the Finance limit to THB 150,000 (board 2026-10)' })
   reason!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '500000.00',
+    description:
+      'D-449 B: requests at or below this amount (THB) are approved at creation ("below threshold"); null = none',
+  })
+  autoApproveMaxAmount!: string | null;
 
   @ApiProperty({ type: [PolicyStepDto] })
   steps!: PolicyStepDto[];
@@ -229,6 +253,7 @@ export const POLICY_VERSION_EXAMPLE: PolicyVersionDto = {
   status: 'proposed',
   effectiveFrom: '2026-11-01T00:00:00+07:00',
   reason: 'Raise the Finance limit to THB 150,000 (board 2026-10)',
+  autoApproveMaxAmount: '500000.00',
   steps: [STEP_EXAMPLE],
   approvalId: '0192f3a0-7c1e-7d2a-9b1f-00000000e0a1',
   createdBy: { id: '0192f3a0-7c1e-7d2a-9b1f-000000000a01', displayName: 'Dev Superadmin' },

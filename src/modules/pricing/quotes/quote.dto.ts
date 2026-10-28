@@ -479,6 +479,16 @@ export class QuoteStepDto {
   })
   arrival!: QuoteArrivalDto | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '12624.67',
+    description:
+      'C1-API-1 (D-441, GLOBAL-RULES §5): the total before VAT — `grossAmount` minus `vatAmount`, both as sent ' +
+      '(decimal maths in the API), so pages show "ก่อน VAT · VAT · รวม" without computing money; null when either is null',
+  })
+  netAmount!: string | null;
+
   @ApiProperty({ type: String, nullable: true, example: '13380.00', description: 'Total incl. VAT' })
   grossAmount!: string | null;
 
@@ -849,6 +859,7 @@ export const STORE_CALCULATION_EXAMPLE: QuoteCalculationDto = {
       savingPercent: null,
       zoneName: { th: 'กรุงเทพฯ และปริมณฑล', en: 'Bangkok and vicinity' },
       arrival: { from: '2026-10-12', to: '2026-10-14' },
+      netAmount: '12624.67',
       grossAmount: '13508.40',
       leadTimeDays: 7,
       earliestShipDate: '2026-10-09',

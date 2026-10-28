@@ -468,6 +468,86 @@ export class FilesService {
   }
 
   /**
+   * D-449 (1), owner decision 2026-10-28 (C1d): a Superadmin (`customer_files.read_with_reason`) opens a customer's
+   * original, production copy or Studio / design artwork (or its thumbnail) after typing a reason. The access-log row
+   * (reason, actor, file, order, time), an audit row and the `customer_file.read_with_reason` event are written in one
+   * transaction before the URL is returned (no row, no URL). Only customer files: anything else uses
+   * `admin.files.download`. Admin and Auditor keep no access (D-444 / D-445 unchanged).
+   */
+  async downloadWithReason(
+    actor: UserActor,
+    publicId: string,
+    reason: string,
+  ): Promise<{ url: string; expiresAt: Date }> {
+    const granted = (await this.permissions.forUser(actor.userId)).permissions;
+    if (!granted.has('customer_files.read_with_reason')) throw new DomainException('auth.forbidden');
+    const file = await this.prisma.fileObject.findUnique({ where: { publicId } });
+    if (!file || file.purgedAt) throw new DomainException('http.not_found');
+    const subject =
+      file.thumbnailOfFileId === null
+        ? file
+        : await this.prisma.fileObject.findUnique({ where: { id: file.thumbnailOfFileId } });
+    const ref = subject ? await this.customerFiles.classify(subject) : null;
+    if (!ref)
+      throw new DomainException('validation.failed', {
+        errors: [
+          {
+            path: 'fileId',
+            code: 'not_customer_file',
+            message: 'not a customer original or artwork; use admin.files.download',
+          },
+        ],
+      });
+    if (file.uploadStatus !== 'uploaded') throw new DomainException('file.not_ready');
+    if (file.scanStatus === 'infected') throw new DomainException('file.infected');
+    if (file.scanStatus !== 'clean') throw new DomainException('file.not_ready');
+    const typed = reason.trim();
+    const url = await this.storage.presignGet(file.storageKey, {
+      expiresInSeconds: DOWNLOAD_URL_TTL_SECONDS,
+      fileName: file.originalName,
+      contentType: file.mimeType,
+    });
+    const purpose = file.thumbnailOfFileId === null ? 'download' : 'thumbnail';
+    await this.prisma.withTx(async (tx) => {
+      const order =
+        ref.orderId === null
+          ? null
+          : await tx.order.findUnique({ where: { id: ref.orderId }, select: { publicId: true } });
+      await this.customerFiles.record(
+        actor,
+        { fileObjectId: file.id, ref, channel: 'admin', purpose, reason: typed },
+        tx,
+      );
+      const data = {
+        fileId: file.publicId,
+        kind: ref.kind,
+        orderId: order?.publicId ?? null,
+        purpose,
+        reason: typed,
+      };
+      await this.audit.record(tx, {
+        category: 'data_access',
+        action: 'customer_file.read_with_reason',
+        actor,
+        resourceType: 'file',
+        resourcePublicId: file.publicId,
+        data,
+      });
+      await this.events.record(
+        tx,
+        {
+          type: 'customer_file.read_with_reason',
+          aggregateType: 'file',
+          aggregateId: file.publicId,
+          payload: data,
+        },
+        actor,
+      );
+    });
+    return { url, expiresAt: new Date(Date.now() + DOWNLOAD_URL_TTL_SECONDS * 1000) };
+  }
+
+  /**
    * A signed download URL for a file the caller already authorised through its owning row (a design's assets,
    * a shared design); null while it is not uploaded, scanned clean and unpurged.
    */

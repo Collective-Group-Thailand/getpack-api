@@ -14,19 +14,29 @@ import { DocumentNumberingService } from '@platform/numbering/document-numbering
 import {
   type AcceptBasketItemDto,
   type AcceptedBasketDto,
+  type AddBasketProductDto,
   MAX_BASKET_ITEMS,
   type RfqBasketDto,
   type RfqBasketItemInputDto,
   type SetBasketDetailsDto,
 } from './rfq-baskets.dto';
-import { rfqDto } from './rfq-views';
+import { productOf, rfqDto } from './rfq-views';
+import { type RfqProductRefDto } from './rfqs.dto';
 import { type RfqPlan, RfqsService, type SubmitRfqInput } from './rfqs.service';
 
 const INCLUDE = {
   items: {
     orderBy: [{ sort: 'asc' }, { id: 'asc' }],
     include: {
-      productType: { select: { publicId: true, code: true, nameTh: true, nameEn: true } },
+      productType: {
+        select: {
+          publicId: true,
+          code: true,
+          nameTh: true,
+          nameEn: true,
+          category: { select: { code: true } },
+        },
+      },
       designDocumentVersion: { select: { versionNo: true, designDocument: { select: { publicId: true } } } },
       rfq: { select: { publicId: true } },
     },
@@ -37,6 +47,19 @@ type BasketRow = Prisma.RfqBasketGetPayload<{ include: typeof INCLUDE }>;
 
 /** What an item stores: the RFQ form without the basket-wide delivery fields. */
 type ItemSpec = Omit<SubmitRfqInput, 'deliveryPostcode' | 'targetDate' | 'notes' | 'routedFrom'>;
+
+/** The product a line names (C1 product reference), as stored in its specification. */
+type ProductRef = { catalogProductSlug?: string; stockProductSku?: string };
+const refOf = (specification: unknown): ProductRef => {
+  const s = (specification ?? {}) as ProductRef;
+  return {
+    ...(typeof s.catalogProductSlug === 'string' && { catalogProductSlug: s.catalogProductSlug }),
+    ...(typeof s.stockProductSku === 'string' && { stockProductSku: s.stockProductSku }),
+  };
+};
+const sameProduct = (a: ProductRef, b: ProductRef) =>
+  (!!a.catalogProductSlug && a.catalogProductSlug === b.catalogProductSlug) ||
+  (!!a.stockProductSku && a.stockProductSku === b.stockProductSku);
 
 const invalid = (path: string, message: string, code = 'invalid'): never => {
   throw new DomainException('validation.failed', { errors: [{ path, code, message }] });
@@ -84,6 +107,21 @@ export class RfqBasketsService {
     const { spec, designVersionId, productTypeId } = await this.checkItem(actor, input, 'item');
     return this.prisma.withTx(async (tx) => {
       const basket = await this.draftRow(tx, actor, true);
+      // C1b §10.9: the filled form of a product waiting in the basket (put in from the quote tray) fills that line.
+      const ref = refOf(spec);
+      const waiting = basket.items.find((i) => i.formPending && sameProduct(refOf(i.specification), ref));
+      if (waiting) {
+        await tx.rfqBasketItem.update({
+          where: { id: waiting.id },
+          data: {
+            productTypeId,
+            specification: spec as unknown as Prisma.InputJsonValue,
+            designDocumentVersionId: designVersionId,
+            formPending: false,
+          },
+        });
+        return this.view(await this.touch(tx, basket.id));
+      }
       if (basket.items.length >= MAX_BASKET_ITEMS)
         invalid('items', `a basket holds up to ${MAX_BASKET_ITEMS} items`, 'maxItems');
       await tx.rfqBasketItem.create({
@@ -111,6 +149,54 @@ export class RfqBasketsService {
           productTypeId,
           specification: spec as unknown as Prisma.InputJsonValue,
           designDocumentVersionId: designVersionId,
+          formPending: false,
+        },
+      });
+      return this.view(await this.touch(tx, basket.id));
+    });
+  }
+
+  /**
+   * C1b (owner 2026-10-28, DECISIONS-STAGE-A §10.9): the storefront's quote tray of a signed-in customer — a product
+   * goes straight into my draft basket as a line whose form is still to be filled (`formPending`), so the tray follows
+   * the account across devices, and a guest's tray merges into it at sign-in. Putting in a product that is already
+   * waiting is a no-op; the basket's 20-line limit applies (D-301). The line is filled by `addItem` (the same product's
+   * form) or `updateItem`; `submit` refuses a basket with a pending line.
+   */
+  async addProduct(actor: UserActor, input: AddBasketProductDto): Promise<RfqBasketDto> {
+    if (!!input.catalogProductSlug === !!input.stockProductSku)
+      invalid('catalogProductSlug', 'give either catalogProductSlug or stockProductSku', 'oneOf');
+    const product = input.catalogProductSlug
+      ? await this.prisma.catalogProduct.findFirst({
+          where: { slug: input.catalogProductSlug, status: 'active', productType: { status: 'active' } },
+          select: { productType: { select: { id: true, code: true } } },
+        })
+      : await this.prisma.stockProduct.findFirst({
+          where: { sku: input.stockProductSku, status: 'active', productType: { status: 'active' } },
+          select: { productType: { select: { id: true, code: true } } },
+        });
+    if (!product)
+      invalid(
+        input.catalogProductSlug ? 'catalogProductSlug' : 'stockProductSku',
+        'not an active product',
+        'exists',
+      );
+    const ref: ProductRef = input.catalogProductSlug
+      ? { catalogProductSlug: input.catalogProductSlug }
+      : { stockProductSku: input.stockProductSku! };
+    return this.prisma.withTx(async (tx) => {
+      const basket = await this.draftRow(tx, actor, true);
+      if (basket.items.some((i) => i.formPending && sameProduct(refOf(i.specification), ref)))
+        return this.view(basket);
+      if (basket.items.length >= MAX_BASKET_ITEMS)
+        invalid('items', `a basket holds up to ${MAX_BASKET_ITEMS} items`, 'maxItems');
+      await tx.rfqBasketItem.create({
+        data: {
+          basketId: basket.id,
+          sort: (basket.items.at(-1)?.sort ?? -1) + 1,
+          productTypeId: product!.productType.id,
+          specification: { productTypeCode: product!.productType.code, ...ref },
+          formPending: true,
         },
       });
       return this.view(await this.touch(tx, basket.id));
@@ -160,6 +246,10 @@ export class RfqBasketsService {
     const basket = await this.draftRow(this.prisma, actor, false);
     if (!basket) throw new DomainException('http.not_found');
     if (basket.items.length === 0) invalid('items', 'add at least one item', 'minItems');
+    // C1b §10.9: a product put in from the quote tray is asked only once its form is filled.
+    const pending = basket.items.findIndex((i) => i.formPending);
+    if (pending >= 0)
+      invalid(`items[${pending}]`, "fill this item's form first (store.rfqBaskets.addItem)", 'required');
     if (!basket.deliveryPostcode)
       invalid('deliveryPostcode', 'set the delivery postcode (store.rfqBaskets.setDetails)', 'required');
     if (basket.targetDate && bangkokDate(basket.targetDate) < bangkokDate(new Date()))
@@ -349,7 +439,43 @@ export class RfqBasketsService {
     return db.rfqBasket.findUniqueOrThrow({ where: { id }, include: INCLUDE });
   }
 
+  /** C1: the products the lines name (by slug / SKU in the item), read once per basket. */
+  private async productsOf(
+    b: BasketRow,
+  ): Promise<(i: BasketRow['items'][number]) => RfqProductRefDto | null> {
+    const spec = (i: BasketRow['items'][number]) =>
+      i.specification as { catalogProductSlug?: string; stockProductSku?: string };
+    const slugs = [
+      ...new Set(b.items.map((i) => spec(i).catalogProductSlug).filter((v): v is string => !!v)),
+    ];
+    const skus = [...new Set(b.items.map((i) => spec(i).stockProductSku).filter((v): v is string => !!v))];
+    const [catalog, stock] = await Promise.all([
+      slugs.length
+        ? this.prisma.catalogProduct.findMany({
+            where: { slug: { in: slugs } },
+            select: { slug: true, nameTh: true, nameEn: true },
+          })
+        : [],
+      skus.length
+        ? this.prisma.stockProduct.findMany({
+            where: { sku: { in: skus } },
+            select: { sku: true, nameTh: true, nameEn: true },
+          })
+        : [],
+    ]);
+    const bySlug = new Map(catalog.map((p) => [p.slug, p]));
+    const bySku = new Map(stock.map((p) => [p.sku, p]));
+    return (i) => {
+      const { catalogProductSlug, stockProductSku } = spec(i);
+      return productOf({
+        catalogProduct: (catalogProductSlug && bySlug.get(catalogProductSlug)) || null,
+        stockProduct: (stockProductSku && bySku.get(stockProductSku)) || null,
+      });
+    };
+  }
+
   private async view(b: BasketRow): Promise<RfqBasketDto> {
+    const productOfItem = await this.productsOf(b);
     return {
       id: b.publicId,
       basketCode: b.basketCode,
@@ -372,12 +498,15 @@ export class RfqBasketsService {
               nameEn: i.productType.nameEn,
             },
             specification: i.specification as Record<string, unknown>,
+            formPending: i.formPending,
+            categoryCode: i.productType.category?.code ?? null,
             design: i.designDocumentVersion
               ? {
                   designId: i.designDocumentVersion.designDocument.publicId,
                   versionNo: i.designDocumentVersion.versionNo,
                 }
               : null,
+            product: productOfItem(i),
             rfq: rfq ? rfqDto(rfq, await this.rfqs.attachments(rfq)) : null,
           };
         }),

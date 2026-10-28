@@ -8,6 +8,7 @@ import {
   type ConsultationLineDto,
   type FactoryConsultationDto,
   type RfqDto,
+  type RfqProductRefDto,
   type RfqQuotationDto,
   type RfqQuoteLineDto,
   type StaffRfqDto,
@@ -69,6 +70,7 @@ export function rfqDto(r: RfqRow, files: RfqFiles = NO_FILES): RfqDto {
     targetDate: date(r.targetDate),
     targetPricePerUnit: targetString(r.targetPricePerUnit),
     style: styleOf(r.styleVariant),
+    product: productOf(r),
     design: r.designDocumentVersion
       ? {
           designId: r.designDocumentVersion.designDocument.publicId,
@@ -216,4 +218,26 @@ function styleOf(
         options: v.options as Record<string, unknown>,
       }
     : null;
+}
+
+/** C1 (DECISIONS-STAGE-A §4): the catalogue or stock product a request was asked from. */
+export function productOf(r: {
+  catalogProduct: { slug: string; nameTh: string; nameEn: string } | null;
+  stockProduct: { sku: string; nameTh: string; nameEn: string } | null;
+}): RfqProductRefDto | null {
+  if (r.catalogProduct)
+    return {
+      kind: 'catalog_product',
+      key: r.catalogProduct.slug,
+      nameTh: r.catalogProduct.nameTh,
+      nameEn: r.catalogProduct.nameEn,
+    };
+  if (r.stockProduct)
+    return {
+      kind: 'stock_product',
+      key: r.stockProduct.sku,
+      nameTh: r.stockProduct.nameTh,
+      nameEn: r.stockProduct.nameEn,
+    };
+  return null;
 }

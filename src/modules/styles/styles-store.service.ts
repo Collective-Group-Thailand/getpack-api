@@ -11,6 +11,7 @@ import { Injectable } from '@nestjs/common';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
+import { quoteResponseDaysOf } from './quote-response-days';
 import { StyleAssetsService } from './style-assets.service';
 import { fitOf, hasFitRange, parseProductSize } from './style-fit';
 import { StyleMakeabilityService } from './style-makeability.service';
@@ -58,6 +59,9 @@ const LIBRARY_INCLUDE = {
             select: {
               slug: true,
               status: true,
+              nameTh: true,
+              nameEn: true,
+              sort: true,
               priceHint: {
                 select: {
                   unitPrice: true,
@@ -442,6 +446,7 @@ export class StylesStoreService {
       recyclable: row.recyclable,
       plasticFree: row.plasticFree,
       certifications: row.certifications,
+      products: productsOf(row),
       assets: await Promise.all(
         row.assets.map(async (a) => ({
           kind: a.kind,
@@ -481,9 +486,10 @@ export class StylesStoreService {
   private readonly responseDays = new Map<string, { days: number | null; until: number }>();
 
   /**
-   * C0b (DECISIONS-STAGE-A §9.3): the quotation first-response time in working days — `rfq.sla_business_hours` at the
-   * style's product type (platform fallback, D-100) over 24 h, rounded up: the RFQ due time counts every hour of a
-   * working day (`WorkingDayCalendar.addWorkingMinutes`). Null without a product type or a setting value.
+   * C0b / C1c (DECISIONS-STAGE-A §9.3, §11.2): the quotation first-response time in working days —
+   * `rfq.sla_business_hours` at the style's product type (platform fallback, D-100) divided by the hours of one
+   * business day (`calendar.business_hours`, D-175: 09:00–18:00 = 9 h), rounded up ({@link quoteResponseDaysOf}).
+   * Null without a product type, an SLA value or a usable business-hours window: the timing is then omitted.
    */
   private async quoteResponseDays(productTypeId: bigint | null): Promise<number | null> {
     if (productTypeId === null) return null;
@@ -493,14 +499,13 @@ export class StylesStoreService {
     if (cached && cached.until > now) return cached.days;
     let days: number | null = null;
     try {
-      const hours = Number(
-        (
-          await this.settings.at('rfq.sla_business_hours', {
-            scope: { type: 'product_type', id: productTypeId },
-          })
-        ).value,
-      );
-      days = Number.isFinite(hours) && hours > 0 ? Math.ceil(hours / 24) : null;
+      const hours = (
+        await this.settings.at('rfq.sla_business_hours', {
+          scope: { type: 'product_type', id: productTypeId },
+        })
+      ).value;
+      const window = (await this.settings.at('calendar.business_hours')).value;
+      days = quoteResponseDaysOf(hours, window);
     } catch (error) {
       if (!(error instanceof SettingNotFoundError)) throw error;
     }
@@ -579,6 +584,49 @@ function productHints(r: LibraryRow) {
     .filter((p) => p.status === 'active' && p.priceHint)
     .map((p) => ({ slug: p.slug, ...p.priceHint! }))
     .sort((a, b) => a.unitPrice.comparedTo(b.unitPrice) || a.slug.localeCompare(b.slug));
+}
+
+/** A product's "starting from" price in the style DTOs' shape (D-220, D-441). */
+function stylePrice(
+  slug: string,
+  h: NonNullable<LibraryRow['pattern']>['catalogProducts'][number]['catalogProduct']['priceHint'],
+  calculatorKey: string | null,
+) {
+  return h
+    ? {
+        unitPrice: h.unitPrice.toFixed(2),
+        currency: 'THB' as const,
+        quantity: h.quantity,
+        catalogProductSlug: slug,
+        computedAt: toBangkokIso(h.computedAt),
+        label: specLabel(
+          (Array.isArray(h.specSummary) ? h.specSummary : []) as unknown as SpecLineDto[],
+          calculatorKey,
+        ),
+      }
+    : null;
+}
+
+/**
+ * C1 (products Phase 2): the active catalogue products of the style's pattern — priced ones cheapest first, then the
+ * rest in the catalogue's own order. Never a factory (GLOBAL-RULES §1).
+ */
+export function productsOf(r: Pick<LibraryRow, 'pattern' | 'productType'>) {
+  return (r.pattern?.catalogProducts ?? [])
+    .map((p) => p.catalogProduct)
+    .filter((p) => p.status === 'active')
+    .sort((a, b) => {
+      if (a.priceHint && b.priceHint)
+        return a.priceHint.unitPrice.comparedTo(b.priceHint.unitPrice) || a.slug.localeCompare(b.slug);
+      if (a.priceHint || b.priceHint) return a.priceHint ? -1 : 1;
+      return a.sort - b.sort || a.slug.localeCompare(b.slug);
+    })
+    .map((p) => ({
+      slug: p.slug,
+      nameTh: p.nameTh,
+      nameEn: p.nameEn,
+      startingPrice: stylePrice(p.slug, p.priceHint, r.productType?.calculatorKey ?? null),
+    }));
 }
 
 function card(

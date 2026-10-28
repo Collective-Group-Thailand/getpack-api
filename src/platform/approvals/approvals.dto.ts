@@ -1,7 +1,18 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsDate,
+  IsIn,
+  IsISO8601,
+  IsOptional,
+  IsString,
+  IsUUID,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export const APPROVAL_STATUSES = ['pending', 'approved', 'rejected', 'withdrawn', 'expired'] as const;
 export const APPROVAL_STEP_STATUSES = ['pending', 'approved', 'rejected', 'skipped', 'expired'] as const;
@@ -71,6 +82,21 @@ export class ApprovalActionDto {
   @ApiProperty({ type: String, nullable: true, example: 'Verified by phone with the factory' })
   comment!: string | null;
 
+  @ApiProperty({
+    example: false,
+    description:
+      'D-449 A: a Superadmin approved their own request under solo-owner mode ("อนุมัติด้วยตนเอง")',
+  })
+  selfApproved!: boolean;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'The typed reason of a self-approval; null otherwise',
+  })
+  selfApprovalReason!: string | null;
+
   @ApiProperty({ format: 'date-time', example: '2026-09-23T15:00:00+07:00' })
   at!: string;
 }
@@ -116,6 +142,24 @@ export class ApprovalRequestDto {
   @ApiProperty({ type: [String], example: [] })
   flags!: string[];
 
+  @ApiProperty({
+    example: false,
+    description:
+      'D-449 A: at least one step was self-approved by its requester (a Superadmin, solo-owner mode)',
+  })
+  selfApproved!: boolean;
+
+  @ApiProperty({
+    nullable: true,
+    enum: ['below_threshold'],
+    enumName: 'ApprovalAutoApprovedReason',
+    example: null,
+    description:
+      "D-449 B: `below_threshold` = approved at creation because the amount is at or below the policy version's " +
+      'auto-approve amount (no second approval); null otherwise',
+  })
+  autoApprovedReason!: 'below_threshold' | null;
+
   @ApiProperty({ type: 'integer', nullable: true, example: 1 })
   currentStepNo!: number | null;
 
@@ -154,6 +198,8 @@ export const APPROVAL_EXAMPLE: ApprovalRequestDto = {
   currency: 'THB',
   pct: null,
   flags: [],
+  selfApproved: false,
+  autoApprovedReason: null,
   currentStepNo: 2,
   expiresAt: null,
   decidedAt: null,
@@ -177,6 +223,8 @@ export const APPROVAL_EXAMPLE: ApprovalRequestDto = {
       actor: USER,
       onBehalfOf: null,
       comment: 'Verified by phone with the factory',
+      selfApproved: false,
+      selfApprovalReason: null,
       at: '2026-09-23T15:00:00+07:00',
     },
   ],
@@ -205,6 +253,74 @@ export class ApproveDto {
   @IsString()
   @MaxLength(1000)
   comment?: string;
+
+  @ApiPropertyOptional({
+    example: 'ยังไม่มีผู้อนุมัติคนอื่น ตรวจเอกสารธนาคารครบแล้ว',
+    minLength: 10,
+    maxLength: 1000,
+    description:
+      'D-449 A: only for approving your own request as a Superadmin under solo-owner mode — why (at least 10 ' +
+      'characters); stored on the action, flagged "อนุมัติด้วยตนเอง", audited and listed in the daily digest',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  selfApprovalReason?: string;
+}
+
+export class SoloOwnerModeDto {
+  @ApiProperty({ example: true, description: 'The value in force: on or off' })
+  enabled!: boolean;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2027-01-26T10:00:00+07:00' })
+  expiresAt!: string | null;
+
+  @ApiProperty({ example: true, description: 'On and not expired — self-approval is possible now' })
+  active!: boolean;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 90,
+    description: 'Default and longest duration in days (setting `approvals.solo_owner_mode_max_days`)',
+  })
+  maxDays!: number | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-28T10:00:00+07:00' })
+  changedAt!: string | null;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  changedBy!: UserRefDto | null;
+}
+
+export const SOLO_OWNER_MODE_EXAMPLE: SoloOwnerModeDto = {
+  enabled: true,
+  expiresAt: '2027-01-26T10:00:00+07:00',
+  active: true,
+  maxDays: 90,
+  changedAt: '2026-10-28T10:00:00+07:00',
+  changedBy: { id: '0192f3a0-7c1e-7d2a-9b1f-000000000a01', displayName: 'Dev Superadmin' },
+};
+
+export class SetSoloOwnerModeDto {
+  @ApiProperty({ example: true })
+  @IsBoolean()
+  enabled!: boolean;
+
+  @ApiPropertyOptional({
+    format: 'date-time',
+    example: '2027-01-26T10:00:00+07:00',
+    description: 'When it turns off; default and latest = now + max days (90); ignored when turning off',
+  })
+  @IsOptional()
+  @IsISO8601()
+  expiresAt?: string;
+
+  @ApiProperty({ example: 'บริษัทยังมีผู้อนุมัติคนเดียวช่วงเปิดตัว', minLength: 3, maxLength: 500 })
+  @IsString()
+  @MinLength(3)
+  @MaxLength(500)
+  reason!: string;
 }
 
 export class RejectDto {

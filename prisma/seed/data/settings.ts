@@ -5,6 +5,7 @@
  * Money and percentages are decimal strings (CLAUDE.md); percentages are in percent (10 = 10 %).
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
+import { STYLE_LIBRARY_CONTENT_SCHEMA } from '../../../src/modules/styles/style-library-content';
 import { HERO_PRESETS } from './hero-presets';
 import { INTAKE_TERMS_V1 } from './intake-terms';
 import { STUDIO_PRINT_RULES } from './studio';
@@ -1273,8 +1274,9 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'storefront.support_channels',
     valueType: 'json',
-    value: null,
-    unset: true,
+    // D-447 (owner 2026-10-28, GLOBAL-RULES §6): only the decided opening hours; the accounts stay unset (D-005).
+    value: { hours: 'ทุกวัน 09:00–18:00' },
+    fillIfUnset: true,
     valueSchema: {
       type: 'object',
       additionalProperties: false,
@@ -1286,8 +1288,8 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it',
-    decisions: ['D-221', 'D-005'],
+      'D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) are not seeded — null until the CS Lead sets them; the opening hours are the decided daily 09:00–18:00 (D-447)',
+    decisions: ['D-221', 'D-005', 'D-447'],
     ownerRole: 'cs_lead',
   },
   {
@@ -1315,8 +1317,8 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'storefront.support_hours',
     valueType: 'json',
-    value: null,
-    unset: true,
+    value: { days: 'daily', open: '09:00', close: '18:00' },
+    fillIfUnset: true,
     valueSchema: {
       type: 'object',
       additionalProperties: false,
@@ -1328,10 +1330,66 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-309 hours CS answers on the storefront (Asia/Bangkok): which days and the opening and closing time; not seeded — null until the CS Lead sets it',
-    decisions: ['D-309', 'D-221'],
-    confirmation: 'pending_business',
+      'D-309 hours CS answers on the storefront (Asia/Bangkok): which days and the opening and closing time; decided daily 09:00–18:00 (D-447, GLOBAL-RULES §6), the CS Lead changes it from a date',
+    decisions: ['D-309', 'D-221', 'D-447'],
     ownerRole: 'cs_lead',
+  },
+  {
+    key: 'storefront.featured_services',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'array',
+      maxItems: 3,
+      uniqueItems: true,
+      items: { type: 'string', pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', maxLength: 120 },
+    },
+    description:
+      'D-447 the add-on services the storefront features (/products "บริการเสริม"), in order: up to 3 catalogue product slugs chosen by staff; unset = the catalogue\'s own service list (first 3)',
+    decisions: ['D-447'],
+    ownerRole: 'marketing',
+  },
+  {
+    key: 'storefront.style_library',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: STYLE_LIBRARY_CONTENT_SCHEMA,
+    description:
+      'D-448 (C1c) the /styles page content staff keep: "ค้นหาบ่อย" terms, material swatches and the trust section (certificates with number, issuer and expiry, food-grade documents, production photos, customer logos with their permission, the tax-invoice note); edited in the back office by Admin or Marketing (styles.curate, D-246); unset = every part hidden',
+    decisions: ['D-448', 'D-246', 'D-010', 'D-125'],
+    ownerRole: 'marketing',
+  },
+  {
+    key: 'approvals.solo_owner_mode',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['enabled', 'expiresAt'],
+      properties: {
+        enabled: { type: 'boolean' },
+        expiresAt: { type: ['string', 'null'], maxLength: 40 },
+      },
+    },
+    description:
+      'D-449 A solo-owner mode (owner decision 2026-10-28): while enabled and before expiresAt a Superadmin may approve their own maker-checker request with a typed reason ("อนุมัติด้วยตนเอง", flagged, audited, daily digest); never for a step another active user could approve; off at expiry; only Superadmin changes it; unset = off',
+    decisions: ['D-449', 'D-063'],
+    ownerRole: 'superadmin',
+  },
+  {
+    key: 'approvals.solo_owner_mode_max_days',
+    valueType: 'integer',
+    value: 90,
+    valueSchema: { minimum: 1, maximum: 366 },
+    description:
+      'D-449 A how long solo-owner mode lasts when turned on (the default expiry and the longest one), in days; renewable by turning it on again; owner decision 2026-10-28: 90 days',
+    decisions: ['D-449'],
+    ownerRole: 'superadmin',
+    fillIfUnset: true,
   },
   {
     key: 'support.reply_minutes',

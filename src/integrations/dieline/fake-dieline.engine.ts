@@ -14,6 +14,7 @@ import {
   type RecipeBuild,
   type RecipeBuildRequest,
   type RecipeFacts,
+  type RecipeInsideSizes,
   type StoredRecipe,
   type Thumbnails,
 } from './dieline-engine.port';
@@ -121,6 +122,11 @@ export class FakeDielineEngine implements DielineEngine {
       // The fake cannot enumerate a recipe's variants: unknown, so the D-407 drawability gate stays open.
       variants: null,
     });
+  }
+
+  /** The fake knows no presets or closed sizes: nothing (C1c sources (b)/(c) from the engine stay empty). */
+  insideSizes(_recipe: StoredRecipe): Promise<RecipeInsideSizes> {
+    return Promise.resolve({});
   }
 
   async thumbnails(_request: RecipeBuildRequest, size: number): Promise<Thumbnails> {

@@ -56,6 +56,7 @@ import { TOOLING_ADMIN_CONTROLLERS } from '@modules/tooling/tooling.registry';
 import { Module } from '@nestjs/common';
 import { AdminApprovalPoliciesController } from '@platform/approvals/approval-policies.controller';
 import { ApprovalDelegationsController, ApprovalsController } from '@platform/approvals/approvals.controller';
+import { SoloOwnerModeController } from '@platform/approvals/solo-owner.controller';
 import { AuditLogsController } from '@platform/audit/audit.controller';
 import { AuditQueryService } from '@platform/audit/audit-query.service';
 import { AdminCalendarController } from '@platform/calendar/calendar-admin.controller';
@@ -66,7 +67,7 @@ import {
   OrderSupportAssignmentsController,
   StudioRenderPreviewsController,
 } from '@platform/files/customer-file-access.controller';
-import { AdminFilesController } from '@platform/files/files.controllers';
+import { AdminCustomerFilesController, AdminFilesController } from '@platform/files/files.controllers';
 import { AdminDeepLinksController } from '@platform/notifications/deep-links.controller';
 import { AdminInboxController } from '@platform/notifications/my-notifications.controller';
 import {
@@ -87,6 +88,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
   providers: [UsersAdminService, AuditQueryService, FactoryOwnersService],
   controllers: [
     AdminFilesController,
+    AdminCustomerFilesController,
 
     AdminRealtimeController,
     AdminWebPushController,
@@ -102,6 +104,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     AdminSearchController,
     OutboxAdminController,
     ApprovalsController,
+    SoloOwnerModeController,
     ApprovalDelegationsController,
     AdminApprovalPoliciesController,
     SettingsController,

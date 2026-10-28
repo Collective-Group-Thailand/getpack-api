@@ -35,6 +35,8 @@ export const RFQ_INCLUDE = {
   styleVariant: {
     select: { code: true, options: true, base: { select: { code: true, nameTh: true, nameEn: true } } },
   },
+  catalogProduct: { select: { slug: true, nameTh: true, nameEn: true } },
+  stockProduct: { select: { sku: true, nameTh: true, nameEn: true } },
   province: { select: { nameTh: true, nameEn: true } },
   designDocumentVersion: { select: { versionNo: true, designDocument: { select: { publicId: true } } } },
   customer: {
@@ -99,6 +101,10 @@ export interface SubmitRfqInput {
   targetPricePerUnit?: string | null;
   /** D-269: a published style variant of the product type. */
   styleVariantCode?: string | null;
+  /** C1 (DECISIONS-STAGE-A §4): the catalogue product asked from (an active product of the type). */
+  catalogProductSlug?: string | null;
+  /** C1: the stock product asked from (an active stock product of the type); never with `catalogProductSlug`. */
+  stockProductSku?: string | null;
 }
 
 /** A checked submission (`RfqsService.prepare`), written by `RfqsService.create`. */
@@ -110,6 +116,8 @@ export interface RfqPlan {
   type: { id: bigint; code: string; rfqSpecSchemaVersion: number };
   routedFrom: bigint | null;
   styleVariantId: bigint | null;
+  catalogProductId: bigint | null;
+  stockProductId: bigint | null;
   files: bigint[];
   provinceId: bigint | null;
   now: Date;
@@ -200,6 +208,38 @@ export class RfqsService implements OnModuleInit {
   }
 
   /** Every check of a submission, outside any transaction (D-301: a basket checks all its items first). */
+  /**
+   * C1 (DECISIONS-STAGE-A §4): the product a request is asked from — an active catalogue or stock product of the
+   * request's product type, at most one of them; anything else is a 422 on its field.
+   */
+  private async productRef(
+    productTypeId: bigint,
+    input: Pick<SubmitRfqInput, 'catalogProductSlug' | 'stockProductSku'>,
+  ): Promise<{ catalogProductId: bigint | null; stockProductId: bigint | null }> {
+    const refuse = (path: string, code: string, message: string): never => {
+      throw new DomainException('validation.failed', { errors: [{ path, code, message }] });
+    };
+    if (input.catalogProductSlug && input.stockProductSku)
+      refuse('stockProductSku', 'exclusive', 'give either catalogProductSlug or stockProductSku, not both');
+    if (input.catalogProductSlug) {
+      const row = await this.prisma.catalogProduct.findFirst({
+        where: { slug: input.catalogProductSlug, status: 'active', productTypeId },
+        select: { id: true },
+      });
+      if (!row) refuse('catalogProductSlug', 'exists', 'not an active product of this product type');
+      return { catalogProductId: row!.id, stockProductId: null };
+    }
+    if (input.stockProductSku) {
+      const row = await this.prisma.stockProduct.findFirst({
+        where: { sku: input.stockProductSku, status: 'active', productTypeId },
+        select: { id: true },
+      });
+      if (!row) refuse('stockProductSku', 'exists', 'not an active stock product of this product type');
+      return { catalogProductId: null, stockProductId: row!.id };
+    }
+    return { catalogProductId: null, stockProductId: null };
+  }
+
   async prepare(
     customerUserId: bigint,
     channel: SalesChannel,
@@ -258,6 +298,7 @@ export class RfqsService implements OnModuleInit {
           },
         ],
       });
+    const product = await this.productRef(type.id, input);
     const files = await this.ownFiles(customerUserId, createdBy, input.fileIds ?? []);
     const province = await this.prisma.geoSubdistrict.findFirst({
       where: { postcode: input.deliveryPostcode },
@@ -274,6 +315,8 @@ export class RfqsService implements OnModuleInit {
       type,
       routedFrom,
       styleVariantId: styleVariant?.id ?? null,
+      catalogProductId: product.catalogProductId,
+      stockProductId: product.stockProductId,
       files,
       provinceId: province?.district.provinceId ?? null,
       now,
@@ -307,6 +350,8 @@ export class RfqsService implements OnModuleInit {
         routedFromCalculateLogId: routedFrom,
         routedFromQuoteId: extra.routedFromQuoteId ?? null,
         styleVariantId: plan.styleVariantId,
+        catalogProductId: plan.catalogProductId,
+        stockProductId: plan.stockProductId,
         basketId: extra.basketId ?? null,
         designDocumentVersionId: extra.designDocumentVersionId ?? null,
         targetPricePerUnit: input.targetPricePerUnit ?? null,

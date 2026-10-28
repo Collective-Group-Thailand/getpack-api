@@ -3,6 +3,7 @@ import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type Promotion } from '@generated/prisma/client';
 import { QuotePathService } from '@modules/partners/quote-path/quote-path.service';
+import { exVatFigure, vatStandardPct } from '@modules/pricing/hints/vat-figures';
 import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { type SpecLabel, specLabel } from '@modules/quotes/spec-label';
 import { Injectable } from '@nestjs/common';
@@ -31,6 +32,8 @@ export interface CampaignBadge {
 
 export interface CardFacts {
   startingPricePerPiece: string | null;
+  /** C1b §10.6: the same figure without VAT (shared helper, approved rate); null without a price or a rate. */
+  startingPricePerPieceExVat: string | null;
   startingPriceAssumes: { quantity: number; specs: SpecLineDto[]; label: SpecLabel } | null;
   moq: number | null;
   leadTimeDays: { min: number; max: number } | null;
@@ -152,9 +155,10 @@ export class CardFactsService {
         },
       },
     });
-    const [promotions, availability] = await Promise.all([
+    const [promotions, availability, ratePct] = await Promise.all([
       this.livePromotions(now),
       this.availabilities(rows.map((r) => r.productType.publicId)),
+      vatStandardPct(this.prisma, now),
     ]);
     const out = new Map<bigint, CardFacts>();
     for (const r of rows) {
@@ -170,8 +174,10 @@ export class CardFactsService {
       );
       const list = h ? new MoneyDecimal(h.unitPrice.toString()) : null;
       const promoted = promo && list && h ? this.promotedPrice(promo, list, h.quantity) : null;
+      const starting = list ? ceilMoney(promoted ?? list) : null;
       out.set(r.id, {
-        startingPricePerPiece: list ? ceilMoney(promoted ?? list) : null,
+        startingPricePerPiece: starting,
+        startingPricePerPieceExVat: exVatFigure(starting, ratePct),
         startingPriceAssumes: h ? basis(h, r.productType.calculatorKey) : null,
         moq: r.quantityMin,
         leadTimeDays: h && h.leadTimeDays !== null ? { min: h.leadTimeDays, max: h.leadTimeDays } : null,
@@ -204,9 +210,10 @@ export class CardFactsService {
         },
       },
     });
-    const [promotions, availability] = await Promise.all([
+    const [promotions, availability, ratePct] = await Promise.all([
       this.livePromotions(now),
       this.availabilities(types.map((t) => t.publicId)),
+      vatStandardPct(this.prisma, now),
     ]);
     const out = new Map<bigint, CardFacts>();
     for (const t of types) {
@@ -223,8 +230,10 @@ export class CardFactsService {
         },
         promotions,
       );
+      const starting = cheapest ? ceilMoney(new MoneyDecimal(cheapest.unitPrice.toString())) : null;
       out.set(t.id, {
-        startingPricePerPiece: cheapest ? ceilMoney(new MoneyDecimal(cheapest.unitPrice.toString())) : null,
+        startingPricePerPiece: starting,
+        startingPricePerPieceExVat: exVatFigure(starting, ratePct),
         startingPriceAssumes: cheapest ? basis(cheapest, t.calculatorKey) : null,
         moq: moqs.length ? Math.min(...moqs) : null,
         leadTimeDays: leads.length ? { min: Math.min(...leads), max: Math.max(...leads) } : null,

@@ -2,7 +2,8 @@ import { OptionalNoteDto } from '@common/dto/optional-note.dto';
 import { ApiStatusLabelAdminTh, ApiStatusLabelTh } from '@common/labels/status-label.decorators';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
-import { EnumField, IntField, RefField, TextField } from '@modules/catalog/crud/dto-fields';
+import { EnumField, IntField, RefField, SLUG, TextField } from '@modules/catalog/crud/dto-fields';
+import { PRICE_HINT_KINDS } from '@modules/pricing/hints/price-hints.dto';
 import { TargetPriceField } from '@modules/pricing/quotes/target-price';
 import { SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { MONEY, POSTCODE, RATE } from '@modules/shipping/rates/customer-rates.dto';
@@ -50,6 +51,8 @@ export const RFQ_STATUSES = [
 export const RFQ_QUOTE_STATUSES = ['draft', 'sent', 'accepted', 'superseded', 'expired'] as const;
 export const CONSULTATION_STATUSES = ['requested', 'responded', 'declined', 'expired'] as const;
 export const MESSAGE_VISIBILITIES = ['customer', 'internal'] as const;
+/** C1: what an RFQ's product reference points at — the same kinds as a price hint's (`PriceHintKind`). */
+export const RFQ_PRODUCT_KINDS = PRICE_HINT_KINDS;
 
 const IDS = {
   rfq: '0192f3a0-7c1e-7d2a-9b1f-00000000e701',
@@ -182,7 +185,55 @@ export class SubmitRfqDto {
 
   @StyleVariantField()
   styleVariantCode?: string;
+
+  @ApiPropertyOptional({
+    example: 'mailer-box-b',
+    pattern: SLUG.source,
+    maxLength: 120,
+    description:
+      'C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of ' +
+      '`productTypeCode`; CS sees it with the request. Never together with `stockProductSku`',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  @Matches(SLUG)
+  catalogProductSlug?: string;
+
+  @ApiPropertyOptional({
+    example: 'PKO-BTL-0250',
+    maxLength: 60,
+    description:
+      'C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never ' +
+      'together with `catalogProductSlug`',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  stockProductSku?: string;
 }
+
+/** C1 (DECISIONS-STAGE-A §4): the product an RFQ (or a basket line) is for. */
+export class RfqProductRefDto {
+  @EnumField(RFQ_PRODUCT_KINDS, 'PriceHintKind', { example: 'catalog_product' })
+  kind!: (typeof RFQ_PRODUCT_KINDS)[number];
+
+  @ApiProperty({ example: 'mailer-box-b', description: 'Catalogue product slug or stock product SKU' })
+  key!: string;
+
+  @ApiProperty({ example: 'กล่องไปรษณีย์ ฝาชน (ลอน B)' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Mailer box (B flute)' })
+  nameEn!: string;
+}
+
+export const RFQ_PRODUCT_EXAMPLE: RfqProductRefDto = {
+  kind: 'catalog_product',
+  key: 'mailer-box-b',
+  nameTh: 'กล่องไปรษณีย์ ฝาชน (ลอน B)',
+  nameEn: 'Mailer box (B flute)',
+};
 
 export class RfqStyleDto {
   @ApiProperty({ example: 'PK-TE-01-K7QD' })
@@ -711,6 +762,13 @@ export class RfqDto {
     description: 'The style variant asked for (D-269)',
   })
   style!: RfqStyleDto | null;
+
+  @ApiProperty({
+    type: () => RfqProductRefDto,
+    nullable: true,
+    description: 'C1: the catalogue or stock product the request was asked from; null for a category request',
+  })
+  product!: RfqProductRefDto | null;
 
   @ApiProperty({
     type: () => RfqDesignRefDto,

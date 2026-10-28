@@ -92,6 +92,13 @@ export const PERMISSIONS = [
     decisionRefs: ['D-444'],
   },
   {
+    key: 'customer_files.read_with_reason',
+    audience: 'staff',
+    description:
+      'Download any customer original / Studio artwork after typing a reason that is stored in the access log with actor, file, order and time (Superadmin only, D-449); Admin and Auditor have no access',
+    decisionRefs: ['D-449', 'D-444'],
+  },
+  {
     key: 'customer_file_access_logs.read',
     audience: 'staff',
     description:

@@ -2,7 +2,7 @@ import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { DomainException } from '@common/errors/domain.exception';
 import { decodeCursor, encodeCursor } from '@common/pagination/pagination';
-import { PrismaService } from '@database/prisma.service';
+import { PrismaService, type Tx } from '@database/prisma.service';
 import {
   type ClaimStatus,
   type CustomerFileKind,
@@ -362,10 +362,13 @@ export class CustomerFileAccessService {
       ref: CustomerFileRef;
       channel: FileAccessChannel;
       purpose: FileAccessPurpose;
+      /** D-449 (1): the typed reason of a Superadmin download. */
+      reason?: string;
     },
+    tx?: Tx,
   ): Promise<void> {
     if (actor.type !== 'user' && actor.type !== 'api_client') return;
-    await this.prisma.customerFileAccessLog.create({
+    await (tx ?? this.prisma).customerFileAccessLog.create({
       data: {
         actorType: actor.type,
         actorUserId: actor.type === 'user' ? actor.userId : null,
@@ -375,6 +378,7 @@ export class CustomerFileAccessService {
         orderId: entry.ref.orderId,
         channel: entry.channel,
         purpose: entry.purpose,
+        reason: entry.reason ?? null,
         requestId: RequestContext.current()?.requestId ?? null,
       },
     });

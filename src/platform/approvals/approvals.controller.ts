@@ -43,6 +43,8 @@ export function toApprovalDto(request: ApprovalDetail): ApprovalRequestDto {
     currency: 'THB',
     pct: request.pct?.toFixed(4) ?? null,
     flags: request.flags,
+    selfApproved: request.actions.some((a) => a.selfApproved),
+    autoApprovedReason: request.autoApprovedReason === 'below_threshold' ? 'below_threshold' : null,
     currentStepNo: request.currentStepNo,
     expiresAt: iso(request.expiresAt),
     decidedAt: iso(request.decidedAt),
@@ -62,6 +64,8 @@ export function toApprovalDto(request: ApprovalDetail): ApprovalRequestDto {
       actor: { id: a.actor.publicId, displayName: a.actor.displayName },
       onBehalfOf: a.onBehalfOf ? { id: a.onBehalfOf.publicId, displayName: a.onBehalfOf.displayName } : null,
       comment: a.comment,
+      selfApproved: a.selfApproved,
+      selfApprovalReason: a.selfApprovalReason,
       at: toBangkokIso(a.createdAt),
     })),
   };
@@ -120,8 +124,9 @@ export class ApprovalsController {
     summary: 'Requests waiting for my decision',
     description:
       'Pending requests whose current step I can decide through my roles or an active delegation; my own requests and ' +
-      'requests I already approved a step of are excluded (maker-checker, ADR-0006).',
-    implements: ['ADR-0006'],
+      'requests I already approved a step of are excluded (maker-checker, ADR-0006). D-449: a Superadmin sees every ' +
+      "staff role's steps, and also their own requests while solo-owner mode is on.",
+    implements: ['ADR-0006', 'D-449'],
   })
   @ApiSuccess(200, { description: 'Inbox', type: [ApprovalRequestDto], example: [APPROVAL_EXAMPLE] })
   @ApiStandardErrors('http.not_found')
@@ -150,9 +155,14 @@ export class ApprovalsController {
     id: 'admin.approvals.approve',
     summary: 'Approve the current step',
     description:
-      "Needs the step's role (or a delegation from someone who holds it). The requester never approves, one person " +
-      'approves at most one step, and SoD rules are checked. The last step approves the request (`approval.approved`).',
-    implements: ['ADR-0006', 'D-166', 'D-169'],
+      "Needs the step's role (or a delegation from someone who holds it); a Superadmin may decide a step of any staff " +
+      'role (D-449). The requester never approves, one person approves at most one step, and SoD rules are checked. ' +
+      'The last step approves the request (`approval.approved`). D-449 A: a Superadmin may approve their own request ' +
+      'only with `selfApprovalReason` (≥ 10 characters) while solo-owner mode is on (409 ' +
+      '`approval.solo_owner_mode_off`) and no other active user could decide the step (409 ' +
+      '`approval.other_approver_exists`); the action is flagged "อนุมัติด้วยตนเอง", audited, evented ' +
+      '(`approval.self_approved`) and listed in the daily digest to Superadmins.',
+    implements: ['ADR-0006', 'D-166', 'D-169', 'D-449'],
   })
   @ApiBody({
     type: ApproveDto,
@@ -164,6 +174,9 @@ export class ApprovalsController {
     'http.malformed_json',
     ...DECISION_ERRORS,
     'approval.already_acted',
+    'approval.not_self_approval',
+    'approval.solo_owner_mode_off',
+    'approval.other_approver_exists',
     'iam.sod_conflict',
   )
   async approve(
@@ -171,7 +184,9 @@ export class ApprovalsController {
     @Param('requestId', ParseUUIDPipe) requestId: string,
     @Body() body: ApproveDto,
   ): Promise<ApprovalRequestDto> {
-    return toApprovalDto(await this.approvals.approve(userActor(actor), requestId, body.comment));
+    return toApprovalDto(
+      await this.approvals.approve(userActor(actor), requestId, body.comment, body.selfApprovalReason),
+    );
   }
 
   @Post(':requestId/actions/reject')

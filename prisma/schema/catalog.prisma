@@ -466,6 +466,8 @@ model CatalogProduct {
 
   advisoryRecommendations AdvisoryRecommendation[] @relation("AdvisoryRecommendationCatalogProduct")
 
+  rfqs Rfq[] @relation("RfqCatalogProduct")
+
   @@index([productTypeId], map: "ix_catalog_products__product_type_id")
   @@index([seoPageId], map: "ix_catalog_products__seo_page_id")
   @@index([nameTh(ops: raw("gin_trgm_ops"))], type: Gin, map: "ix_catalog_products__name_th_trgm")
@@ -1263,6 +1265,7 @@ model StockProduct {
   levels        StockLevel[]
   movements     StockMovement[]
   priceSummary  StockProductPriceSummary[]
+  priceHint     StockPriceHint?
   plPrices      PlStockProductPrice[]      @relation("PlStockProductPriceStockProduct")
   createdBy     User?                      @relation("StockProductCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__created_by")
   updatedBy     User?                      @relation("StockProductUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_products__updated_by")
@@ -1275,6 +1278,8 @@ model StockProduct {
 
   // --- end Quotes & RFQ
   orders Order[] @relation("OrderStockProduct")
+
+  rfqs Rfq[] @relation("RfqStockProduct")
 
   @@index([productTypeId], map: "ix_stock_products__product_type_id")
   @@index([seoPageId], map: "ix_stock_products__seo_page_id")
@@ -2194,6 +2199,23 @@ model CatalogPriceHint {
   catalogProduct CatalogProduct @relation(fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_catalog_price_hints__catalog_product_id")
 
   @@map("catalog_price_hints")
+}
+
+/// C1b (owner 2026-10-28, DECISIONS-STAGE-A §10.5): a stock product's "starting from" price — the unit price at its
+/// minimum orderable quantity (the first price tier), priced through the store pricing path; no row = no price shown.
+model StockPriceHint {
+  stockProductId    BigInt   @id(map: "pk_stock_price_hints") @map("stock_product_id")
+  /// The quantity priced: the product's minimum order (`stock_products.min_order_qty`).
+  quantity          Int
+  /// Per piece, incl. VAT (customer prices include VAT), excluding delivery and design.
+  unitPrice         Decimal  @map("unit_price") @db.Decimal(18, 6)
+  leadTimeDays      Int?     @map("lead_time_days")
+  calculatorVersion String   @map("calculator_version")
+  computedAt        DateTime @map("computed_at") @db.Timestamptz(6)
+
+  stockProduct StockProduct @relation(fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_stock_price_hints__stock_product_id")
+
+  @@map("stock_price_hints")
 }
 
 /// D-182: which size a dimension describes — inside, outside, score-to-score (over crease) or the finished flat product.

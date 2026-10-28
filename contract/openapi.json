@@ -507,6 +507,28 @@
           "type": "https://errors.getpack/approval.not_pending"
         }
       },
+      "problem.approval.not_self_approval": {
+        "summary": "approval.not_self_approval",
+        "value": {
+          "code": "approval.not_self_approval",
+          "detail": "เหตุผลการอนุมัติด้วยตนเองใช้ได้เฉพาะคำขอที่คุณเป็นผู้ขอเท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่ใช่คำขอของคุณ",
+          "type": "https://errors.getpack/approval.not_self_approval"
+        }
+      },
+      "problem.approval.other_approver_exists": {
+        "summary": "approval.other_approver_exists",
+        "value": {
+          "code": "approval.other_approver_exists",
+          "detail": "ขั้นนี้มีผู้ใช้งานคนอื่นที่อนุมัติได้ จึงต้องให้ผู้นั้นอนุมัติ (ผู้ขอไม่อนุมัติเอง)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีผู้อนุมัติคนอื่นแล้ว",
+          "type": "https://errors.getpack/approval.other_approver_exists"
+        }
+      },
       "problem.approval.self_approval": {
         "summary": "approval.self_approval",
         "value": {
@@ -516,6 +538,28 @@
           "status": 403,
           "title": "อนุมัติคำขอของตนเองไม่ได้",
           "type": "https://errors.getpack/approval.self_approval"
+        }
+      },
+      "problem.approval.solo_owner_mode_off": {
+        "summary": "approval.solo_owner_mode_off",
+        "value": {
+          "code": "approval.solo_owner_mode_off",
+          "detail": "อนุมัติคำขอของตนเองได้เฉพาะเมื่อซูเปอร์แอดมินเปิดโหมดเจ้าของคนเดียวและยังไม่หมดอายุ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "โหมดเจ้าของคนเดียวปิดอยู่",
+          "type": "https://errors.getpack/approval.solo_owner_mode_off"
+        }
+      },
+      "problem.approval.threshold_superadmin_only": {
+        "summary": "approval.threshold_superadmin_only",
+        "value": {
+          "code": "approval.threshold_superadmin_only",
+          "detail": "เกณฑ์อนุมัติอัตโนมัติตามยอดเงินเปลี่ยนได้เฉพาะซูเปอร์แอดมิน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "เฉพาะซูเปอร์แอดมิน",
+          "type": "https://errors.getpack/approval.threshold_superadmin_only"
         }
       },
       "problem.artwork.file_not_usable": {
@@ -5722,6 +5766,24 @@
           "webhook"
         ],
         "type": "string"
+      },
+      "AddBasketProductDto": {
+        "properties": {
+          "catalogProductSlug": {
+            "description": "An active catalogue product. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "stockProductSku": {
+            "description": "An active stock product. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "AddCarrierAccountDto": {
         "properties": {
@@ -11137,6 +11199,14 @@
               "null"
             ]
           },
+          "netAmount": {
+            "description": "C1-API-1 (D-441, GLOBAL-RULES §5): the total before VAT — `grossAmount` minus `vatAmount`, both as sent (decimal maths in the API), so pages show \"ก่อน VAT · VAT · รวม\" without computing money; null when either is null",
+            "example": "12624.67",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "productAmount": {
             "description": "Pieces incl. VAT",
             "example": "13380.00",
@@ -11322,6 +11392,7 @@
           "savingPercent",
           "zoneName",
           "arrival",
+          "netAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -13099,6 +13170,17 @@
             "example": false,
             "type": "boolean"
           },
+          "fitRangeBounds": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FitRangeBoundSourcesDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1c: for a backfilled range, the source and basis of each of the six bounds; null for a business range or none. Read-only."
+          },
           "fitRangeSource": {
             "anyOf": [
               {
@@ -13108,7 +13190,7 @@
                 "type": "null"
               }
             ],
-            "description": "Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / the CSV (never overwritten by the backfill); null = no range. Read-only.",
+            "description": "Where the fit range in `commercial` came from (C0b/C1c, DECISIONS-STAGE-A §9.1, §11.1): a backfill source — `recipe` (approved recipe range), `standard_sizes` (the style's standard sizes), `production_envelope` (calculator size rules ∩ dieline engine limits) or `combined` (bounds from several; see `fitRangeBounds`) — replaced by any value curation saves; `business` = entered by curation / the CSV, never overwritten by the backfill; null = no range. Read-only.",
             "example": null
           },
           "hidden": {
@@ -13314,7 +13396,8 @@
           "recipes",
           "reasonCounts",
           "commercial",
-          "fitRangeSource"
+          "fitRangeSource",
+          "fitRangeBounds"
         ],
         "type": "object"
       },
@@ -13470,6 +13553,50 @@
           "recipeVersion",
           "recipeApproved",
           "version"
+        ],
+        "type": "object"
+      },
+      "AdminStyleLibrarySettingsDto": {
+        "properties": {
+          "content": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleLibraryContentDto"
+              }
+            ],
+            "description": "The content in force (empty while unset)"
+          },
+          "effectiveFrom": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "settingId": {
+            "description": "The setting (`admin.settings.get`, version history); null before the reference seed ran",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionNo": {
+            "description": "Version in force; null = unset",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "content",
+          "versionNo",
+          "effectiveFrom",
+          "settingId"
         ],
         "type": "object"
       },
@@ -16764,6 +16891,19 @@
             ],
             "description": "Delegator when acting through a delegation"
           },
+          "selfApprovalReason": {
+            "description": "The typed reason of a self-approval; null otherwise",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "selfApproved": {
+            "description": "D-449 A: a Superadmin approved their own request under solo-owner mode (\"อนุมัติด้วยตนเอง\")",
+            "example": false,
+            "type": "boolean"
+          },
           "stepNo": {
             "example": 1,
             "type": [
@@ -16778,6 +16918,8 @@
           "actor",
           "onBehalfOf",
           "comment",
+          "selfApproved",
+          "selfApprovalReason",
           "at"
         ],
         "type": "object"
@@ -16790,6 +16932,13 @@
           "delegate",
           "comment",
           "escalate"
+        ],
+        "type": "string"
+      },
+      "ApprovalAutoApprovedReason": {
+        "description": "D-449 B: `below_threshold` = approved at creation because the amount is at or below the policy version's auto-approve amount (no second approval); null otherwise",
+        "enum": [
+          "below_threshold"
         ],
         "type": "string"
       },
@@ -16883,6 +17032,18 @@
               "null"
             ]
           },
+          "autoApprovedReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApprovalAutoApprovedReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-449 B: `below_threshold` = approved at creation because the amount is at or below the policy version's auto-approve amount (no second approval); null otherwise",
+            "example": null
+          },
           "createdAt": {
             "example": "2026-09-23T14:05:00+07:00",
             "format": "date-time",
@@ -16957,6 +17118,11 @@
           "requester": {
             "$ref": "#/components/schemas/UserRefDto"
           },
+          "selfApproved": {
+            "description": "D-449 A: at least one step was self-approved by its requester (a Superadmin, solo-owner mode)",
+            "example": false,
+            "type": "boolean"
+          },
           "status": {
             "allOf": [
               {
@@ -16992,6 +17158,8 @@
           "currency",
           "pct",
           "flags",
+          "selfApproved",
+          "autoApprovedReason",
           "currentStepNo",
           "expiresAt",
           "decidedAt",
@@ -17110,6 +17278,13 @@
           "comment": {
             "example": "Verified by phone with the factory",
             "maxLength": 1000,
+            "type": "string"
+          },
+          "selfApprovalReason": {
+            "description": "D-449 A: only for approving your own request as a Superadmin under solo-owner mode — why (at least 10 characters); stored on the action, flagged \"อนุมัติด้วยตนเอง\", audited and listed in the daily digest",
+            "example": "ยังไม่มีผู้อนุมัติคนอื่น ตรวจเอกสารธนาคารครบแล้ว",
+            "maxLength": 1000,
+            "minLength": 10,
             "type": "string"
           }
         },
@@ -35858,6 +36033,35 @@
         ],
         "type": "string"
       },
+      "CustomerLogoDto": {
+        "properties": {
+          "logoUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": "https://example.invalid/logo.svg",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "name": {
+            "example": "ร้านตัวอย่าง",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "permission": {
+            "description": "Where the customer's permission to show the logo is recorded — staff only, never published",
+            "example": "อีเมลอนุญาตจากลูกค้า 2026-10-01 (CS ticket …)",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "logoUrl",
+          "permission"
+        ],
+        "type": "object"
+      },
       "CustomerOrderStatus": {
         "description": "THE status to show a customer (D-437), derived by the API from payment, artwork, production, shipment, receipt, claims and cancellation; every customer surface (overview, list, detail, e-mail, LINE) uses it. `status` is the stored fact status (staff)",
         "enum": [
@@ -40271,6 +40475,21 @@
         "required": [
           "url",
           "expiresAt"
+        ],
+        "type": "object"
+      },
+      "DownloadWithReasonDto": {
+        "properties": {
+          "reason": {
+            "description": "Why the file is opened; at least 10 characters after trimming; stored with the access-log row",
+            "example": "ลูกค้าแจ้งไฟล์งานพิมพ์ผิด ตรวจสอบตามคำร้องเรียน #C-2610-0012",
+            "maxLength": 500,
+            "minLength": 10,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
         ],
         "type": "object"
       },
@@ -64571,6 +64790,14 @@
             ],
             "example": "download"
           },
+          "reason": {
+            "description": "D-449 (1): the reason a Superadmin typed before opening the file; null for every other access",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "requestId": {
             "example": "req-3f2a9c1d",
             "type": [
@@ -64588,6 +64815,7 @@
           "order",
           "channel",
           "purpose",
+          "reason",
           "requestId"
         ],
         "type": "object"
@@ -65336,8 +65564,31 @@
       },
       "FitRangeBackfillResult": {
         "properties": {
+          "boundsBySource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FitRangeSourceCountsDto"
+              }
+            ],
+            "description": "C1c: backfilled bounds per source"
+          },
+          "bySource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FitRangeSummaryCountsDto"
+              }
+            ],
+            "description": "C1c: backfilled styles (filled, refreshed or unchanged) per summary source"
+          },
+          "changes": {
+            "description": "C1c: what the run writes (or, with `dryRun`, would write)",
+            "items": {
+              "$ref": "#/components/schemas/FitRangeChangeDto"
+            },
+            "type": "array"
+          },
           "considered": {
-            "description": "Styles with an approved recipe",
+            "description": "Active styles",
             "example": 122,
             "type": "integer"
           },
@@ -65346,12 +65597,19 @@
             "type": "boolean"
           },
           "filled": {
-            "description": "Codes whose empty range was filled from the recipe (source `recipe`)",
+            "description": "Codes whose empty range was filled",
             "example": [
               "PK-CB-01"
             ],
             "items": {
               "type": "string"
+            },
+            "type": "array"
+          },
+          "incomplete": {
+            "description": "C1c: styles left empty, with what is missing",
+            "items": {
+              "$ref": "#/components/schemas/FitRangeIncompleteDto"
             },
             "type": "array"
           },
@@ -65364,9 +65622,10 @@
             "type": "array"
           },
           "noRecipeRange": {
-            "description": "Codes whose recipe states no complete size range (stay out of the size search)",
+            "deprecated": true,
+            "description": "Codes no source gives a complete range (stay out of the size search) — same as `incomplete[].code`",
             "example": [
-              "PK-CB-02"
+              "PK-LA-01"
             ],
             "items": {
               "type": "string"
@@ -65374,7 +65633,7 @@
             "type": "array"
           },
           "refreshed": {
-            "description": "Codes whose earlier recipe range followed a newer approved recipe",
+            "description": "Codes whose backfilled range followed newer data (or gained its per-bound sources)",
             "example": [],
             "items": {
               "type": "string"
@@ -65382,7 +65641,7 @@
             "type": "array"
           },
           "unchanged": {
-            "description": "Recipe ranges already in place",
+            "description": "Backfilled ranges already in place",
             "example": 0,
             "type": "integer"
           }
@@ -65394,7 +65653,244 @@
           "refreshed",
           "unchanged",
           "keptBusiness",
-          "noRecipeRange"
+          "noRecipeRange",
+          "incomplete",
+          "bySource",
+          "boundsBySource",
+          "changes"
+        ],
+        "type": "object"
+      },
+      "FitRangeBoundSourceDto": {
+        "properties": {
+          "basis": {
+            "description": "The data read: `recipe_size_range` (approved recipe solver range), `catalogue_standard_sizes` (standard sizes of the catalogue products of its pattern), `recipe_presets` (the approved recipe's preset sizes), `calculator_size_rules` (its pattern's size rules), `engine_limits` (the dieline engine's limits)",
+            "example": [
+              "recipe_size_range"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StyleFitBasis"
+            },
+            "type": "array"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleFitBackfillSource"
+              }
+            ],
+            "example": "recipe"
+          }
+        },
+        "required": [
+          "source",
+          "basis"
+        ],
+        "type": "object"
+      },
+      "FitRangeBoundSourcesDto": {
+        "properties": {
+          "fitMaxHMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMaxLMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMaxWMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMinHMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMinLMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMinWMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          }
+        },
+        "required": [
+          "fitMinLMm",
+          "fitMaxLMm",
+          "fitMinWMm",
+          "fitMaxWMm",
+          "fitMinHMm",
+          "fitMaxHMm"
+        ],
+        "type": "object"
+      },
+      "FitRangeChangeDto": {
+        "properties": {
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleFitRangeChangeAction"
+              }
+            ],
+            "example": "filled"
+          },
+          "after": {
+            "$ref": "#/components/schemas/FitRangeValuesDto"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FitRangeValuesDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The range before (null = empty)"
+          },
+          "bounds": {
+            "$ref": "#/components/schemas/FitRangeBoundSourcesDto"
+          },
+          "code": {
+            "example": "PK-SP-01",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleFitRangeSource"
+              }
+            ],
+            "example": "combined"
+          },
+          "styleId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "styleId",
+          "code",
+          "action",
+          "before",
+          "after",
+          "source",
+          "bounds"
+        ],
+        "type": "object"
+      },
+      "FitRangeIncompleteDto": {
+        "properties": {
+          "code": {
+            "example": "PK-LA-01",
+            "type": "string"
+          },
+          "conflicting": {
+            "description": "Dimensions (`length`, `width`, `height`) whose bounds, as the sources give them, leave no size",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "missing": {
+            "description": "Bounds no source gives (`fitMinLMm` … `fitMaxHMm`)",
+            "example": [
+              "fitMinHMm",
+              "fitMaxHMm"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "missing",
+          "conflicting"
+        ],
+        "type": "object"
+      },
+      "FitRangeSourceCountsDto": {
+        "properties": {
+          "production_envelope": {
+            "example": 0,
+            "type": "integer"
+          },
+          "recipe": {
+            "example": 81,
+            "type": "integer"
+          },
+          "standard_sizes": {
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recipe",
+          "standard_sizes",
+          "production_envelope"
+        ],
+        "type": "object"
+      },
+      "FitRangeSummaryCountsDto": {
+        "properties": {
+          "combined": {
+            "example": 9,
+            "type": "integer"
+          },
+          "production_envelope": {
+            "example": 0,
+            "type": "integer"
+          },
+          "recipe": {
+            "example": 81,
+            "type": "integer"
+          },
+          "standard_sizes": {
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recipe",
+          "standard_sizes",
+          "production_envelope",
+          "combined"
+        ],
+        "type": "object"
+      },
+      "FitRangeValuesDto": {
+        "properties": {
+          "fitMaxHMm": {
+            "example": 35,
+            "type": "integer"
+          },
+          "fitMaxLMm": {
+            "example": 400,
+            "type": "integer"
+          },
+          "fitMaxWMm": {
+            "example": 300,
+            "type": "integer"
+          },
+          "fitMinHMm": {
+            "example": 25,
+            "type": "integer"
+          },
+          "fitMinLMm": {
+            "example": 60,
+            "type": "integer"
+          },
+          "fitMinWMm": {
+            "example": 50,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fitMinLMm",
+          "fitMaxLMm",
+          "fitMinWMm",
+          "fitMaxWMm",
+          "fitMinHMm",
+          "fitMaxHMm"
         ],
         "type": "object"
       },
@@ -69794,6 +70290,31 @@
         ],
         "type": "object"
       },
+      "IssuerDto": {
+        "properties": {
+          "legalNameEn": {
+            "description": "`entity.legal_name_en` of the default entity; null until set",
+            "example": "Example Co., Ltd.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "legalNameTh": {
+            "description": "`entity.legal_name_th` of the default entity; null until set",
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "legalNameTh",
+          "legalNameEn"
+        ],
+        "type": "object"
+      },
       "JobArtworkDto": {
         "properties": {
           "approvedAt": {
@@ -71836,6 +72357,30 @@
         ],
         "type": "object"
       },
+      "LocalisedTextDto": {
+        "properties": {
+          "en": {
+            "example": "A full tax invoice with every order",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "th": {
+            "example": "ใบกำกับภาษีเต็มรูปแบบทุกคำสั่งซื้อ",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "th",
+          "en"
+        ],
+        "type": "object"
+      },
       "LoyaltySummaryDto": {
         "properties": {
           "availablePoints": {
@@ -72369,6 +72914,40 @@
           "other"
         ],
         "type": "string"
+      },
+      "MaterialSwatchDto": {
+        "properties": {
+          "colour": {
+            "description": "Board colour (#RRGGBB)",
+            "example": "#C8A27A",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": null,
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "materialClass": {
+            "example": "corrugated",
+            "maxLength": 40,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "materialClass",
+          "colour",
+          "imageUrl"
+        ],
+        "type": "object"
       },
       "MeasurementBasis": {
         "description": "Basis of w / l / d: internal, external or over_crease; another basis than internal is converted with the material caliper (D-182). Absent: internal (assumed, deprecated)",
@@ -79446,6 +80025,14 @@
               "null"
             ]
           },
+          "autoApproveMaxAmount": {
+            "description": "D-449 B: requests at or below this amount (THB) are approved at creation (\"below threshold\"); null = none",
+            "example": "500000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "createdAt": {
             "example": "2026-10-05T10:00:00+07:00",
             "format": "date-time",
@@ -79502,6 +80089,7 @@
           "status",
           "effectiveFrom",
           "reason",
+          "autoApproveMaxAmount",
           "steps",
           "approvalId",
           "createdBy",
@@ -81021,7 +81609,7 @@
             }
           },
           "quantity": {
-            "description": "Quantity the price per piece is for",
+            "description": "Quantity the price per piece is for — for a stock product its minimum order quantity, the first price tier (C1b, DECISIONS-STAGE-A §10.5); show it with the price (\"สั่งขั้นต่ำ N\")",
             "example": 1000,
             "type": "integer"
           },
@@ -81114,6 +81702,14 @@
               "string",
               "null"
             ]
+          },
+          "startingFromPerPieceExVat": {
+            "description": "C1b (DECISIONS-STAGE-A §10.6): the same price per piece without VAT — the shared VAT helper's ex-VAT of `startingFromPerPiece` at the approved `vat_standard` rate, half-up to the satang. Null when `startingFromPerPiece` is null or no rate is approved. For the storefront's \"ราคารวม VAT / ไม่รวม VAT\" switch.",
+            "example": "4.00",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -81121,6 +81717,7 @@
           "kind",
           "productTypeCode",
           "startingFromPerPiece",
+          "startingFromPerPieceExVat",
           "currency",
           "basis",
           "leadTimeBusinessDays",
@@ -82017,6 +82614,62 @@
           "proposalId",
           "computedAt",
           "lines"
+        ],
+        "type": "object"
+      },
+      "PriceTiersDto": {
+        "properties": {
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceHintBasisDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The default spec the tiers are priced at (D-441) — the spec the configurator opens on; `quantity` is the reference quantity of the \"starting from\" price. Null when the product has no instant default spec"
+          },
+          "computedAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "example": "THB"
+          },
+          "key": {
+            "description": "Catalogue product slug",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "tiers": {
+            "description": "One entry per configurator quantity preset (ascending, ≤ 10), each exactly as `store.quotes.calculate` answers it for the default spec without a delivery postcode (shipping pending). Empty when the product has no instant default spec",
+            "items": {
+              "$ref": "#/components/schemas/QuoteStepDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "productTypeCode",
+          "currency",
+          "basis",
+          "tiers",
+          "computedAt"
         ],
         "type": "object"
       },
@@ -84670,6 +85323,15 @@
       },
       "ProposePolicyVersionDto": {
         "properties": {
+          "autoApproveMaxAmount": {
+            "description": "D-449 B: requests at or below this amount (THB, 2 decimals) are approved at creation without the second approval; only on a policy whose steps have an amount condition; Superadmin only; omit to keep the value in force, null to remove it",
+            "example": "500000.00",
+            "pattern": "^\\d{1,12}\\.\\d{2}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "effectiveFrom": {
             "description": "Now or later",
             "example": "2026-11-01T00:00:00+07:00",
@@ -85048,6 +85710,14 @@
             ],
             "description": "From `storefront.support_channels` (D-221)"
           },
+          "issuer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IssuerDto"
+              }
+            ],
+            "description": "D-447: the legal name of the entity that issues customer tax invoices (D-010, D-092 entity settings) — the storefront names the company from here, never from its own copy"
+          },
           "minOrderQty": {
             "$ref": "#/components/schemas/MinOrderQtyDto"
           },
@@ -85097,7 +85767,8 @@
           "supportHours",
           "supportReplyMinutes",
           "templateCount",
-          "contact"
+          "contact",
+          "issuer"
         ],
         "type": "object"
       },
@@ -85825,6 +86496,24 @@
           "H"
         ],
         "type": "string"
+      },
+      "QuickSearchTermDto": {
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/LocalisedTextDto"
+          },
+          "query": {
+            "example": "เมลเลอร์",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "query"
+        ],
+        "type": "object"
       },
       "QuoteAdvisoryDto": {
         "properties": {
@@ -87143,6 +87832,14 @@
               "null"
             ]
           },
+          "netAmount": {
+            "description": "C1-API-1 (D-441, GLOBAL-RULES §5): the total before VAT — `grossAmount` minus `vatAmount`, both as sent (decimal maths in the API), so pages show \"ก่อน VAT · VAT · รวม\" without computing money; null when either is null",
+            "example": "12624.67",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "productAmount": {
             "description": "Pieces incl. VAT",
             "example": "13380.00",
@@ -87328,6 +88025,7 @@
           "savingPercent",
           "zoneName",
           "arrival",
+          "netAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -91796,6 +92494,14 @@
       },
       "RfqBasketItemDto": {
         "properties": {
+          "categoryCode": {
+            "description": "C1b: the category of the line's product type (where its RFQ form is asked); null when it has none",
+            "example": "paper_packaging",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "design": {
             "anyOf": [
               {
@@ -91806,10 +92512,32 @@
               }
             ]
           },
+          "formPending": {
+            "description": "C1b (DECISIONS-STAGE-A §10.9): true for a product put in from the quote tray whose form is not filled yet (`store.rfqBaskets.addProduct`); `specification` then holds only the product type and reference. Adding the filled form of the same product (`store.rfqBaskets.addItem`) or replacing the line (`updateItem`) fills it; the basket is not sent while a line is pending",
+            "example": false,
+            "type": "boolean"
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
             "format": "uuid",
             "type": "string"
+          },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue or stock product the line is for (`catalogProductSlug` / `stockProductSku` of the item); null for a line asked from a category form",
+            "example": {
+              "key": "mailer-box-b",
+              "kind": "catalog_product",
+              "nameEn": "Mailer box (B flute)",
+              "nameTh": "กล่องไปรษณีย์ ฝาชน (ลอน B)"
+            }
           },
           "productType": {
             "$ref": "#/components/schemas/CodeNameRefDto"
@@ -91850,12 +92578,22 @@
           "productType",
           "specification",
           "design",
+          "formPending",
+          "categoryCode",
+          "product",
           "rfq"
         ],
         "type": "object"
       },
       "RfqBasketItemInputDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "design": {
             "allOf": [
               {
@@ -91940,6 +92678,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -92194,6 +92938,17 @@
             "example": "Logo on both sides (fake)",
             "type": "string"
           },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1: the catalogue or stock product the request was asked from; null for a category request"
+          },
           "productTypeCode": {
             "example": "paper_bag",
             "type": "string"
@@ -92317,6 +93072,7 @@
           "targetDate",
           "targetPricePerUnit",
           "style",
+          "product",
           "design",
           "deliveryPostcode",
           "notes",
@@ -92584,6 +93340,38 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "RfqProductRefDto": {
+        "properties": {
+          "key": {
+            "description": "Catalogue product slug or stock product SKU",
+            "example": "mailer-box-b",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PriceHintKind"
+              }
+            ],
+            "example": "catalog_product"
+          },
+          "nameEn": {
+            "example": "Mailer box (B flute)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องไปรษณีย์ ฝาชน (ลอน B)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "nameTh",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -96589,6 +97377,31 @@
         ],
         "type": "object"
       },
+      "SetSoloOwnerModeDto": {
+        "properties": {
+          "enabled": {
+            "example": true,
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "description": "When it turns off; default and latest = now + max days (90); ignored when turning off",
+            "example": "2027-01-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "example": "บริษัทยังมีผู้อนุมัติคนเดียวช่วงเปิดตัว",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "reason"
+        ],
+        "type": "object"
+      },
       "SetStylePhotoDto": {
         "properties": {
           "altEn": {
@@ -99274,6 +100087,63 @@
         ],
         "type": "object"
       },
+      "SoloOwnerModeDto": {
+        "properties": {
+          "active": {
+            "description": "On and not expired — self-approval is possible now",
+            "example": true,
+            "type": "boolean"
+          },
+          "changedAt": {
+            "example": "2026-10-28T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "changedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enabled": {
+            "description": "The value in force: on or off",
+            "example": true,
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "example": "2027-01-26T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "maxDays": {
+            "description": "Default and longest duration in days (setting `approvals.solo_owner_mode_max_days`)",
+            "example": 90,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "enabled",
+          "expiresAt",
+          "active",
+          "maxDays",
+          "changedAt",
+          "changedBy"
+        ],
+        "type": "object"
+      },
       "SortOrder": {
         "enum": [
           "asc",
@@ -100071,6 +100941,17 @@
             "example": false,
             "type": "boolean"
           },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1: the catalogue or stock product the request was asked from; null for a category request"
+          },
           "productTypeCode": {
             "example": "paper_bag",
             "type": "string"
@@ -100218,6 +101099,7 @@
           "targetDate",
           "targetPricePerUnit",
           "style",
+          "product",
           "design",
           "deliveryPostcode",
           "notes",
@@ -100548,6 +101430,13 @@
       },
       "StaffSubmitRfqDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "customerUserId": {
             "description": "The customer the RFQ is for (CS on behalf)",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e705",
@@ -100648,6 +101537,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -103115,6 +104010,27 @@
         ],
         "type": "string"
       },
+      "StoreCustomerLogoDto": {
+        "properties": {
+          "logoUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": "https://example.invalid/logo.svg",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "name": {
+            "example": "ร้านตัวอย่าง",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "logoUrl"
+        ],
+        "type": "object"
+      },
       "StoreFaqDto": {
         "properties": {
           "answerEn": {
@@ -103183,6 +104099,31 @@
           "categoryNameTh",
           "categoryNameEn",
           "faqs"
+        ],
+        "type": "object"
+      },
+      "StoreFeaturedServicesDto": {
+        "properties": {
+          "curated": {
+            "description": "True when staff chose the services (`storefront.featured_services`, Marketing); false = nothing chosen — the storefront shows the catalogue's service list (first 3, catalogue order) and \"ดูบริการทั้งหมด\"",
+            "example": true,
+            "type": "boolean"
+          },
+          "slugs": {
+            "description": "The chosen catalogue product slugs in staff's order (≤ 3), only those still active; empty when nothing is chosen",
+            "example": [
+              "graphic-design-service",
+              "mockup-sample"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "curated",
+          "slugs"
         ],
         "type": "object"
       },
@@ -104163,6 +105104,14 @@
               "null"
             ]
           },
+          "startingPricePerPieceExVat": {
+            "description": "C1b (DECISIONS-STAGE-A §10.6): `startingPricePerPiece` without VAT — the shared VAT helper's ex-VAT of that figure at the approved `vat_standard` rate, half-up to the satang; null when there is no price or no rate. For the \"ราคารวม VAT / ไม่รวม VAT\" switch; never derive it in the browser.",
+            "example": "4.21",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "templateAvailability": {
             "allOf": [
               {
@@ -104174,6 +105123,7 @@
         },
         "required": [
           "startingPricePerPiece",
+          "startingPricePerPieceExVat",
           "startingPriceAssumes",
           "moq",
           "leadTimeDays",
@@ -104375,6 +105325,21 @@
               "null"
             ]
           },
+          "startingPricePerPieceExVat": {
+            "description": "C1b (DECISIONS-STAGE-A §10.6): `startingPricePerPiece` without VAT — the shared VAT helper's ex-VAT of that figure at the approved `vat_standard` rate, half-up to the satang; null when there is no price or no rate. For the \"ราคารวม VAT / ไม่รวม VAT\" switch; never derive it in the browser.",
+            "example": "4.21",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "styles": {
+            "description": "C1 (products Phase 2): the published styles of its patterns (product ↔ style mapping, D-184), in pattern order; empty while unmapped",
+            "items": {
+              "$ref": "#/components/schemas/StoreProductStyleDto"
+            },
+            "type": "array"
+          },
           "templateAvailability": {
             "allOf": [
               {
@@ -104392,6 +105357,7 @@
         },
         "required": [
           "startingPricePerPiece",
+          "startingPricePerPieceExVat",
           "startingPriceAssumes",
           "moq",
           "leadTimeDays",
@@ -104408,11 +105374,41 @@
           "descriptionEn",
           "isCombination",
           "patterns",
+          "styles",
           "optionGroups",
           "standardSizes",
           "images",
           "videos",
           "seo"
+        ],
+        "type": "object"
+      },
+      "StoreProductStyleDto": {
+        "properties": {
+          "category": {
+            "description": "The style's library category (the /styles category facet)",
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "description": "Style code (the /styles quick view)",
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "category"
         ],
         "type": "object"
       },
@@ -104516,10 +105512,19 @@
               "string",
               "null"
             ]
+          },
+          "startingPricePerPieceExVat": {
+            "description": "C1b (DECISIONS-STAGE-A §10.6): `startingPricePerPiece` without VAT — the shared VAT helper's ex-VAT of that figure at the approved `vat_standard` rate, half-up to the satang; null when there is no price or no rate. For the \"ราคารวม VAT / ไม่รวม VAT\" switch; never derive it in the browser.",
+            "example": "4.21",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "startingPricePerPiece",
+          "startingPricePerPieceExVat",
           "startingPriceAssumes",
           "moq",
           "leadTimeDays",
@@ -105541,6 +106546,43 @@
         ],
         "type": "object"
       },
+      "StoreStyleLibrarySettingsDto": {
+        "properties": {
+          "compareLimit": {
+            "description": "Styles compared side by side (D-246)",
+            "example": 3,
+            "type": "integer"
+          },
+          "materialSwatches": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialSwatchDto"
+            },
+            "type": "array"
+          },
+          "quickSearch": {
+            "description": "\"ค้นหาบ่อย\" in this order; empty hides the row",
+            "items": {
+              "$ref": "#/components/schemas/QuickSearchTermDto"
+            },
+            "type": "array"
+          },
+          "trust": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreTrustContentDto"
+              }
+            ],
+            "description": "Each part is hidden on the storefront while empty"
+          }
+        },
+        "required": [
+          "quickSearch",
+          "compareLimit",
+          "materialSwatches",
+          "trust"
+        ],
+        "type": "object"
+      },
       "StoreSupportChannelsDto": {
         "properties": {
           "email": {
@@ -105667,6 +106709,110 @@
           "replyChannel",
           "replyChannelChosen",
           "readByGetpackAt"
+        ],
+        "type": "object"
+      },
+      "StoreTrustCertificationDto": {
+        "properties": {
+          "documentUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": null,
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresOn": {
+            "description": "Last valid day (Asia/Bangkok); an expired certificate is not shown to customers",
+            "example": null,
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issuer": {
+            "description": "Who issued it",
+            "example": null,
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "number": {
+            "description": "The certificate's own number",
+            "example": null,
+            "maxLength": 120,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "$ref": "#/components/schemas/LocalisedTextDto"
+          }
+        },
+        "required": [
+          "title",
+          "number",
+          "issuer",
+          "expiresOn",
+          "documentUrl"
+        ],
+        "type": "object"
+      },
+      "StoreTrustContentDto": {
+        "properties": {
+          "certifications": {
+            "description": "Not expired only",
+            "items": {
+              "$ref": "#/components/schemas/StoreTrustCertificationDto"
+            },
+            "type": "array"
+          },
+          "customerLogos": {
+            "description": "Logos the customer permitted",
+            "items": {
+              "$ref": "#/components/schemas/StoreCustomerLogoDto"
+            },
+            "type": "array"
+          },
+          "foodGrade": {
+            "items": {
+              "$ref": "#/components/schemas/TrustDocumentDto"
+            },
+            "type": "array"
+          },
+          "productionPhotos": {
+            "description": "Production-process photos (\"รูปงานจริงระหว่างผลิต\")",
+            "items": {
+              "$ref": "#/components/schemas/TrustPhotoDto"
+            },
+            "type": "array"
+          },
+          "taxInvoiceNote": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null = the storefront’s default note (D-010)"
+          }
+        },
+        "required": [
+          "certifications",
+          "foodGrade",
+          "productionPhotos",
+          "customerLogos",
+          "taxInvoiceNote"
         ],
         "type": "object"
       },
@@ -107016,7 +108162,7 @@
             "example": "instant"
           },
           "quoteResponseBusinessDays": {
-            "description": "C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style has no product type: then no timing is shown. Never a price or an estimate.",
+            "description": "C0b / C1c (D-100, D-175, D-220, DECISIONS-STAGE-A §9.3, §11.2): the first-response time of a quotation request for this style, in working days — `ceil(rfq.sla_business_hours ÷ hours of one business day)`, the SLA taken at its product type (platform fallback) and the day length from `calendar.business_hours` (09:00–18:00 = 9 h). Null when either setting is missing or unusable or the style has no product type: then no timing is shown. Never a price or an estimate.",
             "example": 2,
             "type": [
               "integer",
@@ -107392,8 +108538,15 @@
               "null"
             ]
           },
+          "products": {
+            "description": "C1 (products Phase 2): active catalogue products whose pattern is this style (product ↔ style mapping), cheapest \"starting from\" first, products without a price last; empty while unmapped",
+            "items": {
+              "$ref": "#/components/schemas/StyleProductDto"
+            },
+            "type": "array"
+          },
           "quoteResponseBusinessDays": {
-            "description": "C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style has no product type: then no timing is shown. Never a price or an estimate.",
+            "description": "C0b / C1c (D-100, D-175, D-220, DECISIONS-STAGE-A §9.3, §11.2): the first-response time of a quotation request for this style, in working days — `ceil(rfq.sla_business_hours ÷ hours of one business day)`, the SLA taken at its product type (platform fallback) and the day length from `calendar.business_hours` (09:00–18:00 = 9 h). Null when either setting is missing or unusable or the style has no product type: then no timing is shown. Never a price or an estimate.",
             "example": 2,
             "type": [
               "integer",
@@ -107494,6 +108647,7 @@
           "leadTime",
           "useCases",
           "assets",
+          "products",
           "recyclable",
           "plasticFree",
           "certifications"
@@ -107592,6 +108746,25 @@
         ],
         "type": "object"
       },
+      "StyleFitBackfillSource": {
+        "enum": [
+          "recipe",
+          "standard_sizes",
+          "production_envelope"
+        ],
+        "type": "string"
+      },
+      "StyleFitBasis": {
+        "description": "The data read: `recipe_size_range` (approved recipe solver range), `catalogue_standard_sizes` (standard sizes of the catalogue products of its pattern), `recipe_presets` (the approved recipe's preset sizes), `calculator_size_rules` (its pattern's size rules), `engine_limits` (the dieline engine's limits)",
+        "enum": [
+          "recipe_size_range",
+          "catalogue_standard_sizes",
+          "recipe_presets",
+          "calculator_size_rules",
+          "engine_limits"
+        ],
+        "type": "string"
+      },
       "StyleFitDto": {
         "properties": {
           "insideHMm": {
@@ -107614,6 +108787,13 @@
           "insideHMm"
         ],
         "type": "object"
+      },
+      "StyleFitRangeChangeAction": {
+        "enum": [
+          "filled",
+          "refreshed"
+        ],
+        "type": "string"
       },
       "StyleFitRangeDto": {
         "properties": {
@@ -107654,9 +108834,12 @@
         "type": "object"
       },
       "StyleFitRangeSource": {
-        "description": "Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / the CSV (never overwritten by the backfill); null = no range. Read-only.",
+        "description": "Where the fit range in `commercial` came from (C0b/C1c, DECISIONS-STAGE-A §9.1, §11.1): a backfill source — `recipe` (approved recipe range), `standard_sizes` (the style's standard sizes), `production_envelope` (calculator size rules ∩ dieline engine limits) or `combined` (bounds from several; see `fitRangeBounds`) — replaced by any value curation saves; `business` = entered by curation / the CSV, never overwritten by the backfill; null = no range. Read-only.",
         "enum": [
           "recipe",
+          "standard_sizes",
+          "production_envelope",
+          "combined",
           "business"
         ],
         "type": "string"
@@ -108070,6 +109253,33 @@
         ],
         "type": "string"
       },
+      "StyleLibraryContentDto": {
+        "properties": {
+          "materialSwatches": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialSwatchDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "quickSearch": {
+            "items": {
+              "$ref": "#/components/schemas/QuickSearchTermDto"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "trust": {
+            "$ref": "#/components/schemas/TrustContentDto"
+          }
+        },
+        "required": [
+          "quickSearch",
+          "materialSwatches",
+          "trust"
+        ],
+        "type": "object"
+      },
       "StyleListDto": {
         "properties": {
           "data": {
@@ -108399,6 +109609,41 @@
           "option"
         ],
         "type": "string"
+      },
+      "StyleProductDto": {
+        "properties": {
+          "nameEn": {
+            "example": "Tuck end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          },
+          "slug": {
+            "description": "Catalogue product slug (`/products/{slug}`)",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "startingPrice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StylePriceDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its own \"starting from\" price (D-220, D-441); null for a product without an instant price"
+          }
+        },
+        "required": [
+          "slug",
+          "nameTh",
+          "nameEn",
+          "startingPrice"
+        ],
+        "type": "object"
       },
       "StylePublishReason": {
         "enum": [
@@ -109363,6 +110608,13 @@
       },
       "SubmitRfqDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "deliveryPostcode": {
             "example": "10110",
             "pattern": "^[0-9]{5}$",
@@ -109457,6 +110709,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -111954,6 +113212,100 @@
           "debit",
           "credit",
           "closing"
+        ],
+        "type": "object"
+      },
+      "TrustContentDto": {
+        "properties": {
+          "certifications": {
+            "items": {
+              "$ref": "#/components/schemas/StoreTrustCertificationDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "customerLogos": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerLogoDto"
+            },
+            "maxItems": 40,
+            "type": "array"
+          },
+          "foodGrade": {
+            "items": {
+              "$ref": "#/components/schemas/TrustDocumentDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "productionPhotos": {
+            "items": {
+              "$ref": "#/components/schemas/TrustPhotoDto"
+            },
+            "maxItems": 24,
+            "type": "array"
+          },
+          "taxInvoiceNote": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "certifications",
+          "foodGrade",
+          "productionPhotos",
+          "customerLogos",
+          "taxInvoiceNote"
+        ],
+        "type": "object"
+      },
+      "TrustDocumentDto": {
+        "properties": {
+          "documentUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": null,
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "$ref": "#/components/schemas/LocalisedTextDto"
+          }
+        },
+        "required": [
+          "title",
+          "documentUrl"
+        ],
+        "type": "object"
+      },
+      "TrustPhotoDto": {
+        "properties": {
+          "alt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              }
+            ],
+            "description": "Alt text (product and process only, GLOBAL-RULES §1)"
+          },
+          "url": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": "/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000001",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "alt"
         ],
         "type": "object"
       },
@@ -115584,6 +116936,31 @@
             "type": "array"
           }
         },
+        "type": "object"
+      },
+      "UpdateStyleLibrarySettingsDto": {
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/StyleLibraryContentDto"
+          },
+          "effectiveFrom": {
+            "description": "From when (now or later); default now",
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why (kept with the version, audited)",
+            "example": "เพิ่มใบรับรอง FSC ที่ได้รับ",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "content",
+          "reason"
+        ],
         "type": "object"
       },
       "UpdateSubPatternDto": {
@@ -133340,6 +134717,7 @@
                   {
                     "current": {
                       "approvalId": null,
+                      "autoApproveMaxAmount": "500000.00",
                       "createdAt": "2026-10-05T10:00:00+07:00",
                       "createdBy": {
                         "displayName": "Dev Superadmin",
@@ -133376,6 +134754,7 @@
                     "key": "credit_limit",
                     "pending": {
                       "approvalId": "0192f3a0-7c1e-7d2a-9b1f-00000000e0a1",
+                      "autoApproveMaxAmount": "500000.00",
                       "createdAt": "2026-10-05T10:00:00+07:00",
                       "createdBy": {
                         "displayName": "Dev Superadmin",
@@ -133558,6 +134937,7 @@
                 "example": [
                   {
                     "approvalId": "0192f3a0-7c1e-7d2a-9b1f-00000000e0a1",
+                    "autoApproveMaxAmount": "500000.00",
                     "createdAt": "2026-10-05T10:00:00+07:00",
                     "createdBy": {
                       "displayName": "Dev Superadmin",
@@ -133752,7 +135132,7 @@
         ]
       },
       "post": {
-        "description": "Its steps (approver roles, scope, conditions, quorum, SLA) from `effectiveFrom` (now or later), with a reason. Routed through `approval_policy_change`: a Superadmin approves and the proposer never approves; once approved it applies from its date, and the running version is never edited (D-063). One proposal per policy at a time (409 `approval.already_pending`). The expiry rule is carried over from the version in force. Requires `Idempotency-Key`. Audited.\n\nImplements: D-063.",
+        "description": "Its steps (approver roles, scope, conditions, quorum, SLA) from `effectiveFrom` (now or later), with a reason. Routed through `approval_policy_change`: a Superadmin approves and the proposer never approves; once approved it applies from its date, and the running version is never edited (D-063). One proposal per policy at a time (409 `approval.already_pending`). The expiry rule is carried over from the version in force. Requires `Idempotency-Key`. Audited. D-449 B: `autoApproveMaxAmount` (THB) approves requests at or below it at creation (\"below threshold\", audited, `approval.approved` with `autoApproved`); only on a policy whose steps have an amount condition (422), set / changed / removed by a Superadmin only (403 `approval.threshold_superadmin_only`); omitted = the value in force is carried over, null = none.\n\nImplements: D-063, D-449.",
         "operationId": "admin.approvalPolicies.proposeVersion",
         "parameters": [
           {
@@ -133815,6 +135195,7 @@
               "application/json": {
                 "example": {
                   "approvalId": "0192f3a0-7c1e-7d2a-9b1f-00000000e0a1",
+                  "autoApproveMaxAmount": "500000.00",
                   "createdAt": "2026-10-05T10:00:00+07:00",
                   "createdBy": {
                     "displayName": "Dev Superadmin",
@@ -133920,6 +135301,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "approval.threshold_superadmin_only": {
+                    "$ref": "#/components/examples/problem.approval.threshold_superadmin_only"
+                  },
                   "auth.forbidden": {
                     "$ref": "#/components/examples/problem.auth.forbidden"
                   },
@@ -133932,7 +135316,7 @@
                 }
               }
             },
-            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `approval.threshold_superadmin_only`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -134063,6 +135447,366 @@
         ]
       }
     },
+    "/v1/admin/approval-solo-owner-mode": {
+      "get": {
+        "description": "D-449 A: whether a Superadmin may approve their own maker-checker request now (on and not expired), its expiry, the longest duration (`approvals.solo_owner_mode_max_days`, 90 days) and who changed it last. Even while on, it never applies to a step another active user could decide.\n\nImplements: D-449.",
+        "operationId": "admin.approvalSoloOwnerMode.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": true,
+                  "changedAt": "2026-10-28T10:00:00+07:00",
+                  "changedBy": {
+                    "displayName": "Dev Superadmin",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000000a01"
+                  },
+                  "enabled": true,
+                  "expiresAt": "2027-01-26T10:00:00+07:00",
+                  "maxDays": 90
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SoloOwnerModeDto"
+                }
+              }
+            },
+            "description": "The mode",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Solo-owner mode of the approvals",
+        "tags": [
+          "admin.approvals"
+        ],
+        "x-required-permissions": [
+          "approvals.read"
+        ]
+      },
+      "put": {
+        "description": "D-449 A: only a Superadmin (owner of the setting `approvals.solo_owner_mode`; anyone else 403 `settings.not_owner`). On: expires at `expiresAt`, default and latest now + `approvals.solo_owner_mode_max_days` (90 days; renew by turning it on again). A new effective-dated version from now, audited (`setting.changed`) and evented; it turns itself off at expiry (worker `approvals.solo_owner_mode_expiry`).\n\nImplements: D-449, D-063.",
+        "operationId": "admin.approvalSoloOwnerMode.set",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "off": {
+                  "value": {
+                    "enabled": false,
+                    "reason": "มีผู้อนุมัติฝ่ายการเงินแล้ว"
+                  }
+                },
+                "on": {
+                  "value": {
+                    "enabled": true,
+                    "reason": "บริษัทยังมีผู้อนุมัติคนเดียวช่วงเปิดตัว"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetSoloOwnerModeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": true,
+                  "changedAt": "2026-10-28T10:00:00+07:00",
+                  "changedBy": {
+                    "displayName": "Dev Superadmin",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-000000000a01"
+                  },
+                  "enabled": true,
+                  "expiresAt": "2027-01-26T10:00:00+07:00",
+                  "maxDays": 90
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SoloOwnerModeDto"
+                }
+              }
+            },
+            "description": "The mode now",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  },
+                  "settings.not_owner": {
+                    "$ref": "#/components/examples/problem.settings.not_owner"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`, `settings.not_owner`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Turn solo-owner mode on or off (Superadmin)",
+        "tags": [
+          "admin.approvals"
+        ],
+        "x-required-permissions": [
+          "settings.change"
+        ]
+      }
+    },
     "/v1/admin/approvals": {
       "get": {
         "description": "All requests of the generic approval engine (discount memos, credit limits, payout runs, price proposals…), newest first.\n\nImplements: ADR-0006, D-052, D-121, D-022.",
@@ -134167,10 +135911,13 @@
                           "at": "2026-09-23T15:00:00+07:00",
                           "comment": "Verified by phone with the factory",
                           "onBehalfOf": null,
+                          "selfApprovalReason": null,
+                          "selfApproved": false,
                           "stepNo": 1
                         }
                       ],
                       "amount": null,
+                      "autoApprovedReason": null,
                       "createdAt": "2026-09-23T14:05:00+07:00",
                       "currency": "THB",
                       "currentStepNo": 2,
@@ -134188,6 +135935,7 @@
                         "displayName": "ผู้ขอ ทดสอบ",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                       },
+                      "selfApproved": false,
                       "status": "pending",
                       "steps": [
                         {
@@ -134376,7 +136124,7 @@
     },
     "/v1/admin/approvals/inbox": {
       "get": {
-        "description": "Pending requests whose current step I can decide through my roles or an active delegation; my own requests and requests I already approved a step of are excluded (maker-checker, ADR-0006).\n\nImplements: ADR-0006.",
+        "description": "Pending requests whose current step I can decide through my roles or an active delegation; my own requests and requests I already approved a step of are excluded (maker-checker, ADR-0006). D-449: a Superadmin sees every staff role's steps, and also their own requests while solo-owner mode is on.\n\nImplements: ADR-0006, D-449.",
         "operationId": "admin.approvals.inbox",
         "parameters": [
           {
@@ -134399,10 +136147,13 @@
                         "at": "2026-09-23T15:00:00+07:00",
                         "comment": "Verified by phone with the factory",
                         "onBehalfOf": null,
+                        "selfApprovalReason": null,
+                        "selfApproved": false,
                         "stepNo": 1
                       }
                     ],
                     "amount": null,
+                    "autoApprovedReason": null,
                     "createdAt": "2026-09-23T14:05:00+07:00",
                     "currency": "THB",
                     "currentStepNo": 2,
@@ -134420,6 +136171,7 @@
                       "displayName": "ผู้ขอ ทดสอบ",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                     },
+                    "selfApproved": false,
                     "status": "pending",
                     "steps": [
                       {
@@ -134620,10 +136372,13 @@
                       "at": "2026-09-23T15:00:00+07:00",
                       "comment": "Verified by phone with the factory",
                       "onBehalfOf": null,
+                      "selfApprovalReason": null,
+                      "selfApproved": false,
                       "stepNo": 1
                     }
                   ],
                   "amount": null,
+                  "autoApprovedReason": null,
                   "createdAt": "2026-09-23T14:05:00+07:00",
                   "currency": "THB",
                   "currentStepNo": 2,
@@ -134641,6 +136396,7 @@
                     "displayName": "ผู้ขอ ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                   },
+                  "selfApproved": false,
                   "status": "pending",
                   "steps": [
                     {
@@ -134827,7 +136583,7 @@
     },
     "/v1/admin/approvals/{requestId}/actions/approve": {
       "post": {
-        "description": "Needs the step's role (or a delegation from someone who holds it). The requester never approves, one person approves at most one step, and SoD rules are checked. The last step approves the request (`approval.approved`).\n\nImplements: ADR-0006, D-166, D-169.",
+        "description": "Needs the step's role (or a delegation from someone who holds it); a Superadmin may decide a step of any staff role (D-449). The requester never approves, one person approves at most one step, and SoD rules are checked. The last step approves the request (`approval.approved`). D-449 A: a Superadmin may approve their own request only with `selfApprovalReason` (≥ 10 characters) while solo-owner mode is on (409 `approval.solo_owner_mode_off`) and no other active user could decide the step (409 `approval.other_approver_exists`); the action is flagged \"อนุมัติด้วยตนเอง\", audited, evented (`approval.self_approved`) and listed in the daily digest to Superadmins.\n\nImplements: ADR-0006, D-166, D-169, D-449.",
         "operationId": "admin.approvals.approve",
         "parameters": [
           {
@@ -134874,10 +136630,13 @@
                       "at": "2026-09-23T15:00:00+07:00",
                       "comment": "Verified by phone with the factory",
                       "onBehalfOf": null,
+                      "selfApprovalReason": null,
+                      "selfApproved": false,
                       "stepNo": 1
                     }
                   ],
                   "amount": null,
+                  "autoApprovedReason": null,
                   "createdAt": "2026-09-23T14:05:00+07:00",
                   "currency": "THB",
                   "currentStepNo": 2,
@@ -134895,6 +136654,7 @@
                     "displayName": "ผู้ขอ ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                   },
+                  "selfApproved": false,
                   "status": "pending",
                   "steps": [
                     {
@@ -135043,6 +136803,12 @@
                   "approval.not_pending": {
                     "$ref": "#/components/examples/problem.approval.not_pending"
                   },
+                  "approval.other_approver_exists": {
+                    "$ref": "#/components/examples/problem.approval.other_approver_exists"
+                  },
+                  "approval.solo_owner_mode_off": {
+                    "$ref": "#/components/examples/problem.approval.solo_owner_mode_off"
+                  },
                   "iam.sod_conflict": {
                     "$ref": "#/components/examples/problem.iam.sod_conflict"
                   }
@@ -135052,7 +136818,7 @@
                 }
               }
             },
-            "description": "Problem: `approval.already_acted`, `approval.expired`, `approval.not_pending`, `iam.sod_conflict`",
+            "description": "Problem: `approval.already_acted`, `approval.expired`, `approval.not_pending`, `approval.other_approver_exists`, `approval.solo_owner_mode_off`, `iam.sod_conflict`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -135063,6 +136829,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "approval.not_self_approval": {
+                    "$ref": "#/components/examples/problem.approval.not_self_approval"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -135072,7 +136841,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `approval.not_self_approval`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -135186,10 +136955,13 @@
                       "at": "2026-09-23T15:00:00+07:00",
                       "comment": "Verified by phone with the factory",
                       "onBehalfOf": null,
+                      "selfApprovalReason": null,
+                      "selfApproved": false,
                       "stepNo": 1
                     }
                   ],
                   "amount": null,
+                  "autoApprovedReason": null,
                   "createdAt": "2026-09-23T14:05:00+07:00",
                   "currency": "THB",
                   "currentStepNo": 2,
@@ -135207,6 +136979,7 @@
                     "displayName": "ผู้ขอ ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                   },
+                  "selfApproved": false,
                   "status": "rejected",
                   "steps": [
                     {
@@ -135492,10 +137265,13 @@
                       "at": "2026-09-23T15:00:00+07:00",
                       "comment": "Verified by phone with the factory",
                       "onBehalfOf": null,
+                      "selfApprovalReason": null,
+                      "selfApproved": false,
                       "stepNo": 1
                     }
                   ],
                   "amount": null,
+                  "autoApprovedReason": null,
                   "createdAt": "2026-09-23T14:05:00+07:00",
                   "currency": "THB",
                   "currentStepNo": 2,
@@ -135513,6 +137289,7 @@
                     "displayName": "ผู้ขอ ทดสอบ",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-00000000c0c0"
                   },
+                  "selfApproved": false,
                   "status": "withdrawn",
                   "steps": [
                     {
@@ -213738,6 +215515,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -214370,6 +216148,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -214976,6 +216755,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -215512,6 +217292,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -216294,6 +218075,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -216794,6 +218576,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -217329,6 +219112,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -220384,6 +222168,7 @@
                         "orderCode": "DEVOR-2610-00001"
                       },
                       "purpose": "download",
+                      "reason": null,
                       "requestId": "req-3f2a9c1d"
                     }
                   ],
@@ -255640,6 +257425,256 @@
         "summary": "Finish an upload",
         "tags": [
           "admin.files"
+        ]
+      }
+    },
+    "/v1/admin/files/{fileId}/actions/download-with-reason": {
+      "post": {
+        "description": "D-449 (1): a Superadmin may open a customer's original, its production copy or Studio / design artwork (or a thumbnail of one) only after typing a reason (at least 10 characters). The customer file access log row (reason, actor, file, order, time), an audit row and the `customer_file.read_with_reason` event are written in one transaction before the 5-minute signed URL is returned. Other files: `admin.files.download`. Admin and Auditor have no access to originals (D-444 / D-445 unchanged).\n\nImplements: D-449, D-444.",
+        "operationId": "admin.files.downloadWithReason",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "fileId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ลูกค้าแจ้งไฟล์งานพิมพ์ผิด ตรวจสอบตามคำร้องเรียน #C-2610-0012"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DownloadWithReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-28T14:10:00+07:00",
+                  "url": "https://getpack-files.s3.example.com/…&X-Amz-Expires=300"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Signed URL (the access is logged with the reason)",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `file.infected`, `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Open a customer's original with a typed reason (Superadmin)",
+        "tags": [
+          "admin.files"
+        ],
+        "x-required-permissions": [
+          "customer_files.read_with_reason"
         ]
       }
     },
@@ -315174,6 +317209,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -315610,6 +317646,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -315980,6 +318017,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -316368,6 +318406,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -316871,6 +318910,7 @@
                       ],
                       "notes": "Logo on both sides (fake)",
                       "overdue": false,
+                      "product": null,
                       "productTypeCode": "paper_bag",
                       "productTypeName": "ถุงกระดาษ",
                       "quantities": [
@@ -317227,6 +319267,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -317612,6 +319653,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -317959,6 +320001,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -318353,6 +320396,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -318752,6 +320796,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -319125,6 +321170,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -319697,6 +321743,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -320100,6 +322147,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -320499,6 +322547,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -325180,7 +327229,7 @@
     },
     "/v1/admin/settings/{settingId}/versions": {
       "post": {
-        "description": "Adds a version effective from `effectiveFrom` (now or later). Only the setting's owner role may change it (Superadmin for platform thresholds, D-063). When the setting names an approval policy the version waits for approval (ADR-0006); otherwise it is approved at once. Audited; emits `setting.changed`.\n\nImplements: ADR-0005, D-063.",
+        "description": "Adds a version effective from `effectiveFrom` (now or later). Only the setting's owner role may change it (Superadmin for platform thresholds, D-063) — or Superadmin for any setting, acting on the owner's behalf (DECISIONS-STAGE-A §11.6, audited as the Superadmin). When the setting names an approval policy the version waits for approval (ADR-0006); otherwise it is approved at once. Audited; emits `setting.changed`.\n\nImplements: ADR-0005, D-063, D-448.",
         "operationId": "admin.settings.changeValue",
         "parameters": [
           {
@@ -343815,6 +345864,443 @@
         ]
       }
     },
+    "/v1/admin/style-library/settings": {
+      "get": {
+        "description": "C1c (DECISIONS-STAGE-A §11.5, D-448): the content in force of `storefront.style_library` with its version (staff fields included: certificate expiry, logo permission references). Empty while unset.\n\nImplements: D-448, D-246, D-010, D-125.",
+        "operationId": "admin.styleLibrary.getSettings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "content": {
+                    "materialSwatches": [],
+                    "quickSearch": [],
+                    "trust": {
+                      "certifications": [],
+                      "customerLogos": [],
+                      "foodGrade": [],
+                      "productionPhotos": [],
+                      "taxInvoiceNote": null
+                    }
+                  },
+                  "effectiveFrom": null,
+                  "settingId": null,
+                  "versionNo": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleLibrarySettingsDto"
+                }
+              }
+            },
+            "description": "The content in force",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Read the style library page content",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      },
+      "put": {
+        "description": "C1c (DECISIONS-STAGE-A §11.5, D-448; D-246: curation by Admin or Marketing with `styles.curate`): adds a version of `storefront.style_library` from `effectiveFrom` (now by default, never in the past) through the settings platform — validated against the setting’s schema, audited (`setting.changed` with before / after and the reason), evented, caches invalidated. Only real content: certificates, documents, photos and logos the business holds (logos need the customer’s permission, recorded in `permission`).\n\nImplements: D-448, D-246, D-010, D-125.",
+        "operationId": "admin.styleLibrary.updateSettings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "content": {
+                      "materialSwatches": [],
+                      "quickSearch": [],
+                      "trust": {
+                        "certifications": [],
+                        "customerLogos": [],
+                        "foodGrade": [],
+                        "productionPhotos": [],
+                        "taxInvoiceNote": {
+                          "en": "A full tax invoice with every order",
+                          "th": "ออกใบกำกับภาษีเต็มรูปแบบทุกคำสั่งซื้อ"
+                        }
+                      }
+                    },
+                    "reason": "ข้อความใบกำกับภาษีที่ฝ่ายบัญชีอนุมัติ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStyleLibrarySettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "content": {
+                    "materialSwatches": [],
+                    "quickSearch": [],
+                    "trust": {
+                      "certifications": [],
+                      "customerLogos": [],
+                      "foodGrade": [],
+                      "productionPhotos": [],
+                      "taxInvoiceNote": null
+                    }
+                  },
+                  "effectiveFrom": null,
+                  "settingId": null,
+                  "versionNo": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleLibrarySettingsDto"
+                }
+              }
+            },
+            "description": "The content in force after the change",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "settings.pending_exists": {
+                    "$ref": "#/components/examples/problem.settings.pending_exists"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `settings.pending_exists`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "settings.backdated": {
+                    "$ref": "#/components/examples/problem.settings.backdated"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `settings.backdated`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Change the style library page content",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.curate"
+        ]
+      }
+    },
     "/v1/admin/style-price-rules": {
       "get": {
         "description": "Which option values a calculator prices and how (D-268); filter by calculator or status.\n\nImplements: D-268, D-266.",
@@ -345388,7 +347874,7 @@
     },
     "/v1/admin/styles/actions/backfill-fit-ranges": {
       "post": {
-        "description": "C0b (owner decision 2026-10-28, DECISIONS-STAGE-A §9.1; curation D-246): each style whose inside fit range is empty gets the approved recipe’s size range (D-241, mm, inside basis; the style’s own material class, else what every complete class allows), through the same path as `admin.styles.update` — audited per style as `style_base.curated` with source `recipe`. A range the business entered is never overwritten; a range filled here earlier follows a newer approved recipe. Idempotent (a second run changes nothing); `dryRun` reports without writing.\n\nImplements: D-241, D-242, D-243, D-246.",
+        "description": "C0b / C1c (owner decisions 2026-10-28, DECISIONS-STAGE-A §9.1, §11.1; curation D-246): each style whose inside fit range is empty gets one through the same path as `admin.styles.update` — audited per style as `style_base.curated` — each bound taken from the first source that gives it: (a) the approved recipe’s size range (D-241), (b) the style’s own standard sizes (its catalogue products’ standard sizes, the recipe’s presets), (c) the production envelope (its pattern’s calculator size rules ∩ the dieline engine’s limits). Each bound’s source is stored; nothing is mapped by hand. A range the business entered is never overwritten; a backfilled range follows newer data. A style without all six bounds stays empty and is listed in `incomplete`. Idempotent (a second run changes nothing); `dryRun` reports without writing (`changes` = preview).\n\nImplements: D-241, D-242, D-243, D-246, D-448.",
         "operationId": "admin.styles.backfillFitRanges",
         "parameters": [
           {
@@ -345417,17 +347903,97 @@
             "content": {
               "application/json": {
                 "example": {
+                  "boundsBySource": {
+                    "production_envelope": 0,
+                    "recipe": 490,
+                    "standard_sizes": 2
+                  },
+                  "bySource": {
+                    "combined": 1,
+                    "production_envelope": 0,
+                    "recipe": 81,
+                    "standard_sizes": 0
+                  },
+                  "changes": [
+                    {
+                      "action": "filled",
+                      "after": {
+                        "fitMaxHMm": 35,
+                        "fitMaxLMm": 400,
+                        "fitMaxWMm": 300,
+                        "fitMinHMm": 25,
+                        "fitMinLMm": 60,
+                        "fitMinWMm": 51
+                      },
+                      "before": null,
+                      "bounds": {
+                        "fitMaxHMm": {
+                          "basis": [
+                            "recipe_presets"
+                          ],
+                          "source": "standard_sizes"
+                        },
+                        "fitMaxLMm": {
+                          "basis": [
+                            "recipe_size_range"
+                          ],
+                          "source": "recipe"
+                        },
+                        "fitMaxWMm": {
+                          "basis": [
+                            "recipe_size_range"
+                          ],
+                          "source": "recipe"
+                        },
+                        "fitMinHMm": {
+                          "basis": [
+                            "recipe_presets"
+                          ],
+                          "source": "standard_sizes"
+                        },
+                        "fitMinLMm": {
+                          "basis": [
+                            "recipe_size_range"
+                          ],
+                          "source": "recipe"
+                        },
+                        "fitMinWMm": {
+                          "basis": [
+                            "recipe_size_range"
+                          ],
+                          "source": "recipe"
+                        }
+                      },
+                      "code": "PK-SP-01",
+                      "source": "combined",
+                      "styleId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001"
+                    }
+                  ],
                   "considered": 122,
                   "dryRun": true,
                   "filled": [
-                    "PK-CB-01"
+                    "PK-SP-01"
+                  ],
+                  "incomplete": [
+                    {
+                      "code": "PK-LA-01",
+                      "conflicting": [],
+                      "missing": [
+                        "fitMinLMm",
+                        "fitMaxLMm",
+                        "fitMinWMm",
+                        "fitMaxWMm",
+                        "fitMinHMm",
+                        "fitMaxHMm"
+                      ]
+                    }
                   ],
                   "keptBusiness": [],
                   "noRecipeRange": [
-                    "PK-CB-02"
+                    "PK-LA-01"
                   ],
                   "refreshed": [],
-                  "unchanged": 0
+                  "unchanged": 81
                 },
                 "schema": {
                   "$ref": "#/components/schemas/FitRangeBackfillResult"
@@ -345585,7 +348151,7 @@
             "staff": []
           }
         ],
-        "summary": "Fill empty fit ranges from approved recipes",
+        "summary": "Fill empty fit ranges from the system's own size data",
         "tags": [
           "admin.styles"
         ],
@@ -345637,6 +348203,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -345920,6 +348487,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -346261,6 +348829,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -346562,6 +349131,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -346866,6 +349436,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -347185,6 +349756,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -347518,6 +350090,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -502741,6 +505314,118 @@
         ]
       }
     },
+    "/v1/store/catalog/featured-services": {
+      "get": {
+        "description": "D-447 (owner 2026-10-28, C1b): up to 3 catalogue product slugs in the order staff chose them in the effective-dated, audited setting `storefront.featured_services` (Marketing), active products only. `curated: false` when nothing is chosen — the storefront then shows the first 3 services of the catalogue list and a link to all of them. No figures, no factory (D-050).\n\nImplements: D-447, D-050.",
+        "operationId": "store.catalog.getFeaturedServices",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "curated": true,
+                  "slugs": [
+                    "graphic-design-service",
+                    "mockup-sample"
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreFeaturedServicesDto"
+                }
+              }
+            },
+            "description": "Featured services",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the add-on services staff feature",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/catalog/geo/districts/{code}/subdistricts": {
       "get": {
         "description": "By district code, with postcodes (D-161).\n\nImplements: D-161.",
@@ -503924,7 +506609,8 @@
                       "min": 7
                     },
                     "productTypeCode": "folding_carton",
-                    "startingFromPerPiece": "4.28"
+                    "startingFromPerPiece": "4.28",
+                    "startingFromPerPieceExVat": "4.00"
                   }
                 ],
                 "schema": {
@@ -504017,6 +506703,178 @@
         },
         "security": [],
         "summary": "Get \"starting from\" prices",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/price-hints/{slug}/tiers": {
+      "get": {
+        "description": "C1-API-2 (products R2, DECISIONS-STAGE-A §4): the product's default spec (D-441, the reference configuration the configurator opens on) priced at every quantity preset of its configurator (ascending, ≤ 10) through the one store pricing path — each tier exactly as `store.quotes.calculate` answers it for that configuration with no delivery postcode (shipping pending), including `netAmount` and `vatRate`. Pure calculation: no calculate log, no quote, cart or customer record. Reused for 60 s. `tiers` is empty (and `basis` null) when the product has no instant default spec — the page then offers the quotation route, never an estimate (D-181). No factory named (D-050).\n\nImplements: D-441, D-220, D-181, D-050.",
+        "operationId": "store.catalog.getPriceTiers",
+        "parameters": [
+          {
+            "description": "Catalogue product slug",
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "tuck-end-box",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basis": {
+                    "includesDelivery": false,
+                    "includesVat": true,
+                    "label": {
+                      "en": "60 × 60 × 150 mm",
+                      "th": "60 × 60 × 150 มม."
+                    },
+                    "quantity": 1000,
+                    "sizeCode": null,
+                    "specs": [
+                      {
+                        "key": "size",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      }
+                    ]
+                  },
+                  "computedAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "key": "tuck-end-box",
+                  "productTypeCode": "folding_carton",
+                  "tiers": [
+                    {
+                      "arrival": null,
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": null,
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13380.00",
+                      "instant": true,
+                      "leadTimeDays": 7,
+                      "netAmount": "12504.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "savingPercent": null,
+                      "shippingAmount": null,
+                      "shippingNetAmount": null,
+                      "shippingPending": true,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "toolingWaiver": null,
+                      "unitPrice": "13.38",
+                      "vatAmount": "875.33",
+                      "vatRate": "0.07",
+                      "zoneName": null
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PriceTiersDto"
+                }
+              }
+            },
+            "description": "Tier table",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the tier table of a product's default spec",
         "tags": [
           "store.catalog"
         ]
@@ -504192,7 +507050,8 @@
                         }
                       ]
                     },
-                    "startingPricePerPiece": "4.50"
+                    "startingPricePerPiece": "4.50",
+                    "startingPricePerPieceExVat": "4.21"
                   }
                 ],
                 "schema": {
@@ -504409,6 +507268,7 @@
                         ]
                       },
                       "startingPricePerPiece": "4.50",
+                      "startingPricePerPieceExVat": "4.21",
                       "templateAvailability": "drawing"
                     }
                   ],
@@ -504644,6 +507504,15 @@
                     ]
                   },
                   "startingPricePerPiece": "4.50",
+                  "startingPricePerPieceExVat": "4.21",
+                  "styles": [
+                    {
+                      "category": "folding_carton",
+                      "code": "PK-TE-01",
+                      "nameEn": "Tuck end box",
+                      "nameTh": "กล่องฝาเสียบ"
+                    }
+                  ],
                   "templateAvailability": "drawing",
                   "videos": [
                     {
@@ -546485,7 +549354,7 @@
     },
     "/v1/store/public-config": {
       "get": {
-        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size and the contacts (D-221). Nothing about production partners — no count, coverage or threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-307, D-435.",
+        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size, the contacts (D-221) and the legal name of the invoicing entity (D-447). Nothing about production partners — no count, coverage or threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-307, D-435, D-447.",
         "operationId": "store.publicConfig.get",
         "parameters": [
           {
@@ -546502,6 +549371,10 @@
                     "email": "support@example.invalid",
                     "lineOaId": "@getpack-test",
                     "phone": "0800000000"
+                  },
+                  "issuer": {
+                    "legalNameEn": "Example Co., Ltd.",
+                    "legalNameTh": "บริษัท ตัวอย่าง จำกัด"
                   },
                   "minOrderQty": {
                     "custom": 500,
@@ -548447,6 +551320,7 @@
                       "grossAmount": "13508.40",
                       "instant": true,
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -548846,6 +551720,7 @@
                             "grossAmount": "13508.40",
                             "instant": true,
                             "leadTimeDays": 7,
+                            "netAmount": "12624.67",
                             "productAmount": "13380.00",
                             "quantity": 1000,
                             "reason": null,
@@ -554584,8 +557459,11 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                     "items": [
                       {
+                        "categoryCode": "paper_packaging",
                         "design": null,
+                        "formPending": false,
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "product": null,
                         "productType": {
                           "code": "paper_bag",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -554754,8 +557632,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -554936,8 +557817,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -555293,8 +558177,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -555590,8 +558477,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -556064,8 +558954,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -556275,6 +559168,265 @@
         ]
       }
     },
+    "/v1/store/rfq-baskets/draft/products": {
+      "post": {
+        "description": "C1b (owner 2026-10-28, DECISIONS-STAGE-A §10.9): the storefront's quote tray when I am signed in — an active catalogue or stock product goes into my draft basket as a line with `formPending: true` (its product type and reference only), so the tray follows my account across devices; a guest tray is merged the same way at sign-in. A product already waiting is not added twice. Filled by `store.rfqBaskets.addItem` with the same product (or `updateItem`); the basket cannot be submitted while a line is pending. Up to 20 lines (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.addProduct",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "catalogProductSlug": "mailer-box-b"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddBasketProductDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": null,
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [
+                    {
+                      "categoryCode": "paper_packaging",
+                      "design": null,
+                      "formPending": true,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
+                      "productType": {
+                        "code": "paper_bag",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                        "nameEn": "Paper bag",
+                        "nameTh": "ถุงกระดาษ"
+                      },
+                      "rfq": null,
+                      "sort": 0,
+                      "specification": {
+                        "catalogProductSlug": "mailer-box-b",
+                        "productTypeCode": "paper_bag"
+                      }
+                    }
+                  ],
+                  "notes": "",
+                  "status": "draft",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Put a product in my basket before filling its form",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
     "/v1/store/rfq-baskets/{basketId}": {
       "get": {
         "description": "With each item’s RFQ, getpack’s quotations per quantity and its acceptance; others’ → 404 (D-301).\n\nImplements: D-301, D-100, D-183.",
@@ -556305,8 +559457,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -556547,8 +559702,11 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                     "items": [
                       {
+                        "categoryCode": "paper_packaging",
                         "design": null,
+                        "formPending": false,
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "product": null,
                         "productType": {
                           "code": "paper_bag",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -557180,6 +560338,7 @@
                         }
                       ],
                       "notes": "Logo on both sides (fake)",
+                      "product": null,
                       "productTypeCode": "paper_bag",
                       "productTypeName": "ถุงกระดาษ",
                       "quantities": [
@@ -557462,6 +560621,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -557763,6 +560923,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -558048,6 +561209,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -558405,6 +561567,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -558727,6 +561890,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -567243,6 +570407,7 @@
                         "grossAmount": "13508.40",
                         "instant": true,
                         "leadTimeDays": 7,
+                        "netAmount": "12624.67",
                         "productAmount": "13380.00",
                         "quantity": 1000,
                         "reason": null,
@@ -568013,6 +571178,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -569664,6 +572830,166 @@
         ]
       }
     },
+    "/v1/store/style-library/settings": {
+      "get": {
+        "description": "C1c (owner decision 2026-10-28, DECISIONS-STAGE-A §11.5, D-448): the \"ค้นหาบ่อย\" terms, material swatches and the trust section (certificates with number, issuer and expiry, food-grade documents, production-process photos, customer logos the customer permitted, the tax-invoice note) from the effective-dated setting `storefront.style_library`; `compareLimit` is D-246’s 3. Empty while unset — every part is hidden; expired certificates are left out. Nothing here is generated; no factory names (D-050).\n\nImplements: D-448, D-246, D-010, D-125, D-050.",
+        "operationId": "store.styleLibrary.getSettings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "compareLimit": 3,
+                  "materialSwatches": [],
+                  "quickSearch": [],
+                  "trust": {
+                    "certifications": [],
+                    "customerLogos": [],
+                    "foodGrade": [],
+                    "productionPhotos": [],
+                    "taxInvoiceNote": null
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreStyleLibrarySettingsDto"
+                }
+              }
+            },
+            "description": "The content in force",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the style library page content staff keep",
+        "tags": [
+          "store.styles"
+        ]
+      }
+    },
     "/v1/store/styles": {
       "get": {
         "description": "Published styles only — every listed style has at least one variant that is priced (instant or RFQ) and makeable by a partner (D-243). Facets with counts over the matching styles (category, family, closure, feature, use case, material class, price path), Thai / English search over names, codes and synonyms with typo tolerance, sorts `relevance` (with `q`), `popular`, `new`, `instant_first`, `name`, cursor pages (D-245). `favourite` is filled for a signed-in customer. No factory identity (D-050). Styles redesign C0 (DECISIONS-STAGE-A §4): `size` keeps the styles a product of that outside size fits (inside = product + 5 mm per dimension, length/width may swap, within the entered inside range; incomplete ranges never match) and fills each card's `fit`; `meta.sizeSearchStyles` says how many styles have a range at all. Cards carry the entered `fitRange` and `moqUnits` and the rendered flat dieline (`dielineUrl`) when they exist.\n\nImplements: D-245, D-246, D-243, D-050.",
@@ -570075,6 +573401,7 @@
                     "plasticFree": null,
                     "pricePath": "instant",
                     "productTypeCode": "folding_carton",
+                    "products": [],
                     "quoteResponseBusinessDays": null,
                     "recyclable": null,
                     "referenceCode": null,
@@ -570652,6 +573979,7 @@
                   "plasticFree": null,
                   "pricePath": "instant",
                   "productTypeCode": "folding_carton",
+                  "products": [],
                   "quoteResponseBusinessDays": null,
                   "recyclable": null,
                   "referenceCode": null,

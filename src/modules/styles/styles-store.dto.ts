@@ -290,10 +290,11 @@ export class StyleCardDto {
     nullable: true,
     example: 2,
     description:
-      'C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in ' +
-      'working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the ' +
-      'way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style ' +
-      'has no product type: then no timing is shown. Never a price or an estimate.',
+      'C0b / C1c (D-100, D-175, D-220, DECISIONS-STAGE-A §9.3, §11.2): the first-response time of a quotation ' +
+      'request for this style, in working days — `ceil(rfq.sla_business_hours ÷ hours of one business day)`, the ' +
+      'SLA taken at its product type (platform fallback) and the day length from `calendar.business_hours` ' +
+      '(09:00–18:00 = 9 h). Null when either setting is missing or unusable or the style has no product type: then ' +
+      'no timing is shown. Never a price or an estimate.',
   })
   quoteResponseBusinessDays!: number | null;
 }
@@ -481,6 +482,25 @@ export class StyleAssetDto {
   url!: string;
 }
 
+/** C1 (products Phase 2): a catalogue product made in this style, with its "starting from" price when it has one. */
+export class StyleProductDto {
+  @ApiProperty({ example: 'tuck-end-box', description: 'Catalogue product slug (`/products/{slug}`)' })
+  slug!: string;
+
+  @ApiProperty({ example: 'กล่องฝาเสียบ' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Tuck end box' })
+  nameEn!: string;
+
+  @ApiProperty({
+    type: StylePriceDto,
+    nullable: true,
+    description: 'Its own "starting from" price (D-220, D-441); null for a product without an instant price',
+  })
+  startingPrice!: StylePriceDto | null;
+}
+
 export class StyleDetailDto extends StyleCardDto {
   @ApiProperty({ example: 'Four side panels + glue flap; …' })
   construction!: string;
@@ -517,6 +537,14 @@ export class StyleDetailDto extends StyleCardDto {
 
   @ApiProperty({ type: [StyleAssetDto] })
   assets!: StyleAssetDto[];
+
+  @ApiProperty({
+    type: [StyleProductDto],
+    description:
+      'C1 (products Phase 2): active catalogue products whose pattern is this style (product ↔ style mapping), ' +
+      'cheapest "starting from" first, products without a price last; empty while unmapped',
+  })
+  products!: StyleProductDto[];
 
   @ApiProperty({
     type: Boolean,
@@ -620,6 +648,7 @@ export const DETAIL_EXAMPLE: StyleDetailDto = {
   ],
   leadTime: null,
   useCases: [],
+  products: [],
   assets: [],
   recyclable: null,
   plasticFree: null,

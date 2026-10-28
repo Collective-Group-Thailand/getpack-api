@@ -7,6 +7,7 @@ import {
   type ConfigVersionStatus,
   Prisma,
 } from '@generated/prisma/client';
+import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
@@ -15,6 +16,7 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 
 import { ApprovalsService } from './approvals.service';
 import { conditionProblems } from './conditions';
+import { conditionUsesAmount } from './solo-owner';
 
 const POLICY = 'approval_policy_change';
 /** A proposal may start a little in the past (clock skew); never backdated further. */
@@ -46,6 +48,9 @@ export interface ProposedStep {
  * policy (its steps, conditions and approver roles), routed through `approval_policy_change` (a Superadmin
  * approves; the proposer never approves). Once approved it applies from its `effectiveFrom`; the running version is
  * never edited in place (decided versions and their steps are frozen by the database).
+ * D-449 B (C1d): a version may carry `autoApproveMaxAmount` — requests at or below it are approved at creation. Only a
+ * version with an amount condition may carry one, and only a Superadmin sets, changes or removes it; omitted, the
+ * value in force is carried over.
  */
 @Injectable()
 export class ApprovalPoliciesService {
@@ -54,6 +59,7 @@ export class ApprovalPoliciesService {
     private readonly approvals: ApprovalsService,
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
+    private readonly permissions: PermissionResolver,
   ) {}
 
   async list() {
@@ -91,7 +97,13 @@ export class ApprovalPoliciesService {
   async propose(
     actor: UserActor,
     policyPublicId: string,
-    input: { effectiveFrom: Date; reason: string; steps: ProposedStep[] },
+    input: {
+      effectiveFrom: Date;
+      reason: string;
+      steps: ProposedStep[];
+      /** Decimal string; null removes it; undefined carries the value in force over. */
+      autoApproveMaxAmount?: string | null;
+    },
   ): Promise<PolicyVersionRow> {
     const problems = input.steps.flatMap((s, i) =>
       conditionProblems(s.condition ?? null, `steps.${i}.condition`),
@@ -132,9 +144,31 @@ export class ApprovalPoliciesService {
           orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
         }),
       ]);
+      const inForceMax = inForce?.autoApproveMaxAmount?.toFixed(2) ?? null;
+      const autoApproveMaxAmount =
+        input.autoApproveMaxAmount === undefined
+          ? inForceMax
+          : input.autoApproveMaxAmount === null
+            ? null
+            : new Prisma.Decimal(input.autoApproveMaxAmount).toFixed(2);
+      if (autoApproveMaxAmount !== inForceMax) {
+        const roles = (await this.permissions.forUser(actor.userId)).roles.map((r) => r.key);
+        if (!roles.includes('superadmin')) throw new DomainException('approval.threshold_superadmin_only');
+      }
+      if (autoApproveMaxAmount !== null && !input.steps.some((s) => conditionUsesAmount(s.condition)))
+        throw new DomainException('validation.failed', {
+          errors: [
+            {
+              path: 'autoApproveMaxAmount',
+              code: 'amountCondition',
+              message: 'only a policy whose steps have an amount condition may auto-approve below an amount',
+            },
+          ],
+        });
       const version = await tx.approvalPolicyVersion.create({
         data: {
           policyId: policy.id,
+          autoApproveMaxAmount,
           versionNo: (last?.versionNo ?? 0) + 1,
           effectiveFrom: input.effectiveFrom,
           status: 'proposed',
@@ -170,6 +204,7 @@ export class ApprovalPoliciesService {
           versionNo: version.versionNo,
           effectiveFrom: input.effectiveFrom.toISOString(),
           reason: input.reason,
+          autoApproveMaxAmount,
           steps: input.steps.map((s) => ({
             name: s.name,
             role: s.approverRole,
@@ -185,6 +220,7 @@ export class ApprovalPoliciesService {
         policy: policy.key,
         versionNo: version.versionNo,
         approvalId: request.publicId,
+        autoApproveMaxAmount,
       });
       return tx.approvalPolicyVersion.findUniqueOrThrow({
         where: { id: version.id },

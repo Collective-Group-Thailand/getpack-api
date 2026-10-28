@@ -99,6 +99,21 @@ export interface RecipeFacts {
   variants: Record<string, string>[] | null;
 }
 
+/** An inside size span per dimension (mm); null where the source gives nothing for that dimension. */
+export interface InsideSpan {
+  length: { min: number; max: number } | null;
+  width: { min: number; max: number } | null;
+  height: { min: number; max: number } | null;
+}
+
+/**
+ * C1c (DECISIONS-STAGE-A §11.1): the inside (closed) sizes a recipe's own data gives, per material class — `standard`
+ * = the span of its presets (the style's standard sizes), `limits` = the span its solver's parameter limits allow;
+ * both through the recipe's own `closedSize` (or its length/width/height parameters when it has none). A dimension the
+ * recipe does not define (flat items, diameters, gussets without a closed size) stays null — never mapped by hand.
+ */
+export type RecipeInsideSizes = Record<string, { standard: InsideSpan; limits: InsideSpan }>;
+
 export interface Thumbnails {
   png2d: Buffer;
   png3d: Buffer | null;
@@ -135,6 +150,8 @@ export interface DielineEngine {
     designerPdf?: DesignerPdfOptions,
   ): Promise<RecipeBuild>;
   facts(recipe: StoredRecipe): Promise<RecipeFacts>;
+  /** C1c: inside size spans of the recipe's presets and solver limits, per material class ({@link RecipeInsideSizes}). */
+  insideSizes(recipe: StoredRecipe): Promise<RecipeInsideSizes>;
   thumbnails(request: RecipeBuildRequest, size: number): Promise<Thumbnails>;
   /** The engine's own recipes, grouped by the base code they name (for the recipe bundle, ADR-0010). */
   recipesByBase(): Promise<Record<string, unknown[]>>;

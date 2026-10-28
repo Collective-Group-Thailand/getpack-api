@@ -103,6 +103,7 @@ export const RFQ_EXAMPLE: RfqDto = {
   targetDate: '2026-11-15',
   targetPricePerUnit: null,
   style: null,
+  product: null,
   design: null,
   deliveryPostcode: '10110',
   notes: 'Logo on both sides (fake)',
