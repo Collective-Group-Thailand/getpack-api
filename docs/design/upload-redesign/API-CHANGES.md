@@ -66,3 +66,37 @@ These are the gaps in FINDINGS.md §1.5. None is implemented here; each needs ap
    before the cart. The prepress team's tool profile, if one exists, is business input.
 6. **Dielines:** the 5 own-file products' patterns have no `dielineKey`, so no template is drawn automatically even
    with `drawing.engine` on. This needs either Prepress-supplied templates or a pattern → engine mapping.
+
+---
+
+# C9 — upload Phase 1 → 2 (branch `design/upload-redesign`, D-457)
+
+Additive. Migration `20261230000001_c9_file_checks` (hand-written; run `pnpm db:migrate` + `pnpm test:int` locally).
+
+## New endpoints (`store`, tag artwork)
+
+| operationId | Method + path | Purpose |
+|---|---|---|
+| `store.fileChecks.rules` | `GET /v1/store/file-checks/rules` (public) | bleed / safe zone / size tolerance from `artwork.preflight_rules`, max bytes checked automatically (200 MB technical bound), extensions `.pdf` `.ai`, which of the 12 checks run automatically |
+| `store.fileChecks.create` | `POST /v1/store/file-checks` (Idempotency-Key) | `{ fileIds[1..20], productSlug?, sizeCode? }` → the check, queued (each file = one variant) |
+| `store.fileChecks.get` | `GET /v1/store/file-checks/{checkId}` (ETag) | spec, variants (current version + history), status/stage 0–5, detection, 12-check report, `done`, `blocking`, `revision` |
+| `store.fileChecks.updateSpec` | `PATCH /v1/store/file-checks/{checkId}` (If-Match optional) | `{ productSlug?, sizeCode?, printMethod?: none\|spot\|cmyk, printSpotColours? }` — re-evaluates finished versions at once from stored facts |
+| `store.fileChecks.addFile` | `POST /v1/store/file-checks/{checkId}/files` (Idempotency-Key) | `{ fileId, variantNo? }` — new variant, or a corrected version of one |
+| `store.fileChecks.removeVariant` | `DELETE /v1/store/file-checks/{checkId}/variants/{variantNo}` | takes a file out (history kept) |
+| `store.fileChecks.versionFile` | `GET /v1/store/file-checks/{checkId}/versions/{versionId}/file` | signed URL (5 min) of my original file, for the preview / history |
+| `store.fileChecks.addToCart` | `POST /v1/store/file-checks/{checkId}/actions/add-to-cart` (Idempotency-Key) | `{ variantNo, quoteId, quoteOptionId, destinations? }` → `own_file` cart line with the checked file; 409 `file_checks.blocking` / `not_ready`, 422 `spec_missing` / `quote_mismatch` |
+| `store.fileChecks.reorderable` | `GET /v1/store/file-checks/reorderable` | produced own-file orders (≤ 6) for "สั่งซ้ำจากไฟล์เดิม" → reorder with `store.orders.reorder` |
+
+## Changed
+
+- `CartItemDto.checkedFile` (nullable): `{ fileCheckId, variantNo, versionNo, originalFileId, printFileId, reportId, fileName }` — `printFileId` = the original until auto-fixes exist.
+- `PreflightCheck` enum + `ink_count`, `small_text`, `small_text_black`, `barcode`, `die_layer` (order submissions and the Studio print file get them too). Die lines no longer count as thin lines or overprint; a file without TrimBox is sized by its die lines.
+- Setting `artwork.preflight_rules`: optional `minTextPt`, `blackOnlyTextBelowPt` (not seeded — Prepress sets them; until then the checks are `not_checked`).
+- Engine port `blank()` (pattern key + size → blank mm).
+- Checkout extension `file_check` (order 997): the checked file becomes the order's artwork submission (source `upload`, channel `web`).
+- Errors `file_checks.{not_ready, blocking, spec_missing, quote_mismatch, in_cart}` (th/en).
+- Events `file_check.{created, file_added, file_removed, spec_changed, carted, checked, ordered}` (+ activity rows, aggregate `file_check`); payloads carry no file names.
+
+## Not built (owner / business input)
+
+Auto-fixes and the derived print file (needs a PDF toolchain decision) · team fix service line (fee) · Studio conversion · e-mail intake + cloud pickers (developer accounts, inbound domain) · link import (size cap) · check report PDF · notify-when-done (template) · Phase 3–4.
