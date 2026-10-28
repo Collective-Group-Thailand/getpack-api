@@ -52,9 +52,15 @@ describe('style library content (C1c, DECISIONS-STAGE-A §11.5)', () => {
     const badUrl = { ...filled, trust: { ...filled.trust, productionPhotos: [{ url: 'http://x', alt: T }] } };
     expect(settingValueError('json', badUrl, SCHEMA)).not.toBeNull();
     // C1e (§13.3): pictures are uploaded files only — no https link, no other site path.
-    const linkedPhoto = { ...filled, trust: { ...filled.trust, productionPhotos: [{ url: 'https://x.invalid/p.jpg', alt: T }] } };
+    const linkedPhoto = {
+      ...filled,
+      trust: { ...filled.trust, productionPhotos: [{ url: 'https://x.invalid/p.jpg', alt: T }] },
+    };
     expect(settingValueError('json', linkedPhoto, SCHEMA)).not.toBeNull();
-    const sitePathDoc = { ...filled, trust: { ...filled.trust, foodGrade: [{ title: T, documentUrl: '/docs/a.pdf' }] } };
+    const sitePathDoc = {
+      ...filled,
+      trust: { ...filled.trust, foodGrade: [{ title: T, documentUrl: '/docs/a.pdf' }] },
+    };
     expect(settingValueError('json', sitePathDoc, SCHEMA)).not.toBeNull();
     const noPermission = {
       ...filled,
@@ -68,7 +74,15 @@ describe('style library content (C1c, DECISIONS-STAGE-A §11.5)', () => {
       quickSearch: [{ label: { th: ' กล่อง ', en: '' }, query: ' กล่อง ' }],
       materialSwatches: [],
       trust: {
-        certifications: [{ title: { th: 'FSC', en: undefined } as never, number: ' ', issuer: undefined, expiresOn: undefined, documentUrl: undefined } as never],
+        certifications: [
+          {
+            title: { th: 'FSC', en: undefined } as never,
+            number: ' ',
+            issuer: undefined,
+            expiresOn: undefined,
+            documentUrl: undefined,
+          } as never,
+        ],
         foodGrade: [],
         productionPhotos: [],
         customerLogos: [],
@@ -105,7 +119,7 @@ describe('uploaded files in the content (C1e, DECISIONS-STAGE-A §13.3)', () => 
     ]);
   });
 
-  it('publishes only what customers see — an expired certificate\'s document is not served', () => {
+  it("publishes only what customers see — an expired certificate's document is not served", () => {
     expect(publicFileIds(filled, '2026-10-28')).toEqual({ images: [ID(3), ID(4)], documents: [ID(2)] });
     expect(publicFileIds(filled, '2026-10-27').documents).toEqual([ID(1), ID(2)]);
   });

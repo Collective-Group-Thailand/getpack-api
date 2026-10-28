@@ -96,7 +96,7 @@ describe('company credit (e2e, B3.5)', () => {
       include: { templateVersion: { include: { template: true } }, instalments: true },
     });
 
-  it('becomes eligible after paid orders, gets a limit approved by Finance, orders on credit and is blocked when overdue', async () => {
+  it('becomes eligible after paid orders, gets a limit approved below the threshold, orders on credit and is blocked when overdue', async () => {
     const admin = await customerToken(ctx, 1);
     const companyId = await activeCompany(ctx, admin.token, 1);
     await ctx.prisma.company.update({ where: { publicId: companyId }, data: { paidOrdersCount: 2 } });
@@ -115,7 +115,7 @@ describe('company credit (e2e, B3.5)', () => {
     const eligible = await ctx.prisma.company.findUniqueOrThrow({ where: { publicId: companyId } });
     expect(eligible).toMatchObject({ creditStatus: 'eligible', paidOrdersCount: 3 });
 
-    // CS Lead requests THB 50,000 / 30 days; Finance approves (≤ 100,000, D-121).
+    // CS Lead requests THB 50,000 / 30 days; at or below the ฿100,000 threshold it is approved at creation (D-121, D-451).
     const csLead = await staffToken(ctx, 'cs-lead');
     await as(ctx, csLead)
       .post(`/v1/admin/companies/${companyId}/credit-limits`, {
@@ -162,12 +162,17 @@ describe('company credit (e2e, B3.5)', () => {
       where: { creditLimit: { company: { publicId: companyId } }, status: 'proposed' },
       include: { approvalRequest: true },
     });
+    expect(version.approvalRequest).toMatchObject({
+      status: 'approved',
+      autoApprovedReason: 'below_threshold',
+    });
+    // Nothing is left for Finance to decide.
     const finance = await staffToken(ctx, 'finance');
     await as(ctx, finance)
       .post(`/v1/admin/approvals/${version.approvalRequest!.publicId}/actions/approve`, {
         comment: 'ตรวจแล้ว',
       })
-      .expect(200);
+      .expect(409);
     const outcome = await ctx.prisma.domainEvent.findFirstOrThrow({
       where: { type: 'approval.approved', aggregateId: version.approvalRequest!.publicId },
     });

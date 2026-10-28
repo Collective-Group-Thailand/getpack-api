@@ -262,6 +262,7 @@ describe('approval engine (e2e, ADR-0006)', () => {
     ).rejects.toMatchObject({
       code: 'approval.no_matching_step',
     });
+    // Above the D-451 threshold (฿100,000), so the first request stays pending.
     const subject = { type: 'company_credit_limit', id: 42n, publicId: randomUUID() };
     await prisma.withTx((tx) =>
       approvals.create(tx, {
@@ -269,7 +270,7 @@ describe('approval engine (e2e, ADR-0006)', () => {
         subject,
         requester: actors['finance']!,
         payload: {},
-        amount: '5.00',
+        amount: '200000.00',
       }),
     );
     await expect(
@@ -279,7 +280,7 @@ describe('approval engine (e2e, ADR-0006)', () => {
           subject,
           requester: actors['finance']!,
           payload: {},
-          amount: '5.00',
+          amount: '200000.00',
         }),
       ),
     ).rejects.toMatchObject({ code: 'approval.already_pending' });

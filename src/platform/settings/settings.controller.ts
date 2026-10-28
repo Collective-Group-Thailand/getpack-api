@@ -74,7 +74,7 @@ export class SettingsController {
     summary: 'Change a setting from a date (new version)',
     description:
       "Adds a version effective from `effectiveFrom` (now or later). Only the setting's owner role may change it " +
-      '(Superadmin for platform thresholds, D-063) — or Superadmin for any setting, acting on the owner\'s behalf ' +
+      "(Superadmin for platform thresholds, D-063) — or Superadmin for any setting, acting on the owner's behalf " +
       '(DECISIONS-STAGE-A §11.6, audited as the Superadmin). When the setting names an approval policy the version waits ' +
       'for approval (ADR-0006); otherwise it is approved at once. Audited; emits `setting.changed`.',
     implements: ['ADR-0005', 'D-063', 'D-448'],

@@ -3,12 +3,7 @@ import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { lineSummary } from '@modules/quotes/line-summary';
 import { type ReorderQuantityLimitsDto } from '@modules/quotes/quantity-limits.dto';
 
-import {
-  type AddressSnapshotDto,
-  type CartDto,
-  type CartItemDto,
-  type CartTierHintDto,
-} from './carts.dto';
+import { type AddressSnapshotDto, type CartDto, type CartItemDto, type CartTierHintDto } from './carts.dto';
 import { type CartItemRow, type CartRow, productGross, type RepriceDiff } from './carts.service';
 
 /** D-452 (C5): what the cart endpoints add from settings and other rows (see `CartFigures`). */

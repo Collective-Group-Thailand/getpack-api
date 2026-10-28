@@ -321,12 +321,18 @@ export class StyleCommercialDto {
 const SIZE_CLASS_DESCRIPTION =
   'C1e (DECISIONS-STAGE-A §13.2): how the size search reads the style — `box` (inside L × W × H as stated), `bag` ' +
   '(paper / plastic bags: width × gusset (depth) × height), `cylinder` (cups, bowls, tubes: diameter × diameter ' +
-  'bounding square × height; the product\'s L × W is fitted inside the square) or `not_applicable` (labels, shrink ' +
+  "bounding square × height; the product's L × W is fitted inside the square) or `not_applicable` (labels, shrink " +
   'sleeves, tags, sleeves, inserts, flat folders: no fit range, left out of the size search, not counted as missing). ' +
   'Set by the fit-range backfill from the documented rule. Read-only.';
 
 /** C0b/C1c: `style_bases.fit_range_source` values. */
-export const FIT_RANGE_SOURCES = ['recipe', 'standard_sizes', 'production_envelope', 'combined', 'business'] as const;
+export const FIT_RANGE_SOURCES = [
+  'recipe',
+  'standard_sizes',
+  'production_envelope',
+  'combined',
+  'business',
+] as const;
 /** C1c: the backfill sources, in the fallback order (DECISIONS-STAGE-A §11.1). */
 export const FIT_BACKFILL_SOURCE_VALUES = ['recipe', 'standard_sizes', 'production_envelope'] as const;
 /** C1c: the data a backfill source read. */
@@ -350,8 +356,8 @@ export class FitRangeBoundSourceDto {
     example: ['recipe_size_range'],
     description:
       'The data read: `recipe_size_range` (approved recipe solver range), `catalogue_standard_sizes` (standard sizes ' +
-      'of the catalogue products of its pattern), `recipe_presets` (the approved recipe\'s preset sizes), ' +
-      '`calculator_size_rules` (its pattern\'s size rules), `engine_limits` (the dieline engine\'s limits)',
+      "of the catalogue products of its pattern), `recipe_presets` (the approved recipe's preset sizes), " +
+      "`calculator_size_rules` (its pattern's size rules), `engine_limits` (the dieline engine's limits)",
   })
   basis!: (typeof FIT_BASIS_VALUES)[number][];
 }
@@ -433,7 +439,7 @@ export class AdminStyleBaseDetailDto extends AdminStyleBaseDto {
     example: null,
     description:
       'Where the fit range in `commercial` came from (C0b/C1c, DECISIONS-STAGE-A §9.1, §11.1): a backfill source — ' +
-      '`recipe` (approved recipe range), `standard_sizes` (the style\'s standard sizes), `production_envelope` ' +
+      "`recipe` (approved recipe range), `standard_sizes` (the style's standard sizes), `production_envelope` " +
       '(calculator size rules ∩ dieline engine limits) or `combined` (bounds from several; see `fitRangeBounds`) — ' +
       'replaced by any value curation saves; `business` = entered by curation / the CSV, never overwritten by the ' +
       'backfill; null = no range. Read-only.',
@@ -449,7 +455,12 @@ export class AdminStyleBaseDetailDto extends AdminStyleBaseDto {
   })
   fitRangeBounds!: FitRangeBoundSourcesDto | null;
 
-  @ApiProperty({ enum: SIZE_CLASSES, enumName: 'StyleSizeClass', example: 'box', description: SIZE_CLASS_DESCRIPTION })
+  @ApiProperty({
+    enum: SIZE_CLASSES,
+    enumName: 'StyleSizeClass',
+    example: 'box',
+    description: SIZE_CLASS_DESCRIPTION,
+  })
   sizeClass!: (typeof SIZE_CLASSES)[number];
 }
 
@@ -523,14 +534,24 @@ export class FitRangeChangeDto {
   @ApiProperty({
     type: FitRangeBoundSourcesDto,
     nullable: true,
-    description: 'Each bound\'s source when the run writes a range; null otherwise',
+    description: "Each bound's source when the run writes a range; null otherwise",
   })
   bounds!: FitRangeBoundSourcesDto | null;
 
-  @ApiProperty({ enum: SIZE_CLASSES, enumName: 'StyleSizeClass', example: 'box', description: 'C1e: size class before' })
+  @ApiProperty({
+    enum: SIZE_CLASSES,
+    enumName: 'StyleSizeClass',
+    example: 'box',
+    description: 'C1e: size class before',
+  })
   sizeClassBefore!: (typeof SIZE_CLASSES)[number];
 
-  @ApiProperty({ enum: SIZE_CLASSES, enumName: 'StyleSizeClass', example: 'bag', description: 'C1e: size class after' })
+  @ApiProperty({
+    enum: SIZE_CLASSES,
+    enumName: 'StyleSizeClass',
+    example: 'bag',
+    description: 'C1e: size class after',
+  })
   sizeClass!: (typeof SIZE_CLASSES)[number];
 }
 
@@ -549,7 +570,8 @@ export class FitRangeIncompleteDto {
   @ApiProperty({
     type: [String],
     example: [],
-    description: 'Dimensions (`length`, `width`, `height`) whose bounds, as the sources give them, leave no size',
+    description:
+      'Dimensions (`length`, `width`, `height`) whose bounds, as the sources give them, leave no size',
   })
   conflicting!: string[];
 }
@@ -647,13 +669,15 @@ export class FitRangeBackfillResult {
     type: [String],
     example: ['PK-LA-01'],
     deprecated: true,
-    description: 'Codes no source gives a complete range (stay out of the size search) — same as `incomplete[].code`',
+    description:
+      'Codes no source gives a complete range (stay out of the size search) — same as `incomplete[].code`',
   })
   noRecipeRange!: string[];
 
   @ApiProperty({
     type: [FitRangeIncompleteDto],
-    description: 'C1c: styles left empty, with what is missing (C1e: never a style whose size search does not apply)',
+    description:
+      'C1c: styles left empty, with what is missing (C1e: never a style whose size search does not apply)',
   })
   incomplete!: FitRangeIncompleteDto[];
 
@@ -667,7 +691,10 @@ export class FitRangeBackfillResult {
   @ApiProperty({ type: FitRangeSizeClassCountsDto, description: 'C1e: active styles per size class' })
   bySizeClass!: FitRangeSizeClassCountsDto;
 
-  @ApiProperty({ type: FitRangeCoverageDto, description: 'C1e: applicable styles with a range / applicable styles' })
+  @ApiProperty({
+    type: FitRangeCoverageDto,
+    description: 'C1e: applicable styles with a range / applicable styles',
+  })
   coverage!: FitRangeCoverageDto;
 
   @ApiProperty({
@@ -679,7 +706,10 @@ export class FitRangeBackfillResult {
   @ApiProperty({ type: FitRangeSourceCountsDto, description: 'C1c: backfilled bounds per source' })
   boundsBySource!: FitRangeSourceCountsDto;
 
-  @ApiProperty({ type: [FitRangeChangeDto], description: 'C1c: what the run writes (or, with `dryRun`, would write)' })
+  @ApiProperty({
+    type: [FitRangeChangeDto],
+    description: 'C1c: what the run writes (or, with `dryRun`, would write)',
+  })
   changes!: FitRangeChangeDto[];
 }
 

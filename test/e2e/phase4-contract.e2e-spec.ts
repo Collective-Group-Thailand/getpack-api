@@ -74,7 +74,7 @@ describe('Phase 4 contract (e2e)', () => {
       priceLockDays: (await settings.at('quotes.validity_days')).value,
       claimWindowDays: (await settings.at('claims.window_days')).value,
       proofSlaBusinessDays: null,
-      supportHours: null,
+      supportHours: { tz: 'Asia/Bangkok', ...(await settings.at('storefront.support_hours')).value }, // D-447
       supportReplyMinutes: null,
       templateCount: templates,
       contact: { phone: channels['phone'], lineOaId: channels['lineOaId'], email: channels['email'] },

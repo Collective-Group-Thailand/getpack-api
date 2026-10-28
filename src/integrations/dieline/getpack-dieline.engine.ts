@@ -26,7 +26,7 @@ import {
   type StoredRecipe,
   type Thumbnails,
 } from './dieline-engine.port';
-import { insideFromParameters,type InsideRule } from './inside-rules';
+import { insideFromParameters, type InsideRule } from './inside-rules';
 
 type Pt = [number, number];
 type Values = Record<string, unknown>;
@@ -48,7 +48,10 @@ interface EngineRecipe {
 interface EngineStyle {
   defaults?: Values;
   presets?: { id?: string; values: Values }[];
-  closedSize?: (values: Values, material: DielineMaterial) => { length: number; width: number; height: number };
+  closedSize?: (
+    values: Values,
+    material: DielineMaterial,
+  ) => { length: number; width: number; height: number };
 }
 interface Variant {
   axes: Record<string, string>;

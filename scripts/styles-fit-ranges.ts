@@ -35,11 +35,17 @@ async function main(): Promise<void> {
         `size classes ${JSON.stringify(result.bySizeClass)}; not applicable (${result.notApplicable.length}): ` +
         result.notApplicable.join(' '),
     );
-    console.log(`styles by source: ${JSON.stringify(result.bySource)}; bounds by source: ${JSON.stringify(result.boundsBySource)}`);
+    console.log(
+      `styles by source: ${JSON.stringify(result.bySource)}; bounds by source: ${JSON.stringify(result.boundsBySource)}`,
+    );
     for (const c of result.changes)
-      console.log(`  ${c.action} ${c.code} [${c.sizeClass}${c.source ? `, ${c.source}` : ''}] ${JSON.stringify(c.after)}`);
+      console.log(
+        `  ${c.action} ${c.code} [${c.sizeClass}${c.source ? `, ${c.source}` : ''}] ${JSON.stringify(c.after)}`,
+      );
     for (const i of result.incomplete)
-      console.log(`  empty ${i.code}: missing ${i.missing.join(' ') || '—'}${i.conflicting.length ? `; no size in ${i.conflicting.join(' ')}` : ''}`);
+      console.log(
+        `  empty ${i.code}: missing ${i.missing.join(' ') || '—'}${i.conflicting.length ? `; no size in ${i.conflicting.join(' ')}` : ''}`,
+      );
   } finally {
     await app.close();
   }

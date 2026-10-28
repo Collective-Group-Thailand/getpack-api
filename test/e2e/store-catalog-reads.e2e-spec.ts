@@ -150,14 +150,14 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
     expect(entries.some((e) => e.key === otherSlug || e.key === codes.empty)).toBe(false);
   });
 
-  it('serves the support channels from the CS Lead setting (D-221), null until set', async () => {
+  it('serves the support channels from the CS Lead setting (D-221), null until set (hours seeded, D-447)', async () => {
     const owner = await ctx.prisma.setting.findFirstOrThrow({
       where: { key: 'storefront.support_channels' },
     });
     expect(owner.ownerRoleKey).toBe('cs_lead');
     await request(ctx.server)
       .get('/v1/store/support-channels')
-      .expect(200, { lineOaId: null, phone: null, email: null, hours: null });
+      .expect(200, { lineOaId: null, phone: null, email: null, hours: 'ทุกวัน 09:00–18:00' });
     await setSetting(ctx, 'storefront.support_channels', {
       lineOaId: '@getpack-test',
       phone: '0800000000',

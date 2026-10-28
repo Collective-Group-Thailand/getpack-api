@@ -137,7 +137,7 @@ export class AdminStylesController {
   @Can('styles.curate')
   @ApiEndpoint({
     id: 'admin.styles.backfillFitRanges',
-    summary: 'Fill empty fit ranges from the system\'s own size data',
+    summary: "Fill empty fit ranges from the system's own size data",
     description:
       'C0b / C1c (owner decisions 2026-10-28, DECISIONS-STAGE-A §9.1, §11.1; curation D-246): each style whose inside ' +
       'fit range is empty gets one through the same path as `admin.styles.update` — audited per style as ' +
@@ -147,8 +147,8 @@ export class AdminStylesController {
       'Each bound’s source is stored. A range the business entered is never overwritten; ' +
       'a backfilled range follows newer data. A style without all six bounds stays empty and is listed in ' +
       '`incomplete`. Idempotent (a second run changes nothing); `dryRun` reports without writing (`changes` = preview). ' +
-      'C1e (§13.2, D-450): each style\'s size class is set from the documented rule and read by it — bags (PK-PG-*, ' +
-      'PK-PB-*) as width × gusset (depth) × height, cups / bowls / tubes (sized by a body diameter) as the diameter\'s ' +
+      "C1e (§13.2, D-450): each style's size class is set from the documented rule and read by it — bags (PK-PG-*, " +
+      "PK-PB-*) as width × gusset (depth) × height, cups / bowls / tubes (sized by a body diameter) as the diameter's " +
       'bounding square × height; labels, tags, sleeves, inserts and flat folders are `notApplicable` (no range — a ' +
       'backfilled one is `cleared` — never in `incomplete`); `coverage` = applicable styles with a range.',
     implements: [...DECISIONS, 'D-246', 'D-448', 'D-450'],
@@ -167,7 +167,13 @@ export class AdminStylesController {
       unchanged: 80,
       keptBusiness: [],
       noRecipeRange: ['PK-PB-01'],
-      incomplete: [{ code: 'PK-PB-01', missing: ['fitMinLMm', 'fitMaxLMm', 'fitMinWMm', 'fitMaxWMm', 'fitMinHMm', 'fitMaxHMm'], conflicting: [] }],
+      incomplete: [
+        {
+          code: 'PK-PB-01',
+          missing: ['fitMinLMm', 'fitMaxLMm', 'fitMinWMm', 'fitMaxWMm', 'fitMinHMm', 'fitMaxHMm'],
+          conflicting: [],
+        },
+      ],
       notApplicable: ['PK-LA-01', 'PK-SP-12'],
       bySource: { recipe: 80, standard_sizes: 0, production_envelope: 0, combined: 1 },
       boundsBySource: { recipe: 484, standard_sizes: 2, production_envelope: 0 },
@@ -179,7 +185,14 @@ export class AdminStylesController {
           code: 'PK-SP-01',
           action: 'filled',
           before: null,
-          after: { fitMinLMm: 60, fitMaxLMm: 400, fitMinWMm: 51, fitMaxWMm: 300, fitMinHMm: 25, fitMaxHMm: 35 },
+          after: {
+            fitMinLMm: 60,
+            fitMaxLMm: 400,
+            fitMinWMm: 51,
+            fitMaxWMm: 300,
+            fitMinHMm: 25,
+            fitMaxHMm: 35,
+          },
           source: 'combined',
           bounds: {
             fitMinLMm: { source: 'recipe', basis: ['recipe_size_range'] },
@@ -196,7 +209,14 @@ export class AdminStylesController {
           styleId: STYLE_IDS.base,
           code: 'PK-SP-12',
           action: 'cleared',
-          before: { fitMinLMm: 150, fitMaxLMm: 330, fitMinWMm: 4, fitMaxWMm: 4, fitMinHMm: 200, fitMaxHMm: 450 },
+          before: {
+            fitMinLMm: 150,
+            fitMaxLMm: 330,
+            fitMinWMm: 4,
+            fitMaxWMm: 4,
+            fitMinHMm: 200,
+            fitMaxHMm: 450,
+          },
           after: null,
           source: null,
           bounds: null,

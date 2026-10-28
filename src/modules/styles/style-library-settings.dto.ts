@@ -130,12 +130,18 @@ export class TrustDocumentDto {
 }
 
 export class TrustPhotoDto {
-  @ApiProperty({ example: '/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000001', description: IMAGE_HINT })
+  @ApiProperty({
+    example: '/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000001',
+    description: IMAGE_HINT,
+  })
   @Matches(IMAGE_RE)
   @MaxLength(2000)
   url!: string;
 
-  @ApiProperty({ type: LocalisedTextDto, description: 'Alt text (product and process only, GLOBAL-RULES §1)' })
+  @ApiProperty({
+    type: LocalisedTextDto,
+    description: 'Alt text (product and process only, GLOBAL-RULES §1)',
+  })
   @ValidateNested()
   @Type(() => LocalisedTextDto)
   alt!: LocalisedTextDto;
@@ -148,7 +154,10 @@ export class StoreCustomerLogoDto {
   @MaxLength(120)
   name!: string;
 
-  @ApiProperty({ example: '/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000002', description: IMAGE_HINT })
+  @ApiProperty({
+    example: '/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000002',
+    description: IMAGE_HINT,
+  })
   @Matches(IMAGE_RE)
   @MaxLength(2000)
   logoUrl!: string;
@@ -178,7 +187,11 @@ export class StoreTrustContentDto {
   @ApiProperty({ type: [StoreCustomerLogoDto], description: 'Logos the customer permitted' })
   customerLogos!: StoreCustomerLogoDto[];
 
-  @ApiProperty({ type: LocalisedTextDto, nullable: true, description: 'null = the storefront’s default note (D-010)' })
+  @ApiProperty({
+    type: LocalisedTextDto,
+    nullable: true,
+    description: 'null = the storefront’s default note (D-010)',
+  })
   taxInvoiceNote!: LocalisedTextDto | null;
 }
 
@@ -192,7 +205,10 @@ export class StoreStyleLibrarySettingsDto {
   @ApiProperty({ type: [MaterialSwatchDto] })
   materialSwatches!: MaterialSwatchDto[];
 
-  @ApiProperty({ type: StoreTrustContentDto, description: 'Each part is hidden on the storefront while empty' })
+  @ApiProperty({
+    type: StoreTrustContentDto,
+    description: 'Each part is hidden on the storefront while empty',
+  })
   trust!: StoreTrustContentDto;
 }
 
@@ -257,7 +273,12 @@ export class AdminStyleLibrarySettingsDto {
   @ApiProperty({ type: StyleLibraryContentDto, description: 'The content in force (empty while unset)' })
   content!: StyleLibraryContentDto;
 
-  @ApiProperty({ type: 'integer', nullable: true, example: null, description: 'Version in force; null = unset' })
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: null,
+    description: 'Version in force; null = unset',
+  })
   versionNo!: number | null;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
@@ -279,7 +300,10 @@ export class UpdateStyleLibrarySettingsDto {
   @Type(() => StyleLibraryContentDto)
   content!: StyleLibraryContentDto;
 
-  @ApiProperty({ example: 'เพิ่มใบรับรอง FSC ที่ได้รับ', description: 'Why (kept with the version, audited)' })
+  @ApiProperty({
+    example: 'เพิ่มใบรับรอง FSC ที่ได้รับ',
+    description: 'Why (kept with the version, audited)',
+  })
   @IsString()
   @MinLength(3)
   @MaxLength(500)
