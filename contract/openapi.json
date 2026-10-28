@@ -9917,6 +9917,18 @@
             "description": "The unit the web shows sizes in (D-183); every size in the API is millimetres",
             "example": "mm"
           },
+          "editorMode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EditorMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Studio editor's mode the person last chose (D-456); null until they choose",
+            "example": "easy"
+          },
           "email": {
             "example": "user.one@example.com",
             "type": [
@@ -9973,6 +9985,7 @@
           "email",
           "locale",
           "displayUnit",
+          "editorMode",
           "roles",
           "permissions",
           "menu",
@@ -41307,6 +41320,14 @@
           "queued",
           "sent",
           "failed"
+        ],
+        "type": "string"
+      },
+      "EditorMode": {
+        "description": "The Studio editor's mode the person last chose (D-456); null until they choose",
+        "enum": [
+          "easy",
+          "pro"
         ],
         "type": "string"
       },
@@ -77367,6 +77388,18 @@
             "description": "The unit the web shows sizes in (D-183); every size in the API is millimetres",
             "example": "mm"
           },
+          "editorMode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EditorMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Studio editor's mode the person last chose (D-456); null until they choose",
+            "example": "easy"
+          },
           "email": {
             "example": "user.one@example.com",
             "type": [
@@ -77415,6 +77448,7 @@
           "email",
           "locale",
           "displayUnit",
+          "editorMode",
           "roles",
           "permissions",
           "factories"
@@ -104866,6 +104900,18 @@
             "description": "The unit the web shows sizes in (D-183); every size in the API is millimetres",
             "example": "mm"
           },
+          "editorMode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EditorMode"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The Studio editor's mode the person last chose (D-456); null until they choose",
+            "example": "easy"
+          },
           "email": {
             "example": "user.one@example.com",
             "type": [
@@ -104929,6 +104975,7 @@
           "email",
           "locale",
           "displayUnit",
+          "editorMode",
           "roles",
           "permissions",
           "phone",
@@ -116655,13 +116702,19 @@
                 "$ref": "#/components/schemas/DisplayUnit"
               }
             ],
-            "description": "The unit the web shows sizes in (D-183); sizes are still sent and stored in millimetres",
+            "description": "The unit the web shows sizes in (D-183); sizes are still sent and stored in millimetres. Omitted = unchanged",
             "example": "cm"
+          },
+          "editorMode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/EditorMode"
+              }
+            ],
+            "description": "The Studio editor's mode (D-456): `easy` or `pro`. Omitted = unchanged",
+            "example": "pro"
           }
         },
-        "required": [
-          "displayUnit"
-        ],
         "type": "object"
       },
       "UpdatePrintTypeDto": {
@@ -275065,6 +275118,7 @@
                 "example": {
                   "displayName": "การเงิน ทดสอบ",
                   "displayUnit": "mm",
+                  "editorMode": null,
                   "email": "finance.one@example.com",
                   "featureFlags": [],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
@@ -275219,7 +275273,7 @@
     },
     "/v1/admin/me/preferences": {
       "patch": {
-        "description": "The unit the web shows sizes in: mm, cm or in (D-183). Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183.",
+        "description": "The unit the web shows sizes in: mm, cm or in (D-183), and the Studio editor mode the person last chose: `easy` or `pro` (D-456). Send at least one; what is omitted is unchanged. Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183, D-456.",
         "operationId": "admin.me.updatePreferences",
         "parameters": [
           {
@@ -275233,6 +275287,12 @@
                 "default": {
                   "value": {
                     "displayUnit": "cm"
+                  }
+                },
+                "editorMode": {
+                  "summary": "The Studio editor mode (D-456)",
+                  "value": {
+                    "editorMode": "pro"
                   }
                 }
               },
@@ -275250,6 +275310,7 @@
                 "example": {
                   "displayName": "การเงิน ทดสอบ",
                   "displayUnit": "mm",
+                  "editorMode": null,
                   "email": "finance.one@example.com",
                   "featureFlags": [],
                   "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
@@ -275436,7 +275497,7 @@
             "staff": []
           }
         ],
-        "summary": "Set my display unit",
+        "summary": "Set my preferences",
         "tags": [
           "admin.me"
         ]
@@ -483800,6 +483861,7 @@
                 "example": {
                   "displayName": "โรงงาน ทดสอบ",
                   "displayUnit": "mm",
+                  "editorMode": null,
                   "email": "planner@factory.example",
                   "factories": [
                     {
@@ -484702,7 +484764,7 @@
     },
     "/v1/partner/me/preferences": {
       "patch": {
-        "description": "The unit the web shows sizes in: mm, cm or in (D-183). Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183.",
+        "description": "The unit the web shows sizes in: mm, cm or in (D-183), and the Studio editor mode the person last chose: `easy` or `pro` (D-456). Send at least one; what is omitted is unchanged. Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183, D-456.",
         "operationId": "partner.me.updatePreferences",
         "parameters": [
           {
@@ -484716,6 +484778,12 @@
                 "default": {
                   "value": {
                     "displayUnit": "cm"
+                  }
+                },
+                "editorMode": {
+                  "summary": "The Studio editor mode (D-456)",
+                  "value": {
+                    "editorMode": "pro"
                   }
                 }
               },
@@ -484733,6 +484801,7 @@
                 "example": {
                   "displayName": "โรงงาน ทดสอบ",
                   "displayUnit": "mm",
+                  "editorMode": null,
                   "email": "planner@factory.example",
                   "factories": [
                     {
@@ -484912,7 +484981,7 @@
             "partner": []
           }
         ],
-        "summary": "Set my display unit",
+        "summary": "Set my preferences",
         "tags": [
           "partner.me"
         ]
@@ -537617,6 +537686,7 @@
                 "example": {
                   "displayName": "ลูกค้า ทดสอบ",
                   "displayUnit": "mm",
+                  "editorMode": null,
                   "email": "customer.one@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
                   "identities": [
@@ -538390,6 +538460,7 @@
                 "example": {
                   "displayName": "ลูกค้า ทดสอบ",
                   "displayUnit": "mm",
+                  "editorMode": null,
                   "email": "customer.one@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
                   "identities": [
@@ -539143,7 +539214,7 @@
     },
     "/v1/store/me/preferences": {
       "patch": {
-        "description": "The unit the web shows sizes in: mm, cm or in (D-183). Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183.",
+        "description": "The unit the web shows sizes in: mm, cm or in (D-183), and the Studio editor mode the person last chose: `easy` or `pro` (D-456). Send at least one; what is omitted is unchanged. Every size in the API stays in millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.\n\nImplements: D-183, D-456.",
         "operationId": "store.me.updatePreferences",
         "parameters": [
           {
@@ -539157,6 +539228,12 @@
                 "default": {
                   "value": {
                     "displayUnit": "cm"
+                  }
+                },
+                "editorMode": {
+                  "summary": "The Studio editor mode (D-456)",
+                  "value": {
+                    "editorMode": "pro"
                   }
                 }
               },
@@ -539174,6 +539251,7 @@
                 "example": {
                   "displayName": "ลูกค้า ทดสอบ",
                   "displayUnit": "mm",
+                  "editorMode": null,
                   "email": "customer.one@example.com",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
                   "identities": [
@@ -539347,7 +539425,7 @@
             "customer": []
           }
         ],
-        "summary": "Set my display unit",
+        "summary": "Set my preferences",
         "tags": [
           "store.me"
         ]

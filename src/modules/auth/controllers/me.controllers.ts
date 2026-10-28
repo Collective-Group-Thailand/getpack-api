@@ -45,28 +45,40 @@ async function baseOf(prisma: PrismaService, resolver: PermissionResolver, actor
       email: user.email,
       locale: user.locale,
       displayUnit: user.displayUnit,
+      editorMode: user.editorMode,
       roles: [...new Set(access.roles.map((r) => r.key))].sort(),
       permissions: [...access.permissions].sort(),
     },
   };
 }
 
-/** D-183: the display unit is the user's own preference (the API stays millimetre-only); audited and evented. */
-async function savePreferences(
+/**
+ * D-183 / D-456: the display unit and the Studio editor's mode are the user's own preferences (the API stays
+ * millimetre-only); at least one is sent; only what is sent changes; audited and evented.
+ */
+export async function savePreferences(
   prisma: PrismaService,
   audit: AuditService,
   events: DomainEvents,
   me: UserActor,
   body: UpdatePreferencesDto,
 ): Promise<void> {
+  const data = {
+    ...(body.displayUnit !== undefined ? { displayUnit: body.displayUnit } : {}),
+    ...(body.editorMode !== undefined ? { editorMode: body.editorMode } : {}),
+  };
+  if (!Object.keys(data).length)
+    throw new DomainException('validation.failed', {
+      errors: [{ path: 'displayUnit', code: 'required', message: 'Send displayUnit or editorMode' }],
+    });
   await prisma.withTx(async (tx) => {
-    await tx.user.update({ where: { id: me.userId }, data: { displayUnit: body.displayUnit } });
+    await tx.user.update({ where: { id: me.userId }, data });
     await audit.record(tx, {
       category: 'config',
       action: 'user.preferences_updated',
       resourceType: 'user',
       resourcePublicId: me.publicId,
-      data: { displayUnit: body.displayUnit },
+      data,
       actor: me,
     });
     await events.record(
@@ -75,7 +87,7 @@ async function savePreferences(
         type: 'user.preferences_updated',
         aggregateType: 'user',
         aggregateId: me.publicId,
-        payload: { userId: me.publicId, displayUnit: body.displayUnit },
+        payload: { userId: me.publicId, ...data },
       },
       me,
     );
@@ -84,14 +96,18 @@ async function savePreferences(
 
 const PREFERENCES_BODY = {
   type: UpdatePreferencesDto,
-  examples: { default: { value: { displayUnit: 'cm' } } },
+  examples: {
+    default: { value: { displayUnit: 'cm' } },
+    editorMode: { summary: 'The Studio editor mode (D-456)', value: { editorMode: 'pro' } },
+  },
 };
 const PREFERENCES_DOC = {
-  summary: 'Set my display unit',
+  summary: 'Set my preferences',
   description:
-    'The unit the web shows sizes in: mm, cm or in (D-183). Every size in the API stays in millimetres — a request ' +
-    'that sends a unit is refused with `specs.unit_not_accepted`. Audited.',
-  implements: ['D-183'],
+    'The unit the web shows sizes in: mm, cm or in (D-183), and the Studio editor mode the person last chose: ' +
+    '`easy` or `pro` (D-456). Send at least one; what is omitted is unchanged. Every size in the API stays in ' +
+    'millimetres — a request that sends a unit is refused with `specs.unit_not_accepted`. Audited.',
+  implements: ['D-183', 'D-456'],
 };
 
 /** The sessions each sign-in identity opens (an unlinked identity's sessions are revoked). */

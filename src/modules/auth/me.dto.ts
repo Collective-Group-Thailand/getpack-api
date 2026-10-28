@@ -4,6 +4,8 @@ import { ApiProperty } from '@nestjs/swagger';
 export const LOCALES = ['th', 'en'] as const;
 /** D-183: the unit the web shows sizes in; every size in the API is millimetres. */
 export const DISPLAY_UNITS = ['mm', 'cm', 'in'] as const;
+/** D-456: the Studio editor's two modes — one document model; switching never changes the design. */
+export const EDITOR_MODES = ['easy', 'pro'] as const;
 export const IDENTITY_PROVIDERS = ['phone_otp', 'firebase_google', 'firebase_apple', 'line'] as const;
 
 const USER_ID = '0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b';
@@ -28,6 +30,15 @@ class MeBaseDto {
     description: 'The unit the web shows sizes in (D-183); every size in the API is millimetres',
   })
   displayUnit!: (typeof DISPLAY_UNITS)[number];
+
+  @ApiProperty({
+    enum: EDITOR_MODES,
+    enumName: 'EditorMode',
+    nullable: true,
+    example: 'easy',
+    description: "The Studio editor's mode the person last chose (D-456); null until they choose",
+  })
+  editorMode!: (typeof EDITOR_MODES)[number] | null;
 
   @ApiProperty({ type: [String], example: [] })
   roles!: string[];
@@ -116,6 +127,7 @@ export const STORE_ME_EXAMPLE: StoreMeDto = {
   phone: '+66810001234',
   locale: 'th',
   displayUnit: 'mm',
+  editorMode: null,
   roles: [],
   permissions: [],
   scopes: [],
@@ -128,6 +140,7 @@ export const ADMIN_ME_EXAMPLE: AdminMeDto = {
   email: 'finance.one@example.com',
   locale: 'th',
   displayUnit: 'mm',
+  editorMode: null,
   roles: ['finance'],
   permissions: ['approvals.act', 'approvals.read', 'audit_logs.read'],
   menu: [
@@ -144,6 +157,7 @@ export const PARTNER_ME_EXAMPLE: PartnerMeDto = {
   email: 'planner@factory.example',
   locale: 'th',
   displayUnit: 'mm',
+  editorMode: null,
   roles: ['factory_planner'],
   permissions: ['factory_profile.read'],
   factories: [
@@ -158,8 +172,17 @@ export const PARTNER_ME_EXAMPLE: PartnerMeDto = {
 
 export class UpdatePreferencesDto {
   @EnumField(DISPLAY_UNITS, 'DisplayUnit', {
+    optional: true,
     example: 'cm',
-    description: 'The unit the web shows sizes in (D-183); sizes are still sent and stored in millimetres',
+    description:
+      'The unit the web shows sizes in (D-183); sizes are still sent and stored in millimetres. Omitted = unchanged',
   })
-  displayUnit!: (typeof DISPLAY_UNITS)[number];
+  displayUnit?: (typeof DISPLAY_UNITS)[number];
+
+  @EnumField(EDITOR_MODES, 'EditorMode', {
+    optional: true,
+    example: 'pro',
+    description: "The Studio editor's mode (D-456): `easy` or `pro`. Omitted = unchanged",
+  })
+  editorMode?: (typeof EDITOR_MODES)[number];
 }
