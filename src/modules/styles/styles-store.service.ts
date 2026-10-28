@@ -8,7 +8,7 @@ import { imageUrl } from '@modules/catalog/store/store-catalog.service';
 import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { specLabel } from '@modules/quotes/spec-label';
 import { Injectable } from '@nestjs/common';
-import { SettingsService } from '@platform/settings/settings.service';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
 import { quoteResponseDaysFor } from './quote-response-days';
@@ -18,6 +18,7 @@ import { fitOf, hasFitRange, parseProductSize } from './style-fit';
 import { StyleMakeabilityService } from './style-makeability.service';
 import { MULTI_SELECT_AXES } from './style-master';
 import {
+  type StudioFeaturedStylesDto,
   type StyleCardDto,
   type StyleDetailDto,
   type StyleFacetsDto,
@@ -42,6 +43,8 @@ const CLOSURE_AXES: ReadonlySet<string> = new Set([
   'lid_depth',
 ]);
 const POPULAR_WINDOW_DAYS = 90;
+/** D-455: "แบบที่คนเริ่มบ่อย" shows up to six styles (the C7 prompt). */
+const STUDIO_FEATURED_MAX = 6;
 
 const LIBRARY_INCLUDE = {
   productType: { select: { code: true, calculatorKey: true, quoteMode: true, status: true } },
@@ -361,6 +364,64 @@ export class StylesStoreService {
         ),
       );
     return out;
+  }
+
+  /**
+   * D-455 (C7, DECISIONS-STAGE-A §2): the Studio's "แบบที่คนเริ่มบ่อย". Until real usage exists the admins' ordered
+   * list in `studio.featured_styles` (styles that are on and published, first 6); once the Studio designs started
+   * within `usage.windowDays` reach `usage.minDesigns`, the styles most designs were started from (a design's style
+   * variant's base, else the base linked to its pattern, D-184). Unset → `none`: the section hides — no popularity
+   * is claimed without data.
+   */
+  async studioFeatured(userId: bigint | null): Promise<StudioFeaturedStylesDto> {
+    let value: {
+      styles: { code: string; enabled: boolean }[];
+      usage: { minDesigns: number | null; windowDays: number };
+    } | null = null;
+    try {
+      value = (await this.settings.at('studio.featured_styles')).value ?? null;
+    } catch (error) {
+      if (!(error instanceof SettingNotFoundError)) throw error;
+    }
+    if (!value) return { source: 'none', data: [] };
+    const rows = await this.prisma.styleBase.findMany({ where: PUBLISHED, include: LIBRARY_INCLUDE });
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    let source: StudioFeaturedStylesDto['source'] = 'none';
+    let picked: LibraryRow[] = [];
+    if (value.usage.minDesigns !== null) {
+      const usage = await this.studioUsage(value.usage.windowDays);
+      const total = usage.reduce((sum, u) => sum + u.n, 0);
+      if (total >= value.usage.minDesigns) {
+        picked = usage.flatMap((u) => byId.get(u.id) ?? []).slice(0, STUDIO_FEATURED_MAX);
+        if (picked.length) source = 'usage';
+      }
+    }
+    if (source === 'none') {
+      const byCode = new Map(rows.map((r) => [r.code, r]));
+      picked = value.styles
+        .filter((s) => s.enabled)
+        .flatMap((s) => byCode.get(s.code) ?? [])
+        .slice(0, STUDIO_FEATURED_MAX);
+      if (picked.length) source = 'curated';
+    }
+    const favourites = await this.favouriteIds(
+      userId,
+      picked.map((r) => r.id),
+    );
+    return { source, data: await Promise.all(picked.map((r) => this.card(r, favourites))) };
+  }
+
+  /** Studio designs started per style base in the window, most first (deleted designs excluded). */
+  private async studioUsage(windowDays: number): Promise<{ id: bigint; n: number }[]> {
+    const rows = await this.prisma.$queryRaw<{ id: bigint; n: bigint }[]>`
+      SELECT b.id, count(*) AS n
+      FROM design_documents d
+      LEFT JOIN style_variants v ON v.id = d.style_variant_id
+      JOIN style_bases b ON b.id = COALESCE(v.base_id, (SELECT sb.id FROM style_bases sb WHERE sb.pattern_id = d.pattern_id))
+      WHERE d.deleted_at IS NULL AND d.created_at > now() - make_interval(days => ${windowDays})
+      GROUP BY b.id
+      ORDER BY n DESC, b.id ASC`;
+    return rows.map((r) => ({ id: r.id, n: Number(r.n) }));
   }
 
   async favourites(userId: bigint): Promise<StyleFavouriteDto[]> {

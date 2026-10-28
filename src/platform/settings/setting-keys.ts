@@ -281,6 +281,14 @@ export interface SettingValues {
   'dielines.downloads_per_minute': number;
   /** D-278 the studio print-check rule catalogue (Prepress). */
   'studio.print_rules': RuleCatalogue;
+  /**
+   * D-455 (C7, DECISIONS-STAGE-A §2) the Studio's "แบบที่คนเริ่มบ่อย": the admins' ordered style list (on/off each) and
+   * when to switch to real usage — `minDesigns` Studio designs started within `windowDays` (null = never); unset = hidden.
+   */
+  'studio.featured_styles': {
+    styles: { code: string; enabled: boolean }[];
+    usage: { minDesigns: number | null; windowDays: number };
+  };
   /** D-286 studio launch targets (spec §1, Marketing). */
   'studio.funnel_targets': {
     medianMinutesToCart: number;

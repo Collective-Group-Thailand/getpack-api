@@ -366,6 +366,28 @@ export class StyleListDto {
   meta!: StyleListMeta;
 }
 
+/**
+ * C7 (DECISIONS-STAGE-A §2, D-455): the styles the Studio's "แบบที่คนเริ่มบ่อย" shows — the admins' ordered list until
+ * there is enough real usage, then the styles most designs were started from.
+ */
+export const STUDIO_FEATURED_SOURCES = ['curated', 'usage', 'none'] as const;
+export type StudioFeaturedSource = (typeof STUDIO_FEATURED_SOURCES)[number];
+
+export class StudioFeaturedStylesDto {
+  @ApiProperty({
+    enum: STUDIO_FEATURED_SOURCES,
+    enumName: 'StudioFeaturedSource',
+    example: 'curated',
+    description:
+      "`curated` = the admins' ordered list (`studio.featured_styles`); `usage` = ranked by Studio designs started in " +
+      'the window once they reach the configured threshold; `none` = nothing chosen and no usage ranking (hide the section)',
+  })
+  source!: StudioFeaturedSource;
+
+  @ApiProperty({ type: [StyleCardDto], description: 'Up to 6 published styles, in order' })
+  data!: StyleCardDto[];
+}
+
 export class StyleAxisDto {
   @ApiProperty({ example: 'tuck_bottom' })
   axis!: string;

@@ -1374,6 +1374,45 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'marketing',
   },
   {
+    key: 'studio.featured_styles',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['styles', 'usage'],
+      properties: {
+        styles: {
+          type: 'array',
+          maxItems: 12,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['code', 'enabled'],
+            properties: {
+              code: { type: 'string', pattern: '^[A-Z0-9][A-Z0-9-]{2,39}$' },
+              enabled: { type: 'boolean' },
+            },
+          },
+        },
+        usage: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['minDesigns', 'windowDays'],
+          properties: {
+            minDesigns: { type: ['integer', 'null'], minimum: 1, maximum: 1000000 },
+            windowDays: { type: 'integer', minimum: 7, maximum: 365 },
+          },
+        },
+      },
+    },
+    description:
+      'D-455 (C7, DECISIONS-STAGE-A §2) the Studio "แบบที่คนเริ่มบ่อย": the style codes admins pick, in order, each on/off (the first 6 published ones that are on are shown); once Studio designs started within usage.windowDays reach usage.minDesigns the section ranks by them instead (null = never); unset = the section is hidden (no popularity is claimed without data)',
+    decisions: ['D-455', 'D-286'],
+    ownerRole: 'admin',
+  },
+  {
     key: 'storefront.style_library',
     valueType: 'json',
     value: null,
