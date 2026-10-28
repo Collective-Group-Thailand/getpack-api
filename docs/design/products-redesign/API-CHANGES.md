@@ -17,3 +17,15 @@ figures (R3 — the VAT switch stays hidden until the API sends both figures), c
 Unit tests: `price-hints.service.spec.ts` (tiers), `store-step-fields.spec.ts` (netAmount), `rfq-product-ref.spec.ts`,
 `style-products.spec.ts`. DB-backed checks for the owner: `test:int` for RFQ submit / basket submit with a product
 reference, and one tiers call against UAT data (compare with `calculate` for the same default spec).
+
+## C1b — owner decisions after C1 (2026-10-28, DECISIONS-STAGE-A §10, D-447)
+
+| # | Change | Contract |
+|---|---|---|
+| C1b-API-1 | Stock "starting from" = unit price at `min_order_qty` through `StorePricingService` (no calculate log), cached in new `stock_price_hints` (refreshed with the catalogue hints, on `catalog.stock_product.updated`); `store.catalog.listPriceHints` returns it for SKUs with `basis.quantity` = MOQ | additive (values were null) |
+| C1b-API-2 | `PriceHintDto.startingFromPerPieceExVat`, `StoreCardFactsDto.startingPricePerPieceExVat` (shared `exVat`, approved `vat_standard`; null without a rate) | additive |
+| C1b-API-3 | `POST /v1/store/rfq-baskets/draft/products` (`store.rfqBaskets.addProduct`): pending basket line; `RfqBasketItemDto.formPending`, `.categoryCode`; `addItem` of the same product fills the pending line; `submit` refuses pending lines (422 `items[i]`) | new endpoint + additive |
+| C1b-API-4 | `GET /v1/store/catalog/featured-services` (`store.catalog.getFeaturedServices`) from new setting `storefront.featured_services` (Marketing, unset) | new endpoint |
+| C1b-API-5 | `PublicConfigDto.issuer { legalNameTh, legalNameEn }` (default entity's settings) | additive |
+| C1b-API-6 | Seeds: `storefront.support_hours` daily 09:00–18:00 and `storefront.support_channels.hours` "ทุกวัน 09:00–18:00" (`fillIfUnset`); UAT script `set-support-hours.mjs` | — |
+Migration `20261224000001_c1b_stock_hints_basket_pending` (hand-written, + `down.sql`): run `pnpm db:migrate` + `pnpm test:int`.

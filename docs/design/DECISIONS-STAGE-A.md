@@ -123,3 +123,22 @@ Decided by the product owner (Superball) on 2026-10-28, answering the open quest
 | 9.4b | Landing copy | DRAFT Thai (and English) intros and 4–6 FAQs for the 8 `/packaging/[slug]` pages, from repo/API facts only (no statistics, counts, certifications, awards, superlatives, competitors, factory names or locations), stored in the copy slot `packagingPages.<slug>` with `status: draft`. Drafts stay behind `FEATURE_PACKAGING_LANDINGS` (off), `noindex`, without FAQPage JSON-LD, sitemap or llms.txt entry, until the owner sets `approved`. |
 | 9.4c | Trust section | No invented certificates, photos or logos. Only the tax-invoice note is filled, backed by **D-010** (getpack/Collective Group issues every customer tax invoice for the full amount) and **D-125** (a tax invoice per order, per branch). Everything else waits for the business: `docs/design/styles-redesign/TRUST-CONTENT-CHECKLIST.md`. |
 | 9.5 | Flexible corrugated printing | Customers may choose more inks/colours per side than the engine can price instantly; the choice is never blocked or silently trimmed — configurator and Studio route it to "ขอใบเสนอราคา" with the spec (the existing `rfq_required` path; the store print model reports the extra counts as `quote`). On corrugate the Studio's "เพิ่มจำนวนสี" leads to that quote path. `catalog.print_limits` values stay as they are (pending business); no prices added. |
+
+---
+
+## 10. Owner decisions after C1 (2026-10-28)
+
+Decided by the product owner (Superball) on 2026-10-28, answering the 10 open questions of the C1 report (`STAGE-C-REPORT.md`, C1). Implemented in C1b; recorded in `getpack-api/docs/decisions.md` as **D-447**.
+
+| # | Topic | Decision |
+|---|---|---|
+| 10.1 | `partial` availability | Prices instantly, like `instant` (confirmed, unchanged). |
+| 10.2 | Stock items | Both **add to cart** (at the minimum order, signed-in, priced by the API) **and** add to the quote tray, as the prototype — to widen sales. |
+| 10.3 | Services | Staff curate which services show: the effective-dated, audited setting `storefront.featured_services` (≤ 3 catalogue product slugs, in order, owner role Marketing), read via `GET /v1/store/catalog/featured-services`. Up to 3 curated ones; none curated → the API's service list (first 3, API order) + "ดูบริการทั้งหมด". No new business values. |
+| 10.4 | Out of stock | "สินค้าหมด" badge (`STOCK_AVAILABILITY` in `src/domain/status`), no cart button; may still go to the quote tray. |
+| 10.5 | Stock "starting from" | The unit price at the item's **minimum orderable quantity** (first price tier), labelled with that quantity — "เริ่มต้น ฿x/ชิ้น (สั่งขั้นต่ำ N)"; never the cheapest high-volume tier. From the API (`stock_price_hints`, store pricing path), never computed in the browser. |
+| 10.6 | Ex-VAT switch | The API adds the ex-VAT (net) figure to the catalogue's price responses (`startingPricePerPieceExVat`, `startingFromPerPieceExVat`; shared VAT helper, approved `vat_standard` rate). The web shows "ราคารวม VAT / ไม่รวม VAT" (default incl. VAT) only when every listed price has both figures. |
+| 10.7 | LINE hours | Daily 09:00–18:00: reference/dev/UAT seeds give `storefront.support_hours` (`{days: daily, open: 09:00, close: 18:00}`) and `storefront.support_channels.hours` ("ทุกวัน 09:00–18:00") a first version where unset (`fillIfUnset`); an existing UAT value is changed with `docs/design/products-redesign/set-support-hours.mjs` (admin API, no SQL). |
+| 10.8 | Tax-invoice FAQ | The company name comes from settings (`entity.legal_name_th/en` via `PublicConfigDto.issuer`), not content; without a name the answer omits it. |
+| 10.9 | Quote tray | Guests keep it in the browser. Signed in, items go straight into the existing server-side draft RFQ basket as lines whose form is pending (`POST /v1/store/rfq-baskets/draft/products`, `formPending`); the same product's filled form fills the line; the basket is not sent while a line is pending; a guest tray merges into the basket at sign-in. Account mode follows `FEATURE_RFQ_PRODUCT_REF`. |
+| 10.10 | Materials "หมายเหตุ" | Each material's approved description (§8) from the catalogue API; empty → empty cell (column hidden when none has one); no invented notes. |
