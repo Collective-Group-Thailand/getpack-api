@@ -206,7 +206,7 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
       standardSizes: {
         create: {
           code: 'M',
-          name: '[DEV] 30×40×25 ซม.',
+          name: '[DEV] 40×30×25 ซม.',
           lengthMm: 400,
           widthMm: 300,
           heightMm: 250,

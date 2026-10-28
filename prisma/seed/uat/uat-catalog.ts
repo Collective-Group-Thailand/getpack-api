@@ -17,6 +17,7 @@ import {
   UAT_RENAMES,
   UAT_SHIPPING_BANDS,
   UAT_STOCK_PRODUCTS,
+  UAT_SUB_PATTERN_RENAMES,
   UAT_ZONES,
   type UatZoneCode,
 } from './uat-data';
@@ -63,6 +64,12 @@ async function renameDevData(tx: Tx): Promise<void> {
     tx.pattern.updateMany({ where: { code }, data: v as { name: string } }),
   );
   await each(r['printType'], (code, v) => tx.printType.updateMany({ where: { code }, data: v as Names }));
+  // C2b: the parts of the reused dev patterns (customer-facing names, e.g. the telescope box's lid).
+  for (const [code, parts] of Object.entries(UAT_SUB_PATTERN_RENAMES)) {
+    for (const [seq, name] of Object.entries(parts)) {
+      await tx.subPattern.updateMany({ where: { pattern: { code }, seq: Number(seq) }, data: { name } });
+    }
+  }
   await each(r['catalogProduct'], (slug, v) =>
     tx.catalogProduct.updateMany({ where: { slug }, data: v as Names }),
   );
