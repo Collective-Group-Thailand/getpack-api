@@ -5723,6 +5723,24 @@
         ],
         "type": "string"
       },
+      "AddBasketProductDto": {
+        "properties": {
+          "catalogProductSlug": {
+            "description": "An active catalogue product. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "stockProductSku": {
+            "description": "An active stock product. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "AddCarrierAccountDto": {
         "properties": {
           "credentialsSecretRef": {
@@ -11137,6 +11155,14 @@
               "null"
             ]
           },
+          "netAmount": {
+            "description": "C1-API-1 (D-441, GLOBAL-RULES §5): the total before VAT — `grossAmount` minus `vatAmount`, both as sent (decimal maths in the API), so pages show \"ก่อน VAT · VAT · รวม\" without computing money; null when either is null",
+            "example": "12624.67",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "productAmount": {
             "description": "Pieces incl. VAT",
             "example": "13380.00",
@@ -11322,6 +11348,7 @@
           "savingPercent",
           "zoneName",
           "arrival",
+          "netAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -69794,6 +69821,31 @@
         ],
         "type": "object"
       },
+      "IssuerDto": {
+        "properties": {
+          "legalNameEn": {
+            "description": "`entity.legal_name_en` of the default entity; null until set",
+            "example": "Example Co., Ltd.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "legalNameTh": {
+            "description": "`entity.legal_name_th` of the default entity; null until set",
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "legalNameTh",
+          "legalNameEn"
+        ],
+        "type": "object"
+      },
       "JobArtworkDto": {
         "properties": {
           "approvedAt": {
@@ -81021,7 +81073,7 @@
             }
           },
           "quantity": {
-            "description": "Quantity the price per piece is for",
+            "description": "Quantity the price per piece is for — for a stock product its minimum order quantity, the first price tier (C1b, DECISIONS-STAGE-A §10.5); show it with the price (\"สั่งขั้นต่ำ N\")",
             "example": 1000,
             "type": "integer"
           },
@@ -81114,6 +81166,14 @@
               "string",
               "null"
             ]
+          },
+          "startingFromPerPieceExVat": {
+            "description": "C1b (DECISIONS-STAGE-A §10.6): the same price per piece without VAT — the shared VAT helper's ex-VAT of `startingFromPerPiece` at the approved `vat_standard` rate, half-up to the satang. Null when `startingFromPerPiece` is null or no rate is approved. For the storefront's \"ราคารวม VAT / ไม่รวม VAT\" switch.",
+            "example": "4.00",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -81121,6 +81181,7 @@
           "kind",
           "productTypeCode",
           "startingFromPerPiece",
+          "startingFromPerPieceExVat",
           "currency",
           "basis",
           "leadTimeBusinessDays",
@@ -82017,6 +82078,62 @@
           "proposalId",
           "computedAt",
           "lines"
+        ],
+        "type": "object"
+      },
+      "PriceTiersDto": {
+        "properties": {
+          "basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PriceHintBasisDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The default spec the tiers are priced at (D-441) — the spec the configurator opens on; `quantity` is the reference quantity of the \"starting from\" price. Null when the product has no instant default spec"
+          },
+          "computedAt": {
+            "example": "2026-10-01T09:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "currency": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Currency"
+              }
+            ],
+            "example": "THB"
+          },
+          "key": {
+            "description": "Catalogue product slug",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "productTypeCode": {
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "tiers": {
+            "description": "One entry per configurator quantity preset (ascending, ≤ 10), each exactly as `store.quotes.calculate` answers it for the default spec without a delivery postcode (shipping pending). Empty when the product has no instant default spec",
+            "items": {
+              "$ref": "#/components/schemas/QuoteStepDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "productTypeCode",
+          "currency",
+          "basis",
+          "tiers",
+          "computedAt"
         ],
         "type": "object"
       },
@@ -85048,6 +85165,14 @@
             ],
             "description": "From `storefront.support_channels` (D-221)"
           },
+          "issuer": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/IssuerDto"
+              }
+            ],
+            "description": "D-447: the legal name of the entity that issues customer tax invoices (D-010, D-092 entity settings) — the storefront names the company from here, never from its own copy"
+          },
           "minOrderQty": {
             "$ref": "#/components/schemas/MinOrderQtyDto"
           },
@@ -85097,7 +85222,8 @@
           "supportHours",
           "supportReplyMinutes",
           "templateCount",
-          "contact"
+          "contact",
+          "issuer"
         ],
         "type": "object"
       },
@@ -87143,6 +87269,14 @@
               "null"
             ]
           },
+          "netAmount": {
+            "description": "C1-API-1 (D-441, GLOBAL-RULES §5): the total before VAT — `grossAmount` minus `vatAmount`, both as sent (decimal maths in the API), so pages show \"ก่อน VAT · VAT · รวม\" without computing money; null when either is null",
+            "example": "12624.67",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "productAmount": {
             "description": "Pieces incl. VAT",
             "example": "13380.00",
@@ -87328,6 +87462,7 @@
           "savingPercent",
           "zoneName",
           "arrival",
+          "netAmount",
           "grossAmount",
           "leadTimeDays",
           "earliestShipDate",
@@ -91796,6 +91931,14 @@
       },
       "RfqBasketItemDto": {
         "properties": {
+          "categoryCode": {
+            "description": "C1b: the category of the line's product type (where its RFQ form is asked); null when it has none",
+            "example": "paper_packaging",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "design": {
             "anyOf": [
               {
@@ -91806,10 +91949,32 @@
               }
             ]
           },
+          "formPending": {
+            "description": "C1b (DECISIONS-STAGE-A §10.9): true for a product put in from the quote tray whose form is not filled yet (`store.rfqBaskets.addProduct`); `specification` then holds only the product type and reference. Adding the filled form of the same product (`store.rfqBaskets.addItem`) or replacing the line (`updateItem`) fills it; the basket is not sent while a line is pending",
+            "example": false,
+            "type": "boolean"
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
             "format": "uuid",
             "type": "string"
+          },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue or stock product the line is for (`catalogProductSlug` / `stockProductSku` of the item); null for a line asked from a category form",
+            "example": {
+              "key": "mailer-box-b",
+              "kind": "catalog_product",
+              "nameEn": "Mailer box (B flute)",
+              "nameTh": "กล่องไปรษณีย์ ฝาชน (ลอน B)"
+            }
           },
           "productType": {
             "$ref": "#/components/schemas/CodeNameRefDto"
@@ -91850,12 +92015,22 @@
           "productType",
           "specification",
           "design",
+          "formPending",
+          "categoryCode",
+          "product",
           "rfq"
         ],
         "type": "object"
       },
       "RfqBasketItemInputDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "design": {
             "allOf": [
               {
@@ -91940,6 +92115,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -92194,6 +92375,17 @@
             "example": "Logo on both sides (fake)",
             "type": "string"
           },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1: the catalogue or stock product the request was asked from; null for a category request"
+          },
           "productTypeCode": {
             "example": "paper_bag",
             "type": "string"
@@ -92317,6 +92509,7 @@
           "targetDate",
           "targetPricePerUnit",
           "style",
+          "product",
           "design",
           "deliveryPostcode",
           "notes",
@@ -92584,6 +92777,38 @@
         },
         "required": [
           "body"
+        ],
+        "type": "object"
+      },
+      "RfqProductRefDto": {
+        "properties": {
+          "key": {
+            "description": "Catalogue product slug or stock product SKU",
+            "example": "mailer-box-b",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PriceHintKind"
+              }
+            ],
+            "example": "catalog_product"
+          },
+          "nameEn": {
+            "example": "Mailer box (B flute)",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องไปรษณีย์ ฝาชน (ลอน B)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "nameTh",
+          "nameEn"
         ],
         "type": "object"
       },
@@ -100071,6 +100296,17 @@
             "example": false,
             "type": "boolean"
           },
+          "product": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RfqProductRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1: the catalogue or stock product the request was asked from; null for a category request"
+          },
           "productTypeCode": {
             "example": "paper_bag",
             "type": "string"
@@ -100218,6 +100454,7 @@
           "targetDate",
           "targetPricePerUnit",
           "style",
+          "product",
           "design",
           "deliveryPostcode",
           "notes",
@@ -100548,6 +100785,13 @@
       },
       "StaffSubmitRfqDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "customerUserId": {
             "description": "The customer the RFQ is for (CS on behalf)",
             "example": "0192f3a0-7c1e-7d2a-9b1f-00000000e705",
@@ -100648,6 +100892,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -103186,6 +103436,31 @@
         ],
         "type": "object"
       },
+      "StoreFeaturedServicesDto": {
+        "properties": {
+          "curated": {
+            "description": "True when staff chose the services (`storefront.featured_services`, Marketing); false = nothing chosen — the storefront shows the catalogue's service list (first 3, catalogue order) and \"ดูบริการทั้งหมด\"",
+            "example": true,
+            "type": "boolean"
+          },
+          "slugs": {
+            "description": "The chosen catalogue product slugs in staff's order (≤ 3), only those still active; empty when nothing is chosen",
+            "example": [
+              "graphic-design-service",
+              "mockup-sample"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "curated",
+          "slugs"
+        ],
+        "type": "object"
+      },
       "StoreGeoSubdistrictDto": {
         "properties": {
           "code": {
@@ -104163,6 +104438,14 @@
               "null"
             ]
           },
+          "startingPricePerPieceExVat": {
+            "description": "C1b (DECISIONS-STAGE-A §10.6): `startingPricePerPiece` without VAT — the shared VAT helper's ex-VAT of that figure at the approved `vat_standard` rate, half-up to the satang; null when there is no price or no rate. For the \"ราคารวม VAT / ไม่รวม VAT\" switch; never derive it in the browser.",
+            "example": "4.21",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "templateAvailability": {
             "allOf": [
               {
@@ -104174,6 +104457,7 @@
         },
         "required": [
           "startingPricePerPiece",
+          "startingPricePerPieceExVat",
           "startingPriceAssumes",
           "moq",
           "leadTimeDays",
@@ -104375,6 +104659,21 @@
               "null"
             ]
           },
+          "startingPricePerPieceExVat": {
+            "description": "C1b (DECISIONS-STAGE-A §10.6): `startingPricePerPiece` without VAT — the shared VAT helper's ex-VAT of that figure at the approved `vat_standard` rate, half-up to the satang; null when there is no price or no rate. For the \"ราคารวม VAT / ไม่รวม VAT\" switch; never derive it in the browser.",
+            "example": "4.21",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "styles": {
+            "description": "C1 (products Phase 2): the published styles of its patterns (product ↔ style mapping, D-184), in pattern order; empty while unmapped",
+            "items": {
+              "$ref": "#/components/schemas/StoreProductStyleDto"
+            },
+            "type": "array"
+          },
           "templateAvailability": {
             "allOf": [
               {
@@ -104392,6 +104691,7 @@
         },
         "required": [
           "startingPricePerPiece",
+          "startingPricePerPieceExVat",
           "startingPriceAssumes",
           "moq",
           "leadTimeDays",
@@ -104408,11 +104708,41 @@
           "descriptionEn",
           "isCombination",
           "patterns",
+          "styles",
           "optionGroups",
           "standardSizes",
           "images",
           "videos",
           "seo"
+        ],
+        "type": "object"
+      },
+      "StoreProductStyleDto": {
+        "properties": {
+          "category": {
+            "description": "The style's library category (the /styles category facet)",
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "code": {
+            "description": "Style code (the /styles quick view)",
+            "example": "PK-TE-01",
+            "type": "string"
+          },
+          "nameEn": {
+            "example": "Tuck end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "category"
         ],
         "type": "object"
       },
@@ -104516,10 +104846,19 @@
               "string",
               "null"
             ]
+          },
+          "startingPricePerPieceExVat": {
+            "description": "C1b (DECISIONS-STAGE-A §10.6): `startingPricePerPiece` without VAT — the shared VAT helper's ex-VAT of that figure at the approved `vat_standard` rate, half-up to the satang; null when there is no price or no rate. For the \"ราคารวม VAT / ไม่รวม VAT\" switch; never derive it in the browser.",
+            "example": "4.21",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "startingPricePerPiece",
+          "startingPricePerPieceExVat",
           "startingPriceAssumes",
           "moq",
           "leadTimeDays",
@@ -107392,6 +107731,13 @@
               "null"
             ]
           },
+          "products": {
+            "description": "C1 (products Phase 2): active catalogue products whose pattern is this style (product ↔ style mapping), cheapest \"starting from\" first, products without a price last; empty while unmapped",
+            "items": {
+              "$ref": "#/components/schemas/StyleProductDto"
+            },
+            "type": "array"
+          },
           "quoteResponseBusinessDays": {
             "description": "C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style has no product type: then no timing is shown. Never a price or an estimate.",
             "example": 2,
@@ -107494,6 +107840,7 @@
           "leadTime",
           "useCases",
           "assets",
+          "products",
           "recyclable",
           "plasticFree",
           "certifications"
@@ -108399,6 +108746,41 @@
           "option"
         ],
         "type": "string"
+      },
+      "StyleProductDto": {
+        "properties": {
+          "nameEn": {
+            "example": "Tuck end box",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "กล่องฝาเสียบ",
+            "type": "string"
+          },
+          "slug": {
+            "description": "Catalogue product slug (`/products/{slug}`)",
+            "example": "tuck-end-box",
+            "type": "string"
+          },
+          "startingPrice": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StylePriceDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Its own \"starting from\" price (D-220, D-441); null for a product without an instant price"
+          }
+        },
+        "required": [
+          "slug",
+          "nameTh",
+          "nameEn",
+          "startingPrice"
+        ],
+        "type": "object"
       },
       "StylePublishReason": {
         "enum": [
@@ -109363,6 +109745,13 @@
       },
       "SubmitRfqDto": {
         "properties": {
+          "catalogProductSlug": {
+            "description": "C1 (DECISIONS-STAGE-A §4): the catalogue product the request is asked from — an active product of `productTypeCode`; CS sees it with the request. Never together with `stockProductSku`",
+            "example": "mailer-box-b",
+            "maxLength": 120,
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
           "deliveryPostcode": {
             "example": "10110",
             "pattern": "^[0-9]{5}$",
@@ -109457,6 +109846,12 @@
             "maximum": 32767,
             "minimum": 1,
             "type": "integer"
+          },
+          "stockProductSku": {
+            "description": "C1: the stock product the request is asked from — an active stock product of `productTypeCode`. Never together with `catalogProductSlug`",
+            "example": "PKO-BTL-0250",
+            "maxLength": 60,
+            "type": "string"
           },
           "styleVariantCode": {
             "description": "The style-library variant this configuration builds (D-241). It must be publishable and belong to the configuration’s pattern; otherwise no quantity is priced instantly (reason `style_variant_not_publishable`, D-243), so the configuration cannot be saved, carted or ordered",
@@ -213738,6 +214133,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -214370,6 +214766,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -214976,6 +215373,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -215512,6 +215910,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -216294,6 +216693,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -216794,6 +217194,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -217329,6 +217730,7 @@
                         "tooling": null
                       },
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -315174,6 +315576,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -315610,6 +316013,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -315980,6 +316384,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -316368,6 +316773,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -316871,6 +317277,7 @@
                       ],
                       "notes": "Logo on both sides (fake)",
                       "overdue": false,
+                      "product": null,
                       "productTypeCode": "paper_bag",
                       "productTypeName": "ถุงกระดาษ",
                       "quantities": [
@@ -317227,6 +317634,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -317612,6 +318020,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -317959,6 +318368,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -318353,6 +318763,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -318752,6 +319163,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -319125,6 +319537,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -319697,6 +320110,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -320100,6 +320514,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -320499,6 +320914,7 @@
                   ],
                   "notes": "Logo on both sides (fake)",
                   "overdue": false,
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -502741,6 +503157,118 @@
         ]
       }
     },
+    "/v1/store/catalog/featured-services": {
+      "get": {
+        "description": "D-447 (owner 2026-10-28, C1b): up to 3 catalogue product slugs in the order staff chose them in the effective-dated, audited setting `storefront.featured_services` (Marketing), active products only. `curated: false` when nothing is chosen — the storefront then shows the first 3 services of the catalogue list and a link to all of them. No figures, no factory (D-050).\n\nImplements: D-447, D-050.",
+        "operationId": "store.catalog.getFeaturedServices",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "curated": true,
+                  "slugs": [
+                    "graphic-design-service",
+                    "mockup-sample"
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreFeaturedServicesDto"
+                }
+              }
+            },
+            "description": "Featured services",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the add-on services staff feature",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
     "/v1/store/catalog/geo/districts/{code}/subdistricts": {
       "get": {
         "description": "By district code, with postcodes (D-161).\n\nImplements: D-161.",
@@ -503924,7 +504452,8 @@
                       "min": 7
                     },
                     "productTypeCode": "folding_carton",
-                    "startingFromPerPiece": "4.28"
+                    "startingFromPerPiece": "4.28",
+                    "startingFromPerPieceExVat": "4.00"
                   }
                 ],
                 "schema": {
@@ -504017,6 +504546,178 @@
         },
         "security": [],
         "summary": "Get \"starting from\" prices",
+        "tags": [
+          "store.catalog"
+        ]
+      }
+    },
+    "/v1/store/catalog/price-hints/{slug}/tiers": {
+      "get": {
+        "description": "C1-API-2 (products R2, DECISIONS-STAGE-A §4): the product's default spec (D-441, the reference configuration the configurator opens on) priced at every quantity preset of its configurator (ascending, ≤ 10) through the one store pricing path — each tier exactly as `store.quotes.calculate` answers it for that configuration with no delivery postcode (shipping pending), including `netAmount` and `vatRate`. Pure calculation: no calculate log, no quote, cart or customer record. Reused for 60 s. `tiers` is empty (and `basis` null) when the product has no instant default spec — the page then offers the quotation route, never an estimate (D-181). No factory named (D-050).\n\nImplements: D-441, D-220, D-181, D-050.",
+        "operationId": "store.catalog.getPriceTiers",
+        "parameters": [
+          {
+            "description": "Catalogue product slug",
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "example": "tuck-end-box",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basis": {
+                    "includesDelivery": false,
+                    "includesVat": true,
+                    "label": {
+                      "en": "60 × 60 × 150 mm",
+                      "th": "60 × 60 × 150 มม."
+                    },
+                    "quantity": 1000,
+                    "sizeCode": null,
+                    "specs": [
+                      {
+                        "key": "size",
+                        "labelEn": "Size (L × W × H)",
+                        "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                        "valueEn": "60 × 60 × 150 mm",
+                        "valueTh": "60 × 60 × 150 มม."
+                      }
+                    ]
+                  },
+                  "computedAt": "2026-10-01T09:00:00+07:00",
+                  "currency": "THB",
+                  "key": "tuck-end-box",
+                  "productTypeCode": "folding_carton",
+                  "tiers": [
+                    {
+                      "arrival": null,
+                      "designFeeAmount": "0.00",
+                      "earliestDeliveryDate": null,
+                      "earliestShipDate": "2026-10-09",
+                      "grossAmount": "13380.00",
+                      "instant": true,
+                      "leadTimeDays": 7,
+                      "netAmount": "12504.67",
+                      "productAmount": "13380.00",
+                      "quantity": 1000,
+                      "reason": null,
+                      "savingPercent": null,
+                      "shippingAmount": null,
+                      "shippingNetAmount": null,
+                      "shippingPending": true,
+                      "shippingPendingReason": null,
+                      "shippingVatAmount": null,
+                      "structureDesignFeeAmount": "0.00",
+                      "toleranceColourDeltaE": "3.00",
+                      "toleranceDimensionalMm": "1.00",
+                      "toleranceOveragePct": "5.0000",
+                      "toleranceShortagePct": "5.0000",
+                      "toolingAmount": "0.00",
+                      "toolingWaiver": null,
+                      "unitPrice": "13.38",
+                      "vatAmount": "875.33",
+                      "vatRate": "0.07",
+                      "zoneName": null
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PriceTiersDto"
+                }
+              }
+            },
+            "description": "Tier table",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the tier table of a product's default spec",
         "tags": [
           "store.catalog"
         ]
@@ -504192,7 +504893,8 @@
                         }
                       ]
                     },
-                    "startingPricePerPiece": "4.50"
+                    "startingPricePerPiece": "4.50",
+                    "startingPricePerPieceExVat": "4.21"
                   }
                 ],
                 "schema": {
@@ -504409,6 +505111,7 @@
                         ]
                       },
                       "startingPricePerPiece": "4.50",
+                      "startingPricePerPieceExVat": "4.21",
                       "templateAvailability": "drawing"
                     }
                   ],
@@ -504644,6 +505347,15 @@
                     ]
                   },
                   "startingPricePerPiece": "4.50",
+                  "startingPricePerPieceExVat": "4.21",
+                  "styles": [
+                    {
+                      "category": "folding_carton",
+                      "code": "PK-TE-01",
+                      "nameEn": "Tuck end box",
+                      "nameTh": "กล่องฝาเสียบ"
+                    }
+                  ],
                   "templateAvailability": "drawing",
                   "videos": [
                     {
@@ -546485,7 +547197,7 @@
     },
     "/v1/store/public-config": {
       "get": {
-        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size and the contacts (D-221). Nothing about production partners — no count, coverage or threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-307, D-435.",
+        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size, the contacts (D-221) and the legal name of the invoicing entity (D-447). Nothing about production partners — no count, coverage or threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-307, D-435, D-447.",
         "operationId": "store.publicConfig.get",
         "parameters": [
           {
@@ -546502,6 +547214,10 @@
                     "email": "support@example.invalid",
                     "lineOaId": "@getpack-test",
                     "phone": "0800000000"
+                  },
+                  "issuer": {
+                    "legalNameEn": "Example Co., Ltd.",
+                    "legalNameTh": "บริษัท ตัวอย่าง จำกัด"
                   },
                   "minOrderQty": {
                     "custom": 500,
@@ -548447,6 +549163,7 @@
                       "grossAmount": "13508.40",
                       "instant": true,
                       "leadTimeDays": 7,
+                      "netAmount": "12624.67",
                       "productAmount": "13380.00",
                       "quantity": 1000,
                       "reason": null,
@@ -548846,6 +549563,7 @@
                             "grossAmount": "13508.40",
                             "instant": true,
                             "leadTimeDays": 7,
+                            "netAmount": "12624.67",
                             "productAmount": "13380.00",
                             "quantity": 1000,
                             "reason": null,
@@ -554584,8 +555302,11 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                     "items": [
                       {
+                        "categoryCode": "paper_packaging",
                         "design": null,
+                        "formPending": false,
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "product": null,
                         "productType": {
                           "code": "paper_bag",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -554754,8 +555475,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -554936,8 +555660,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -555293,8 +556020,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -555590,8 +556320,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -556064,8 +556797,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -556275,6 +557011,265 @@
         ]
       }
     },
+    "/v1/store/rfq-baskets/draft/products": {
+      "post": {
+        "description": "C1b (owner 2026-10-28, DECISIONS-STAGE-A §10.9): the storefront's quote tray when I am signed in — an active catalogue or stock product goes into my draft basket as a line with `formPending: true` (its product type and reference only), so the tray follows my account across devices; a guest tray is merged the same way at sign-in. A product already waiting is not added twice. Filled by `store.rfqBaskets.addItem` with the same product (or `updateItem`); the basket cannot be submitted while a line is pending. Up to 20 lines (D-301).\n\nImplements: D-301, D-100, D-183.",
+        "operationId": "store.rfqBaskets.addProduct",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "catalogProductSlug": "mailer-box-b"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddBasketProductDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "basketCode": null,
+                  "conversationId": null,
+                  "createdAt": "2026-10-04T10:00:00+07:00",
+                  "deliveryPostcode": "10110",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
+                  "items": [
+                    {
+                      "categoryCode": "paper_packaging",
+                      "design": null,
+                      "formPending": true,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
+                      "productType": {
+                        "code": "paper_bag",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
+                        "nameEn": "Paper bag",
+                        "nameTh": "ถุงกระดาษ"
+                      },
+                      "rfq": null,
+                      "sort": 0,
+                      "specification": {
+                        "catalogProductSlug": "mailer-box-b",
+                        "productTypeCode": "paper_bag"
+                      }
+                    }
+                  ],
+                  "notes": "",
+                  "status": "draft",
+                  "submittedAt": null,
+                  "targetDate": "2026-11-15"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RfqBasketDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Put a product in my basket before filling its form",
+        "tags": [
+          "store.rfqs"
+        ]
+      }
+    },
     "/v1/store/rfq-baskets/{basketId}": {
       "get": {
         "description": "With each item’s RFQ, getpack’s quotations per quantity and its acceptance; others’ → 404 (D-301).\n\nImplements: D-301, D-100, D-183.",
@@ -556305,8 +557300,11 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                   "items": [
                     {
+                      "categoryCode": "paper_packaging",
                       "design": null,
+                      "formPending": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                      "product": null,
                       "productType": {
                         "code": "paper_bag",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -556547,8 +557545,11 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7401",
                     "items": [
                       {
+                        "categoryCode": "paper_packaging",
                         "design": null,
+                        "formPending": false,
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7402",
+                        "product": null,
                         "productType": {
                           "code": "paper_bag",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000e7404",
@@ -557180,6 +558181,7 @@
                         }
                       ],
                       "notes": "Logo on both sides (fake)",
+                      "product": null,
                       "productTypeCode": "paper_bag",
                       "productTypeName": "ถุงกระดาษ",
                       "quantities": [
@@ -557462,6 +558464,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -557763,6 +558766,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -558048,6 +559052,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -558405,6 +559410,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -558727,6 +559733,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -567243,6 +568250,7 @@
                         "grossAmount": "13508.40",
                         "instant": true,
                         "leadTimeDays": 7,
+                        "netAmount": "12624.67",
                         "productAmount": "13380.00",
                         "quantity": 1000,
                         "reason": null,
@@ -568013,6 +569021,7 @@
                     }
                   ],
                   "notes": "Logo on both sides (fake)",
+                  "product": null,
                   "productTypeCode": "paper_bag",
                   "productTypeName": "ถุงกระดาษ",
                   "quantities": [
@@ -570075,6 +571084,7 @@
                     "plasticFree": null,
                     "pricePath": "instant",
                     "productTypeCode": "folding_carton",
+                    "products": [],
                     "quoteResponseBusinessDays": null,
                     "recyclable": null,
                     "referenceCode": null,
@@ -570652,6 +571662,7 @@
                   "plasticFree": null,
                   "pricePath": "instant",
                   "productTypeCode": "folding_carton",
+                  "products": [],
                   "quoteResponseBusinessDays": null,
                   "recyclable": null,
                   "referenceCode": null,

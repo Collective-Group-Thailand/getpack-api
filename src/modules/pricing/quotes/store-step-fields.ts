@@ -8,6 +8,7 @@ export interface StoreStepFields {
   vatRate: string | null;
   zoneName: { th: string; en: string } | null;
   arrival: { from: string; to: string } | null;
+  netAmount: string | null;
 }
 
 const priced = (s: QuoteStepView): boolean => s.instant && s.unitPrice !== null;
@@ -36,6 +37,15 @@ export const vatRateOf = (ratePct: string | null | undefined): string | null =>
   ratePct === null || ratePct === undefined ? null : new MoneyDecimal(ratePct).div(100).toString();
 
 /**
+ * C1-API-1: the tier's total before VAT — `grossAmount − vatAmount`, both the engine's own figures (decimal maths),
+ * so a page can show "ก่อน VAT · VAT · รวม" without computing money itself. Null when either is null.
+ */
+export const netAmountOf = (s: Pick<QuoteStepView, 'grossAmount' | 'vatAmount'>): string | null =>
+  s.grossAmount === null || s.vatAmount === null
+    ? null
+    : new MoneyDecimal(s.grossAmount).sub(new MoneyDecimal(s.vatAmount)).toFixed(2);
+
+/**
  * The store fields of every tier: `vatRate` beside each `vatAmount`, the destination zone's name and the arrival
  * window where shipping is priced. Arrival (C4-API-3) is the engine's window: ready date + the zone's min / max transit
  * working days (`shipping.transit_days`, national business calendar with its holidays). Without a transit setting it
@@ -54,5 +64,6 @@ export function storeStepFields(
     arrival:
       view.arrivals?.[i] ??
       (s.earliestDeliveryDate ? { from: s.earliestDeliveryDate, to: s.earliestDeliveryDate } : null),
+    netAmount: netAmountOf(s),
   }));
 }

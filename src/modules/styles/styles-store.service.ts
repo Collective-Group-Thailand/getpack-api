@@ -58,6 +58,9 @@ const LIBRARY_INCLUDE = {
             select: {
               slug: true,
               status: true,
+              nameTh: true,
+              nameEn: true,
+              sort: true,
               priceHint: {
                 select: {
                   unitPrice: true,
@@ -442,6 +445,7 @@ export class StylesStoreService {
       recyclable: row.recyclable,
       plasticFree: row.plasticFree,
       certifications: row.certifications,
+      products: productsOf(row),
       assets: await Promise.all(
         row.assets.map(async (a) => ({
           kind: a.kind,
@@ -579,6 +583,49 @@ function productHints(r: LibraryRow) {
     .filter((p) => p.status === 'active' && p.priceHint)
     .map((p) => ({ slug: p.slug, ...p.priceHint! }))
     .sort((a, b) => a.unitPrice.comparedTo(b.unitPrice) || a.slug.localeCompare(b.slug));
+}
+
+/** A product's "starting from" price in the style DTOs' shape (D-220, D-441). */
+function stylePrice(
+  slug: string,
+  h: NonNullable<LibraryRow['pattern']>['catalogProducts'][number]['catalogProduct']['priceHint'],
+  calculatorKey: string | null,
+) {
+  return h
+    ? {
+        unitPrice: h.unitPrice.toFixed(2),
+        currency: 'THB' as const,
+        quantity: h.quantity,
+        catalogProductSlug: slug,
+        computedAt: toBangkokIso(h.computedAt),
+        label: specLabel(
+          (Array.isArray(h.specSummary) ? h.specSummary : []) as unknown as SpecLineDto[],
+          calculatorKey,
+        ),
+      }
+    : null;
+}
+
+/**
+ * C1 (products Phase 2): the active catalogue products of the style's pattern — priced ones cheapest first, then the
+ * rest in the catalogue's own order. Never a factory (GLOBAL-RULES §1).
+ */
+export function productsOf(r: Pick<LibraryRow, 'pattern' | 'productType'>) {
+  return (r.pattern?.catalogProducts ?? [])
+    .map((p) => p.catalogProduct)
+    .filter((p) => p.status === 'active')
+    .sort((a, b) => {
+      if (a.priceHint && b.priceHint)
+        return a.priceHint.unitPrice.comparedTo(b.priceHint.unitPrice) || a.slug.localeCompare(b.slug);
+      if (a.priceHint || b.priceHint) return a.priceHint ? -1 : 1;
+      return a.sort - b.sort || a.slug.localeCompare(b.slug);
+    })
+    .map((p) => ({
+      slug: p.slug,
+      nameTh: p.nameTh,
+      nameEn: p.nameEn,
+      startingPrice: stylePrice(p.slug, p.priceHint, r.productType?.calculatorKey ?? null),
+    }));
 }
 
 function card(

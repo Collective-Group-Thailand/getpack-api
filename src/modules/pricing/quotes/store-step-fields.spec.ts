@@ -1,5 +1,5 @@
 import { type QuoteStepView } from './quote-engine.service';
-import { savingPercents, storeStepFields, vatRateOf } from './store-step-fields';
+import { netAmountOf, savingPercents, storeStepFields, vatRateOf } from './store-step-fields';
 
 const step = (
   quantity: number,
@@ -12,6 +12,7 @@ const step = (
     reason: unitPrice === null ? 'not_instant' : null,
     unitPrice,
     vatAmount: unitPrice === null ? null : '1.00',
+    grossAmount: unitPrice === null ? null : '15.00',
     shippingAmount: null,
     earliestDeliveryDate: null,
     internal: null,
@@ -63,9 +64,10 @@ describe('C4-API-2 store step fields', () => {
         vatRate: '0.07',
         zoneName: zone,
         arrival: { from: '2026-11-02', to: '2026-11-02' },
+        netAmount: '14.00',
       },
-      { savingPercent: 10, vatRate: '0.07', zoneName: null, arrival: null },
-      { savingPercent: null, vatRate: null, zoneName: null, arrival: null },
+      { savingPercent: 10, vatRate: '0.07', zoneName: null, arrival: null, netAmount: '14.00' },
+      { savingPercent: null, vatRate: null, zoneName: null, arrival: null, netAmount: null },
     ]);
   });
 
@@ -87,6 +89,13 @@ describe('C4-API-2 store step fields', () => {
 
   it('never carries a factory or origin field', () => {
     const [f] = storeStepFields({ vatRatePct: '7', shippingZone: null, steps: [step(1, '1.00')] });
-    expect(Object.keys(f!).sort()).toEqual(['arrival', 'savingPercent', 'vatRate', 'zoneName']);
+    expect(Object.keys(f!).sort()).toEqual(['arrival', 'netAmount', 'savingPercent', 'vatRate', 'zoneName']);
+  });
+
+  it('C1-API-1: netAmount = grossAmount − vatAmount in decimals, null when either is missing', () => {
+    expect(netAmountOf({ grossAmount: '13508.40', vatAmount: '883.73' })).toBe('12624.67');
+    expect(netAmountOf({ grossAmount: '0.30', vatAmount: '0.10' })).toBe('0.20');
+    expect(netAmountOf({ grossAmount: null, vatAmount: '1.00' })).toBeNull();
+    expect(netAmountOf({ grossAmount: '1.00', vatAmount: null })).toBeNull();
   });
 });

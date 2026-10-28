@@ -1273,8 +1273,9 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'storefront.support_channels',
     valueType: 'json',
-    value: null,
-    unset: true,
+    // D-447 (owner 2026-10-28, GLOBAL-RULES §6): only the decided opening hours; the accounts stay unset (D-005).
+    value: { hours: 'ทุกวัน 09:00–18:00' },
+    fillIfUnset: true,
     valueSchema: {
       type: 'object',
       additionalProperties: false,
@@ -1286,8 +1287,8 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) — not seeded, every field null until the CS Lead sets it',
-    decisions: ['D-221', 'D-005'],
+      'D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) are not seeded — null until the CS Lead sets them; the opening hours are the decided daily 09:00–18:00 (D-447)',
+    decisions: ['D-221', 'D-005', 'D-447'],
     ownerRole: 'cs_lead',
   },
   {
@@ -1315,8 +1316,8 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'storefront.support_hours',
     valueType: 'json',
-    value: null,
-    unset: true,
+    value: { days: 'daily', open: '09:00', close: '18:00' },
+    fillIfUnset: true,
     valueSchema: {
       type: 'object',
       additionalProperties: false,
@@ -1328,10 +1329,25 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-309 hours CS answers on the storefront (Asia/Bangkok): which days and the opening and closing time; not seeded — null until the CS Lead sets it',
-    decisions: ['D-309', 'D-221'],
-    confirmation: 'pending_business',
+      'D-309 hours CS answers on the storefront (Asia/Bangkok): which days and the opening and closing time; decided daily 09:00–18:00 (D-447, GLOBAL-RULES §6), the CS Lead changes it from a date',
+    decisions: ['D-309', 'D-221', 'D-447'],
     ownerRole: 'cs_lead',
+  },
+  {
+    key: 'storefront.featured_services',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'array',
+      maxItems: 3,
+      uniqueItems: true,
+      items: { type: 'string', pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*$', maxLength: 120 },
+    },
+    description:
+      'D-447 the add-on services the storefront features (/products "บริการเสริม"), in order: up to 3 catalogue product slugs chosen by staff; unset = the catalogue\'s own service list (first 3)',
+    decisions: ['D-447'],
+    ownerRole: 'marketing',
   },
   {
     key: 'support.reply_minutes',

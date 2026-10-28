@@ -50,12 +50,13 @@ describe('hero presets (Phase 4 review, D-310)', () => {
     const setting = SETTINGS.find((s) => s.key === 'catalog.hero_presets')!;
     expect(setting).toMatchObject({ value: HERO_PRESETS, ownerRole: 'admin' });
     expect(setting.unset).toBeUndefined();
-    for (const key of [
-      'artwork.first_proof_business_days',
-      'storefront.support_hours',
-      'support.reply_minutes',
-    ])
+    for (const key of ['artwork.first_proof_business_days', 'support.reply_minutes'])
       expect(SETTINGS.find((s) => s.key === key)).toMatchObject({ unset: true, value: null });
+    // D-447 (C1b): the support hours were decided — daily 09:00–18:00, filled where still unset.
+    expect(SETTINGS.find((s) => s.key === 'storefront.support_hours')).toMatchObject({
+      value: { days: 'daily', open: '09:00', close: '18:00' },
+      fillIfUnset: true,
+    });
   });
 
   it('opens on the owner’s default when the catalogue offers it, and on nothing otherwise', () => {

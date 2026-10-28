@@ -22,6 +22,7 @@ import {
   AcceptBasketItemsDto,
   ACCEPTED_EXAMPLE,
   AcceptedBasketDto,
+  AddBasketProductDto,
   BASKET_EXAMPLE,
   RfqBasketDto,
   RfqBasketItemInputDto,
@@ -114,6 +115,42 @@ export class StoreRfqBasketsController {
   @ApiStandardErrors(...WRITE, 'specs.unit_not_accepted')
   addItem(@CurrentActor() actor: Actor, @Body() body: RfqBasketItemInputDto) {
     return this.baskets.addItem(customer(actor), body);
+  }
+
+  @Post('draft/products')
+  @Idempotent()
+  @ApiEndpoint({
+    id: 'store.rfqBaskets.addProduct',
+    summary: 'Put a product in my basket before filling its form',
+    description:
+      "C1b (owner 2026-10-28, DECISIONS-STAGE-A §10.9): the storefront's quote tray when I am signed in — an active " +
+      'catalogue or stock product goes into my draft basket as a line with `formPending: true` (its product type and ' +
+      'reference only), so the tray follows my account across devices; a guest tray is merged the same way at sign-in. ' +
+      'A product already waiting is not added twice. Filled by `store.rfqBaskets.addItem` with the same product (or ' +
+      '`updateItem`); the basket cannot be submitted while a line is pending. Up to 20 lines (D-301).',
+    implements: DECISIONS,
+  })
+  @ApiBody({
+    type: AddBasketProductDto,
+    examples: { default: { value: { catalogProductSlug: 'mailer-box-b' } } },
+  })
+  @ApiSuccess(201, {
+    description: 'Draft',
+    type: RfqBasketDto,
+    example: {
+      ...BASKET_EXAMPLE,
+      items: [
+        {
+          ...BASKET_EXAMPLE.items[0]!,
+          specification: { productTypeCode: 'paper_bag', catalogProductSlug: 'mailer-box-b' },
+          formPending: true,
+        },
+      ],
+    },
+  })
+  @ApiStandardErrors(...WRITE)
+  addProduct(@CurrentActor() actor: Actor, @Body() body: AddBasketProductDto) {
+    return this.baskets.addProduct(customer(actor), body);
   }
 
   @Put('draft/items/:itemId')

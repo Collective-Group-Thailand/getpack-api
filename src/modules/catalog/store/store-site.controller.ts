@@ -3,7 +3,7 @@ import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/deco
 import { Controller, Get, Header } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
-import { StoreSitemapEntryDto, StoreSupportChannelsDto } from './store-catalog.dto';
+import { StoreFeaturedServicesDto, StoreSitemapEntryDto, StoreSupportChannelsDto } from './store-catalog.dto';
 import { StoreCatalogService } from './store-catalog.service';
 
 const CACHE = 'public, max-age=300';
@@ -72,5 +72,35 @@ export class StoreSupportChannelsController {
   @ApiStandardErrors('validation.failed')
   supportChannels(): Promise<StoreSupportChannelsDto> {
     return this.catalog.supportChannels();
+  }
+}
+
+/** `/v1/store/catalog/featured-services`: the add-on services staff feature on the storefront (D-447). */
+@ApiTags('store.catalog')
+@Controller('catalog/featured-services')
+export class StoreFeaturedServicesController {
+  constructor(private readonly catalog: StoreCatalogService) {}
+
+  @Get()
+  @Public()
+  @Header('Cache-Control', CACHE)
+  @ApiEndpoint({
+    id: 'store.catalog.getFeaturedServices',
+    summary: 'Get the add-on services staff feature',
+    description:
+      'D-447 (owner 2026-10-28, C1b): up to 3 catalogue product slugs in the order staff chose them in the ' +
+      'effective-dated, audited setting `storefront.featured_services` (Marketing), active products only. ' +
+      '`curated: false` when nothing is chosen — the storefront then shows the first 3 services of the catalogue list ' +
+      'and a link to all of them. No figures, no factory (D-050).',
+    implements: ['D-447', 'D-050'],
+  })
+  @ApiSuccess(200, {
+    description: 'Featured services',
+    type: StoreFeaturedServicesDto,
+    example: { curated: true, slugs: ['graphic-design-service', 'mockup-sample'] },
+  })
+  @ApiStandardErrors('validation.failed')
+  featuredServices(): Promise<StoreFeaturedServicesDto> {
+    return this.catalog.featuredServices();
   }
 }

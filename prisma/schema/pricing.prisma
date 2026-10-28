@@ -797,6 +797,10 @@ model Rfq {
   acceptedQuoteId          BigInt?          @unique(map: "ux_rfqs__accepted_quote_id") @map("accepted_quote_id")
   /// D-301 the basket the request was submitted with (one RFQ per basket item).
   basketId                 BigInt?          @map("basket_id")
+  /// C1 (DECISIONS-STAGE-A §4): the catalogue product the request is for, when the customer asked from one.
+  catalogProductId         BigInt?          @map("catalog_product_id")
+  /// C1: the stock product the request is for, when the customer asked from one (never both).
+  stockProductId           BigInt?          @map("stock_product_id")
   submittedAt              DateTime         @default(now()) @map("submitted_at") @db.Timestamptz(6)
   closedAt                 DateTime?        @map("closed_at") @db.Timestamptz(6)
   createdAt                DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
@@ -815,6 +819,8 @@ model Rfq {
   styleVariant          StyleVariant?            @relation("RfqStyleVariant", fields: [styleVariantId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__style_variant_id")
   designDocumentVersion DesignDocumentVersion?   @relation("RfqDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__design_document_version_id")
   basket                RfqBasket?               @relation("RfqBasketRfqs", fields: [basketId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__basket_id")
+  catalogProduct        CatalogProduct?          @relation("RfqCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__catalog_product_id")
+  stockProduct          StockProduct?            @relation("RfqStockProduct", fields: [stockProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_rfqs__stock_product_id")
   basketItem            RfqBasketItem?           @relation("RfqBasketItemRfq")
   tiers                 RfqQuantityTier[]
   messages              RfqMessage[]
@@ -828,6 +834,8 @@ model Rfq {
   structuralRequest StructuralDesignRequest? @relation("StructuralRequestServiceRfq")
 
   @@index([designDocumentVersionId], map: "ix_rfqs__design_document_version_id")
+  @@index([catalogProductId], map: "ix_rfqs__catalog_product_id")
+  @@index([stockProductId], map: "ix_rfqs__stock_product_id")
   @@index([customerUserId, submittedAt(sort: Desc)], map: "ix_rfqs__customer_user_id__submitted_at")
   @@index([status, slaDueAt], map: "ix_rfqs__status__sla_due_at")
   @@index([assignedToUserId], map: "ix_rfqs__assigned_to_user_id")
@@ -897,6 +905,9 @@ model RfqBasketItem {
   specification           Json
   designDocumentVersionId BigInt?  @map("design_document_version_id")
   rfqId                   BigInt?  @unique(map: "ux_rfq_basket_items__rfq_id") @map("rfq_id")
+  /// C1b (DECISIONS-STAGE-A §10.9): a product put in the basket from the quote tray whose form is not filled yet
+  /// (`specification` holds only the product type and reference). The basket is not sent while one is pending.
+  formPending             Boolean  @default(false) @map("form_pending")
   createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 

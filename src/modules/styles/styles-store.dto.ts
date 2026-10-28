@@ -481,6 +481,25 @@ export class StyleAssetDto {
   url!: string;
 }
 
+/** C1 (products Phase 2): a catalogue product made in this style, with its "starting from" price when it has one. */
+export class StyleProductDto {
+  @ApiProperty({ example: 'tuck-end-box', description: 'Catalogue product slug (`/products/{slug}`)' })
+  slug!: string;
+
+  @ApiProperty({ example: 'กล่องฝาเสียบ' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Tuck end box' })
+  nameEn!: string;
+
+  @ApiProperty({
+    type: StylePriceDto,
+    nullable: true,
+    description: 'Its own "starting from" price (D-220, D-441); null for a product without an instant price',
+  })
+  startingPrice!: StylePriceDto | null;
+}
+
 export class StyleDetailDto extends StyleCardDto {
   @ApiProperty({ example: 'Four side panels + glue flap; …' })
   construction!: string;
@@ -517,6 +536,14 @@ export class StyleDetailDto extends StyleCardDto {
 
   @ApiProperty({ type: [StyleAssetDto] })
   assets!: StyleAssetDto[];
+
+  @ApiProperty({
+    type: [StyleProductDto],
+    description:
+      'C1 (products Phase 2): active catalogue products whose pattern is this style (product ↔ style mapping), ' +
+      'cheapest "starting from" first, products without a price last; empty while unmapped',
+  })
+  products!: StyleProductDto[];
 
   @ApiProperty({
     type: Boolean,
@@ -620,6 +647,7 @@ export const DETAIL_EXAMPLE: StyleDetailDto = {
   ],
   leadTime: null,
   useCases: [],
+  products: [],
   assets: [],
   recyclable: null,
   plasticFree: null,
