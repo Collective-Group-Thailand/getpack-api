@@ -4,6 +4,7 @@ import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
 import { type Prisma } from '@generated/prisma/client';
+import { cartLimits } from '@modules/carts/cart-settings';
 import { type CartActor, cartEtag, type CartRow, CartsService } from '@modules/carts/carts.service';
 import { Inject, Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
@@ -71,8 +72,11 @@ function offerView(c: CouponRow, reason: string | null): PromotionOffer {
   };
 }
 
-/** Codes one cart may carry; the engine decides which of them stack (D-053). */
-export const MAX_CART_CODES = 5;
+/**
+ * Codes one cart may carry when `promotions.max_codes_per_cart` has no version in force — the value D-452 seeds
+ * (owner, Stage C C5: max 3); the engine decides which of them stack (D-053).
+ */
+export const MAX_CART_CODES = 3;
 const CODE = /^[A-Za-z0-9-]{3,40}$/;
 
 export interface AttemptSource {
@@ -109,12 +113,13 @@ export class PromotionCodes {
         errors: [{ path: 'code', code: 'pattern', message: '3–40 letters, digits or dashes' }],
       });
     await this.countAttempt(who, source);
+    const maxCodes = (await cartLimits(this.settings)).maxCodes ?? MAX_CART_CODES;
     return this.prisma.withTx(async (tx) => {
       const cart = await this.carts.active(tx, who);
       assertIfMatch(ifMatch, cartEtag(cart), { required: false });
       if (source.deviceId) await this.identity.record(tx, who.customerUserId, 'device', source.deviceId);
       if (cart.codes.some((c) => c.code.toLowerCase() === code.toLowerCase())) return cart;
-      if (cart.codes.length >= MAX_CART_CODES)
+      if (cart.codes.length >= maxCodes)
         throw new DomainException('promotions.code_invalid', { params: { reason: 'too_many_codes' } });
       const coupon = await tx.couponCode.findUnique({
         where: { code },

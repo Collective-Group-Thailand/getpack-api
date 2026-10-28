@@ -31,6 +31,7 @@ import {
   ORDER_GROUP_EXAMPLE,
   OrderGroupDto,
 } from '../orders/orders.dto';
+import { previewDisplay } from './cart-figures';
 import {
   AdminCheckoutDto,
   CHECKOUT_EXAMPLE,
@@ -121,6 +122,7 @@ function inputOf(body: AdminCheckoutDto, admin: boolean): CheckoutInput {
 export function previewDto(draft: CheckoutDraft): CheckoutPreviewDto {
   const money = (t: CheckoutDraft['totals']) => ({ ...t, currency: 'THB' });
   return {
+    display: previewDisplay(draft.orders.flatMap((o) => o.lines)),
     totals: money(draft.totals),
     orders: draft.orders.map((o) => ({
       cartItemId: o.cartItemPublicId,

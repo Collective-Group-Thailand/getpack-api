@@ -171,6 +171,7 @@ export const ERROR_CODES = {
   'cart.price_locked': HttpStatus.CONFLICT,
   'cart.reprice_unavailable': HttpStatus.CONFLICT,
   'cart.no_pending_reprice': HttpStatus.CONFLICT,
+  'cart.quantity_unavailable': HttpStatus.CONFLICT,
   'checkout.cart_empty': HttpStatus.UNPROCESSABLE_ENTITY,
   'checkout.price_expired': HttpStatus.CONFLICT,
   'checkout.destinations_incomplete': HttpStatus.UNPROCESSABLE_ENTITY,

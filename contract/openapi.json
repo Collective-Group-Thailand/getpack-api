@@ -1090,6 +1090,17 @@
           "type": "https://errors.getpack/cart.price_locked"
         }
       },
+      "problem.cart.quantity_unavailable": {
+        "summary": "cart.quantity_unavailable",
+        "value": {
+          "code": "cart.quantity_unavailable",
+          "detail": "รายการนี้เปลี่ยนจำนวนในตะกร้าไม่ได้ (ใบเสนอราคาจากทีมงาน งานจากสตูดิโอ งานสั่งซ้ำ หรือราคารอยืนยัน) หรือจำนวนนี้ไม่มีราคาทันที กรุณาแก้สเปกหรือขอใบเสนอราคาใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เปลี่ยนจำนวนนี้ไม่ได้",
+          "type": "https://errors.getpack/cart.quantity_unavailable"
+        }
+      },
       "problem.cart.reprice_unavailable": {
         "summary": "cart.reprice_unavailable",
         "value": {
@@ -22956,15 +22967,39 @@
             },
             "type": "array"
           },
+          "maxCodes": {
+            "description": "D-452: coupon codes the cart may hold (`promotions.max_codes_per_cart`); null as `vatAmount`",
+            "example": 3,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "productGrossAmount": {
             "description": "Sum of the items, incl. VAT, excluding shipping",
             "example": "13380.00",
             "type": "string"
           },
+          "quantityStep": {
+            "description": "D-452: pieces the quantity stepper moves by (`storefront.cart_quantity_step`); null as `vatAmount`",
+            "example": 50,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "updatedAt": {
             "example": "2026-09-25T10:00:00+07:00",
             "format": "date-time",
             "type": "string"
+          },
+          "vatAmount": {
+            "description": "D-452: VAT included in `productGrossAmount` — the order lines checkout builds before shipping (shared VAT helper, DECISIONS-STAGE-A §7, each quotation’s VAT rate). Always set by `store.cart.*` and the code endpoints; null in carts returned by other modules (read the cart again)",
+            "example": "875.33",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -22973,6 +23008,9 @@
           "channel",
           "items",
           "productGrossAmount",
+          "vatAmount",
+          "maxCodes",
+          "quantityStep",
           "codes",
           "currency",
           "updatedAt"
@@ -23029,10 +23067,27 @@
             "example": true,
             "type": "boolean"
           },
+          "earliestShipDate": {
+            "description": "D-452: the quotation’s earliest ship date (Bangkok day) while it is still ahead; null when passed or unknown",
+            "example": "2026-11-09",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
             "format": "uuid",
             "type": "string"
+          },
+          "leadTimeDays": {
+            "description": "D-452: production working days of the quotation option (after artwork approval); null when unknown",
+            "example": 5,
+            "type": [
+              "integer",
+              "null"
+            ]
           },
           "mockupOption": {
             "allOf": [
@@ -23074,6 +23129,26 @@
           "quantity": {
             "example": 1000,
             "type": "integer"
+          },
+          "quantityEditable": {
+            "description": "D-452: the quantity can be changed in the cart (`changeQuantity`) — an instant quotation without a Studio design pin, not a reorder and with no re-priced option waiting for confirmation",
+            "example": true,
+            "type": "boolean"
+          },
+          "quantityLimits": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReorderQuantityLimitsDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-452: the catalogue product’s quantity limits; null when the quotation has no catalogue product",
+            "example": {
+              "max": null,
+              "min": 100
+            }
           },
           "quoteCode": {
             "example": "QT-2026-000042",
@@ -23133,6 +23208,18 @@
             ],
             "description": "Product, product type, sales unit and spec lines to display (from its quote)"
           },
+          "tierHint": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CartTierHintDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-452: the smallest larger quantity of the same locked quotation with a lower unit price (\"สั่ง n ชิ้น ราคาต่อชิ้นเหลือ ฿x\"); null when there is none, the lock passed or a re-price waits",
+            "example": null
+          },
           "unitPrice": {
             "description": "Per piece incl. VAT, excluding shipping",
             "example": "13.38",
@@ -23163,7 +23250,12 @@
           "priceLocked",
           "pendingReprice",
           "destinations",
-          "destinationsComplete"
+          "destinationsComplete",
+          "quantityEditable",
+          "quantityLimits",
+          "tierHint",
+          "earliestShipDate",
+          "leadTimeDays"
         ],
         "type": "object"
       },
@@ -23212,6 +23304,124 @@
           "differenceAmount",
           "newUnitPrice",
           "validUntil"
+        ],
+        "type": "object"
+      },
+      "CartShippingEstimateDto": {
+        "properties": {
+          "arrival": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/QuoteArrivalDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Ready date + the zone’s transit working days (`shipping.transit_days`, national calendar); null when unknown"
+          },
+          "available": {
+            "description": "Every item can be shipped to the postcode",
+            "example": true,
+            "type": "boolean"
+          },
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "readyDate": {
+            "description": "The latest ready (ship) date of the items as promised at checkout; null when one is unknown",
+            "example": "2026-11-09",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "shippingGrossAmount": {
+            "description": "Shipping of every item to the postcode incl. VAT (customer rate card, D-013); null when not available",
+            "example": "235.40",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalGrossAmount": {
+            "description": "The cart’s goods (`CartDto.productGrossAmount`) plus this shipping, incl. VAT, before codes, points and promotions (those are the checkout preview’s); null when shipping is not available",
+            "example": "13615.40",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "unavailableItemIds": {
+            "description": "Items that cannot be shipped to the postcode",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "vatAmount": {
+            "description": "VAT included in `totalGrossAmount`: the goods’ VAT (`CartDto.vatAmount`) plus the shipping’s; null as above",
+            "example": "890.73",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "zone": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedLabelDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The destination zone’s name (customer side only)"
+          }
+        },
+        "required": [
+          "postcode",
+          "available",
+          "shippingGrossAmount",
+          "totalGrossAmount",
+          "vatAmount",
+          "zone",
+          "readyDate",
+          "arrival",
+          "unavailableItemIds"
+        ],
+        "type": "object"
+      },
+      "CartTierHintDto": {
+        "properties": {
+          "productGrossAmount": {
+            "description": "That quantity incl. VAT and design fees, excluding shipping",
+            "example": "24200.00",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 2000,
+            "type": "integer"
+          },
+          "quoteOptionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+            "format": "uuid",
+            "type": "string"
+          },
+          "unitPrice": {
+            "description": "Per piece incl. VAT, excluding shipping",
+            "example": "12.10",
+            "type": "string"
+          }
+        },
+        "required": [
+          "quoteOptionId",
+          "quantity",
+          "unitPrice",
+          "productGrossAmount"
         ],
         "type": "object"
       },
@@ -23976,6 +24186,21 @@
         ],
         "type": "object"
       },
+      "ChangeQuantityDto": {
+        "properties": {
+          "quantity": {
+            "description": "Pieces",
+            "example": 2000,
+            "maximum": 1000000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantity"
+        ],
+        "type": "object"
+      },
       "ChangeQuoteModeDto": {
         "properties": {
           "quoteMode": {
@@ -24375,6 +24600,14 @@
             ],
             "description": "When ordering for a company (B2B)"
           },
+          "display": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PreviewDisplayDto"
+              }
+            ],
+            "description": "D-452: the summary rows, incl. VAT, adding up to the total"
+          },
           "notices": {
             "items": {
               "$ref": "#/components/schemas/CheckoutNoticeDto"
@@ -24426,6 +24659,7 @@
           }
         },
         "required": [
+          "display",
           "paymentSchedule",
           "totals",
           "orders",
@@ -62314,6 +62548,19 @@
         ],
         "type": "object"
       },
+      "EstimateShippingDto": {
+        "properties": {
+          "postcode": {
+            "example": "10110",
+            "pattern": "^\\d{5}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "postcode"
+        ],
+        "type": "object"
+      },
       "EvalCaseResultDto": {
         "properties": {
           "id": {
@@ -81217,6 +81464,43 @@
           "capReason",
           "promotionId",
           "code"
+        ],
+        "type": "object"
+      },
+      "PreviewDisplayDto": {
+        "properties": {
+          "discountGrossAmount": {
+            "description": "Every discount (codes, automatic promotions, points, memos) with the VAT it takes off",
+            "example": "0.00",
+            "type": "string"
+          },
+          "goodsGrossAmount": {
+            "description": "Goods and design fees before discounts, incl. VAT",
+            "example": "14054.40",
+            "type": "string"
+          },
+          "grossAmount": {
+            "description": "= `totals.grossAmount`",
+            "example": "14182.80",
+            "type": "string"
+          },
+          "shippingGrossAmount": {
+            "description": "Shipping of every destination before discounts, incl. VAT",
+            "example": "128.40",
+            "type": "string"
+          },
+          "vatAmount": {
+            "description": "VAT included in `grossAmount` (= `totals.vatAmount`)",
+            "example": "927.85",
+            "type": "string"
+          }
+        },
+        "required": [
+          "goodsGrossAmount",
+          "discountGrossAmount",
+          "shippingGrossAmount",
+          "vatAmount",
+          "grossAmount"
         ],
         "type": "object"
       },
@@ -225163,7 +225447,7 @@
     },
     "/v1/admin/customers/{customerId}/cart": {
       "get": {
-        "description": "The active cart (the customer’s CS cart), created on first use. Each item is a saved quotation option with its price lock (D-051); `priceLocked: false` means re-price and confirm before checkout. Shipping is priced per destination at checkout.\n\nImplements: D-051, D-072, D-142.",
+        "description": "The active cart (the customer’s CS cart), created on first use. Each item is a saved quotation option with its price lock (D-051); `priceLocked: false` means re-price and confirm before checkout. Shipping is priced per destination at checkout.\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "admin.cart.get",
         "parameters": [
           {
@@ -225221,7 +225505,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -225229,6 +225515,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -225271,11 +225562,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -225442,9 +225742,249 @@
         ]
       }
     },
+    "/v1/admin/customers/{customerId}/cart/actions/estimate-shipping": {
+      "post": {
+        "description": "D-452: what shipping every item to one postcode would cost incl. VAT at the customer rate card (D-013) — the same destination shipping checkout prices — with the destination zone’s name, the latest ready date and the arrival window (`shipping.transit_days`). An estimate: nothing is saved and the cart does not change; checkout prices each destination again. An RFQ quotation ships only to its own postcode. Limited per client (30 a minute).\n\nImplements: D-452, D-013, D-436.",
+        "operationId": "admin.cart.estimateShipping",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "postcode": "10110"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/EstimateShippingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "arrival": {
+                    "from": "2026-11-10",
+                    "to": "2026-11-11"
+                  },
+                  "available": true,
+                  "postcode": "10110",
+                  "readyDate": "2026-11-09",
+                  "shippingGrossAmount": "235.40",
+                  "totalGrossAmount": "13615.40",
+                  "unavailableItemIds": [],
+                  "vatAmount": "890.73",
+                  "zone": {
+                    "en": "Bangkok & vicinity",
+                    "th": "กรุงเทพฯ และปริมณฑล"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartShippingEstimateDto"
+                }
+              }
+            },
+            "description": "Estimate",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Estimate shipping of the cart to a postcode",
+        "tags": [
+          "admin.cart"
+        ],
+        "x-required-permissions": [
+          "carts.manage_on_behalf"
+        ]
+      }
+    },
     "/v1/admin/customers/{customerId}/cart/codes": {
       "post": {
-        "description": "Checks the code now (status, window, assignment to this customer, uses left) and keeps it on the cart; the checkout preview evaluates its conditions against the cart and shows the discount or why it does not apply (D-053). Attempts are limited per customer, IP and device each hour (`promotions.code_attempt_limits`). Entering a code already on the cart changes nothing.\n\nImplements: D-053.",
+        "description": "Checks the code now (status, window, assignment to this customer, uses left) and keeps it on the cart; the checkout preview evaluates its conditions against the cart and shows the discount or why it does not apply (D-053). Attempts are limited per customer, IP and device each hour (`promotions.code_attempt_limits`). Entering a code already on the cart changes nothing. A cart holds at most `promotions.max_codes_per_cart` codes (D-452, `CartDto.maxCodes`); one more is refused as `promotions.code_invalid` with reason `too_many_codes`.\n\nImplements: D-053, D-452.",
         "operationId": "admin.cart.applyCode",
         "parameters": [
           {
@@ -225531,7 +226071,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -225539,6 +226081,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -225581,11 +226128,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -225823,7 +226379,7 @@
     },
     "/v1/admin/customers/{customerId}/cart/codes/{code}": {
       "delete": {
-        "description": "Takes the code off the cart; nothing was reserved yet (usage is reserved at checkout, D-053).\n\nImplements: D-053.",
+        "description": "Takes the code off the cart; nothing was reserved yet (usage is reserved at checkout, D-053).\n\nImplements: D-053, D-452.",
         "operationId": "admin.cart.removeCode",
         "parameters": [
           {
@@ -225893,7 +226449,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -225901,6 +226459,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -225943,11 +226506,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -226156,7 +226728,7 @@
     },
     "/v1/admin/customers/{customerId}/cart/items": {
       "post": {
-        "description": "A live saved quotation of this customer (instant or accepted RFQ), one item per option. `hired_design` needs a quotation priced with the design fee; a mockup add-on (D-072) is refused until it can be priced. Destinations default to the default delivery address and must add up to the quantity.\n\nImplements: D-051, D-072, D-142.",
+        "description": "A live saved quotation of this customer (instant or accepted RFQ), one item per option. `hired_design` needs a quotation priced with the design fee; a mockup add-on (D-072) is refused until it can be priced. Destinations default to the default delivery address and must add up to the quantity.\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "admin.cart.addItem",
         "parameters": [
           {
@@ -226242,7 +226814,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -226250,6 +226824,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -226292,11 +226871,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -226560,7 +227148,7 @@
     },
     "/v1/admin/customers/{customerId}/cart/items/{itemId}": {
       "delete": {
-        "description": "The quotation stays saved and can be added again while it is live (D-051).\n\nImplements: D-051, D-072, D-142.",
+        "description": "The quotation stays saved and can be added again while it is live (D-051).\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "admin.cart.removeItem",
         "parameters": [
           {
@@ -226604,8 +227192,11 @@
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
                   "items": [],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -226792,7 +227383,7 @@
         ]
       },
       "patch": {
-        "description": "Guarded by the cart’s `If-Match` (D-072).\n\nImplements: D-051, D-072, D-142.",
+        "description": "Guarded by the cart’s `If-Match` (D-072).\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "admin.cart.updateItem",
         "parameters": [
           {
@@ -226879,7 +227470,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -226887,6 +227480,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -226929,11 +227527,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -227169,9 +227776,427 @@
         ]
       }
     },
+    "/v1/admin/customers/{customerId}/cart/items/{itemId}/actions/change-quantity": {
+      "post": {
+        "description": "D-452: an instant item takes another quantity. When its locked quotation already has that quantity the item switches to it (same price lock); otherwise the configuration is priced again by the quote engine into a new saved quotation at today’s prices with a new lock (D-051) — the response shows the new unit price and lock. Within the product’s `quantityLimits`. One destination follows the new quantity; a split over several addresses is cleared and set again at checkout. RFQ quotations, Studio design pins (D-277), reorders (D-153) and items with a re-price waiting are refused (`cart.quantity_unavailable`). Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142, D-452.",
+        "operationId": "admin.cart.changeQuantity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "customerId",
+            "required": true,
+            "schema": {
+              "format": "uuid"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "quantity": 2000
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ChangeQuantityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
+                  "currency": "THB",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
+                  "items": [
+                    {
+                      "designDocumentId": null,
+                      "designFeeAmount": "0.00",
+                      "designNote": null,
+                      "designOption": "own_file",
+                      "designVersionNo": null,
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca003",
+                          "quantity": 1000
+                        }
+                      ],
+                      "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
+                      "mockupOption": "none",
+                      "pendingReprice": null,
+                      "priceLocked": true,
+                      "priceLockedUntil": "2026-10-16T10:00:00+07:00",
+                      "productGrossAmount": "13380.00",
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
+                      "quoteCode": null,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
+                      "quoteShippingAmount": "128.40",
+                      "reorderOf": null,
+                      "reusesApprovedArtwork": false,
+                      "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "maxCodes": 3,
+                  "productGrossAmount": "13380.00",
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartDto"
+                }
+              }
+            },
+            "description": "Cart",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.item_exists": {
+                    "$ref": "#/components/examples/problem.cart.item_exists"
+                  },
+                  "cart.quantity_unavailable": {
+                    "$ref": "#/components/examples/problem.cart.quantity_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.item_exists`, `cart.quantity_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.design_option_unavailable": {
+                    "$ref": "#/components/examples/problem.cart.design_option_unavailable"
+                  },
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.design_option_unavailable`, `pricing.not_instant`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Change an item’s quantity",
+        "tags": [
+          "admin.cart"
+        ],
+        "x-required-permissions": [
+          "carts.manage_on_behalf"
+        ]
+      }
+    },
     "/v1/admin/customers/{customerId}/cart/items/{itemId}/actions/confirm-reprice": {
       "post": {
-        "description": "The item takes the new quotation, its price and a new lock (D-051). Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142.",
+        "description": "The item takes the new quotation, its price and a new lock (D-051). Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "admin.cart.confirmReprice",
         "parameters": [
           {
@@ -227241,7 +228266,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -227249,6 +228276,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -227291,11 +228323,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -227524,7 +228565,7 @@
     },
     "/v1/admin/customers/{customerId}/cart/items/{itemId}/actions/reprice": {
       "post": {
-        "description": "After the 15-day lock (D-051) the configuration is re-priced into a new quotation; the item shows `pendingReprice` with the difference until the client confirms it. A live lock is kept (`cart.price_locked`); RFQ quotations are not re-priced (ask for a new quotation).\n\nImplements: D-051, D-072, D-142.",
+        "description": "After the 15-day lock (D-051) the configuration is re-priced into a new quotation; the item shows `pendingReprice` with the difference until the client confirms it. A live lock is kept (`cart.price_locked`); RFQ quotations are not re-priced (ask for a new quotation).\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "admin.cart.repriceItem",
         "parameters": [
           {
@@ -227591,7 +228632,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -227599,6 +228642,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -227641,11 +228689,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -227843,7 +228900,7 @@
     },
     "/v1/admin/customers/{customerId}/cart/items/{itemId}/destinations": {
       "put": {
-        "description": "Replaces the destinations; each is one of the customer’s delivery addresses (copied as a snapshot, D-142) and the quantities add up to the item quantity. Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142.",
+        "description": "Replaces the destinations; each is one of the customer’s delivery addresses (copied as a snapshot, D-142) and the quantities add up to the item quantity. Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "admin.cart.setDestinations",
         "parameters": [
           {
@@ -227939,7 +228996,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -227947,6 +229006,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -227989,11 +229053,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -228810,6 +229883,13 @@
               "application/json": {
                 "example": {
                   "company": null,
+                  "display": {
+                    "discountGrossAmount": "0.00",
+                    "goodsGrossAmount": "14054.40",
+                    "grossAmount": "14182.80",
+                    "shippingGrossAmount": "128.40",
+                    "vatAmount": "927.85"
+                  },
                   "notices": [],
                   "orders": [
                     {
@@ -501608,7 +502688,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -501616,6 +502698,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -501658,11 +502745,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -501892,7 +502988,7 @@
     },
     "/v1/store/cart": {
       "get": {
-        "description": "The active cart (my cart), created on first use. Each item is a saved quotation option with its price lock (D-051); `priceLocked: false` means re-price and confirm before checkout. Shipping is priced per destination at checkout.\n\nImplements: D-051, D-072, D-142.",
+        "description": "The active cart (my cart), created on first use. Each item is a saved quotation option with its price lock (D-051); `priceLocked: false` means re-price and confirm before checkout. Shipping is priced per destination at checkout.\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "store.cart.get",
         "parameters": [
           {
@@ -501942,7 +503038,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -501950,6 +503048,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -501992,11 +503095,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -502160,9 +503272,238 @@
         ]
       }
     },
+    "/v1/store/cart/actions/estimate-shipping": {
+      "post": {
+        "description": "D-452: what shipping every item to one postcode would cost incl. VAT at the customer rate card (D-013) — the same destination shipping checkout prices — with the destination zone’s name, the latest ready date and the arrival window (`shipping.transit_days`). An estimate: nothing is saved and the cart does not change; checkout prices each destination again. An RFQ quotation ships only to its own postcode. Limited per client (30 a minute).\n\nImplements: D-452, D-013, D-436.",
+        "operationId": "store.cart.estimateShipping",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "postcode": "10110"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/EstimateShippingDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "arrival": {
+                    "from": "2026-11-10",
+                    "to": "2026-11-11"
+                  },
+                  "available": true,
+                  "postcode": "10110",
+                  "readyDate": "2026-11-09",
+                  "shippingGrossAmount": "235.40",
+                  "totalGrossAmount": "13615.40",
+                  "unavailableItemIds": [],
+                  "vatAmount": "890.73",
+                  "zone": {
+                    "en": "Bangkok & vicinity",
+                    "th": "กรุงเทพฯ และปริมณฑล"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartShippingEstimateDto"
+                }
+              }
+            },
+            "description": "Estimate",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Estimate shipping of the cart to a postcode",
+        "tags": [
+          "store.cart"
+        ]
+      }
+    },
     "/v1/store/cart/codes": {
       "post": {
-        "description": "Checks the code now (status, window, assignment to this customer, uses left) and keeps it on the cart; the checkout preview evaluates its conditions against the cart and shows the discount or why it does not apply (D-053). Attempts are limited per customer, IP and device each hour (`promotions.code_attempt_limits`). Entering a code already on the cart changes nothing.\n\nImplements: D-053.",
+        "description": "Checks the code now (status, window, assignment to this customer, uses left) and keeps it on the cart; the checkout preview evaluates its conditions against the cart and shows the discount or why it does not apply (D-053). Attempts are limited per customer, IP and device each hour (`promotions.code_attempt_limits`). Entering a code already on the cart changes nothing. A cart holds at most `promotions.max_codes_per_cart` codes (D-452, `CartDto.maxCodes`); one more is refused as `promotions.code_invalid` with reason `too_many_codes`.\n\nImplements: D-053, D-452.",
         "operationId": "store.cart.applyCode",
         "parameters": [
           {
@@ -502241,7 +503582,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -502249,6 +503592,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -502291,11 +503639,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -502530,7 +503887,7 @@
     },
     "/v1/store/cart/codes/{code}": {
       "delete": {
-        "description": "Takes the code off the cart; nothing was reserved yet (usage is reserved at checkout, D-053).\n\nImplements: D-053.",
+        "description": "Takes the code off the cart; nothing was reserved yet (usage is reserved at checkout, D-053).\n\nImplements: D-053, D-452.",
         "operationId": "store.cart.removeCode",
         "parameters": [
           {
@@ -502592,7 +503949,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -502600,6 +503959,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -502642,11 +504006,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -502852,7 +504225,7 @@
     },
     "/v1/store/cart/items": {
       "post": {
-        "description": "A live saved quotation of this customer (instant or accepted RFQ), one item per option. `hired_design` needs a quotation priced with the design fee; a mockup add-on (D-072) is refused until it can be priced. Destinations default to the default delivery address and must add up to the quantity.\n\nImplements: D-051, D-072, D-142.",
+        "description": "A live saved quotation of this customer (instant or accepted RFQ), one item per option. `hired_design` needs a quotation priced with the design fee; a mockup add-on (D-072) is refused until it can be priced. Destinations default to the default delivery address and must add up to the quantity.\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "store.cart.addItem",
         "parameters": [
           {
@@ -502930,7 +504303,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -502938,6 +504313,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -502980,11 +504360,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -503245,7 +504634,7 @@
     },
     "/v1/store/cart/items/{itemId}": {
       "delete": {
-        "description": "The quotation stays saved and can be added again while it is live (D-051).\n\nImplements: D-051, D-072, D-142.",
+        "description": "The quotation stays saved and can be added again while it is live (D-051).\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "store.cart.removeItem",
         "parameters": [
           {
@@ -503281,8 +504670,11 @@
                   "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
                   "items": [],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -503466,7 +504858,7 @@
         ]
       },
       "patch": {
-        "description": "Guarded by the cart’s `If-Match` (D-072).\n\nImplements: D-051, D-072, D-142.",
+        "description": "Guarded by the cart’s `If-Match` (D-072).\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "store.cart.updateItem",
         "parameters": [
           {
@@ -503545,7 +504937,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -503553,6 +504947,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -503595,11 +504994,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -503832,9 +505240,416 @@
         ]
       }
     },
+    "/v1/store/cart/items/{itemId}/actions/change-quantity": {
+      "post": {
+        "description": "D-452: an instant item takes another quantity. When its locked quotation already has that quantity the item switches to it (same price lock); otherwise the configuration is priced again by the quote engine into a new saved quotation at today’s prices with a new lock (D-051) — the response shows the new unit price and lock. Within the product’s `quantityLimits`. One destination follows the new quantity; a split over several addresses is cleared and set again at checkout. RFQ quotations, Studio design pins (D-277), reorders (D-153) and items with a re-price waiting are refused (`cart.quantity_unavailable`). Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142, D-452.",
+        "operationId": "store.cart.changeQuantity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "itemId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "quantity": 2000
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ChangeQuantityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "channel": "web",
+                  "codes": [
+                    {
+                      "code": "WELCOME10",
+                      "rejectReason": null,
+                      "status": "validated"
+                    }
+                  ],
+                  "currency": "THB",
+                  "customerId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0001",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca001",
+                  "items": [
+                    {
+                      "designDocumentId": null,
+                      "designFeeAmount": "0.00",
+                      "designNote": null,
+                      "designOption": "own_file",
+                      "designVersionNo": null,
+                      "destinations": [
+                        {
+                          "address": {
+                            "districtNameTh": null,
+                            "line1": "99/9 ถนนตัวอย่าง",
+                            "line2": null,
+                            "phone": "+66810001234",
+                            "postcode": "10110",
+                            "provinceId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0004",
+                            "provinceNameTh": "กรุงเทพมหานคร",
+                            "recipientName": "สมชาย ทดสอบ",
+                            "subdistrictId": null,
+                            "subdistrictNameTh": null
+                          },
+                          "addressId": "0192f3a0-7c1e-7d2a-9b1f-0000000c0002",
+                          "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca003",
+                          "quantity": 1000
+                        }
+                      ],
+                      "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
+                      "mockupOption": "none",
+                      "pendingReprice": null,
+                      "priceLocked": true,
+                      "priceLockedUntil": "2026-10-16T10:00:00+07:00",
+                      "productGrossAmount": "13380.00",
+                      "productTypeCode": "folding_carton",
+                      "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
+                      "quoteCode": null,
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
+                      "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
+                      "quoteShippingAmount": "128.40",
+                      "reorderOf": null,
+                      "reusesApprovedArtwork": false,
+                      "source": "instant",
+                      "summary": {
+                        "product": {
+                          "imageUrl": "/v1/store/catalog/images/0192f3a0-7c1e-7d2a-9b1f-00000000c009",
+                          "nameEn": "Tuck-end box",
+                          "nameTh": "กล่องฝาเสียบ",
+                          "slug": "tuck-end-box"
+                        },
+                        "productTypeCode": "folding_carton",
+                        "productTypeNameEn": "Folding carton",
+                        "productTypeNameTh": "กล่องกระดาษแข็ง",
+                        "specs": [
+                          {
+                            "key": "style",
+                            "labelEn": "Style",
+                            "labelTh": "แบบกล่อง",
+                            "valueEn": "ฝาเสียบ",
+                            "valueTh": "ฝาเสียบ"
+                          },
+                          {
+                            "key": "size",
+                            "labelEn": "Size (L × W × H)",
+                            "labelTh": "ขนาด (ยาว × กว้าง × สูง)",
+                            "valueEn": "60 × 60 × 150 mm",
+                            "valueTh": "60 × 60 × 150 มม."
+                          },
+                          {
+                            "key": "material",
+                            "labelEn": "Material",
+                            "labelTh": "วัสดุ",
+                            "valueEn": "Art card 350 gsm",
+                            "valueTh": "อาร์ตการ์ด 350 แกรม"
+                          }
+                        ],
+                        "unit": "piece"
+                      },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
+                      "unitPrice": "13.38"
+                    }
+                  ],
+                  "maxCodes": 3,
+                  "productGrossAmount": "13380.00",
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CartDto"
+                }
+              }
+            },
+            "description": "Cart",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.item_exists": {
+                    "$ref": "#/components/examples/problem.cart.item_exists"
+                  },
+                  "cart.quantity_unavailable": {
+                    "$ref": "#/components/examples/problem.cart.quantity_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.item_exists`, `cart.quantity_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "cart.design_option_unavailable": {
+                    "$ref": "#/components/examples/problem.cart.design_option_unavailable"
+                  },
+                  "pricing.not_instant": {
+                    "$ref": "#/components/examples/problem.pricing.not_instant"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `cart.design_option_unavailable`, `pricing.not_instant`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Change an item’s quantity",
+        "tags": [
+          "store.cart"
+        ]
+      }
+    },
     "/v1/store/cart/items/{itemId}/actions/confirm-reprice": {
       "post": {
-        "description": "The item takes the new quotation, its price and a new lock (D-051). Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142.",
+        "description": "The item takes the new quotation, its price and a new lock (D-051). Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "store.cart.confirmReprice",
         "parameters": [
           {
@@ -503896,7 +505711,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -503904,6 +505721,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -503946,11 +505768,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -504176,7 +506007,7 @@
     },
     "/v1/store/cart/items/{itemId}/actions/reprice": {
       "post": {
-        "description": "After the 15-day lock (D-051) the configuration is re-priced into a new quotation; the item shows `pendingReprice` with the difference until the client confirms it. A live lock is kept (`cart.price_locked`); RFQ quotations are not re-priced (ask for a new quotation).\n\nImplements: D-051, D-072, D-142.",
+        "description": "After the 15-day lock (D-051) the configuration is re-priced into a new quotation; the item shows `pendingReprice` with the difference until the client confirms it. A live lock is kept (`cart.price_locked`); RFQ quotations are not re-priced (ask for a new quotation).\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "store.cart.repriceItem",
         "parameters": [
           {
@@ -504235,7 +506066,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -504243,6 +506076,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -504285,11 +506123,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -504484,7 +506331,7 @@
     },
     "/v1/store/cart/items/{itemId}/destinations": {
       "put": {
-        "description": "Replaces the destinations; each is one of the customer’s delivery addresses (copied as a snapshot, D-142) and the quantities add up to the item quantity. Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142.",
+        "description": "Replaces the destinations; each is one of the customer’s delivery addresses (copied as a snapshot, D-142) and the quantities add up to the item quantity. Guarded by `If-Match`.\n\nImplements: D-051, D-072, D-142, D-452.",
         "operationId": "store.cart.setDestinations",
         "parameters": [
           {
@@ -504572,7 +506419,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -504580,6 +506429,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -504622,11 +506476,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -510629,6 +512492,13 @@
               "application/json": {
                 "example": {
                   "company": null,
+                  "display": {
+                    "discountGrossAmount": "0.00",
+                    "goodsGrossAmount": "14054.40",
+                    "grossAmount": "14182.80",
+                    "shippingGrossAmount": "128.40",
+                    "vatAmount": "927.85"
+                  },
                   "notices": [],
                   "orders": [
                     {
@@ -542111,7 +543981,9 @@
                         }
                       ],
                       "destinationsComplete": true,
+                      "earliestShipDate": "2026-11-09",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                      "leadTimeDays": 5,
                       "mockupOption": "none",
                       "pendingReprice": null,
                       "priceLocked": true,
@@ -542119,6 +543991,11 @@
                       "productGrossAmount": "13380.00",
                       "productTypeCode": "folding_carton",
                       "quantity": 1000,
+                      "quantityEditable": true,
+                      "quantityLimits": {
+                        "max": null,
+                        "min": 100
+                      },
                       "quoteCode": null,
                       "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                       "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -542161,11 +544038,20 @@
                         ],
                         "unit": "piece"
                       },
+                      "tierHint": {
+                        "productGrossAmount": "24200.00",
+                        "quantity": 2000,
+                        "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                        "unitPrice": "12.10"
+                      },
                       "unitPrice": "13.38"
                     }
                   ],
+                  "maxCodes": 3,
                   "productGrossAmount": "13380.00",
-                  "updatedAt": "2026-10-01T10:00:00+07:00"
+                  "quantityStep": 50,
+                  "updatedAt": "2026-10-01T10:00:00+07:00",
+                  "vatAmount": "875.33"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CartDto"
@@ -560036,7 +561922,9 @@
                           }
                         ],
                         "destinationsComplete": true,
+                        "earliestShipDate": "2026-11-09",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ca002",
+                        "leadTimeDays": 5,
                         "mockupOption": "none",
                         "pendingReprice": null,
                         "priceLocked": true,
@@ -560044,6 +561932,11 @@
                         "productGrossAmount": "13380.00",
                         "productTypeCode": "folding_carton",
                         "quantity": 1000,
+                        "quantityEditable": true,
+                        "quantityLimits": {
+                          "max": null,
+                          "min": 100
+                        },
                         "quoteCode": null,
                         "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca004",
                         "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca005",
@@ -560086,11 +561979,20 @@
                           ],
                           "unit": "piece"
                         },
+                        "tierHint": {
+                          "productGrossAmount": "24200.00",
+                          "quantity": 2000,
+                          "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000ca006",
+                          "unitPrice": "12.10"
+                        },
                         "unitPrice": "13.38"
                       }
                     ],
+                    "maxCodes": 3,
                     "productGrossAmount": "13380.00",
-                    "updatedAt": "2026-10-01T10:00:00+07:00"
+                    "quantityStep": 50,
+                    "updatedAt": "2026-10-01T10:00:00+07:00",
+                    "vatAmount": "875.33"
                   }
                 },
                 "schema": {

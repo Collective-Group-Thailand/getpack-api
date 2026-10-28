@@ -212,6 +212,8 @@ export type DestinationShipping =
       factoryPayoutVersionId: string | null;
       weightG: number;
       settingVersionIds: Record<string, string>;
+      /** C5 (D-452): the customer rate card's zone of the postcode — code for transit days, names to show. */
+      zone: { code: string; nameTh: string; nameEn: string };
     }
   | { available: false; reason: RateMissReason | 'delivery_unavailable' };
 
@@ -749,6 +751,11 @@ export class QuoteEngineService {
         factoryPayoutVersionId: delivery.factoryPayoutVersionId?.toString() ?? null,
         weightG: prepared.pack.weightG,
         settingVersionIds: prepared.settingVersionIds,
+        zone: {
+          code: prepared.customer.zoneCode,
+          nameTh: prepared.customer.zoneNameTh,
+          nameEn: prepared.customer.zoneNameEn,
+        },
       });
     }
     return out;

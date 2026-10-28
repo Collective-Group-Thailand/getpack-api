@@ -4,9 +4,9 @@ import { type Actor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { ApiConcurrency, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
-import { cartDto } from '@modules/carts/cart-views';
 import { CART_EXAMPLE, CartDto } from '@modules/carts/carts.dto';
 import { type CartActor, cartEtag } from '@modules/carts/carts.service';
+import { CartFigures } from '@modules/checkout/cart-figures.service';
 import { CustomersService } from '@modules/customers/customers.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import {
@@ -36,7 +36,7 @@ export class ApplyCodeDto {
 }
 
 const named = <T>(cls: T, name: string): T => Object.defineProperty(cls, 'name', { value: name });
-const DECISIONS = ['D-053'];
+const DECISIONS = ['D-053', 'D-452'];
 
 /** Coupon codes on the customer's cart and on CS's cart for a customer (D-053). */
 function cartCodesController(surface: 'store' | 'admin'): Type<unknown> {
@@ -52,6 +52,7 @@ function cartCodesController(surface: 'store' | 'admin'): Type<unknown> {
     constructor(
       private readonly codes: PromotionCodes,
       private readonly customers: CustomersService,
+      private readonly figures: CartFigures,
     ) {}
 
     async who(actor: Actor, customerId: string | undefined): Promise<CartActor> {
@@ -79,7 +80,9 @@ function cartCodesController(surface: 'store' | 'admin'): Type<unknown> {
         'Checks the code now (status, window, assignment to this customer, uses left) and keeps it on the cart; ' +
         'the checkout preview evaluates its conditions against the cart and shows the discount or why it does not ' +
         'apply (D-053). Attempts are limited per customer, IP and device each hour (`promotions.code_attempt_limits`). ' +
-        'Entering a code already on the cart changes nothing.',
+        'Entering a code already on the cart changes nothing. A cart holds at most `promotions.max_codes_per_cart` ' +
+        'codes (D-452, `CartDto.maxCodes`); one more is refused as `promotions.code_invalid` with reason ' +
+        '`too_many_codes`.',
       implements: DECISIONS,
     })
     @ApiConcurrency()
@@ -107,7 +110,7 @@ function cartCodesController(surface: 'store' | 'admin'): Type<unknown> {
         deviceId: deviceId?.slice(0, 128),
       });
       res.setHeader('ETag', cartEtag(cart));
-      return cartDto(cart);
+      return this.figures.view(cart);
     }
 
     @Delete(':code')
@@ -132,7 +135,7 @@ function cartCodesController(surface: 'store' | 'admin'): Type<unknown> {
     ): Promise<CartDto> {
       const cart = await this.codes.remove(await this.who(actor, customerId), ifMatch, code);
       res.setHeader('ETag', cartEtag(cart));
-      return cartDto(cart);
+      return this.figures.view(cart);
     }
   }
   return named(CartCodesController, admin ? 'AdminCartCodesController' : 'StoreCartCodesController');

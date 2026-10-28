@@ -6,7 +6,9 @@ import {
   TextField,
   TimestampField,
 } from '@modules/catalog/crud/dto-fields';
-import { LINE_SUMMARY_EXAMPLE, LineSummaryDto } from '@modules/quotes/line-summary.dto';
+import { QuoteArrivalDto } from '@modules/pricing/quotes/quote.dto';
+import { LINE_SUMMARY_EXAMPLE, LineSummaryDto, LocalisedLabelDto } from '@modules/quotes/line-summary.dto';
+import { ReorderQuantityLimitsDto } from '@modules/quotes/quantity-limits.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -16,6 +18,8 @@ import {
   IsInt,
   IsOptional,
   IsUUID,
+  Matches,
+  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -234,6 +238,24 @@ export class OrderRefDto {
   orderCode!: string;
 }
 
+/** D-452 (C5): a cheaper quantity of the same locked quotation (the pricing service's own option). */
+export class CartTierHintDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000ca006' })
+  quoteOptionId!: string;
+
+  @ApiProperty({ type: 'integer', example: 2000 })
+  quantity!: number;
+
+  @ApiProperty({ example: '12.10', description: 'Per piece incl. VAT, excluding shipping' })
+  unitPrice!: string;
+
+  @ApiProperty({
+    example: '24200.00',
+    description: 'That quantity incl. VAT and design fees, excluding shipping',
+  })
+  productGrossAmount!: string;
+}
+
 export class CartItemDto {
   @IdField(CART_IDS.item)
   id!: string;
@@ -338,6 +360,52 @@ export class CartItemDto {
 
   @ApiProperty({ example: true, description: 'Destinations cover exactly the quantity' })
   destinationsComplete!: boolean;
+
+  @ApiProperty({
+    example: true,
+    description:
+      'D-452: the quantity can be changed in the cart (`changeQuantity`) — an instant quotation without a Studio ' +
+      'design pin, not a reorder and with no re-priced option waiting for confirmation',
+  })
+  quantityEditable!: boolean;
+
+  @ApiProperty({
+    type: ReorderQuantityLimitsDto,
+    nullable: true,
+    example: { min: 100, max: null },
+    description:
+      'D-452: the catalogue product’s quantity limits; null when the quotation has no catalogue product',
+  })
+  quantityLimits!: ReorderQuantityLimitsDto | null;
+
+  @ApiProperty({
+    type: CartTierHintDto,
+    nullable: true,
+    example: null,
+    description:
+      'D-452: the smallest larger quantity of the same locked quotation with a lower unit price ("สั่ง n ชิ้น ' +
+      'ราคาต่อชิ้นเหลือ ฿x"); null when there is none, the lock passed or a re-price waits',
+  })
+  tierHint!: CartTierHintDto | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-11-09',
+    description:
+      'D-452: the quotation’s earliest ship date (Bangkok day) while it is still ahead; null when passed or unknown',
+  })
+  earliestShipDate!: string | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 5,
+    description:
+      'D-452: production working days of the quotation option (after artwork approval); null when unknown',
+  })
+  leadTimeDays!: number | null;
 }
 
 export class CartCodeDto {
@@ -366,6 +434,35 @@ export class CartDto {
 
   @ApiProperty({ example: '13380.00', description: 'Sum of the items, incl. VAT, excluding shipping' })
   productGrossAmount!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '875.33',
+    description:
+      'D-452: VAT included in `productGrossAmount` — the order lines checkout builds before shipping (shared VAT ' +
+      'helper, DECISIONS-STAGE-A §7, each quotation’s VAT rate). Always set by `store.cart.*` and the code ' +
+      'endpoints; null in carts returned by other modules (read the cart again)',
+  })
+  vatAmount!: string | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 3,
+    description:
+      'D-452: coupon codes the cart may hold (`promotions.max_codes_per_cart`); null as `vatAmount`',
+  })
+  maxCodes!: number | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 50,
+    description:
+      'D-452: pieces the quantity stepper moves by (`storefront.cart_quantity_step`); null as `vatAmount`',
+  })
+  quantityStep!: number | null;
 
   @ApiProperty({
     type: [CartCodeDto],
@@ -423,6 +520,16 @@ export const CART_ITEM_EXAMPLE: CartItemDto = {
   pendingReprice: null,
   destinations: [DESTINATION_EXAMPLE],
   destinationsComplete: true,
+  quantityEditable: true,
+  quantityLimits: { min: 100, max: null },
+  tierHint: {
+    quoteOptionId: '0192f3a0-7c1e-7d2a-9b1f-0000000ca006',
+    quantity: 2000,
+    unitPrice: '12.10',
+    productGrossAmount: '24200.00',
+  },
+  earliestShipDate: '2026-11-09',
+  leadTimeDays: 5,
 };
 
 export const CART_EXAMPLE: CartDto = {
@@ -431,6 +538,9 @@ export const CART_EXAMPLE: CartDto = {
   channel: 'web',
   items: [CART_ITEM_EXAMPLE],
   productGrossAmount: '13380.00',
+  vatAmount: '875.33',
+  maxCodes: 3,
+  quantityStep: 50,
   codes: [{ code: 'WELCOME10', status: 'validated', rejectReason: null }],
   currency: 'THB',
   updatedAt: '2026-10-01T10:00:00+07:00',
@@ -441,4 +551,97 @@ export const ADD_ITEM_EXAMPLE = {
   quoteOptionId: CART_IDS.option,
   designOption: 'own_file',
   destinations: [{ addressId: CART_IDS.address, quantity: 1000 }],
+};
+
+/** D-452 (C5): a new quantity for a cart item. */
+export class ChangeQuantityDto {
+  @ApiProperty({ type: 'integer', example: 2000, minimum: 1, maximum: 1000000, description: 'Pieces' })
+  @IsInt()
+  @Min(1)
+  @Max(1_000_000)
+  quantity!: number;
+}
+
+/** D-452 (C5): a postcode for the cart's shipping estimate. */
+export class EstimateShippingDto {
+  @ApiProperty({ example: '10110', pattern: '^\\d{5}$' })
+  @Matches(/^\d{5}$/)
+  postcode!: string;
+}
+
+/** D-452 (C5): what shipping the whole cart to one postcode would cost — an estimate, nothing is saved. */
+export class CartShippingEstimateDto {
+  @ApiProperty({ example: '10110' })
+  postcode!: string;
+
+  @ApiProperty({ example: true, description: 'Every item can be shipped to the postcode' })
+  available!: boolean;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '235.40',
+    description:
+      'Shipping of every item to the postcode incl. VAT (customer rate card, D-013); null when not available',
+  })
+  shippingGrossAmount!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '13615.40',
+    description:
+      'The cart’s goods (`CartDto.productGrossAmount`) plus this shipping, incl. VAT, before codes, points and promotions ' +
+      '(those are the checkout preview’s); null when shipping is not available',
+  })
+  totalGrossAmount!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '890.73',
+    description:
+      'VAT included in `totalGrossAmount`: the goods’ VAT (`CartDto.vatAmount`) plus the shipping’s; null as above',
+  })
+  vatAmount!: string | null;
+
+  @ApiProperty({
+    type: LocalisedLabelDto,
+    nullable: true,
+    description: 'The destination zone’s name (customer side only)',
+  })
+  zone!: LocalisedLabelDto | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date',
+    nullable: true,
+    example: '2026-11-09',
+    description:
+      'The latest ready (ship) date of the items as promised at checkout; null when one is unknown',
+  })
+  readyDate!: string | null;
+
+  @ApiProperty({
+    type: QuoteArrivalDto,
+    nullable: true,
+    description:
+      'Ready date + the zone’s transit working days (`shipping.transit_days`, national calendar); null when unknown',
+  })
+  arrival!: QuoteArrivalDto | null;
+
+  @ApiProperty({ type: [String], example: [], description: 'Items that cannot be shipped to the postcode' })
+  unavailableItemIds!: string[];
+}
+
+export const SHIPPING_ESTIMATE_EXAMPLE: CartShippingEstimateDto = {
+  postcode: '10110',
+  available: true,
+  shippingGrossAmount: '235.40',
+  totalGrossAmount: '13615.40',
+  vatAmount: '890.73',
+  zone: { th: 'กรุงเทพฯ และปริมณฑล', en: 'Bangkok & vicinity' },
+  readyDate: '2026-11-09',
+  arrival: { from: '2026-11-10', to: '2026-11-11' },
+  unavailableItemIds: [],
 };

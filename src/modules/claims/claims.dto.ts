@@ -6,6 +6,7 @@ import { PageQuery } from '@common/pagination/pagination.dto';
 import { DECISION_CHANNELS } from '@modules/artwork/proofs.dto';
 import { OrderCustomerRefDto } from '@modules/orders/orders.dto';
 import { ToolingWaiverDto } from '@modules/pricing/quotes/quote.dto';
+import { ReorderQuantityLimitsDto } from '@modules/quotes/quantity-limits.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Transform, Type } from 'class-transformer';
@@ -27,6 +28,8 @@ import {
 } from 'class-validator';
 
 import { LIABILITY_RULES } from './liability';
+
+export { ReorderQuantityLimitsDto };
 
 /** Claims and reorder (D-080, D-082, D-083, D-153; B4.5). */
 
@@ -1090,14 +1093,6 @@ export const CLAIM_FORM_EXAMPLE: ClaimFormDto = {
 };
 
 // --- reorder preview (U-B0.1, D-153) -------------------------------------------------------------------
-
-export class ReorderQuantityLimitsDto {
-  @ApiProperty({ type: 'integer', nullable: true, example: 500 })
-  min!: number | null;
-
-  @ApiProperty({ type: 'integer', nullable: true, example: 100000 })
-  max!: number | null;
-}
 
 /** Today's price of reordering one of my orders (D-153): nothing is saved until the reorder is added. */
 export class ReorderPreviewDto {

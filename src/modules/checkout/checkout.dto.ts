@@ -410,7 +410,40 @@ export class PaymentMethodOptionDto {
   available!: boolean;
 }
 
+/**
+ * D-452 (C5): the totals as the summary shows them, every figure incl. VAT so the rows add up:
+ * `goodsGrossAmount` − `discountGrossAmount` + `shippingGrossAmount` = `grossAmount` (= `totals.grossAmount`).
+ */
+export class PreviewDisplayDto {
+  @ApiProperty({ example: '14054.40', description: 'Goods and design fees before discounts, incl. VAT' })
+  goodsGrossAmount!: string;
+
+  @ApiProperty({
+    example: '0.00',
+    description: 'Every discount (codes, automatic promotions, points, memos) with the VAT it takes off',
+  })
+  discountGrossAmount!: string;
+
+  @ApiProperty({
+    example: '128.40',
+    description: 'Shipping of every destination before discounts, incl. VAT',
+  })
+  shippingGrossAmount!: string;
+
+  @ApiProperty({ example: '927.85', description: 'VAT included in `grossAmount` (= `totals.vatAmount`)' })
+  vatAmount!: string;
+
+  @ApiProperty({ example: '14182.80', description: '= `totals.grossAmount`' })
+  grossAmount!: string;
+}
+
 export class CheckoutPreviewDto {
+  @ApiProperty({
+    type: PreviewDisplayDto,
+    description: 'D-452: the summary rows, incl. VAT, adding up to the total',
+  })
+  display!: PreviewDisplayDto;
+
   @ApiProperty({
     type: PreviewScheduleDto,
     nullable: true,
@@ -455,6 +488,13 @@ export const CHECKOUT_EXAMPLE = {
 };
 
 export const PREVIEW_EXAMPLE: CheckoutPreviewDto = {
+  display: {
+    goodsGrossAmount: '14054.40',
+    discountGrossAmount: '0.00',
+    shippingGrossAmount: '128.40',
+    vatAmount: '927.85',
+    grossAmount: '14182.80',
+  },
   totals: MONEY_EXAMPLE,
   orders: [
     {

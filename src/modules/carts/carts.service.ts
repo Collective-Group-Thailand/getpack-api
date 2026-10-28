@@ -331,6 +331,120 @@ export class CartsService {
     });
   }
 
+  /**
+   * D-452 (Stage C C5): a new quantity for an instant item. The same locked quotation's option for that quantity
+   * when it has one (its price and lock stay); otherwise the configuration is priced again by the quote engine as a
+   * new saved quotation (today's prices, a new lock — the old quotation stays saved), carrying the other quantities
+   * so the tier hint still works. One destination follows the new quantity; a split is cleared (set again at
+   * checkout). RFQ quotations, Studio design pins, reorders and items with a re-price waiting are refused.
+   */
+  async changeQuantity(
+    who: CartActor,
+    itemId: string,
+    ifMatch: string | undefined,
+    quantity: number,
+  ): Promise<CartRow> {
+    const { cart: before, item } = await this.prisma.withTx((tx) => this.item(tx, who, itemId));
+    assertIfMatch(ifMatch, cartEtag(before));
+    if (
+      item.quote.source !== 'instant' ||
+      item.quote.designDocumentVersionId !== null ||
+      item.reorderOfOrderId !== null ||
+      item.pendingQuoteOptionId !== null
+    )
+      throw new DomainException('cart.quantity_unavailable');
+    if (quantity === item.quantity) return before;
+    const product = item.quote.catalogProductId
+      ? await this.prisma.catalogProduct.findUnique({
+          where: { id: item.quote.catalogProductId },
+          select: { quantityMin: true, quantityMax: true },
+        })
+      : null;
+    if (product?.quantityMin != null && quantity < product.quantityMin)
+      invalid('quantity', `at least ${product.quantityMin}`, 'min');
+    if (product?.quantityMax != null && quantity > product.quantityMax)
+      invalid('quantity', `at most ${product.quantityMax}`, 'max');
+    const live = item.priceLockedUntil > new Date();
+    let option = live
+      ? await this.prisma.quoteOption.findFirst({ where: { quoteId: item.quoteId, quantity } })
+      : null;
+    let lockedUntil = item.priceLockedUntil;
+    if (!option) {
+      const input = item.quote.input as unknown as {
+        productTypeCode: string;
+        configuration: Record<string, unknown>;
+        deliveryPostcode: string | null;
+      };
+      const known = (await this.prisma.quoteOption.findMany({ where: { quoteId: item.quoteId } })).map(
+        (o) => o.quantity,
+      );
+      const quantities = [...new Set([...known, quantity])]
+        .sort((a, b) => Math.abs(a - quantity) - Math.abs(b - quantity))
+        .slice(0, 10)
+        .sort((a, b) => a - b);
+      let fresh;
+      try {
+        fresh = await this.quotes.save(
+          this.owner(who),
+          item.quote.channel,
+          {
+            productTypeCode: input.productTypeCode,
+            configuration: { ...input.configuration, quantities },
+            deliveryPostcode: input.deliveryPostcode ?? undefined,
+            targetPricePerUnit: item.quote.targetPricePerUnit?.toFixed(2) ?? null,
+          },
+          { customerUserId: item.quote.customerUserId ?? undefined },
+        );
+      } catch (error) {
+        if (error instanceof DomainException && error.code === 'quotes.nothing_to_save')
+          throw new DomainException('cart.quantity_unavailable');
+        throw error;
+      }
+      option = fresh.options.find((o) => o.quantity === quantity) ?? null;
+      if (!option) throw new DomainException('cart.quantity_unavailable');
+      lockedUntil = fresh.validUntil;
+    }
+    const chosen = option;
+    return this.prisma.withTx(async (tx) => {
+      const { cart, item: current } = await this.item(tx, who, itemId);
+      assertIfMatch(ifMatch, cartEtag(cart));
+      if (cart.items.some((i) => i.id !== current.id && i.quoteOptionId === chosen.id))
+        throw new DomainException('cart.item_exists');
+      this.checkDesignOption(current.designOption, chosen.result);
+      await tx.cartItem.update({
+        where: { id: current.id },
+        data: {
+          quoteId: chosen.quoteId,
+          quoteOptionId: chosen.id,
+          quantity,
+          netAmount: chosen.netAmount,
+          vatAmount: chosen.vatAmount,
+          grossAmount: chosen.grossAmount,
+          shippingAmount: chosen.shippingAmount,
+          unitPrice: chosen.unitPrice,
+          priceLockedUntil: lockedUntil,
+          rowVersion: { increment: 1 },
+        },
+      });
+      if (current.destinations.length === 1)
+        await tx.cartItemDestination.update({
+          where: { id: current.destinations[0]!.id },
+          data: { quantity },
+        });
+      else if (current.destinations.length > 1)
+        await tx.cartItemDestination.deleteMany({ where: { cartItemId: current.id } });
+      await this.touch(tx, cart.id);
+      await this.record(
+        tx,
+        cart.publicId,
+        'cart.item_quantity_changed',
+        { itemId, from: current.quantity, to: quantity, requoted: chosen.quoteId !== current.quoteId },
+        who,
+      );
+      return this.load(tx, cart.id);
+    });
+  }
+
   // --- helpers --------------------------------------------------------------------------------------
 
   load(tx: Tx, cartId: bigint): Promise<CartRow> {
