@@ -48,7 +48,7 @@ import {
 import { type CartActor, cartEtag, type CartRow, CartsService } from './carts.service';
 
 type CartSurface = 'store' | 'admin';
-const DECISIONS = ['D-051', 'D-072', 'D-142', 'D-452'];
+const DECISIONS = ['D-051', 'D-072', 'D-142', 'D-452', 'D-454'];
 /** The estimate prices shipping like the checkout preview: 30 a minute per client (env `CART_ESTIMATE_THROTTLE_LIMIT`). */
 const ESTIMATE_THROTTLE = {
   default: { limit: () => Number(process.env.CART_ESTIMATE_THROTTLE_LIMIT ?? 30), ttl: 60_000 },
@@ -123,7 +123,9 @@ function cartController(surface: CartSurface): Type<unknown> {
         'A live saved quotation of this customer (instant or accepted RFQ), one item per option. ' +
         '`hired_design` needs a quotation priced with the design fee; a mockup add-on (D-072) is refused ' +
         'until it can be priced. Destinations default to the default delivery address and must add up to ' +
-        'the quantity.',
+        "the quantity. D-454: the minimum order counts per size — a customer's instant quotation option must meet " +
+        "its catalogue product's `quantityMin` / `quantityMax` on its own (422 `validation.failed`, path " +
+        '`quoteOptionId`, code `min` / `max`); other items of the same product (other sizes) never count towards it.',
       implements: DECISIONS,
     })
     @ApiConcurrency()

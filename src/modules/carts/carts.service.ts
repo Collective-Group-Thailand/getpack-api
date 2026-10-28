@@ -13,6 +13,7 @@ import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 import { type AddCartItemDto, type DestinationInputDto, type UpdateCartItemDto } from './carts.dto';
+import { quantityLimitError } from './quantity-limits';
 
 export const CART_INCLUDE = {
   items: {
@@ -129,6 +130,22 @@ export class CartsService {
       if (quote.customerUserId !== who.customerUserId) throw new DomainException('http.not_found');
       if (cart.items.some((i) => i.quoteOptionId === snapshot.quoteOptionId))
         throw new DomainException('cart.item_exists');
+      // D-454: the minimum order counts per size — each item (one configuration, one size) meets its catalogue
+      // product's limits on its own; other items of the same product never count towards it. A customer's instant
+      // quotation only: CS quotations, accepted RFQs, samples, call-offs and reorders (D-153) keep their own terms.
+      if (
+        quote.source === 'instant' &&
+        quote.channel !== 'cs' &&
+        !reorder &&
+        quote.catalogProductId !== null
+      ) {
+        const product = await tx.catalogProduct.findUnique({
+          where: { id: quote.catalogProductId },
+          select: { quantityMin: true, quantityMax: true },
+        });
+        const error = quantityLimitError(snapshot.quantity, product, 'quoteOptionId');
+        if (error) throw new DomainException('validation.failed', { errors: [error] });
+      }
       const option = await tx.quoteOption.findUniqueOrThrow({ where: { id: snapshot.quoteOptionId } });
       this.checkDesignOption(body.designOption, option.result);
       const design = await this.designDocument(
@@ -360,10 +377,9 @@ export class CartsService {
           select: { quantityMin: true, quantityMax: true },
         })
       : null;
-    if (product?.quantityMin != null && quantity < product.quantityMin)
-      invalid('quantity', `at least ${product.quantityMin}`, 'min');
-    if (product?.quantityMax != null && quantity > product.quantityMax)
-      invalid('quantity', `at most ${product.quantityMax}`, 'max');
+    // D-454: this item's own size against the product's limits (never summed with other items).
+    const limitError = quantityLimitError(quantity, product);
+    if (limitError) invalid(limitError.path, limitError.message, limitError.code);
     const live = item.priceLockedUntil > new Date();
     let option = live
       ? await this.prisma.quoteOption.findFirst({ where: { quoteId: item.quoteId, quantity } })

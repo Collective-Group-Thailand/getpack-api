@@ -177,7 +177,7 @@ export class StoreConfiguratorSizeDto {
   @ApiProperty({ example: 'M' })
   code!: string;
 
-  @ApiProperty({ example: '30×40×25 ซม.' })
+  @ApiProperty({ example: '40×30×25 ซม.' })
   name!: string;
 
   @ApiProperty({ example: 400, description: 'Unit: mm.' })
@@ -431,7 +431,7 @@ export const CONFIGURATOR_EXAMPLE: StoreConfiguratorDto = {
     {
       id: ID('005'),
       code: 'M',
-      name: '30×40×25 ซม.',
+      name: '40×30×25 ซม.',
       lengthMm: 400,
       widthMm: 300,
       heightMm: 250,
