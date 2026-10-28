@@ -27,6 +27,7 @@ import {
 
 import { AddressSnapshotDto, DestinationInputDto } from '../carts/carts.dto';
 import { ACTION_OWNERS, CUSTOMER_ORDER_STATUSES } from './customer-status';
+import { ORDER_TABS, type OrderTab } from './order-tabs';
 
 /** Order groups and orders (schema-design §3.6, B3.1). Money: decimal strings, THB. */
 
@@ -847,6 +848,61 @@ export class OrderGroupListQuery extends PageQuery {
   @IsIn(ORDER_GROUP_STATUSES)
   status?: (typeof ORDER_GROUP_STATUSES)[number];
 }
+
+/** D-453: the customer's orders list — status of the group, a tab of the account's list, and a search. */
+export class StoreOrderGroupListQuery extends OrderGroupListQuery {
+  @ApiPropertyOptional({
+    enum: ORDER_TABS,
+    enumName: 'StoreOrderTab',
+    description:
+      'Only orders in this tab of the account list (D-453): `active` not finished · `todo` the customer acts next ' +
+      '(`actionOwner = customer`) · `in_production` / `shipping` / `completed` / `cancelled` by `customerStatus`. ' +
+      "Each group then lists only its orders in the tab; its totals and deadline stay the whole group's.",
+  })
+  @IsOptional()
+  @IsIn(ORDER_TABS)
+  tab?: OrderTab;
+}
+
+/** D-453: how many of the customer's orders each tab of the account list holds. */
+export class StoreOrderTabCountsDto {
+  @ApiProperty({ example: 3, description: 'Not completed or cancelled' })
+  active!: number;
+
+  @ApiProperty({
+    example: 2,
+    description: 'The customer acts next (`actionOwner = customer`) — the account menu badge',
+  })
+  todo!: number;
+
+  @ApiProperty({ example: 0 })
+  in_production!: number;
+
+  @ApiProperty({ example: 0 })
+  shipping!: number;
+
+  @ApiProperty({ example: 4 })
+  completed!: number;
+
+  @ApiProperty({ example: 1 })
+  cancelled!: number;
+
+  @ApiProperty({
+    example: 1,
+    description: 'Delivered orders whose claim is being reviewed ("ได้รับแล้ว · เคลมกำลังตรวจ")',
+  })
+  claimInReview!: number;
+}
+
+export const STORE_ORDER_TAB_COUNTS_EXAMPLE: StoreOrderTabCountsDto = {
+  active: 3,
+  todo: 2,
+  in_production: 0,
+  shipping: 0,
+  completed: 4,
+  cancelled: 1,
+  claimInReview: 1,
+};
 
 export class CancelOrderDto {
   @ApiProperty({

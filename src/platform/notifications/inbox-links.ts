@@ -10,6 +10,11 @@ type Link = (id: string, payload: Record<string, unknown>) => string | null;
 const LINKS: Record<InboxSurface, Record<string, Link>> = {
   store: {
     order: (id) => `/account/orders/${id}`,
+    // D-453: the overdue reminder opens the group's first order on its "ตรวจราคาใหม่และชำระ" step (D-436).
+    order_group: (_id, p) =>
+      typeof p['orderId'] === 'string'
+        ? `/account/orders/${p['orderId']}${p['dueAt'] ? '?requote=1' : ''}`
+        : '/account/orders',
     rfq: (id) => `/account/rfqs/${id}`,
     conversation: (id) => `/account/messages/${id}`,
     claim: (id, p) =>

@@ -27,6 +27,8 @@ interface Row {
   category?: 'marketing';
   /** Route conditions on the payload (the router's `conditions`). */
   conditions?: Record<string, string | number | boolean>;
+  /** The deep link's words when they name the action (D-453: "ตรวจราคาใหม่และชำระ"); default "เปิดใน getpack". */
+  linkLabel?: Text;
 }
 
 const email = (greeting: string, body: string, footer: string) =>
@@ -348,6 +350,19 @@ const ROWS: Row[] = [
     },
     'Customer: unpaid order expired (D-060)',
   ),
+  {
+    ...C(
+      'order_group.payment_overdue',
+      ['email', 'line'],
+      { th: 'เลยกำหนดชำระ {{payload.groupCode}}', en: 'Payment overdue: {{payload.groupCode}}' },
+      {
+        th: 'คำสั่งซื้อ {{payload.orderCode}} เลยกำหนดชำระแล้ว ระบบไม่ได้ยกเลิกคำสั่งซื้อ ตรวจราคาและวันส่งใหม่ แล้วชำระได้ทันที',
+        en: "Order {{payload.orderCode}} is past its payment deadline. It has not been cancelled: re-check today's price and delivery date, then pay",
+      },
+      'Customer: payment deadline passed — one reminder per deadline (D-453, D-436; flag orders.payment_overdue_reminder)',
+    ),
+    linkLabel: { th: 'ตรวจราคาใหม่และชำระ', en: 'Re-check price and pay' },
+  },
   C(
     'points.expiring',
     ['email'],
@@ -1047,9 +1062,15 @@ const LINK = {
 };
 const linked = (r: Row, channel: Channel) =>
   r.audience !== 'staff_team' && ['email', 'line', 'sms'].includes(channel);
+function linkOf(r: Row, lang: 'th' | 'en', kind: 'email' | 'text'): string {
+  if (!r.linkLabel) return LINK[lang][kind];
+  return kind === 'email'
+    ? `{{#if link}}<a href="{{link}}">${r.linkLabel[lang]}</a>{{/if}}`
+    : `{{#if link}}\n${r.linkLabel[lang]}: {{link}}{{/if}}`;
+}
 function bodyOf(r: Row, channel: Channel, lang: 'th' | 'en'): string {
   const withLink = (body: string, kind: 'email' | 'text') =>
-    linked(r, channel) ? `${body}${kind === 'email' ? '<br/>' : ''}${LINK[lang][kind]}` : body;
+    linked(r, channel) ? `${body}${kind === 'email' ? '<br/>' : ''}${linkOf(r, lang, kind)}` : body;
   return channel === 'email'
     ? email(GREETING[lang], withLink(r.body[lang], 'email'), FOOTER[lang])
     : withLink(r.body[lang], 'text');

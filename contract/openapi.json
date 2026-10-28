@@ -105039,6 +105039,62 @@
         ],
         "type": "object"
       },
+      "StoreOrderTab": {
+        "enum": [
+          "active",
+          "todo",
+          "in_production",
+          "shipping",
+          "completed",
+          "cancelled"
+        ],
+        "type": "string"
+      },
+      "StoreOrderTabCountsDto": {
+        "properties": {
+          "active": {
+            "description": "Not completed or cancelled",
+            "example": 3,
+            "type": "number"
+          },
+          "cancelled": {
+            "example": 1,
+            "type": "number"
+          },
+          "claimInReview": {
+            "description": "Delivered orders whose claim is being reviewed (\"ได้รับแล้ว · เคลมกำลังตรวจ\")",
+            "example": 1,
+            "type": "number"
+          },
+          "completed": {
+            "example": 4,
+            "type": "number"
+          },
+          "in_production": {
+            "example": 0,
+            "type": "number"
+          },
+          "shipping": {
+            "example": 0,
+            "type": "number"
+          },
+          "todo": {
+            "description": "The customer acts next (`actionOwner = customer`) — the account menu badge",
+            "example": 2,
+            "type": "number"
+          }
+        },
+        "required": [
+          "active",
+          "todo",
+          "in_production",
+          "shipping",
+          "completed",
+          "cancelled",
+          "claimInReview"
+        ],
+        "type": "object"
+      },
       "StorePatternDto": {
         "properties": {
           "code": {
@@ -540164,7 +540220,7 @@
     },
     "/v1/store/order-groups": {
       "get": {
-        "description": "Newest first; each group holds one order per configuration. The payment deadline is shown while unpaid (D-060) and an overdue group is re-quoted, never cancelled (`paymentOverdue`, D-436).\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439.",
+        "description": "Newest first; each group holds one order per configuration. The payment deadline is shown while unpaid (D-060) and an overdue group is re-quoted, never cancelled (`paymentOverdue`, D-436). `tab` keeps the orders of one tab of the account list and `q` searches the order or group code, the PO number and the product name (D-453); with either, each group lists only its matching orders and `meta.total` counts those groups.\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439, D-453.",
         "operationId": "store.orders.listGroups",
         "parameters": [
           {
@@ -540223,6 +540279,15 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/OrderGroupStatus"
+            }
+          },
+          {
+            "description": "Only orders in this tab of the account list (D-453): `active` not finished · `todo` the customer acts next (`actionOwner = customer`) · `in_production` / `shipping` / `completed` / `cancelled` by `customerStatus`. Each group then lists only its orders in the tab; its totals and deadline stay the whole group's.",
+            "in": "query",
+            "name": "tab",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/StoreOrderTab"
             }
           },
           {
@@ -542897,6 +542962,147 @@
         "summary": "Pay open instalments",
         "tags": [
           "store.payments"
+        ]
+      }
+    },
+    "/v1/store/order-tabs": {
+      "get": {
+        "description": "How many of my orders each tab of the account list holds (D-453): `active`, `todo` (I act next — the account menu badge), `in_production`, `shipping`, `completed`, `cancelled`, and `claimInReview` (delivered, claim being reviewed). Same rules as `store.orders.listGroups?tab=`.\n\nImplements: D-060, D-073, D-142, D-050, D-436, D-437, D-438, D-439, D-453.",
+        "operationId": "store.orders.tabCounts",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "active": 3,
+                  "cancelled": 1,
+                  "claimInReview": 1,
+                  "completed": 4,
+                  "in_production": 0,
+                  "shipping": 0,
+                  "todo": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreOrderTabCountsDto"
+                }
+              }
+            },
+            "description": "Orders per tab",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Count my orders per tab",
+        "tags": [
+          "store.orders"
         ]
       }
     },

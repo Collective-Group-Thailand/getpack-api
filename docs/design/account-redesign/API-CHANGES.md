@@ -287,3 +287,37 @@ Unchanged `CS-YYMM-NNNNN`; the topic is the ticket's own field (already stored),
 `test/unit/storefront-factory-confidentiality.spec.ts` now also fails on: a factory- or capacity-named enum value
 reachable from a store success response (except the agent programme's `AgentLeadKind` / `AgentCommissionKind`), a
 "factory" / "capacity" / "โรงงาน" string in a store success example, and a store problem code naming either.
+
+---
+
+# C6 — account Phases 1–4 (Stage C, branch `design/account-redesign`, D-453)
+
+Additive only; no schema change, no migration, no new setting. One new feature flag (seeded off).
+
+## 1. `store.orders.listGroups` — `tab` and `q` (`GET /v1/store/order-groups`)
+| Query | Meaning |
+|---|---|
+| `tab` (new, enum `StoreOrderTab`) | `active` not completed/cancelled · `todo` `actionOwner = customer` · `in_production` / `shipping` / `completed` / `cancelled` by `customerStatus` (`src/modules/orders/order-tabs.ts`). |
+| `q` (was accepted and ignored on the store) | Part of the order code, group code, PO number or product name (th/en, product type name), case-insensitive. |
+With `tab` or `q`, each group lists **only its matching orders**; the group's totals, `expiresAt`, `paymentOverdue` stay the whole group's; `meta.total` counts the matching groups. Read over the customer's newest 1,000 groups.
+
+## 2. New `store.orders.tabCounts` (`GET /v1/store/order-tabs`)
+`200 StoreOrderTabCountsDto` `{ active, todo, in_production, shipping, completed, cancelled, claimInReview }` — the same
+rules as `tab`; `todo` is the account menu badge ("คำสั่งซื้อ" items needing action).
+
+## 3. Overdue-payment reminder (owner's C6 item; closes A2 open question 5)
+- Worker job `orders.payment_overdue_reminder` (every 15 min), only while the feature flag
+  **`orders.payment_overdue_reminder`** is on (seeded **off**, owner Superadmin).
+- An unpaid group (`waiting_payment`) past `expires_at` gets ONE event `order_group.payment_overdue` per deadline
+  (payload `groupCode, dueAt, grossAmount, cashAmount, orderCount, orderId, orderCode`) + customer-visible activity
+  "เลยกำหนดชำระ ตรวจราคาใหม่และชำระได้ที่หน้าคำสั่งซื้อ", in one transaction, under a row lock (re-checked: paid /
+  re-quoted / cancelled meanwhile → nothing). A re-quote sets a new deadline; if that one passes, one more reminder.
+- Notification route (seed, `notification-matrix.ts`): customer, e-mail + LINE, subject "เลยกำหนดชำระ {groupCode}",
+  body "… ระบบไม่ได้ยกเลิกคำสั่งซื้อ ตรวจราคาและวันส่งใหม่ แล้วชำระได้ทันที", link text **"ตรวจราคาใหม่และชำระ"** →
+  store deep link `/account/orders/{orderId}?requote=1` (new `order_group` store inbox link; other `order_group`
+  events with an `orderId` open that order, else `/account/orders`).
+- Never cancels anything (D-436).
+
+## Local checks
+`pnpm db:seed` (flag + template + route rows) · `pnpm test:int` · turn the flag on in UAT and wait one run: one e-mail
+per overdue group, none on the next run, a new one only after a re-quote's deadline passes too.

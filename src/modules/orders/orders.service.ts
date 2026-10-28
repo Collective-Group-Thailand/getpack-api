@@ -11,6 +11,9 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { applyFact, groupStatusOf, type OrderFact, type OrderFacts } from './order-state';
 import { GROUP_INCLUDE, ORDER_INCLUDE, type OrderGroupRow, type OrderRow } from './order-views';
 
+/** D-453: the most groups the account list's tabs and search read for one customer. */
+export const CUSTOMER_GROUPS_MAX = 1000;
+
 export const groupEtag = (g: { publicId: string; rowVersion: number }) => etagOf(g.publicId, g.rowVersion);
 
 /**
@@ -87,6 +90,19 @@ export class OrdersService {
     if (!row || (customerUserId !== undefined && row.customerUserId !== customerUserId))
       throw new DomainException('http.not_found');
     return row;
+  }
+
+  /**
+   * D-453: every group of one customer (newest first) for the account list's tabs and search, which filter per
+   * order on the customer status. Bounded: a customer with more groups sees their newest `CUSTOMER_GROUPS_MAX`.
+   */
+  async customerGroups(where: Prisma.OrderGroupWhereInput & { customerUserId: bigint }) {
+    return this.prisma.orderGroup.findMany({
+      where,
+      include: GROUP_INCLUDE,
+      orderBy: { placedAt: 'desc' },
+      take: CUSTOMER_GROUPS_MAX,
+    });
   }
 
   async groups(where: Prisma.OrderGroupWhereInput, page: number, perPage: number) {
