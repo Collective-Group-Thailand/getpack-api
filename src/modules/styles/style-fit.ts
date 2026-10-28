@@ -39,6 +39,9 @@ export function parseProductSize(value: string): ProductSizeMm | null {
   return { l, w, h };
 }
 
+/** C1e: the size classes the fit test distinguishes (`size-classes.ts`; bags fit like boxes). */
+export type SizeShape = 'box' | 'bag' | 'cylinder' | 'not_applicable';
+
 /** True when the style has all six bounds (it can take part in the size search). */
 export function hasFitRange(r: FitRange): boolean {
   return [r.fitMinLMm, r.fitMaxLMm, r.fitMinWMm, r.fitMaxWMm, r.fitMinHMm, r.fitMaxHMm].every(
@@ -48,9 +51,18 @@ export function hasFitRange(r: FitRange): boolean {
 
 const within = (v: number, min: number, max: number) => v >= min && v <= max;
 
-/** The inside size this product needs in this style, or null when it does not fit (or the range is incomplete). */
-export function fitOf(range: FitRange, product: ProductSizeMm): FitResult | null {
-  if (!hasFitRange(range)) return null;
+/**
+ * The inside size this product needs in this style, or null when it does not fit (or the range is incomplete).
+ * C1e (§13.2): a `cylinder` style's footprint is the diameter's bounding square — the product's L × W must fit inside
+ * one square side (the larger of the two + clearance, within both the length and the width range), its height within
+ * the height range; the result reads diameter × diameter × height. A `not_applicable` style never fits.
+ */
+export function fitOf(
+  range: FitRange,
+  product: ProductSizeMm,
+  sizeClass: SizeShape = 'box',
+): FitResult | null {
+  if (sizeClass === 'not_applicable' || !hasFitRange(range)) return null;
   const minL = range.fitMinLMm!;
   const maxL = range.fitMaxLMm!;
   const minW = range.fitMinWMm!;
@@ -61,6 +73,12 @@ export function fitOf(range: FitRange, product: ProductSizeMm): FitResult | null
   const b = product.w + FIT_CLEARANCE_MM;
   const h = product.h + FIT_CLEARANCE_MM;
   if (!within(h, minH, maxH)) return null;
+  if (sizeClass === 'cylinder') {
+    const d = Math.max(a, b);
+    return within(d, minL, maxL) && within(d, minW, maxW)
+      ? { insideLMm: d, insideWMm: d, insideHMm: h }
+      : null;
+  }
   // As measured first; turned 90° on the base second.
   if (within(a, minL, maxL) && within(b, minW, maxW)) return { insideLMm: a, insideWMm: b, insideHMm: h };
   if (within(b, minL, maxL) && within(a, minW, maxW)) return { insideLMm: b, insideWMm: a, insideHMm: h };

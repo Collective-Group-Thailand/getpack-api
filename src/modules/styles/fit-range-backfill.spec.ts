@@ -31,6 +31,7 @@ function base(code: string, over: Record<string, unknown> = {}): Row {
     nameTh: code,
     nameEn: code,
     ...EMPTY,
+    sizeClass: 'box',
     recipes: [{ recipe: { engine: [{ base: code }] }, sizeRanges: { paperboard: FULL } }],
     pattern: null,
     ...over,
@@ -38,7 +39,7 @@ function base(code: string, over: Record<string, unknown> = {}): Row {
 }
 
 /** An in-memory stand-in for the parts of Prisma the backfill touches (the curation path writes through `update`). */
-function harness(rows: Row[], inside: RecipeInsideSizes = {}) {
+function harness(rows: Row[], inside: RecipeInsideSizes = {}, rules: unknown[] = []) {
   const byId = new Map(rows.map((r) => [r.publicId, r]));
   const audits: unknown[] = [];
   const tx = {
@@ -64,7 +65,9 @@ function harness(rows: Row[], inside: RecipeInsideSizes = {}) {
     { recompute: () => Promise.resolve() } as never,
     { record: (_t: unknown, e: unknown) => (audits.push(e), Promise.resolve()) } as never,
     { record: () => Promise.resolve() } as never,
-    { insideSizes: () => Promise.resolve(inside) } as never,
+    {
+      insideSizes: (_recipe: unknown, rule: unknown) => (rules.push(rule), Promise.resolve(inside)),
+    } as never,
   );
   const actor = { type: 'system', name: 'test' } as never;
   return { service, actor, rows, audits };
@@ -114,5 +117,94 @@ describe('fit-range backfill (C1c, DECISIONS-STAGE-A §11.1)', () => {
     const run = await h.service.backfillFitRanges(h.actor);
     expect(run.unchanged).toBe(1);
     expect(h.audits).toHaveLength(0);
+  });
+});
+
+describe('size classes in the backfill (C1e, DECISIONS-STAGE-A §13.2)', () => {
+  const BAG_RANGE = { minL: null, maxL: null, minW: 120, maxW: 600, minH: 150, maxH: 700 };
+  const bagRecipe = { engine: [{ params: [{ ref: 'width' }, { ref: 'gusset' }, { ref: 'height' }] }] };
+  const cupRecipe = { engine: [{ params: [{ ref: 'topDiameter' }, { ref: 'bottomDiameter' }, { ref: 'height' }] }] };
+
+  it('reads a bag as width × gusset × height and a cup as its diameter square × height', async () => {
+    const rules: unknown[] = [];
+    const h = harness(
+      [
+        base('PK-PG-01', { recipes: [{ recipe: bagRecipe, sizeRanges: { paperboard: BAG_RANGE } }] }),
+        base('PK-SP-23', {
+          recipes: [{ recipe: cupRecipe, sizeRanges: { paperboard: { ...BAG_RANGE, minW: null, maxW: null, minH: 30, maxH: 200 } } }],
+        }),
+      ],
+      {
+        paperboard: {
+          // What the engine reads through the rule (inside-rules.ts) — presets: gusset 80–120 / diameter 56–60.
+          standard: { length: { min: 56, max: 60 }, width: { min: 80, max: 120 }, height: { min: 93, max: 135 } },
+          limits: { length: null, width: null, height: null },
+        },
+      },
+      rules,
+    );
+    const run = await h.service.backfillFitRanges(h.actor);
+    expect(rules).toEqual(['bag', 'cylinder']);
+    expect(run.bySizeClass).toEqual({ box: 0, bag: 1, cylinder: 1, not_applicable: 0 });
+    // The bag: L = the recipe's width range, W = the gusset from the presets, H = the recipe's height.
+    expect(h.rows[0]).toMatchObject({
+      sizeClass: 'bag',
+      fitMinLMm: 120,
+      fitMaxLMm: 600,
+      fitMinWMm: 80,
+      fitMaxWMm: 120,
+      fitMinHMm: 150,
+      fitMaxHMm: 700,
+      fitRangeSource: 'combined',
+    });
+    expect(h.rows[1]).toMatchObject({ sizeClass: 'cylinder', fitMinLMm: 56, fitMaxLMm: 60, fitMinHMm: 30, fitMaxHMm: 200 });
+    expect(run.coverage).toEqual({ applicable: 2, withRange: 2 });
+    expect(run.changes.map((c) => [c.code, c.action, c.sizeClassBefore, c.sizeClass])).toEqual([
+      ['PK-PG-01', 'filled', 'box', 'bag'],
+      ['PK-SP-23', 'filled', 'box', 'cylinder'],
+    ]);
+    const again = await h.service.backfillFitRanges(h.actor);
+    expect(again.changes).toEqual([]);
+    expect(again.unchanged).toBe(2);
+  });
+
+  it('marks labels, tags, sleeves, inserts and flat folders not applicable: clears a backfilled range, never a business one', async () => {
+    const SP12 = { fitMinLMm: 150, fitMaxLMm: 330, fitMinWMm: 4, fitMaxWMm: 4, fitMinHMm: 200, fitMaxHMm: 450 };
+    const h = harness([
+      base('PK-LA-01', { recipes: [] }),
+      base('PK-SP-12', { ...SP12, fitRangeSource: 'combined', fitRangeBounds: {} }),
+      base('PK-TG-03', { ...SP12, fitRangeSource: 'business' }),
+      base('PK-AA-05'), // harness ids come from the code's last two digits
+    ]);
+    const dry = await h.service.backfillFitRanges(h.actor, { dryRun: true });
+    expect(dry.notApplicable).toEqual(['PK-LA-01', 'PK-SP-12', 'PK-TG-03']);
+    expect(dry.incomplete).toEqual([]);
+    expect(dry.cleared).toEqual(['PK-SP-12']);
+    expect(dry.classified).toEqual(['PK-LA-01', 'PK-TG-03']);
+    expect(dry.coverage).toEqual({ applicable: 1, withRange: 1 });
+    expect(h.rows[1]!['fitMinLMm']).toBe(150);
+
+    await h.service.backfillFitRanges(h.actor);
+    expect(h.rows[0]).toMatchObject({ sizeClass: 'not_applicable', fitMinLMm: null });
+    expect(h.rows[1]).toMatchObject({ sizeClass: 'not_applicable', fitMinLMm: null, fitRangeSource: null, fitRangeBounds: null });
+    expect(h.rows[2]).toMatchObject({ sizeClass: 'not_applicable', fitMinLMm: 150, fitRangeSource: 'business' });
+
+    const again = await h.service.backfillFitRanges(h.actor);
+    expect(again.changes).toEqual([]);
+    expect(again.notApplicable).toHaveLength(3);
+  });
+
+  it('refuses a business fit range on a style whose size search does not apply', async () => {
+    const h = harness([base('PK-LA-02', { sizeClass: 'not_applicable', recipes: [] })]);
+    const curate = (
+      h.service as unknown as {
+        curate: (tx: unknown, actor: unknown, base: unknown, input: unknown) => Promise<void>;
+      }
+    ).curate.bind(h.service);
+    await expect(
+      curate({ styleBase: { update: () => Promise.resolve() } }, h.actor, h.rows[0], {
+        commercial: { fitMinLMm: 10, fitMaxLMm: 20, fitMinWMm: 10, fitMaxWMm: 20, fitMinHMm: 10, fitMaxHMm: 20, certifications: [] },
+      }),
+    ).rejects.toMatchObject({ code: 'validation.failed' });
   });
 });

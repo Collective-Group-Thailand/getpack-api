@@ -12,6 +12,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { DOCUMENT_URL_PATTERN, IMAGE_URL_PATTERN } from './style-library-content';
+
 /**
  * C1c (owner decision 2026-10-28, DECISIONS-STAGE-A §11.5, D-448): the style library page's staff-managed content —
  * `store.styleLibrary.getSettings` (public) and the back-office editor `admin.styleLibrary.getSettings` /
@@ -20,8 +22,14 @@ import {
  * certificate's `expiresOn` and a logo's staff-only `permission`.
  */
 
-const URL_RE = /^(https:\/\/\S+|\/\S*)$/;
-const URL_HINT = 'An https link or a path on getpack’s own site';
+/** C1e (§13.3, D-450): pictures are uploaded files; documents are uploaded files or an external https link. */
+const IMAGE_RE = new RegExp(IMAGE_URL_PATTERN);
+const DOCUMENT_RE = new RegExp(DOCUMENT_URL_PATTERN);
+const IMAGE_HINT =
+  'An uploaded picture: `/v1/store/catalog/images/{fileId}` (file purpose `image`, PNG / JPEG / WebP; C1e)';
+const DOCUMENT_HINT =
+  'An uploaded document `/v1/store/style-library/documents/{fileId}` (purpose `document` or `image`) or an external ' +
+  'https link (C1e)';
 
 export class LocalisedTextDto {
   @ApiProperty({ example: 'ใบกำกับภาษีเต็มรูปแบบทุกคำสั่งซื้อ' })
@@ -62,9 +70,9 @@ export class MaterialSwatchDto {
   @Matches(/^#[0-9A-Fa-f]{6}$/)
   colour!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: URL_HINT })
+  @ApiProperty({ type: String, nullable: true, example: null, description: IMAGE_HINT })
   @IsOptional()
-  @Matches(URL_RE)
+  @Matches(IMAGE_RE)
   @MaxLength(2000)
   imageUrl!: string | null;
 }
@@ -101,9 +109,9 @@ export class StoreTrustCertificationDto {
   @Matches(/^\d{4}-\d{2}-\d{2}$/)
   expiresOn!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: URL_HINT })
+  @ApiProperty({ type: String, nullable: true, example: null, description: DOCUMENT_HINT })
   @IsOptional()
-  @Matches(URL_RE)
+  @Matches(DOCUMENT_RE)
   @MaxLength(2000)
   documentUrl!: string | null;
 }
@@ -114,16 +122,16 @@ export class TrustDocumentDto {
   @Type(() => LocalisedTextDto)
   title!: LocalisedTextDto;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: URL_HINT })
+  @ApiProperty({ type: String, nullable: true, example: null, description: DOCUMENT_HINT })
   @IsOptional()
-  @Matches(URL_RE)
+  @Matches(DOCUMENT_RE)
   @MaxLength(2000)
   documentUrl!: string | null;
 }
 
 export class TrustPhotoDto {
-  @ApiProperty({ example: '/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000001', description: URL_HINT })
-  @Matches(URL_RE)
+  @ApiProperty({ example: '/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000001', description: IMAGE_HINT })
+  @Matches(IMAGE_RE)
   @MaxLength(2000)
   url!: string;
 
@@ -140,8 +148,8 @@ export class StoreCustomerLogoDto {
   @MaxLength(120)
   name!: string;
 
-  @ApiProperty({ example: 'https://example.invalid/logo.svg', description: URL_HINT })
-  @Matches(URL_RE)
+  @ApiProperty({ example: '/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000002', description: IMAGE_HINT })
+  @Matches(IMAGE_RE)
   @MaxLength(2000)
   logoUrl!: string;
 }

@@ -88,6 +88,11 @@ model StyleBase {
   /// (`{ fitMinLMm: { source: recipe | standard_sizes | production_envelope, basis: [...] }, … }`); null for a business
   /// range or none. `fit_range_source` then holds the one source of all six bounds, or `combined`.
   fitRangeBounds           Json?       @map("fit_range_bounds")
+  /// C1e (owner decision 2026-10-28, DECISIONS-STAGE-A §13.2): how the size search reads the style — `box` (as stated),
+  /// `bag` (width × gusset × height), `cylinder` (diameter square × height) or `not_applicable` (labels, tags, sleeves,
+  /// inserts, flat folders: no fit range, out of the size search, not counted as missing). Set by the fit-range backfill
+  /// from the documented rule (`size-classes.ts`); audited with it.
+  sizeClass                String      @default("box") @map("size_class")
   /// Minimum order quantity shown on the card and in the quick view (pieces); null = not shown.
   moqUnits                 Int?        @map("moq_units")
   /// Sustainability facts as entered by the business (never derived from the material); null = unknown.

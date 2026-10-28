@@ -15,6 +15,7 @@ import {
 } from 'class-validator';
 
 import { PRICE_REASONS } from './publishability';
+import { SIZE_CLASSES } from './size-classes';
 
 /** Store style library DTOs (U3.B2, D-245, D-246): published styles only, never a factory identity (D-050). */
 
@@ -260,6 +261,17 @@ export class StyleCardDto {
   fitRange!: StyleFitRangeDto | null;
 
   @ApiProperty({
+    enum: SIZE_CLASSES,
+    enumName: 'StyleSizeClass',
+    example: 'box',
+    description:
+      'C1e (DECISIONS-STAGE-A §13.2): how the size search reads the style — `box`, `bag` (width × gusset × height), ' +
+      '`cylinder` (inside length = width = the diameter; show it as ⌀ × height) or `not_applicable` (never in the size ' +
+      'search)',
+  })
+  sizeClass!: (typeof SIZE_CLASSES)[number];
+
+  @ApiProperty({
     type: 'integer',
     nullable: true,
     example: null,
@@ -281,7 +293,9 @@ export class StyleCardDto {
     type: StyleFitDto,
     nullable: true,
     example: null,
-    description: 'Only with the `size` search: the inside size recommended for the product; null otherwise',
+    description:
+      'Only with the `size` search: the inside size recommended for the product; null otherwise. For a `cylinder` ' +
+      'style length = width = the diameter (C1e)',
   })
   fit!: StyleFitDto | null;
 
@@ -335,7 +349,8 @@ export class StyleListMeta extends CursorMeta {
     type: 'integer',
     example: 0,
     description:
-      'Published styles with a complete inside size range — the size search is offered only when this is above 0',
+      'Published styles with a complete inside size range whose size search applies (C1e: never `not_applicable`) — ' +
+      'the size search is offered only when this is above 0',
   })
   sizeSearchStyles!: number;
 }
@@ -598,6 +613,7 @@ export const CARD_EXAMPLE: StyleCardDto = {
   thumbnailUrl: null,
   photo: null,
   fitRange: null,
+  sizeClass: 'box',
   moqUnits: null,
   dielineUrl: null,
   fit: null,

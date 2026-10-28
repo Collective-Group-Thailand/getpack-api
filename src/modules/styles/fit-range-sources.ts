@@ -1,5 +1,6 @@
 import { type InsideSpan } from '@integrations/dieline/dieline-engine.port';
 
+import { type SizeClass } from './size-classes';
 import { type FitRange, fitRangeFromRecipe } from './style-fit';
 
 /**
@@ -15,8 +16,10 @@ import { type FitRange, fitRangeFromRecipe } from './style-fit';
  *       rules of its pattern (`patterns.constraints`, checked on every customer request) and the dieline engine's
  *       limits (the solver's parameter limits through `closedSize`).
  *
- * Nothing is mapped by hand (a diameter or a gusset is not turned into a length); a bound no source gives stays empty,
- * and a style whose six bounds are not all given stays out of the size search. Pure.
+ * C1e (§13.2): bags and cylinders are read by their owner-approved mapping rule (`size-classes.ts`,
+ * `inside-rules.ts`): a bag's width × gusset × height, a cylinder's diameter square × height — in every source that
+ * states those values. Nothing else is mapped; a bound no source gives stays empty, and a style whose six bounds are not
+ * all given stays out of the size search. Pure.
  */
 
 export const FIT_BOUNDS = ['fitMinLMm', 'fitMaxLMm', 'fitMinWMm', 'fitMaxWMm', 'fitMinHMm', 'fitMaxHMm'] as const;
@@ -59,8 +62,42 @@ const positive = (v: unknown): v is number => typeof v === 'number' && Number.is
 /**
  * (a) The approved recipe's size range: the complete range C0b used when there is one (unchanged for those styles),
  * else the bounds the recipe states for the style's own class, else for a bound every class states, the narrowest.
+ * C1e: read by the size class — {@link remapRecipeBounds}.
  */
-export function recipeBounds(materialClass: string, sizeRanges: unknown): SourceBounds {
+export function recipeBounds(materialClass: string, sizeRanges: unknown, sizeClass: SizeClass = 'box'): SourceBounds {
+  return remapRecipeBounds(sizeClass, statedRecipeBounds(materialClass, sizeRanges));
+}
+
+/**
+ * C1e (§13.2): a recipe's size range is stated in its `length` / `width` / `height` parameters. A bag's `width`
+ * parameter is its inside length (the gusset — its depth — is not in the range: it comes from the presets or the
+ * limits), its `height` the height; a cylinder's range states only its height (the diameter comes from the presets or
+ * the limits). Boxes are read as stated; a style whose size search does not apply gets nothing.
+ */
+export function remapRecipeBounds(sizeClass: SizeClass, stated: SourceBounds): SourceBounds {
+  switch (sizeClass) {
+    case 'box':
+      return stated;
+    case 'bag': {
+      const out: SourceBounds = {};
+      if (stated.fitMinWMm) out.fitMinLMm = stated.fitMinWMm;
+      if (stated.fitMaxWMm) out.fitMaxLMm = stated.fitMaxWMm;
+      if (stated.fitMinHMm) out.fitMinHMm = stated.fitMinHMm;
+      if (stated.fitMaxHMm) out.fitMaxHMm = stated.fitMaxHMm;
+      return out;
+    }
+    case 'cylinder': {
+      const out: SourceBounds = {};
+      if (stated.fitMinHMm) out.fitMinHMm = stated.fitMinHMm;
+      if (stated.fitMaxHMm) out.fitMaxHMm = stated.fitMaxHMm;
+      return out;
+    }
+    default:
+      return {};
+  }
+}
+
+function statedRecipeBounds(materialClass: string, sizeRanges: unknown): SourceBounds {
   const basis: FitBasis[] = ['recipe_size_range'];
   const complete = fitRangeFromRecipe(materialClass, sizeRanges);
   if (complete) {
