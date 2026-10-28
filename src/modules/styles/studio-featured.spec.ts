@@ -14,7 +14,9 @@ describe('studio featured styles', () => {
       $queryRaw: jest.fn().mockResolvedValue(usage),
     };
     const s = new StylesStoreService(prisma as never, {} as never, {} as never, settings as never);
-    jest.spyOn(s as never, 'card').mockImplementation((r) => Promise.resolve({ code: r.code }));
+    (jest.spyOn(s as never, 'card') as unknown as jest.SpyInstance).mockImplementation(
+      (r: { code: string }) => Promise.resolve({ code: r.code }),
+    );
     return { s, prisma };
   };
   const curated = (minDesigns: number | null) => ({
