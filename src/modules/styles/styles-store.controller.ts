@@ -11,6 +11,7 @@ import {
   CompareQuery,
   DETAIL_EXAMPLE,
   LIST_EXAMPLE,
+  StudioFeaturedStylesDto,
   StyleDetailDto,
   StyleFavouriteDto,
   StyleListDto,
@@ -105,6 +106,29 @@ export class StoreStylesController {
     @Query() query: StyleVariantListQuery,
   ): Promise<StyleVariantListDto> {
     return this.styles.listVariants(query, customerOf(actor));
+  }
+
+  @Get('studio-featured')
+  @Public()
+  @ApiEndpoint({
+    id: 'store.styles.studioFeatured',
+    summary: 'Get the styles the Studio features',
+    description:
+      'D-455 (C7, DECISIONS-STAGE-A §2): the Studio\'s "แบบที่คนเริ่มบ่อย" — up to 6 published styles. Until there is ' +
+      "enough real usage, the admins' ordered list in the effective-dated, audited setting `studio.featured_styles` " +
+      '(each style on/off); once the Studio designs started within `usage.windowDays` reach `usage.minDesigns`, the ' +
+      'styles most designs were started from (`source: usage`). Unset or nothing published → `source: none`, empty: ' +
+      'the storefront hides the section. Cards as `store.styles.list`; no factory identity (D-050).',
+    implements: ['D-455', 'D-245', 'D-050'],
+  })
+  @ApiSuccess(200, {
+    description: 'The featured styles and where their order comes from',
+    type: StudioFeaturedStylesDto,
+    example: { source: 'curated', data: [CARD_EXAMPLE] },
+  })
+  @ApiStandardErrors('validation.failed')
+  studioFeatured(@OptionalActor() actor: Actor | undefined): Promise<StudioFeaturedStylesDto> {
+    return this.styles.studioFeatured(customerOf(actor));
   }
 
   @Get(':code')

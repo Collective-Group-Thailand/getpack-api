@@ -89,6 +89,8 @@ export async function seedDevFolding(tx: Tx): Promise<{ created: boolean; fixtur
     data: {
       productTypeId: folding.id,
       code: 'DEV-FLAT',
+      // C7 (D-455): the engine drawing that opens this pattern in the Studio (flat-rect, @getpack/dieline).
+      dielineKey: 'flat-rect',
       name: '[DEV] แผ่นเรียบ',
       constraints: {},
       geometryFormula: 'flat',

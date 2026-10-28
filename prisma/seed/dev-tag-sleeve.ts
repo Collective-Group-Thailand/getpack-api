@@ -58,6 +58,8 @@ export async function seedDevTagSleeve(tx: Tx): Promise<{ created: boolean; fixt
     data: {
       productTypeId: tag.id,
       code: 'DEV-TAG',
+      // C7 (D-455): the engine drawing that opens this pattern in the Studio (tag-cut, @getpack/dieline).
+      dielineKey: 'tag-cut',
       name: '[DEV] ป้ายกระดาษ Tag ตัดมุม',
       constraints: { minW: 20, maxW: 300, minL: 20, maxL: 400 },
       geometryFormula: 'flat',

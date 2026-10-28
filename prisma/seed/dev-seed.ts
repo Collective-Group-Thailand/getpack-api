@@ -380,6 +380,8 @@ async function seedDevCatalog(tx: Prisma.TransactionClient): Promise<boolean> {
     data: {
       productTypeId: folding.id,
       code: 'DEV-RTE',
+      // C7 (D-455): the engine drawing that opens this pattern in the Studio (rte, @getpack/dieline).
+      dielineKey: 'rte',
       name: '[DEV] ฝาเสียบกลับด้าน',
       constraints: {},
       status: 'active',
