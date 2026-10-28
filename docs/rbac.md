@@ -35,6 +35,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `files.read` — Download files of records the user can see | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● | ● |
 | `customer_files.read` — Download customer artwork / originals and their production copies of any order (Prepress); `files.read` no longer covers them (D-444) |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |  |
 | `customer_files.read_handled` — Download customer artwork / originals and their production copies of orders the user handles: explicit order assignment or an open conversation assigned to them (support) (D-444) |  |  |  |  |  | ● | ● |  |  |  |  |  |  |  |  |  |
+| `customer_files.read_with_reason` — Download any customer original / Studio artwork after typing a reason that is stored in the access log with actor, file, order and time (Superadmin only, D-449); Admin and Auditor have no access (D-449, D-444) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `customer_file_access_logs.read` — Read the access log of customer artwork / originals and production copies (Superadmin, Auditor); not the files (D-444) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  | ● |  |
 | `orders.assign_support` — Assign the support staff member who handles an order (gives `customer_files.read_handled` access to its artwork) (D-444) | ● |  |  |  | ● |  | ● |  |  |  |  |  |  |  |  |  |
 | `notification_templates.manage` — Edit and publish notification templates | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |

@@ -566,19 +566,22 @@ model ApprovalPolicy {
 
 /// Versioned policy (schema-design §2.1); steps belong to a version.
 model ApprovalPolicyVersion {
-  id                BigInt              @id(map: "pk_approval_policy_versions") @default(autoincrement())
-  policyId          BigInt              @map("policy_id")
-  versionNo         Int                 @map("version_no")
-  effectiveFrom     DateTime            @map("effective_from") @db.Timestamptz(6)
-  status            ConfigVersionStatus @default(draft)
-  expiryRule        Json?               @map("expiry_rule")
-  onNoMatch         ApprovalNoMatch     @default(fail_closed) @map("on_no_match")
-  reason            String
-  approvalRequestId BigInt?             @map("approval_request_id")
-  createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  createdById       BigInt?             @map("created_by")
-  decidedAt         DateTime?           @map("decided_at") @db.Timestamptz(6)
-  decidedById       BigInt?             @map("decided_by")
+  id                   BigInt              @id(map: "pk_approval_policy_versions") @default(autoincrement())
+  policyId             BigInt              @map("policy_id")
+  versionNo            Int                 @map("version_no")
+  effectiveFrom        DateTime            @map("effective_from") @db.Timestamptz(6)
+  status               ConfigVersionStatus @default(draft)
+  expiryRule           Json?               @map("expiry_rule")
+  onNoMatch            ApprovalNoMatch     @default(fail_closed) @map("on_no_match")
+  /// C1d (D-449 B): a request whose amount is at or below this is approved at creation, without the second
+  /// approval (audited "below threshold"); only on versions with an amount condition; changed by Superadmin only.
+  autoApproveMaxAmount Decimal?            @map("auto_approve_max_amount") @db.Decimal(14, 2)
+  reason               String
+  approvalRequestId    BigInt?             @map("approval_request_id")
+  createdAt            DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById          BigInt?             @map("created_by")
+  decidedAt            DateTime?           @map("decided_at") @db.Timestamptz(6)
+  decidedById          BigInt?             @map("decided_by")
 
   policy          ApprovalPolicy    @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__policy_id")
   approvalRequest ApprovalRequest?  @relation("ApprovalPolicyVersionApproval", fields: [approvalRequestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_policy_versions__approval_request_id")
@@ -619,26 +622,28 @@ model ApprovalStep {
 }
 
 model ApprovalRequest {
-  id              BigInt         @id(map: "pk_approval_requests") @default(autoincrement())
-  publicId        String         @unique(map: "ux_approval_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  entityId        BigInt         @map("entity_id")
-  policyId        BigInt         @map("policy_id")
-  policyVersionId BigInt         @map("policy_version_id")
-  subjectType     String         @map("subject_type")
-  subjectId       BigInt         @map("subject_id")
-  subjectPublicId String         @map("subject_public_id") @db.Uuid
-  requesterUserId BigInt         @map("requester_user_id")
-  payloadSnapshot Json           @map("payload_snapshot")
-  amount          Decimal?       @db.Decimal(14, 2)
-  pct             Decimal?       @db.Decimal(7, 4)
-  flags           String[]       @default([])
-  status          ApprovalStatus @default(pending)
-  currentStepNo   Int?           @map("current_step_no") @db.SmallInt
-  expiresAt       DateTime?      @map("expires_at") @db.Timestamptz(6)
-  decidedAt       DateTime?      @map("decided_at") @db.Timestamptz(6)
-  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion      Int            @default(1) @map("row_version")
+  id                 BigInt         @id(map: "pk_approval_requests") @default(autoincrement())
+  publicId           String         @unique(map: "ux_approval_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId           BigInt         @map("entity_id")
+  policyId           BigInt         @map("policy_id")
+  policyVersionId    BigInt         @map("policy_version_id")
+  subjectType        String         @map("subject_type")
+  subjectId          BigInt         @map("subject_id")
+  subjectPublicId    String         @map("subject_public_id") @db.Uuid
+  requesterUserId    BigInt         @map("requester_user_id")
+  payloadSnapshot    Json           @map("payload_snapshot")
+  amount             Decimal?       @db.Decimal(14, 2)
+  pct                Decimal?       @db.Decimal(7, 4)
+  flags              String[]       @default([])
+  status             ApprovalStatus @default(pending)
+  /// C1d (D-449 B): `below_threshold` when approved at creation by the version's auto-approve amount; else null.
+  autoApprovedReason String?        @map("auto_approved_reason")
+  currentStepNo      Int?           @map("current_step_no") @db.SmallInt
+  expiresAt          DateTime?      @map("expires_at") @db.Timestamptz(6)
+  decidedAt          DateTime?      @map("decided_at") @db.Timestamptz(6)
+  createdAt          DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int            @default(1) @map("row_version")
 
   entity                 Entity                  @relation(fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_requests__entity_id")
   policy                 ApprovalPolicy          @relation(fields: [policyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_requests__policy_id")
@@ -740,15 +745,19 @@ model ApprovalRequestStep {
 
 /// Append-only (trigger). The requester can never approve; one person approves at most one step.
 model ApprovalAction {
-  id               BigInt             @id(map: "pk_approval_actions") @default(autoincrement())
-  requestId        BigInt             @map("request_id")
-  requestStepId    BigInt?            @map("request_step_id")
-  action           ApprovalActionKind
-  actorUserId      BigInt             @map("actor_user_id")
-  onBehalfOfUserId BigInt?            @map("on_behalf_of_user_id")
-  comment          String?
-  ip               String?            @db.Inet
-  createdAt        DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  id                 BigInt             @id(map: "pk_approval_actions") @default(autoincrement())
+  requestId          BigInt             @map("request_id")
+  requestStepId      BigInt?            @map("request_step_id")
+  action             ApprovalActionKind
+  actorUserId        BigInt             @map("actor_user_id")
+  onBehalfOfUserId   BigInt?            @map("on_behalf_of_user_id")
+  comment            String?
+  /// C1d (D-449 A): a Superadmin approved their own request under solo-owner mode ("อนุมัติด้วยตนเอง").
+  selfApproved       Boolean            @default(false) @map("self_approved")
+  /// The typed reason of a self-approval (required when `self_approved`).
+  selfApprovalReason String?            @map("self_approval_reason")
+  ip                 String?            @db.Inet
+  createdAt          DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
 
   request     ApprovalRequest      @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_actions__request_id")
   requestStep ApprovalRequestStep? @relation(fields: [requestStepId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_actions__request_step_id")
@@ -1085,6 +1094,8 @@ model CustomerFileAccessLog {
   orderId          BigInt?           @map("order_id")
   channel          FileAccessChannel
   purpose          FileAccessPurpose
+  /// C1d (D-449 (1)): the typed reason of a Superadmin download (`admin.files.downloadWithReason`); else null.
+  reason           String?
   requestId        String?           @map("request_id")
 
   actorUser      User?      @relation("CustomerFileAccessLogActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_customer_file_access_logs__actor_user_id")

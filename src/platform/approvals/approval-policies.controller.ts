@@ -28,6 +28,7 @@ const versionDto = (v: PolicyVersionRow): PolicyVersionDto => ({
   status: v.status,
   effectiveFrom: toBangkokIso(v.effectiveFrom),
   reason: v.reason,
+  autoApproveMaxAmount: v.autoApproveMaxAmount?.toFixed(2) ?? null,
   steps: v.steps.map((s) => ({
     stepNo: s.stepNo,
     name: s.name,
@@ -102,8 +103,11 @@ export class AdminApprovalPoliciesController {
       'Routed through `approval_policy_change`: a Superadmin approves and the proposer never approves; once approved ' +
       'it applies from its date, and the running version is never edited (D-063). One proposal per policy at a time ' +
       '(409 `approval.already_pending`). The expiry rule is carried over from the version in force. Requires ' +
-      '`Idempotency-Key`. Audited.',
-    implements: ['D-063'],
+      '`Idempotency-Key`. Audited. D-449 B: `autoApproveMaxAmount` (THB) approves requests at or below it at creation ' +
+      '("below threshold", audited, `approval.approved` with `autoApproved`); only on a policy whose steps have an amount ' +
+      'condition (422), set / changed / removed by a Superadmin only (403 `approval.threshold_superadmin_only`); ' +
+      'omitted = the value in force is carried over, null = none.',
+    implements: ['D-063', 'D-449'],
   })
   @ApiBody({
     type: ProposePolicyVersionDto,
@@ -135,6 +139,7 @@ export class AdminApprovalPoliciesController {
     'http.not_found',
     'validation.failed',
     'approval.already_pending',
+    'approval.threshold_superadmin_only',
   )
   async propose(
     @CurrentActor() actor: Actor,
@@ -146,6 +151,7 @@ export class AdminApprovalPoliciesController {
         effectiveFrom: new Date(body.effectiveFrom),
         reason: body.reason,
         steps: body.steps,
+        ...(body.autoApproveMaxAmount !== undefined && { autoApproveMaxAmount: body.autoApproveMaxAmount }),
       }),
     );
   }

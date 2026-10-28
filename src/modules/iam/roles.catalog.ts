@@ -17,7 +17,8 @@ export interface RoleDefinition {
 const ALL_STAFF = PERMISSIONS.filter((p) => p.audience === 'staff').map((p) => p.key);
 /**
  * D-444: customer artwork / originals are read only by the roles that work on them — Prepress (any order) and support
- * (orders they handle). Not part of Superadmin's "everything", who reads the access log instead.
+ * (orders they handle). Not part of Superadmin's "everything": Superadmin reads them only with a typed reason
+ * (`customer_files.read_with_reason`, D-449), every download logged with it.
  */
 export const CUSTOMER_FILE_READ: readonly PermissionKey[] = [
   'customer_files.read',

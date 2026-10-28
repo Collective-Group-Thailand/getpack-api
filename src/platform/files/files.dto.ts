@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsIn,
@@ -223,6 +223,22 @@ export class FileDto {
 
   @ApiProperty({ format: 'date-time', example: '2026-09-23T14:05:00+07:00' })
   createdAt!: string;
+}
+
+/** D-449 (1): the reason a Superadmin types before opening a customer's original / artwork (stored in the log). */
+export class DownloadWithReasonDto {
+  @ApiProperty({
+    example: 'ลูกค้าแจ้งไฟล์งานพิมพ์ผิด ตรวจสอบตามคำร้องเรียน #C-2610-0012',
+    minLength: 10,
+    maxLength: 500,
+    description:
+      'Why the file is opened; at least 10 characters after trimming; stored with the access-log row',
+  })
+  @IsString()
+  @Transform(({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value))
+  @MinLength(10)
+  @MaxLength(500)
+  reason!: string;
 }
 
 export class DownloadUrlDto {

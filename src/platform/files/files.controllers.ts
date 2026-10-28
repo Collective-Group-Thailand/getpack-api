@@ -1,6 +1,7 @@
 import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor } from '@common/context/actor';
+import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
@@ -22,6 +23,7 @@ import { ApiBody } from '@nestjs/swagger';
 import {
   CompleteUploadDto,
   DownloadUrlDto,
+  DownloadWithReasonDto,
   FILE_EXAMPLE,
   FileDto,
   PresignedUploadDto,
@@ -260,3 +262,59 @@ function filesController(surface: ZoneSurface): Type<unknown> {
 export const StoreFilesController = filesController('store');
 export const AdminFilesController = filesController('admin');
 export const PartnerFilesController = filesController('partner');
+
+/**
+ * D-449 (1), owner decision 2026-10-28 (C1d): Superadmin opens a customer's original / artwork with a typed reason.
+ * Admin-only; separate from the zone controllers so the other zones never expose it.
+ */
+@ApiSurface('admin', 'files')
+@Controller('files')
+export class AdminCustomerFilesController {
+  constructor(readonly files: FilesService) {}
+
+  @Post(':fileId/actions/download-with-reason')
+  @HttpCode(200)
+  @Can('customer_files.read_with_reason')
+  @ApiEndpoint({
+    id: 'admin.files.downloadWithReason',
+    summary: "Open a customer's original with a typed reason (Superadmin)",
+    description:
+      "D-449 (1): a Superadmin may open a customer's original, its production copy or Studio / design artwork (or a " +
+      'thumbnail of one) only after typing a reason (at least 10 characters). The customer file access log row ' +
+      '(reason, actor, file, order, time), an audit row and the `customer_file.read_with_reason` event are written in ' +
+      'one transaction before the 5-minute signed URL is returned. Other files: `admin.files.download`. Admin and ' +
+      'Auditor have no access to originals (D-444 / D-445 unchanged).',
+    implements: ['D-449', 'D-444'],
+  })
+  @ApiBody({
+    type: DownloadWithReasonDto,
+    examples: {
+      default: { value: { reason: 'ลูกค้าแจ้งไฟล์งานพิมพ์ผิด ตรวจสอบตามคำร้องเรียน #C-2610-0012' } },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Signed URL (the access is logged with the reason)',
+    type: DownloadUrlDto,
+    example: {
+      url: 'https://getpack-files.s3.example.com/…&X-Amz-Expires=300',
+      expiresAt: '2026-10-28T14:10:00+07:00',
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'file.not_ready',
+    'file.infected',
+  )
+  async downloadWithReason(
+    @CurrentActor() actor: Actor,
+    @Param('fileId', ParseUUIDPipe) id: string,
+    @Body() body: DownloadWithReasonDto,
+  ): Promise<DownloadUrlDto> {
+    if (actor.type !== 'user') throw new DomainException('auth.forbidden');
+    const { url, expiresAt } = await this.files.downloadWithReason(actor, id, body.reason);
+    return { url, expiresAt: toBangkokIso(expiresAt) };
+  }
+}

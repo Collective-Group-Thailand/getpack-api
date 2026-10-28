@@ -202,6 +202,10 @@ export interface SettingValues {
   'storefront.featured_services': string[];
   /** D-448 (C1c) the style library page's staff-managed content: quick terms, swatches, trust section; unset = empty. */
   'storefront.style_library': StyleLibraryContent;
+  /** D-449 A solo-owner mode (Superadmin only); unset = off. `expiresAt` is an ISO instant. */
+  'approvals.solo_owner_mode': { enabled: boolean; expiresAt: string | null };
+  /** D-449 A default and longest duration of solo-owner mode, in days (owner: 90). */
+  'approvals.solo_owner_mode_max_days': number;
   /** D-309 typical CS reply time within support hours (minutes); unset until the CS Lead sets it. */
   'support.reply_minutes': number;
   /** D-310 homepage Studio hero presets (product owner's values; catalogue mapping per environment). */
