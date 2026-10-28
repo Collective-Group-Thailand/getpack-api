@@ -190,6 +190,7 @@ Every integration flag is seeded **off** and switched on by a superadmin once it
 | `payments.scb` | SCB QR payments (PromptPay QR 30, QR CS) — D-176, on once the merchant account exists |
 | `payments.twoc2p` | 2C2P card and online banking — D-176, on once the merchant account exists |
 | `payments.slip_verify` | Automatic slip verification (Slip2Go) — D-061 / D-176; off: slips go to Finance |
+| `orders.payment_overdue_reminder` | One reminder (e-mail / LINE) when an unpaid group passes its payment deadline, linking to "ตรวจราคาใหม่และชำระ" — D-453, D-436 |
 | `payments.twoc2p_ipp` | 2C2P card instalments (IPP) — R2 (D-111), adapter stubbed |
 | `payments.scb_direct_debit` | SCB direct debit — R2 (D-111), adapter stubbed |
 | `drawing.engine` | Dieline drawing engine @getpack/dieline (B4.1) — off until the package is published; drawings answer 501 |
