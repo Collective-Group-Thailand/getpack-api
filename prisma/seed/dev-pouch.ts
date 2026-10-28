@@ -58,7 +58,16 @@ export async function seedDevPouch(tx: Tx): Promise<{ created: boolean; fixture:
     constraints: object,
   ) =>
     tx.pattern.create({
-      data: { productTypeId: pouch.id, code, name, constraints, pouchFormula, status: 'active' },
+      // C7 (D-455): the engine drawing that opens these patterns in the Studio (`pouch`, @getpack/dieline aliases).
+      data: {
+        productTypeId: pouch.id,
+        code,
+        name,
+        constraints,
+        pouchFormula,
+        dielineKey: pouchFormula === 'stand_up' ? 'pouch-standing' : 'pouch-3-seal',
+        status: 'active',
+      },
     });
   const standUp = await pattern('DEV-POUCH-STAND', '[DEV] ซองตั้งได้', 'stand_up', {
     minW: 80,

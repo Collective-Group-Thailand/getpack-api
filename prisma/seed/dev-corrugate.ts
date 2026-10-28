@@ -121,6 +121,8 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
     data: {
       productTypeId: corrugated.id,
       code: 'DEV-RSC',
+      // C7 (D-455): the engine drawing that opens this pattern in the Studio (rsc, @getpack/dieline).
+      dielineKey: 'rsc',
       name: '[DEV] กล่องฝาชน',
       // Fake size rules (the configurator publishes them; customer requests are checked).
       constraints: { minW: 100, maxW: 800, minL: 100, maxL: 1000, minH: 50, maxH: 800, wMustExceedH: true },
@@ -133,6 +135,8 @@ export async function seedDevCorrugate(tx: Tx): Promise<{ created: boolean; fixt
     data: {
       productTypeId: corrugated.id,
       code: 'DEV-TELE',
+      // C7 (D-455): the engine drawing that opens this pattern in the Studio (telescope, @getpack/dieline).
+      dielineKey: 'telescope',
       name: '[DEV] กล่องฝาครอบ',
       constraints: {},
       status: 'active',
