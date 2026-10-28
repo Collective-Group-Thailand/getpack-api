@@ -262,6 +262,23 @@ export class StorePrintCmykDto {
   addOn!: StorePrintAddOnDto;
 }
 
+export class StorePrintQuoteDto {
+  @ApiProperty({
+    type: 'integer',
+    example: 2,
+    description: 'Spot colours that may be chosen on this side (quote beyond `spot.maxColours`)',
+  })
+  spotMaxColours!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 2,
+    description:
+      'Spot colours that may stand beside CMYK on this side (quote beyond `cmyk.addOn.maxColours`)',
+  })
+  cmykAddOnMaxColours!: number;
+}
+
 export class StorePrintSideDto {
   @ApiProperty({
     enum: ['printFront', 'printBack'],
@@ -286,6 +303,17 @@ export class StorePrintSideDto {
       'What the configurator opens on: the default spec’s print on this side; inside defaults to `none`',
   })
   default!: StorePrintSelectionDto;
+
+  @ApiProperty({
+    type: StorePrintQuoteDto,
+    nullable: true,
+    description:
+      'C0b (owner decision 2026-10-28; D-443, B-API-6): colours a customer may still choose on this side beyond the ' +
+      'instantly priced counts (`spot.maxColours`, `cmyk.addOn.maxColours`), up to the side’s offered spot inks. ' +
+      'Never refused or trimmed: `store.quotes.calculate` answers `instant: false` with `reason: rfq_required` and ' +
+      'the configurator offers the quotation request with the spec. Null when nothing lies beyond.',
+  })
+  quote!: StorePrintQuoteDto | null;
 }
 
 /**
@@ -308,6 +336,7 @@ export const STORE_PRINT_MODEL_EXAMPLE: StorePrintModelDto = {
     spot: { minColours: 1, maxColours: 1, inkColourIds: [INK('101'), INK('102')] },
     cmyk: { inkColourId: INK('103'), addOn: { enabled: false, minColours: 0, maxColours: 0 } },
     default: { method: 'cmyk', spotInkColourIds: [], cmykAddOnInkColourIds: [] },
+    quote: { spotMaxColours: 2, cmykAddOnMaxColours: 2 },
   },
   inside: {
     field: 'printBack',
@@ -315,5 +344,6 @@ export const STORE_PRINT_MODEL_EXAMPLE: StorePrintModelDto = {
     spot: { minColours: 1, maxColours: 1, inkColourIds: [INK('101')] },
     cmyk: null,
     default: { method: 'none', spotInkColourIds: [], cmykAddOnInkColourIds: [] },
+    quote: null,
   },
 };

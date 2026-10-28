@@ -227,4 +227,14 @@ describe('dieline downloads and style assets (e2e, U3.B5)', () => {
     expect(shown.length).toBe(2);
     expect(shown.every((a) => /^https?:\/\//.test(a.url))).toBe(true);
   });
+
+  it("renders the style's own flat dieline at its default size once (C0b: card hover, quick view)", async () => {
+    const assets = ctx.app.get(StyleAssetsService);
+    await assets.renderDue(500);
+    await assets.renderDue(500);
+    const own = { base: { code: BASE }, variantId: null, kind: 'dieline_svg' as const };
+    expect(await ctx.prisma.styleAsset.count({ where: own })).toBe(1);
+    const detail = await request(ctx.server).get(`/v1/store/styles/${BASE}`).expect(200);
+    expect(detail.body.dielineUrl).toMatch(/^https?:\/\//);
+  });
 });

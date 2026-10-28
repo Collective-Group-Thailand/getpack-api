@@ -374,3 +374,26 @@ describe('print model per side (D-443)', () => {
     });
   });
 });
+
+describe('C0b: more colours than priced go to the quote path (DECISIONS-STAGE-A §9.5)', () => {
+  it('offers up to the side’s spot inks beyond the priced count, without changing the limits', () => {
+    const view = storePrintModel(MODEL, null, kindOf, null, SEEDED_LIMITS);
+    expect(view.outside.spot?.maxColours).toBe(1);
+    expect(view.outside.cmyk?.addOn).toEqual({ enabled: false, minColours: 0, maxColours: 0 });
+    expect(view.outside.quote).toEqual({ spotMaxColours: 2, cmykAddOnMaxColours: 2 });
+  });
+
+  it('has nothing beyond when every offered ink is priced or no spot ink is offered', () => {
+    const one: PrintModel = {
+      outside: side({
+        spot: { maxColours: 1, inkColourIds: [BLACK] },
+        cmyk: null,
+        methods: ['none', 'spot'],
+      }),
+      inside: side({ spot: null, methods: ['none', 'cmyk'] }),
+    };
+    const view = storePrintModel(one, null, kindOf, null, SEEDED_LIMITS);
+    expect(view.outside.quote).toBeNull();
+    expect(view.inside.quote).toBeNull();
+  });
+});

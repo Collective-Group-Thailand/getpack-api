@@ -37,3 +37,24 @@ for `catalog.print_limits`, `pricing.margin_floor_pct`, `tax.rounding_mode`.
 
 ## Owner checks
 `pnpm db:migrate` + `pnpm test:int` (migration written by hand: no DB / schema engine in the cloud run).
+
+## C0b — owner decisions after C0 (DECISIONS-STAGE-A §9, 2026-10-28)
+
+Additive. Migration `20261223000001_style_fit_range_source` (+ `down.sql`, hand-written): `style_bases.fit_range_source`
+(`recipe` | `business`, check constraint); existing entered ranges are marked `business`.
+- **Fit-range backfill (§9.1):** `POST /v1/admin/styles/actions/backfill-fit-ranges` (`admin.styles.backfillFitRanges`,
+  `styles.curate`, body `{ dryRun? }`) → `{ considered, filled[], refreshed[], unchanged, keptBusiness[], noRecipeRange[] }`.
+  Same service path as `admin.styles.update` (shared `curate`: validation, audit `style_base.curated` with before/after and
+  source, event, publishability). Never over a business range; idempotent. CLI `pnpm styles:fit-ranges [--confirm]`; UAT
+  seed step 4b. `admin.styles.get` returns `fitRangeSource`. A curation save that changes the range marks it `business`.
+  Seed data (engine bundle `@getpack/dieline@0.1.0+ccc03fe8`): **81 of 122 filled**, 41 without a complete recipe range.
+- **CSV size basis (§9.2):** the catalogue CSV's size columns are **inside dimensions in mm** — the future importer reads
+  them so (the current template's `*_cm` header names notwithstanding); `price_est_*` columns are ignored (D-220).
+- **Quote response (§9.3):** store style card/detail `quoteResponseBusinessDays` = `rfq.sla_business_hours` (product-type
+  scope, platform fallback) ÷ 24, rounded up (RFQ due time counts every hour of a working day); null when unset.
+- **Style dielines (§9.4a):** `styles.render_assets` also renders each published style's own `dieline_svg` (no variant) at
+  the approved recipe's default size → card `dielineUrl` and the quick view "แบบคลี่". 113 of 122 drawable on seed data
+  (not: PK-LA-07, PK-PB-01…08 — no reference material for `shrink_film` / `flexible`).
+- **Print beyond the instant price (§9.5):** `StorePrintSideDto.quote` `{ spotMaxColours, cmykAddOnMaxColours }` | null —
+  colours a customer may still choose beyond the priced counts (up to the side's offered spot inks); `calculate` answers
+  `rfq_required` for them (unchanged). `catalog.print_limits` untouched.
