@@ -279,6 +279,15 @@ export const UAT_RENAMES: Record<
   },
 };
 
+/**
+ * C2b (DECISIONS-STAGE-A §15.2b): the parts (sub-patterns) of the dev patterns the rehearsal reuses, renamed like
+ * `UAT_RENAMES` — a part's name is customer-facing (configurator parts, spec lines, the starting price's basis), and
+ * the telescope box's "[DEV] ฝา" showed on the fruit box. Keyed by pattern code, then part `seq`.
+ */
+export const UAT_SUB_PATTERN_RENAMES: Record<string, Record<number, string>> = {
+  'DEV-TELE': { 1: 'ตัวกล่อง', 2: 'ฝา' },
+};
+
 // --- New rehearsal master data, each priced like a dev source -------------------------------------------------
 
 export interface MaterialSeed {
@@ -744,22 +753,25 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     type: 'corrugated',
     nameTh: 'กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)',
     nameEn: 'Postal box RSC 3-ply (B-flute)',
-    descriptionTh: 'กล่องพัสดุขนาดมาตรฐานยอดนิยมสำหรับร้านค้าออนไลน์ เลือกพิมพ์โลโก้ 1–2 สีได้',
+    // C2b (DECISIONS-STAGE-A §15.2a): the print sentence follows this product's print model (`printModel` in
+    // uat-catalog.ts: per side none · 1 spot colour · CMYK, no add-on) — it said "1–2 สี".
+    descriptionTh:
+      'กล่องพัสดุขนาดมาตรฐานยอดนิยมสำหรับร้านค้าออนไลน์ เลือกพิมพ์โลโก้ 1 สี หรือพิมพ์ 4 สี (CMYK) ได้',
     patterns: ['DEV-RSC'],
     materials: ['dev-ka125-b', 'uat-kt125-b', 'dev-ka185-b', 'uat-ka125-e'],
     inks: HERO_INKS,
     sizes: [
-      ['00', 'เบอร์ 00 (9.75×14×6 ซม.)', 140, 97.5, 60],
-      ['0', 'เบอร์ 0 (11×17×6 ซม.)', 170, 110, 60],
-      ['0+4', 'เบอร์ 0+4 (11×17×10 ซม.)', 170, 110, 100],
-      ['A', 'เบอร์ A (14×20×6 ซม.)', 200, 140, 60],
-      ['2A', 'เบอร์ 2A (14×20×12 ซม.)', 200, 140, 120],
-      ['B', 'เบอร์ B (17×25×9 ซม.)', 250, 170, 90],
-      ['C', 'เบอร์ C (20×30×11 ซม.)', 300, 200, 110],
-      ['C+8', 'เบอร์ C+8 (20×30×19 ซม.)', 300, 200, 190],
-      ['D', 'เบอร์ D (22×35×14 ซม.)', 350, 220, 140],
-      ['E', 'เบอร์ E (24×40×17 ซม.)', 400, 240, 170],
-      ['F', 'เบอร์ F (30×45×22 ซม.)', 450, 300, 220],
+      ['00', 'เบอร์ 00 (14×9.75×6 ซม.)', 140, 97.5, 60],
+      ['0', 'เบอร์ 0 (17×11×6 ซม.)', 170, 110, 60],
+      ['0+4', 'เบอร์ 0+4 (17×11×10 ซม.)', 170, 110, 100],
+      ['A', 'เบอร์ A (20×14×6 ซม.)', 200, 140, 60],
+      ['2A', 'เบอร์ 2A (20×14×12 ซม.)', 200, 140, 120],
+      ['B', 'เบอร์ B (25×17×9 ซม.)', 250, 170, 90],
+      ['C', 'เบอร์ C (30×20×11 ซม.)', 300, 200, 110],
+      ['C+8', 'เบอร์ C+8 (30×20×19 ซม.)', 300, 200, 190],
+      ['D', 'เบอร์ D (35×22×14 ซม.)', 350, 220, 140],
+      ['E', 'เบอร์ E (40×24×17 ซม.)', 400, 240, 170],
+      ['F', 'เบอร์ F (45×30×22 ซม.)', 450, 300, 220],
     ],
     quantities: CORRUGATE_QTY,
     template: 'drawing',
@@ -773,8 +785,8 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     patterns: ['DEV-RSC'],
     materials: ['dev-ki230-b'],
     sizes: [
-      ['S', 'S (15×20×8 ซม.)', 200, 150, 80],
-      ['M', 'M (20×30×11 ซม.)', 300, 200, 110],
+      ['S', 'S (20×15×8 ซม.)', 200, 150, 80],
+      ['M', 'M (30×20×11 ซม.)', 300, 200, 110],
     ],
     quantities: CORRUGATE_QTY,
     template: 'drawing',
@@ -788,8 +800,8 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     patterns: ['DEV-RSC'],
     materials: ['uat-ka125-bc', 'uat-ka185-bc'],
     sizes: [
-      ['M', 'กลาง (40×45×40 ซม.)', 450, 400, 400],
-      ['L', 'ใหญ่ (40×50×40 ซม.)', 500, 400, 400],
+      ['M', 'กลาง (45×40×40 ซม.)', 450, 400, 400],
+      ['L', 'ใหญ่ (50×40×40 ซม.)', 500, 400, 400],
     ],
     quantities: CORRUGATE_QTY,
     template: 'drawing',
@@ -804,8 +816,8 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     materials: ['dev-ka125-b', 'dev-ka185-b', 'uat-ka125-e'],
     inks: HERO_INKS,
     sizes: [
-      ['4KG', 'ผลไม้ 4 กก. (30×40×15 ซม.)', 400, 300, 150],
-      ['10KG', 'ผลไม้ 10 กก. (35×50×20 ซม.)', 500, 350, 200],
+      ['4KG', 'ผลไม้ 4 กก. (40×30×15 ซม.)', 400, 300, 150],
+      ['10KG', 'ผลไม้ 10 กก. (50×35×20 ซม.)', 500, 350, 200],
     ],
     quantities: CORRUGATE_QTY,
     template: 'drawing',
@@ -818,7 +830,7 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     descriptionTh: 'ถาดสำหรับจัดเรียงผักผลไม้ในซูเปอร์มาร์เก็ต หรือรองสินค้าในลัง',
     patterns: ['DEV-OPEN-TOP'],
     materials: ['dev-ka125-b'],
-    sizes: [['STD', 'ถาดผัก (30×40×10 ซม.)', 400, 300, 100]],
+    sizes: [['STD', 'ถาดผัก (40×30×10 ซม.)', 400, 300, 100]],
     quantities: CORRUGATE_QTY,
     template: 'drawing',
   },
