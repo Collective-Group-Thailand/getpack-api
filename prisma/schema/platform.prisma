@@ -764,7 +764,9 @@ model ApprovalAction {
   actor       User                 @relation("ApprovalActionActor", fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_actions__actor_user_id")
   onBehalfOf  User?                @relation("ApprovalActionOnBehalfOf", fields: [onBehalfOfUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_approval_actions__on_behalf_of_user_id")
 
-  @@unique([requestId, actorUserId], map: "ux_approval_actions__one_approval_per_person", where: raw("action = 'approve'"))
+  // C1f (D-451): a flagged self-approval (solo-owner mode) is once per step instead of once per request.
+  @@unique([requestId, actorUserId], map: "ux_approval_actions__one_approval_per_person", where: raw("action = 'approve' AND NOT self_approved"))
+  @@unique([requestStepId, actorUserId], map: "ux_approval_actions__one_self_approval_per_step", where: raw("action = 'approve' AND self_approved"))
   @@index([requestId], map: "ix_approval_actions__request_id")
   @@index([requestStepId], map: "ix_approval_actions__request_step_id")
   @@index([actorUserId], map: "ix_approval_actions__actor_user_id")

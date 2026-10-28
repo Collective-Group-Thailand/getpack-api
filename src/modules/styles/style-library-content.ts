@@ -47,8 +47,8 @@ export const CONTENT_URL_PATTERN = '^(https://[^\\s]+|/[^\\s]*)$';
  * C1e (owner decision 2026-10-28 12:07, DECISIONS-STAGE-A §13.3): pictures (production photos, customer logos,
  * material swatches) are files uploaded through the file service (purpose `image`, D-415) and served by the public
  * catalogue image route while the content in force references them; documents (certificates, food-grade documents)
- * are uploaded files (purpose `document` or `image`) served by `store.styleLibrary.getDocument`, or — documents only —
- * an external https link.
+ * are uploaded files (C1f, §14.3: purpose `published_document` — metadata stripped like images — or `image`) served by
+ * `store.styleLibrary.getDocument`, or — documents only — an external https link.
  */
 export const STYLE_LIBRARY_IMAGE_PREFIX = '/v1/store/catalog/images/';
 export const STYLE_LIBRARY_DOCUMENT_PREFIX = '/v1/store/style-library/documents/';

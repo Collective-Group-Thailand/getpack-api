@@ -1,5 +1,6 @@
 import { type PrismaService } from '@database/prisma.service';
 import { type PermissionKey } from '@modules/iam/permissions.catalog';
+import { fileAccessLogWhere } from '@platform/files/customer-file-access.service';
 
 import { day, iso, money } from './definitions/helpers';
 import { type ReportColumn, type ReportRow } from './report-types';
@@ -10,7 +11,14 @@ import { type ReportColumn, type ReportRow } from './report-types';
  * screens show them to whoever may read them.
  */
 export const LIST_EXPORT_MAX_ROWS = 10_000;
-export const LIST_EXPORT_RESOURCES = ['orders', 'customers', 'companies', 'shipments', 'claims'] as const;
+export const LIST_EXPORT_RESOURCES = [
+  'orders',
+  'customers',
+  'companies',
+  'shipments',
+  'claims',
+  'customer_file_access_logs',
+] as const;
 export type ListExportResource = (typeof LIST_EXPORT_RESOURCES)[number];
 
 export interface ListExport {
@@ -300,6 +308,71 @@ export const LIST_EXPORTS: readonly ListExport[] = [
             claimedAmount: money(cl.claimedAmount),
             submittedAt: iso(cl.submittedAt),
             decidedAt: iso(cl.decidedAt),
+          };
+      })(),
+  },
+  {
+    // C1f (owner 2026-10-28 13:58, D-451, DECISIONS-STAGE-A §14.7): the customer file access log page's export —
+    // its filters, behind `customer_file_access_logs.read` + `reports.export`. The Superadmin's typed reason (D-449 (1))
+    // is a column; no URL, token or file content.
+    resource: 'customer_file_access_logs',
+    nameTh: 'บันทึกการเปิดไฟล์ลูกค้า',
+    nameEn: 'Customer file access log',
+    permission: 'customer_file_access_logs.read',
+    filters: ['from', 'to', 'orderCode', 'fileId', 'userId', 'fileKind', 'withReason'],
+    columns: [
+      c('occurredAt', 'เวลา', 'Time', 'datetime'),
+      c('actor', 'ผู้เปิด', 'Opened by'),
+      c('actorType', 'ประเภทผู้เปิด', 'Actor type'),
+      c('orderCode', 'คำสั่งซื้อ', 'Order'),
+      c('fileId', 'รหัสไฟล์', 'File id'),
+      c('fileKind', 'ชนิดไฟล์', 'File kind'),
+      c('channel', 'ช่องทาง', 'Channel'),
+      c('purpose', 'การใช้งาน', 'Purpose'),
+      c('reason', 'เหตุผลที่ระบุ', 'Typed reason'),
+      c('requestId', 'รหัสคำขอ', 'Request id'),
+    ],
+    rows: (prisma, q) =>
+      (async function* () {
+        const kind = ['customer_original', 'production_copy', 'approved_proof_copy'].find(
+          (k) => k === q['fileKind'],
+        );
+        const where = fileAccessLogWhere({
+          ...(q['orderCode'] && { orderCode: q['orderCode'] }),
+          ...(q['fileId'] && { fileId: q['fileId'] }),
+          ...(q['userId'] && { actorId: q['userId'] }),
+          ...(kind && { fileKind: kind as 'customer_original' }),
+          ...((q['withReason'] === 'true' || q['withReason'] === 'false') && {
+            withReason: q['withReason'] === 'true',
+          }),
+          // Days as the page shows them: from the start of `from` to the end of `to`, Bangkok.
+          ...(isDay(q['from']) && { from: startOf(q['from']!) }),
+          ...(isDay(q['to']) && { to: new Date(startOf(q['to']!).getTime() + 86_400_000) }),
+        });
+        for await (const r of pages((after) =>
+          prisma.customerFileAccessLog.findMany({
+            where: { AND: [...where, { id: { gt: after } }] },
+            include: {
+              actorUser: { select: { displayName: true } },
+              actorApiClient: { select: { name: true } },
+              fileObject: { select: { publicId: true } },
+              order: { select: { orderCode: true } },
+            },
+            orderBy: { id: 'asc' },
+            take: 500,
+          }),
+        ))
+          yield {
+            occurredAt: iso(r.occurredAt),
+            actor: r.actorUser?.displayName ?? r.actorApiClient?.name ?? null,
+            actorType: r.actorType,
+            orderCode: r.order?.orderCode ?? null,
+            fileId: r.fileObject.publicId,
+            fileKind: r.fileKind,
+            channel: r.channel,
+            purpose: r.purpose,
+            reason: r.reason,
+            requestId: r.requestId,
           };
       })(),
   },

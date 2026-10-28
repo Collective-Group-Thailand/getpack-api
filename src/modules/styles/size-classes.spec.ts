@@ -11,7 +11,9 @@ describe('size classes (C1e, DECISIONS-STAGE-A §13.2)', () => {
     ['PK-LA-01', recipe({ ref: 'diameter' }), 'not_applicable'],
     ['PK-LA-07', recipe({ ref: 'diameter' }, { ref: 'height' }), 'not_applicable'],
     ['PK-TG-02', recipe({ ref: 'topDiameter' }, { ref: 'height' }), 'not_applicable'],
-    ['PK-TG-03', recipe('length', 'width', 'height'), 'not_applicable'],
+    // C1f (§14.1): the cup carrier holds products — a box, the one exception to PK-TG-*.
+    ['PK-TG-03', recipe('length', 'width', 'height'), 'box'],
+    ['PK-TG-04', recipe('length', 'width', 'height'), 'not_applicable'],
     ['PK-SL-03', null, 'not_applicable'],
     ['PK-IN-02', null, 'not_applicable'],
     ['PK-CI-02', null, 'not_applicable'],

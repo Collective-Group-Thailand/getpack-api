@@ -4,6 +4,7 @@ import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
 import { type CatalogOptionKind, Prisma } from '@generated/prisma/client';
 import { defaultSpecConfiguration, withSpecDefaults } from '@modules/pricing/hints/default-spec';
+import { quoteResponseDaysFor } from '@modules/styles/quote-response-days';
 import { Injectable } from '@nestjs/common';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
@@ -245,7 +246,7 @@ export class StoreCatalogService {
     const p = await this.prisma.catalogProduct.findFirst({
       where: { slug, ...this.productWhere() },
       include: {
-        productType: { select: { code: true } },
+        productType: { select: { id: true, code: true } },
         patterns: {
           where: { pattern: { status: ACTIVE } },
           include: {
@@ -322,6 +323,10 @@ export class StoreCatalogService {
       })),
       videos: videos.map((v) => ({ provider: v.provider, url: v.url, title: v.title })),
       seo: seoDto(p.seoPage),
+      // C1f (C3 open item, DECISIONS-STAGE-A §9.3 / §11.2 / §14.8): a quote-only product shows the same working-day
+      // answer time as the style pages; instant / partial products, or missing settings, give null (no timing).
+      quoteResponseBusinessDays:
+        facts.availability === 'rfq' ? await quoteResponseDaysFor(this.settings, p.productType.id) : null,
     };
   }
 

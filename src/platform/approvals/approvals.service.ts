@@ -68,6 +68,10 @@ export interface CreateApprovalInput {
  *   their own request only under solo-owner mode, with a typed reason, flagged ("อนุมัติด้วยตนเอง") and only when no
  *   other active user could decide the step; a request whose amount is at or below its policy version's
  *   `autoApproveMaxAmount` is approved at creation ("below threshold").
+ * - D-451 (C1f, owner 2026-10-28 13:58): under solo-owner mode the Superadmin may self-approve **every** step of a
+ *   multi-step policy (bank-account changes, `style_library_change`…), one flagged action per step, each with its own
+ *   typed reason, audit row, event and digest line; the per-person unique index excludes flagged self-approvals and
+ *   a second index keeps them to one per step.
  */
 @Injectable()
 export class ApprovalsService {
@@ -255,8 +259,12 @@ export class ApprovalsService {
         requestPublicId,
         selfApprovalReason,
       );
+      // One person approves at most one step of a request — except a self-approval under solo-owner mode (C1f, D-451):
+      // the Superadmin may decide every step of their own request, once per step, each with its own typed reason.
       const alreadyApproved = await tx.approvalAction.count({
-        where: { requestId: request.id, actorUserId: actor.userId, action: 'approve' },
+        where: selfApproved
+          ? { requestStepId: step.id, actorUserId: actor.userId, action: 'approve' }
+          : { requestId: request.id, actorUserId: actor.userId, action: 'approve' },
       });
       if (alreadyApproved > 0) throw new DomainException('approval.already_acted');
       await this.sod.checkAction(tx, {

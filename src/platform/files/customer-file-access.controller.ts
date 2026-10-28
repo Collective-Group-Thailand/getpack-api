@@ -9,8 +9,8 @@ import { toBangkokIso } from '@common/time/bangkok';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, Param, ParseUUIDPipe, Put, Query } from '@nestjs/common';
 import { ApiBody, ApiParam, ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsDate, IsOptional, IsUUID, ValidateIf } from 'class-validator';
+import { Transform, Type } from 'class-transformer';
+import { IsBoolean, IsDate, IsIn, IsOptional, IsUUID, Matches, ValidateIf } from 'class-validator';
 
 import {
   CustomerFileAccessService,
@@ -52,6 +52,35 @@ export class FileAccessLogQuery extends CursorQuery {
   @IsOptional()
   @IsUUID()
   userId?: string;
+
+  @ApiPropertyOptional({
+    example: 'DEVOR-2610-00001',
+    description: 'C1f (D-451): the order by its code (exact, case-insensitive)',
+  })
+  @IsOptional()
+  @Matches(/^[A-Za-z0-9-]{1,40}$/)
+  orderCode?: string;
+
+  @ApiPropertyOptional({
+    enum: FILE_KINDS,
+    enumName: 'CustomerFileKind',
+    example: 'customer_original',
+    description: 'C1f (D-451): only this kind of file',
+  })
+  @IsOptional()
+  @IsIn(FILE_KINDS)
+  fileKind?: (typeof FILE_KINDS)[number];
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    example: true,
+    description:
+      'C1f (D-451): true = only the accesses a Superadmin opened with a typed reason (D-449 (1)); false = only the others',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => (value === 'true' ? true : value === 'false' ? false : value))
+  @IsBoolean()
+  withReason?: boolean;
 
   @ApiPropertyOptional({ format: 'date-time', example: '2026-10-01T00:00:00+07:00' })
   @IsOptional()
@@ -179,9 +208,12 @@ export class CustomerFileAccessLogsController {
     description:
       "D-444: every download URL issued for a customer's artwork / original, a production copy of one or an approved " +
       'proof copy — who, when, which file and order, through which surface (store / admin / partner) and for what ' +
-      '(download / thumbnail). Newest first; filter by order, file, user and period. Append-only; no URL or token is ' +
-      'stored. Superadmin and Auditor (`customer_file_access_logs.read`, B-API-6); neither reads the files.',
-    implements: ['D-444'],
+      '(download / thumbnail). Newest first; filter by order (id or code), file, user, file kind, period and — C1f ' +
+      '(D-451) — whether a Superadmin opened it with a typed reason (D-449 (1); the reason is in `reason`). ' +
+      'Append-only; no URL or token is stored. Whoever holds `customer_file_access_logs.read` (Superadmin, Auditor; ' +
+      'B-API-6); read by the back-office page "บันทึกการเปิดไฟล์ลูกค้า", exported through `admin.exports.create` ' +
+      '(resource `customer_file_access_logs`).',
+    implements: ['D-444', 'D-449', 'D-451'],
   })
   @ApiCursorPaginated(FileAccessLogEntryDto, { example: EXAMPLE })
   @ApiStandardErrors('validation.failed')
@@ -191,6 +223,9 @@ export class CustomerFileAccessLogsController {
         ...(query.orderId && { orderId: query.orderId }),
         ...(query.fileId && { fileId: query.fileId }),
         ...(query.userId && { actorId: query.userId }),
+        ...(query.orderCode && { orderCode: query.orderCode }),
+        ...(query.fileKind && { fileKind: query.fileKind }),
+        ...(query.withReason !== undefined && { withReason: query.withReason }),
         ...(query.from && { from: query.from }),
         ...(query.to && { to: query.to }),
       },

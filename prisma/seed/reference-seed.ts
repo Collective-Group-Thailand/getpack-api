@@ -6,7 +6,7 @@ import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { type EntityReturnAddress } from '../../src/platform/settings/setting-keys';
 import { settingValueError } from '../../src/platform/settings/setting-value';
 import { AGENT_AGREEMENT_KEY, AGENT_AGREEMENT_V1_TH, AGENT_PLANS } from './data/agents';
-import { APPROVAL_POLICIES, OWNER_APPROVAL_THRESHOLD_REASON } from './data/approval-policies';
+import { APPROVAL_POLICIES, thresholdAmendmentOf } from './data/approval-policies';
 import { PARTNER_KNOWLEDGE_CATEGORIES, PRODUCT_TYPES } from './data/catalog';
 import {
   ORDER_CANCEL_REASONS,
@@ -376,9 +376,10 @@ async function ensureApprovalPolicies(tx: Tx, count: (what: string) => void): Pr
 }
 
 /**
- * D-449 B (owner decision 2026-10-28): a database seeded before the decision gets the policy's auto-approve amount once,
- * as a new version from now copying the steps in force. Skipped when any version of the policy already carries an
- * amount (also one a Superadmin later removed: the seed never re-adds it).
+ * D-449 B / C1f (owner decisions 2026-10-28, D-451): an existing database gets the policy's latest owner threshold once,
+ * as a new version from now copying the steps in force — only while the value in force is still the seed's
+ * ({@link thresholdAmendmentOf}); a value a Superadmin set, changed or removed is never overwritten, history never
+ * edited.
  */
 async function amendAutoApprove(
   tx: Tx,
@@ -386,14 +387,7 @@ async function amendAutoApprove(
   policy: (typeof APPROVAL_POLICIES)[number],
   count: (what: string) => void,
 ): Promise<void> {
-  if (!policy.autoApproveMaxAmount) return;
-  const already = await tx.approvalPolicyVersion.count({
-    where: {
-      policyId,
-      OR: [{ autoApproveMaxAmount: { not: null } }, { reason: OWNER_APPROVAL_THRESHOLD_REASON }],
-    },
-  });
-  if (already > 0) return;
+  if (!policy.autoApproveHistory?.length) return;
   if (await tx.approvalPolicyVersion.count({ where: { policyId, status: 'proposed' } })) return;
   const now = new Date();
   const [last, inForce] = await Promise.all([
@@ -405,15 +399,30 @@ async function amendAutoApprove(
     }),
   ]);
   if (!inForce) return;
+  const facts = (v: {
+    reason: string;
+    autoApproveMaxAmount: { toFixed(n: number): string } | null;
+    createdById: bigint | null;
+  }) => ({
+    reason: v.reason,
+    autoApproveMaxAmount: v.autoApproveMaxAmount?.toFixed(2) ?? null,
+    createdById: v.createdById,
+  });
+  const all = await tx.approvalPolicyVersion.findMany({
+    where: { policyId },
+    select: { reason: true, autoApproveMaxAmount: true, createdById: true },
+  });
+  const decision = thresholdAmendmentOf(policy.autoApproveHistory, facts(inForce), all.map(facts));
+  if (!decision) return;
   const version = await tx.approvalPolicyVersion.create({
     data: {
       policyId,
       versionNo: (last?.versionNo ?? 0) + 1,
       effectiveFrom: now,
-      reason: OWNER_APPROVAL_THRESHOLD_REASON,
+      reason: decision.reason,
       expiryRule: inForce.expiryRule ?? undefined,
       onNoMatch: inForce.onNoMatch,
-      autoApproveMaxAmount: policy.autoApproveMaxAmount,
+      autoApproveMaxAmount: decision.amount,
     },
   });
   await tx.approvalStep.createMany({

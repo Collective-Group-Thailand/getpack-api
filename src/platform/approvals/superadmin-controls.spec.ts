@@ -1,6 +1,12 @@
 import { type UserActor } from '@common/context/actor';
 import { Prisma } from '@generated/prisma/client';
 
+import {
+  OWNER_APPROVAL_THRESHOLD_C1D,
+  OWNER_CREDIT_LIMIT_THRESHOLD_C1F,
+  thresholdAmendmentOf,
+  type VersionFacts,
+} from '../../../prisma/seed/data/approval-policies';
 import { ApprovalsService } from './approvals.service';
 import {
   belowThreshold,
@@ -287,6 +293,57 @@ describe('self-approval under solo-owner mode (D-449 A)', () => {
     });
   });
 
+  it('lets a Superadmin decide every step of their own multi-step request, each with its own reason (C1f, D-451)', async () => {
+    const h = engine({ roles: { '1': ['superadmin'] }, soloOn: true, request: { currentStepNo: 2 } });
+    // Step 1 was already self-approved by the same Superadmin; step 2 is pending.
+    h.actions.push({
+      requestId: 100n,
+      requestStepId: 199n,
+      action: 'approve',
+      actorUserId: 1n,
+      selfApproved: true,
+    });
+    const step2 = {
+      id: 200n,
+      requestId: 100n,
+      stepNo: 2,
+      approverRoleId: ROLE_IDS.finance_manager,
+      approverScopeId: null,
+      quorum: 1,
+    };
+    h.tx.approvalRequestStep.findFirstOrThrow.mockResolvedValue(step2);
+    h.tx.approvalAction.count.mockImplementation(
+      ({ where }: { where: { requestId?: bigint; requestStepId?: bigint; actorUserId?: bigint } }) =>
+        Promise.resolve(
+          h.actions.filter(
+            (a) =>
+              (where.requestId === undefined || a['requestId'] === where.requestId) &&
+              (where.requestStepId === undefined || a['requestStepId'] === where.requestStepId) &&
+              (where.actorUserId === undefined || a['actorUserId'] === where.actorUserId),
+          ).length,
+        ),
+    );
+    await h.service.approve(SUPERADMIN, 'req-1', undefined, 'ขั้นที่สอง: ไม่มีผู้อนุมัติคนอื่น (fake)');
+    expect(h.actions[1]).toMatchObject({ requestStepId: 200n, selfApproved: true });
+    expect(h.soloOwner.otherApproverExists).toHaveBeenCalledWith(expect.anything(), 1n, step2);
+    expect(auditActions(h.audit)).toEqual(['approval.self_approved', 'approval.approved']);
+
+    // The same step twice is still refused.
+    await expect(
+      h.service.approve(SUPERADMIN, 'req-1', undefined, 'อีกครั้งในขั้นเดิม (fake)'),
+    ).rejects.toMatchObject({ code: 'approval.already_acted' });
+  });
+
+  it('keeps one approval per person per request for everyone else', async () => {
+    const h = engine({ roles: { '1': ['superadmin'] }, request: { requesterUserId: 2n, currentStepNo: 2 } });
+    h.tx.approvalAction.count.mockImplementation(({ where }: { where: { actorUserId?: bigint } }) =>
+      Promise.resolve('requestId' in where && where.actorUserId === 1n ? 1 : 0),
+    );
+    await expect(h.service.approve(SUPERADMIN, 'req-1')).rejects.toMatchObject({
+      code: 'approval.already_acted',
+    });
+  });
+
   it('refuses a self-approval reason on somebody else’s request', async () => {
     const { service } = engine({ roles: { '1': ['superadmin'] }, request: { requesterUserId: 2n } });
     await expect(service.approve(SUPERADMIN, 'req-1', undefined, REASON)).rejects.toMatchObject({
@@ -304,9 +361,9 @@ describe('approval threshold at request creation (D-449 B)', () => {
     payload: {},
   });
 
-  it('approves at or below ฿500,000.00 without the second approval: audited "below threshold", evented', async () => {
-    const { service, audit, events, created, tx } = engine({ roles: {}, versionMax: '500000.00' });
-    const request = await service.create(tx as never, input('500000.00'));
+  it('approves at or below ฿100,000.00 (C1f) without the second approval: audited "below threshold", evented', async () => {
+    const { service, audit, events, created, tx } = engine({ roles: {}, versionMax: '100000.00' });
+    const request = await service.create(tx as never, input('100000.00'));
     expect(request).toMatchObject({
       status: 'approved',
       autoApprovedReason: 'below_threshold',
@@ -317,7 +374,7 @@ describe('approval threshold at request creation (D-449 B)', () => {
     ).toBe(true);
     expect(auditActions(audit)).toEqual(['approval.auto_approved']);
     expect(audit.record.mock.calls[0]![1]).toMatchObject({
-      data: { reason: 'below threshold', threshold: '500000.00' },
+      data: { reason: 'below threshold', threshold: '100000.00' },
     });
     expect(eventTypes(events)).toEqual(['approval.approved']);
     expect(events.record.mock.calls[0]![1]).toMatchObject({
@@ -327,7 +384,7 @@ describe('approval threshold at request creation (D-449 B)', () => {
 
   it('routes above the threshold, or without one, as before', async () => {
     for (const [amount, max] of [
-      ['500000.01', '500000.00'],
+      ['100000.01', '100000.00'],
       ['1000.00', null],
     ] as const) {
       const { service, events, tx } = engine({ roles: {}, versionMax: max });
@@ -335,5 +392,48 @@ describe('approval threshold at request creation (D-449 B)', () => {
       expect(request).toMatchObject({ status: 'pending', autoApprovedReason: null });
       expect(eventTypes(events)).toEqual(['approval.requested']);
     }
+  });
+});
+
+describe('credit-limit threshold amendment in the seed (C1f, D-451, DECISIONS-STAGE-A §14.5)', () => {
+  const HISTORY = [OWNER_APPROVAL_THRESHOLD_C1D, OWNER_CREDIT_LIMIT_THRESHOLD_C1F];
+  const v = (over: Partial<VersionFacts>): VersionFacts => ({
+    reason: 'Seed from D-121',
+    autoApproveMaxAmount: null,
+    createdById: null,
+    ...over,
+  });
+
+  it('moves a seeded ฿500,000.00 (first seed or C1d amendment) or a pre-C1d database to ฿100,000.00 once', () => {
+    const c1dSeed = v({ autoApproveMaxAmount: '500000.00' });
+    expect(thresholdAmendmentOf(HISTORY, c1dSeed, [c1dSeed])).toBe(OWNER_CREDIT_LIMIT_THRESHOLD_C1F);
+    const amended = v({ autoApproveMaxAmount: '500000.00', reason: OWNER_APPROVAL_THRESHOLD_C1D.reason });
+    expect(thresholdAmendmentOf(HISTORY, amended, [v({}), amended])).toBe(OWNER_CREDIT_LIMIT_THRESHOLD_C1F);
+    const preC1d = v({});
+    expect(thresholdAmendmentOf(HISTORY, preC1d, [preC1d])).toBe(OWNER_CREDIT_LIMIT_THRESHOLD_C1F);
+    expect(OWNER_CREDIT_LIMIT_THRESHOLD_C1F.amount).toBe('100000.00');
+  });
+
+  it('never repeats itself, never overrides a Superadmin, never re-adds a removed amount', () => {
+    const done = v({ autoApproveMaxAmount: '100000.00', reason: OWNER_CREDIT_LIMIT_THRESHOLD_C1F.reason });
+    expect(thresholdAmendmentOf(HISTORY, done, [v({}), done])).toBeNull();
+    const fresh = v({ autoApproveMaxAmount: '100000.00' });
+    expect(thresholdAmendmentOf(HISTORY, fresh, [fresh])).toBeNull();
+    const edited = v({ autoApproveMaxAmount: '250000.00', reason: 'Superadmin', createdById: 1n });
+    expect(
+      thresholdAmendmentOf(HISTORY, edited, [v({ autoApproveMaxAmount: '500000.00' }), edited]),
+    ).toBeNull();
+    const removed = v({ autoApproveMaxAmount: null, reason: 'Superadmin removed it', createdById: 1n });
+    expect(
+      thresholdAmendmentOf(HISTORY, removed, [v({ autoApproveMaxAmount: '500000.00' }), removed]),
+    ).toBeNull();
+    const removedBySeedLike = v({});
+    expect(
+      thresholdAmendmentOf(HISTORY, removedBySeedLike, [
+        v({ autoApproveMaxAmount: '500000.00' }),
+        removedBySeedLike,
+      ]),
+    ).toBeNull();
+    expect(thresholdAmendmentOf(undefined, fresh, [fresh])).toBeNull();
   });
 });

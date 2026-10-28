@@ -14,6 +14,8 @@ import { type InsideRule } from '@integrations/dieline/inside-rules';
  * - `not_applicable` — labels, shrink sleeves, tags, sleeves, inserts, flat folders (`PK-LA-*`, `PK-TG-*`,
  *   PK-SL-03, PK-IN-02, PK-CI-02, PK-DS-04, PK-SP-13, PK-SP-12): "size search not applicable" — no fit range, out
  *   of the size search, and not counted as missing.
+ * - Exception (C1f, owner 2026-10-28 13:58, DECISIONS-STAGE-A §14.1): PK-TG-03 (cup carrier) is a `box` although it
+ *   matches `PK-TG-*` — it holds products, so it keeps its recipe range ({@link BOX_EXCEPTION_CODES}).
  *
  * The lists are the owner's decision (a documented rule, not a business value): change them here and in DECISIONS.
  * Pure.
@@ -31,6 +33,8 @@ export const NOT_APPLICABLE_CODES = [
   'PK-SP-13',
   'PK-SP-12',
 ] as const;
+/** §14.1: codes read as a `box` although a not-applicable prefix matches them (they hold products). */
+export const BOX_EXCEPTION_CODES = ['PK-TG-03'] as const;
 /** §13.2: code prefixes of bags (width × gusset × height). */
 export const BAG_PREFIXES = ['PK-PG-', 'PK-PB-'] as const;
 /** §13.2: recipe parameters that size a round body (`neckDiameter` sizes a neck hole, not the body). */
@@ -56,6 +60,7 @@ export function recipeParameterNames(recipe: unknown): string[] {
 
 /** The style's size class, from its code and (for cylinders) its approved recipe's parameters. */
 export function sizeClassOf(code: string, recipe: unknown): SizeClass {
+  if ((BOX_EXCEPTION_CODES as readonly string[]).includes(code)) return 'box';
   if (
     NOT_APPLICABLE_PREFIXES.some((p) => code.startsWith(p)) ||
     (NOT_APPLICABLE_CODES as readonly string[]).includes(code)
