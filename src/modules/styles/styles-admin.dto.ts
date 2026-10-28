@@ -316,6 +316,58 @@ export class StyleCommercialDto {
   certifications!: string[];
 }
 
+/** C0b/C1c: `style_bases.fit_range_source` values. */
+export const FIT_RANGE_SOURCES = ['recipe', 'standard_sizes', 'production_envelope', 'combined', 'business'] as const;
+/** C1c: the backfill sources, in the fallback order (DECISIONS-STAGE-A §11.1). */
+export const FIT_BACKFILL_SOURCE_VALUES = ['recipe', 'standard_sizes', 'production_envelope'] as const;
+/** C1c: the data a backfill source read. */
+export const FIT_BASIS_VALUES = [
+  'recipe_size_range',
+  'catalogue_standard_sizes',
+  'recipe_presets',
+  'calculator_size_rules',
+  'engine_limits',
+] as const;
+
+/** C1c: where one bound of a backfilled fit range came from. */
+export class FitRangeBoundSourceDto {
+  @ApiProperty({ enum: FIT_BACKFILL_SOURCE_VALUES, enumName: 'StyleFitBackfillSource', example: 'recipe' })
+  source!: (typeof FIT_BACKFILL_SOURCE_VALUES)[number];
+
+  @ApiProperty({
+    enum: FIT_BASIS_VALUES,
+    enumName: 'StyleFitBasis',
+    isArray: true,
+    example: ['recipe_size_range'],
+    description:
+      'The data read: `recipe_size_range` (approved recipe solver range), `catalogue_standard_sizes` (standard sizes ' +
+      'of the catalogue products of its pattern), `recipe_presets` (the approved recipe\'s preset sizes), ' +
+      '`calculator_size_rules` (its pattern\'s size rules), `engine_limits` (the dieline engine\'s limits)',
+  })
+  basis!: (typeof FIT_BASIS_VALUES)[number][];
+}
+
+/** C1c: the source of each bound (`style_bases.fit_range_bounds`). */
+export class FitRangeBoundSourcesDto {
+  @ApiProperty({ type: FitRangeBoundSourceDto })
+  fitMinLMm!: FitRangeBoundSourceDto;
+
+  @ApiProperty({ type: FitRangeBoundSourceDto })
+  fitMaxLMm!: FitRangeBoundSourceDto;
+
+  @ApiProperty({ type: FitRangeBoundSourceDto })
+  fitMinWMm!: FitRangeBoundSourceDto;
+
+  @ApiProperty({ type: FitRangeBoundSourceDto })
+  fitMaxWMm!: FitRangeBoundSourceDto;
+
+  @ApiProperty({ type: FitRangeBoundSourceDto })
+  fitMinHMm!: FitRangeBoundSourceDto;
+
+  @ApiProperty({ type: FitRangeBoundSourceDto })
+  fitMaxHMm!: FitRangeBoundSourceDto;
+}
+
 export class AdminStyleBaseDetailDto extends AdminStyleBaseDto {
   @ApiProperty({ example: 'Four side panels + glue flap; …' })
   construction!: string;
@@ -366,16 +418,27 @@ export class AdminStyleBaseDetailDto extends AdminStyleBaseDto {
   commercial!: StyleCommercialDto;
 
   @ApiProperty({
-    enum: ['recipe', 'business'],
+    enum: FIT_RANGE_SOURCES,
     enumName: 'StyleFitRangeSource',
     nullable: true,
     example: null,
     description:
-      'Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the ' +
-      'approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / ' +
-      'the CSV (never overwritten by the backfill); null = no range. Read-only.',
+      'Where the fit range in `commercial` came from (C0b/C1c, DECISIONS-STAGE-A §9.1, §11.1): a backfill source — ' +
+      '`recipe` (approved recipe range), `standard_sizes` (the style\'s standard sizes), `production_envelope` ' +
+      '(calculator size rules ∩ dieline engine limits) or `combined` (bounds from several; see `fitRangeBounds`) — ' +
+      'replaced by any value curation saves; `business` = entered by curation / the CSV, never overwritten by the ' +
+      'backfill; null = no range. Read-only.',
   })
-  fitRangeSource!: 'recipe' | 'business' | null;
+  fitRangeSource!: (typeof FIT_RANGE_SOURCES)[number] | null;
+
+  @ApiProperty({
+    type: FitRangeBoundSourcesDto,
+    nullable: true,
+    description:
+      'C1c: for a backfilled range, the source and basis of each of the six bounds; null for a business range or none. ' +
+      'Read-only.',
+  })
+  fitRangeBounds!: FitRangeBoundSourcesDto | null;
 }
 
 /** C0b: `POST /v1/admin/styles/actions/backfill-fit-ranges`. */
@@ -391,28 +454,109 @@ export class FitRangeBackfillDto {
   dryRun?: boolean;
 }
 
+/** C1c: the fit range a backfill run sets (inside mm, all six bounds). */
+export class FitRangeValuesDto {
+  @ApiProperty({ type: 'integer', example: 60 })
+  fitMinLMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 400 })
+  fitMaxLMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 50 })
+  fitMinWMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 300 })
+  fitMaxWMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 25 })
+  fitMinHMm!: number;
+
+  @ApiProperty({ type: 'integer', example: 35 })
+  fitMaxHMm!: number;
+}
+
+/** C1c: one style the run fills or refreshes (the dry-run preview). */
+export class FitRangeChangeDto {
+  @ApiProperty({ type: String, format: 'uuid', example: STYLE_IDS.base })
+  styleId!: string;
+
+  @ApiProperty({ example: 'PK-SP-01' })
+  code!: string;
+
+  @ApiProperty({ enum: ['filled', 'refreshed'], enumName: 'StyleFitRangeChangeAction', example: 'filled' })
+  action!: 'filled' | 'refreshed';
+
+  @ApiProperty({ type: FitRangeValuesDto, nullable: true, description: 'The range before (null = empty)' })
+  before!: FitRangeValuesDto | null;
+
+  @ApiProperty({ type: FitRangeValuesDto })
+  after!: FitRangeValuesDto;
+
+  @ApiProperty({ enum: FIT_RANGE_SOURCES, enumName: 'StyleFitRangeSource', example: 'combined' })
+  source!: (typeof FIT_RANGE_SOURCES)[number];
+
+  @ApiProperty({ type: FitRangeBoundSourcesDto })
+  bounds!: FitRangeBoundSourcesDto;
+}
+
+/** C1c: a style the run cannot fill, and why. */
+export class FitRangeIncompleteDto {
+  @ApiProperty({ example: 'PK-LA-01' })
+  code!: string;
+
+  @ApiProperty({
+    type: [String],
+    example: ['fitMinHMm', 'fitMaxHMm'],
+    description: 'Bounds no source gives (`fitMinLMm` … `fitMaxHMm`)',
+  })
+  missing!: string[];
+
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'Dimensions (`length`, `width`, `height`) whose bounds, as the sources give them, leave no size',
+  })
+  conflicting!: string[];
+}
+
+export class FitRangeSourceCountsDto {
+  @ApiProperty({ type: 'integer', example: 81 })
+  recipe!: number;
+
+  @ApiProperty({ type: 'integer', example: 0 })
+  standard_sizes!: number;
+
+  @ApiProperty({ type: 'integer', example: 0 })
+  production_envelope!: number;
+}
+
+export class FitRangeSummaryCountsDto extends FitRangeSourceCountsDto {
+  @ApiProperty({ type: 'integer', example: 9 })
+  combined!: number;
+}
+
 export class FitRangeBackfillResult {
   @ApiProperty({ example: false })
   dryRun!: boolean;
 
-  @ApiProperty({ type: 'integer', example: 122, description: 'Styles with an approved recipe' })
+  @ApiProperty({ type: 'integer', example: 122, description: 'Active styles' })
   considered!: number;
 
   @ApiProperty({
     type: [String],
     example: ['PK-CB-01'],
-    description: 'Codes whose empty range was filled from the recipe (source `recipe`)',
+    description: 'Codes whose empty range was filled',
   })
   filled!: string[];
 
   @ApiProperty({
     type: [String],
     example: [],
-    description: 'Codes whose earlier recipe range followed a newer approved recipe',
+    description: 'Codes whose backfilled range followed newer data (or gained its per-bound sources)',
   })
   refreshed!: string[];
 
-  @ApiProperty({ type: 'integer', example: 0, description: 'Recipe ranges already in place' })
+  @ApiProperty({ type: 'integer', example: 0, description: 'Backfilled ranges already in place' })
   unchanged!: number;
 
   @ApiProperty({
@@ -424,10 +568,26 @@ export class FitRangeBackfillResult {
 
   @ApiProperty({
     type: [String],
-    example: ['PK-CB-02'],
-    description: 'Codes whose recipe states no complete size range (stay out of the size search)',
+    example: ['PK-LA-01'],
+    deprecated: true,
+    description: 'Codes no source gives a complete range (stay out of the size search) — same as `incomplete[].code`',
   })
   noRecipeRange!: string[];
+
+  @ApiProperty({ type: [FitRangeIncompleteDto], description: 'C1c: styles left empty, with what is missing' })
+  incomplete!: FitRangeIncompleteDto[];
+
+  @ApiProperty({
+    type: FitRangeSummaryCountsDto,
+    description: 'C1c: backfilled styles (filled, refreshed or unchanged) per summary source',
+  })
+  bySource!: FitRangeSummaryCountsDto;
+
+  @ApiProperty({ type: FitRangeSourceCountsDto, description: 'C1c: backfilled bounds per source' })
+  boundsBySource!: FitRangeSourceCountsDto;
+
+  @ApiProperty({ type: [FitRangeChangeDto], description: 'C1c: what the run writes (or, with `dryRun`, would write)' })
+  changes!: FitRangeChangeDto[];
 }
 
 export class AdminStyleVariantDto {
@@ -617,6 +777,7 @@ export const ADMIN_STYLE_DETAIL_EXAMPLE: AdminStyleBaseDetailDto = {
     certifications: [],
   },
   fitRangeSource: null,
+  fitRangeBounds: null,
 };
 
 export const ADMIN_VARIANT_EXAMPLE: AdminStyleVariantDto = {

@@ -16,11 +16,13 @@ import {
   type DielineMaterial,
   type DielineQuantities,
   type DielineRequest,
+  type InsideSpan,
   type PrintPdf,
   type PrintPdfOptions,
   type RecipeBuild,
   type RecipeBuildRequest,
   type RecipeFacts,
+  type RecipeInsideSizes,
   type StoredRecipe,
   type Thumbnails,
 } from './dieline-engine.port';
@@ -41,6 +43,11 @@ interface EngineRecipe {
   materials?: string[];
   legacy?: { patternKeys: string[] };
   presets?: unknown;
+}
+interface EngineStyle {
+  defaults?: Values;
+  presets?: { id?: string; values: Values }[];
+  closedSize?: (values: Values, material: DielineMaterial) => { length: number; width: number; height: number };
 }
 interface Variant {
   axes: Record<string, string>;
@@ -72,6 +79,8 @@ interface DielinePackage {
   variantsOf(recipe: EngineRecipe): Variant[];
   recipeProcesses(recipe: EngineRecipe): string[];
   sizeRanges(recipe: EngineRecipe, material: DielineMaterial): Record<string, { min: number; max: number }>;
+  /** The engine's style of a recipe: its resolved defaults and presets, and its `closedSize` when it declares one. */
+  styleFromRecipe(recipe: EngineRecipe): EngineStyle;
   explain(
     recipe: EngineRecipe,
     values: Values,
@@ -217,6 +226,46 @@ export class GetpackDielineEngine implements DielineEngine {
       sizeRanges,
       variants,
     };
+  }
+
+  /**
+   * C1c (DECISIONS-STAGE-A §11.1): the inside sizes the recipe's own data gives — its presets (`standard`) and the
+   * solver's parameter limits (`limits`, a 5-point grid per limited parameter, corners included, other parameters at
+   * their defaults) — through the recipe's `closedSize` (the engine's inside closed size), or its own
+   * `length`/`width`/`height` parameters when it declares none. A size the engine cannot evaluate is skipped; a
+   * dimension with no finite positive value stays null.
+   */
+  async insideSizes(stored: StoredRecipe): Promise<RecipeInsideSizes> {
+    const { pkg } = await this.engine();
+    const out: RecipeInsideSizes = {};
+    for (const r of this.parse(pkg, stored)) {
+      const style = pkg.styleFromRecipe(r);
+      for (const cls of r.materials ?? []) {
+        if (out[cls]) continue;
+        const material = this.reference(pkg, cls);
+        if (!material) continue;
+        const inside = (values: Values) => {
+          const v = { ...(style.defaults ?? {}), ...values };
+          if (style.closedSize) return style.closedSize(v, material);
+          return { length: v['length'], width: v['width'], height: v['height'] };
+        };
+        const standard = new SpanBuilder();
+        for (const p of style.presets ?? []) standard.add(() => inside(p.values));
+        const limits = new SpanBuilder();
+        const ranges = Object.entries(pkg.sizeRanges(r, material));
+        if (ranges.length > 0 && ranges.length <= MAX_GRID_PARAMS) {
+          const walk = (i: number, values: Values) => {
+            if (i === ranges.length) return limits.add(() => inside(values));
+            const [key, { min, max }] = ranges[i]!;
+            for (let j = 0; j < GRID_POINTS; j++)
+              walk(i + 1, { ...values, [key]: min + ((max - min) * j) / (GRID_POINTS - 1) });
+          };
+          walk(0, {});
+        }
+        out[cls] = { standard: standard.span(), limits: limits.span() };
+      }
+    }
+    return out;
   }
 
   async thumbnails(request: RecipeBuildRequest, size: number): Promise<Thumbnails> {
@@ -425,5 +474,36 @@ export class GetpackDielineEngine implements DielineEngine {
       }
     })();
     return this.loaded;
+  }
+}
+
+/** C1c: grid points per limited parameter (corners included) and the most parameters walked (5^5 sizes). */
+const GRID_POINTS = 5;
+const MAX_GRID_PARAMS = 5;
+
+/** The min/max per dimension of the inside sizes added; sizes the engine cannot evaluate are skipped. */
+class SpanBuilder {
+  private readonly lo = { length: Infinity, width: Infinity, height: Infinity };
+  private readonly hi = { length: -Infinity, width: -Infinity, height: -Infinity };
+
+  add(size: () => Record<'length' | 'width' | 'height', unknown>): void {
+    let s: Record<'length' | 'width' | 'height', unknown>;
+    try {
+      s = size();
+    } catch {
+      return;
+    }
+    for (const k of ['length', 'width', 'height'] as const) {
+      const v = s[k];
+      if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) continue;
+      this.lo[k] = Math.min(this.lo[k], v);
+      this.hi[k] = Math.max(this.hi[k], v);
+    }
+  }
+
+  span(): InsideSpan {
+    const of = (k: 'length' | 'width' | 'height') =>
+      this.lo[k] <= this.hi[k] ? { min: this.lo[k], max: this.hi[k] } : null;
+    return { length: of('length'), width: of('width'), height: of('height') };
   }
 }

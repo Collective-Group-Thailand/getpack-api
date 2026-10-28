@@ -15,6 +15,10 @@ import {
   StoreStructuralRequestsController,
 } from './structural-requests.controller';
 import { AdminStyleIntakesController, PartnerStyleIntakesController } from './style-intakes.controller';
+import {
+  AdminStyleLibrarySettingsController,
+  StoreStyleLibrarySettingsController,
+} from './style-library-settings.controller';
 import { AdminStylePriceRulesController } from './style-price-rules';
 import { AdminStyleImportsController, AdminStylesController } from './styles-admin.controller';
 import { StoreStyleFavouritesController, StoreStylesController } from './styles-store.controller';
@@ -25,6 +29,7 @@ export const STYLES_STORE_CONTROLLERS: Type<unknown>[] = [
   StoreStyleFavouritesController,
   StoreDielinesController,
   StoreStructuralRequestsController,
+  StoreStyleLibrarySettingsController,
 ];
 
 /** `/v1/admin/*` controllers of the style library. */
@@ -40,6 +45,7 @@ export const STYLES_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminDielinesController,
   AdminStyleIntakesController,
   AdminStructuralRequestsController,
+  AdminStyleLibrarySettingsController,
 ];
 
 /** `/v1/partner/*` controllers of the style library. */

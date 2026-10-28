@@ -80,10 +80,14 @@ model StyleBase {
   fitMaxWMm                Int?        @map("fit_max_w_mm")
   fitMinHMm                Int?        @map("fit_min_h_mm")
   fitMaxHMm                Int?        @map("fit_max_h_mm")
-  /// C0b (owner decision 2026-10-28): where the fit range came from — `recipe` (backfilled from the approved recipe's
-  /// solver range, replaced by any later business value) or `business` (entered by curation or the CSV, never
-  /// overwritten by the backfill); null = no range.
+  /// C0b / C1c (owner decisions 2026-10-28): where the fit range came from — a backfill source (`recipe`,
+  /// `standard_sizes`, `production_envelope`, or `combined` when its bounds come from several; replaced by any later
+  /// business value) or `business` (entered by curation or the CSV, never overwritten by the backfill); null = no range.
   fitRangeSource           String?     @map("fit_range_source")
+  /// C1c (owner decision 2026-10-28, DECISIONS-STAGE-A §11.1): for a backfilled range, each bound's source and basis
+  /// (`{ fitMinLMm: { source: recipe | standard_sizes | production_envelope, basis: [...] }, … }`); null for a business
+  /// range or none. `fit_range_source` then holds the one source of all six bounds, or `combined`.
+  fitRangeBounds           Json?       @map("fit_range_bounds")
   /// Minimum order quantity shown on the card and in the quick view (pieces); null = not shown.
   moqUnits                 Int?        @map("moq_units")
   /// Sustainability facts as entered by the business (never derived from the material); null = unknown.

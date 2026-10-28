@@ -49,12 +49,35 @@ Additive. Migration `20261223000001_style_fit_range_source` (+ `down.sql`, hand-
   seed step 4b. `admin.styles.get` returns `fitRangeSource`. A curation save that changes the range marks it `business`.
   Seed data (engine bundle `@getpack/dieline@0.1.0+ccc03fe8`): **81 of 122 filled**, 41 without a complete recipe range.
 - **CSV size basis (§9.2):** the catalogue CSV's size columns are **inside dimensions in mm** — the future importer reads
-  them so (the current template's `*_cm` header names notwithstanding); `price_est_*` columns are ignored (D-220).
+  them so; since C1c (§11.3) the template's headers say so too (`length_min_mm` … `height_max_mm`); `price_est_*` columns are ignored (D-220).
 - **Quote response (§9.3):** store style card/detail `quoteResponseBusinessDays` = `rfq.sla_business_hours` (product-type
   scope, platform fallback) ÷ 24, rounded up (RFQ due time counts every hour of a working day); null when unset.
+  **Superseded by C1c (§11.2):** ÷ the hours of one business day from `calendar.business_hours`.
 - **Style dielines (§9.4a):** `styles.render_assets` also renders each published style's own `dieline_svg` (no variant) at
   the approved recipe's default size → card `dielineUrl` and the quick view "แบบคลี่". 113 of 122 drawable on seed data
   (not: PK-LA-07, PK-PB-01…08 — no reference material for `shrink_film` / `flexible`).
 - **Print beyond the instant price (§9.5):** `StorePrintSideDto.quote` `{ spotMaxColours, cmykAddOnMaxColours }` | null —
   colours a customer may still choose beyond the priced counts (up to the side's offered spot inks); `calculate` answers
   `rfq_required` for them (unchanged). `catalog.print_limits` untouched.
+
+## C1c — owner decisions after C0b (2026-10-28, DECISIONS-STAGE-A §11, D-448)
+
+Additive. Migration `20261225000001_c1c_fit_range_bounds` (+ `down.sql`, hand-written): `style_bases.fit_range_bounds`
+(jsonb), `fit_range_source` check widened to `recipe | standard_sizes | production_envelope | combined | business`.
+- **Fit-range fallback (§11.1):** `admin.styles.backfillFitRanges` / `pnpm styles:fit-ranges` / UAT seed 4b now take each
+  bound from (a) the approved recipe range, (b) the standard sizes (catalogue products' `standard_sizes` of the style's
+  pattern + the recipe's presets through the engine's `closedSize`), (c) the production envelope (pattern
+  `constraints` size rules ∩ engine solver limits through `closedSize`). Result adds `incomplete[]` (missing bounds),
+  `bySource`, `boundsBySource`, `changes[]` (dry-run preview); `noRecipeRange` deprecated (= `incomplete[].code`).
+  `admin.styles.get` adds `fitRangeBounds` (per bound `{ source, basis[] }`). Engine port: `insideSizes(recipe)`.
+  Seed data: **90 of 122** — recipe 81, combined (recipe + recipe presets) 9; bounds: recipe 512, standard sizes 28,
+  production envelope 0; 32 stay empty (no inside L/W/H in any source: labels, bags, tags, cups, cylinders, flat folders).
+- **Quote response (§11.2):** `quoteResponseBusinessDays = ceil(sla hours ÷ business-day hours)` (`calendar.business_hours`).
+- **CSV (§11.3):** template headers `*_mm`.
+- **Style library content (§11.5):** setting `storefront.style_library` (json, Marketing, unset);
+  `GET /v1/store/style-library/settings` (`store.styleLibrary.getSettings`, public, 60 s cache — closes the web contract
+  request `store.style-library.settings`; adds certificate `expiresOn`); `GET`/`PUT /v1/admin/style-library/settings`
+  (`admin.styleLibrary.getSettings` `styles.read`, `updateSettings` `styles.curate`, versioned via the settings
+  platform: validated, audited, evented). Logos carry a staff-only `permission`.
+- **Superadmin (§11.6):** `admin.settings.changeValue` lets Superadmin change any setting (owner check), audited as them.
+

@@ -4,15 +4,32 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { Prisma } from '@generated/prisma/client';
+import {
+  DIELINE_ENGINE,
+  type DielineEngine,
+  type RecipeInsideSizes,
+  type StoredRecipe,
+} from '@integrations/dieline/dieline-engine.port';
+import { sizeRulesOf } from '@modules/catalog/store/size-rules';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
+import {
+  classSpan,
+  FIT_BOUNDS,
+  type FitBoundSources,
+  mergeFitRange,
+  productionEnvelopeBounds,
+  recipeBounds,
+  sameBoundSources,
+  standardSizeBounds,
+  summarySource,
+} from './fit-range-sources';
 import { PUBLISH_REASONS } from './publishability';
 import {
   type FitRange,
-  fitRangeFromRecipe,
   type FitRangeSource,
   isFitRangeEmpty,
   sameFitRange,
@@ -24,6 +41,7 @@ import {
   type AdminStylePhotoDto,
   type AdminStyleVariantDto,
   type FitRangeBackfillResult,
+  type FitRangeValuesDto,
   type SetStylePhotoDto,
   type StyleCommercialDto,
   type StyleImportRunDto,
@@ -72,6 +90,7 @@ export class StylesAdminService {
     private readonly publishing: StylePublishingService,
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
+    @Inject(DIELINE_ENGINE) private readonly engine: DielineEngine,
   ) {}
 
   async list(query: {
@@ -157,6 +176,7 @@ export class StylesAdminService {
         certifications: row.certifications,
       },
       fitRangeSource: (row.fitRangeSource as FitRangeSource | null) ?? null,
+      fitRangeBounds: fitRangeBoundsDto(row.fitRangeBounds),
     };
   }
 
@@ -303,7 +323,7 @@ export class StylesAdminService {
     actor: Actor,
     base: BaseRow,
     input: UpdateStyleDto,
-    options: { fitRangeSource?: FitRangeSource } = {},
+    options: { fitRangeSource?: FitRangeSource; fitRangeBounds?: FitBoundSources } = {},
   ): Promise<void> {
     let productTypeId: bigint | null | undefined;
     if (input.productTypeCode !== undefined) {
@@ -335,14 +355,25 @@ export class StylesAdminService {
         }
       : null;
     const fitChanged = fit !== null && !sameFitRange(fit, base);
+    const backfill = options.fitRangeSource !== undefined && options.fitRangeSource !== 'business';
     const fitRangeSource: FitRangeSource | null | undefined =
       fit === null
         ? undefined
         : isFitRangeEmpty(fit)
           ? null
-          : fitChanged
+          : fitChanged || backfill
             ? (options.fitRangeSource ?? 'business')
-            : ((base.fitRangeSource as FitRangeSource | null) ?? options.fitRangeSource ?? 'business');
+            : ((base.fitRangeSource as FitRangeSource | null) ?? 'business');
+    // C1c: a backfill writes each bound's source; a business range has none; a resent unchanged range keeps its own.
+    const fitRangeBounds: Prisma.InputJsonValue | typeof Prisma.DbNull | undefined =
+      fit === null
+        ? undefined
+        : backfill && options.fitRangeBounds
+          ? (options.fitRangeBounds)
+          : fitRangeSource === null || fitRangeSource === 'business'
+            ? Prisma.DbNull
+            : undefined;
+    const sourceChanged = fitRangeSource !== undefined && fitRangeSource !== (base.fitRangeSource ?? null);
     await tx.styleBase.update({
       where: { id: base.id },
       data: {
@@ -357,6 +388,7 @@ export class StylesAdminService {
         ...(input.commercial && {
           ...fit,
           fitRangeSource,
+          ...(fitRangeBounds !== undefined && { fitRangeBounds }),
           moqUnits: input.commercial.moqUnits ?? null,
           recyclable: input.commercial.recyclable ?? null,
           plasticFree: input.commercial.plasticFree ?? null,
@@ -392,8 +424,14 @@ export class StylesAdminService {
       {
         fields: Object.keys(input).filter((k) => input[k as keyof UpdateStyleDto] !== undefined),
         namesApprovalCleared: renamed,
-        ...(fitChanged && {
-          fitRange: { before: fitRangeOf(base), after: fit, source: fitRangeSource ?? null },
+        ...((fitChanged || sourceChanged) && {
+          fitRange: {
+            before: fitRangeOf(base),
+            after: fit,
+            sourceBefore: base.fitRangeSource ?? null,
+            source: fitRangeSource ?? null,
+            ...(backfill && options.fitRangeBounds && { bounds: options.fitRangeBounds }),
+          },
         }),
       },
       actor,
@@ -402,15 +440,18 @@ export class StylesAdminService {
   }
 
   /**
-   * C0b (owner decision 2026-10-28, DECISIONS-STAGE-A §9.1): fills each style's empty inside fit range from its approved
-   * recipe's size range ({@link fitRangeFromRecipe}) through the curation path above — audited per style, source
-   * `recipe`. Never touches a business-entered range (source `business`, or any bound entered before sources existed);
-   * a range it filled earlier follows a newer approved recipe. Idempotent: a second run changes nothing. `dryRun`
-   * reports without writing.
+   * C0b / C1c (owner decisions 2026-10-28, DECISIONS-STAGE-A §9.1, §11.1): fills each style's empty inside fit range
+   * through the curation path above — audited per style — taking each bound from the first source that gives it:
+   * (a) the approved recipe's range, (b) the style's own standard sizes (its catalogue products' standard sizes and
+   * the recipe's presets), (c) the production envelope (its pattern's calculator size rules ∩ the dieline engine's
+   * limits) ({@link mergeFitRange}). Each bound's source is stored (`fit_range_bounds`), the summary in
+   * `fit_range_source`. Never touches a business-entered range (source `business`, or any bound entered before sources
+   * existed); a range it filled earlier follows newer data. A style whose six bounds are not all given stays empty and
+   * is listed with what is missing. Idempotent (a second run changes nothing); `dryRun` reports without writing.
    */
   async backfillFitRanges(actor: Actor, options: { dryRun?: boolean } = {}): Promise<FitRangeBackfillResult> {
     const bases = await this.prisma.styleBase.findMany({
-      where: { recipes: { some: { approvedAt: { not: null } } } },
+      where: { status: 'active' },
       orderBy: { code: 'asc' },
       select: {
         publicId: true,
@@ -423,11 +464,30 @@ export class StylesAdminService {
         fitMinHMm: true,
         fitMaxHMm: true,
         fitRangeSource: true,
+        fitRangeBounds: true,
         recipes: {
           where: { approvedAt: { not: null } },
           orderBy: { version: 'desc' },
           take: 1,
-          select: { sizeRanges: true },
+          select: { recipe: true, sizeRanges: true },
+        },
+        pattern: {
+          select: {
+            constraints: true,
+            catalogProducts: {
+              where: { catalogProduct: { status: 'active' } },
+              select: {
+                catalogProduct: {
+                  select: {
+                    standardSizes: {
+                      where: { status: 'active' },
+                      select: { lengthMm: true, widthMm: true, heightMm: true },
+                    },
+                  },
+                },
+              },
+            },
+          },
         },
       },
     });
@@ -439,6 +499,10 @@ export class StylesAdminService {
       unchanged: 0,
       keptBusiness: [],
       noRecipeRange: [],
+      incomplete: [],
+      bySource: { recipe: 0, standard_sizes: 0, production_envelope: 0, combined: 0 },
+      boundsBySource: { recipe: 0, standard_sizes: 0, production_envelope: 0 },
+      changes: [],
     };
     for (const b of bases) {
       const business = b.fitRangeSource === 'business' || (b.fitRangeSource === null && !isFitRangeEmpty(b));
@@ -446,16 +510,54 @@ export class StylesAdminService {
         result.keptBusiness.push(b.code);
         continue;
       }
-      const range = fitRangeFromRecipe(b.materialClass, b.recipes[0]?.sizeRanges ?? null);
-      if (!range) {
+      const recipe = b.recipes[0] ?? null;
+      const inside = recipe ? await this.insideSizes(recipe.recipe) : {};
+      const rules = b.pattern ? sizeRulesOf(b.pattern.constraints) : null;
+      const merged = mergeFitRange({
+        recipe: recipeBounds(b.materialClass, recipe?.sizeRanges ?? null),
+        standard_sizes: standardSizeBounds(
+          (b.pattern?.catalogProducts ?? []).flatMap((p) =>
+            p.catalogProduct.standardSizes.map((z) => ({
+              lengthMm: Number(z.lengthMm),
+              widthMm: Number(z.widthMm),
+              heightMm: Number(z.heightMm),
+            })),
+          ),
+          classSpan(b.materialClass, Object.fromEntries(Object.entries(inside).map(([k, v]) => [k, v.standard]))),
+        ),
+        production_envelope: productionEnvelopeBounds(
+          rules,
+          classSpan(b.materialClass, Object.fromEntries(Object.entries(inside).map(([k, v]) => [k, v.limits]))),
+        ),
+      });
+      if (!merged.range || !merged.bounds) {
         result.noRecipeRange.push(b.code);
+        result.incomplete.push({ code: b.code, missing: merged.missing, conflicting: merged.conflicting });
         continue;
       }
-      if (b.fitRangeSource === 'recipe' && sameFitRange(range, b)) {
+      const source = summarySource(merged.bounds);
+      result.bySource[source] += 1;
+      for (const k of FIT_BOUNDS) result.boundsBySource[merged.bounds[k].source] += 1;
+      if (
+        b.fitRangeSource === source &&
+        sameFitRange(merged.range, b) &&
+        (sameBoundSources(b.fitRangeBounds, merged.bounds) || (source === 'recipe' && b.fitRangeBounds === null))
+      ) {
         result.unchanged += 1;
         continue;
       }
-      (b.fitRangeSource === 'recipe' ? result.refreshed : result.filled).push(b.code);
+      const action = b.fitRangeSource === null ? 'filled' : 'refreshed';
+      result[action].push(b.code);
+      result.changes.push({
+        styleId: b.publicId,
+        code: b.code,
+        action,
+        // A backfilled range always has all six bounds (business ones are skipped above).
+        before: isFitRangeEmpty(b) ? null : (fitRangeOf(b) as FitRangeValuesDto),
+        after: merged.range as FitRangeValuesDto,
+        source,
+        bounds: merged.bounds,
+      });
       if (result.dryRun) continue;
       await this.prisma.withTx(async (tx) => {
         const base = await this.row(tx, b.publicId);
@@ -468,18 +570,27 @@ export class StylesAdminService {
           base,
           {
             commercial: {
-              ...range,
+              ...merged.range!,
               moqUnits: base.moqUnits,
               recyclable: base.recyclable,
               plasticFree: base.plasticFree,
               certifications: base.certifications,
             },
           },
-          { fitRangeSource: 'recipe' },
+          { fitRangeSource: source, fitRangeBounds: merged.bounds! },
         );
       });
     }
     return result;
+  }
+
+  /** C1c: the engine's inside spans of an approved recipe; none when the engine cannot read it (never fails a run). */
+  private async insideSizes(recipe: unknown): Promise<RecipeInsideSizes> {
+    try {
+      return await this.engine.insideSizes(recipe as StoredRecipe);
+    } catch {
+      return {};
+    }
   }
 
   /**
@@ -689,3 +800,10 @@ const fitRangeOf = (r: FitRange): FitRange => ({
   fitMinHMm: r.fitMinHMm,
   fitMaxHMm: r.fitMaxHMm,
 });
+
+/** C1c: `style_bases.fit_range_bounds` as the admin reads it (null for a business range or none). */
+function fitRangeBoundsDto(value: unknown): FitBoundSources | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  const v = value as Record<string, { source?: unknown; basis?: unknown }>;
+  return FIT_BOUNDS.every((k) => typeof v[k]?.source === 'string') ? (v as unknown as FitBoundSources) : null;
+}

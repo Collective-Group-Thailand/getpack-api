@@ -11,6 +11,7 @@ import { Injectable } from '@nestjs/common';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
+import { quoteResponseDaysOf } from './quote-response-days';
 import { StyleAssetsService } from './style-assets.service';
 import { fitOf, hasFitRange, parseProductSize } from './style-fit';
 import { StyleMakeabilityService } from './style-makeability.service';
@@ -485,9 +486,10 @@ export class StylesStoreService {
   private readonly responseDays = new Map<string, { days: number | null; until: number }>();
 
   /**
-   * C0b (DECISIONS-STAGE-A §9.3): the quotation first-response time in working days — `rfq.sla_business_hours` at the
-   * style's product type (platform fallback, D-100) over 24 h, rounded up: the RFQ due time counts every hour of a
-   * working day (`WorkingDayCalendar.addWorkingMinutes`). Null without a product type or a setting value.
+   * C0b / C1c (DECISIONS-STAGE-A §9.3, §11.2): the quotation first-response time in working days —
+   * `rfq.sla_business_hours` at the style's product type (platform fallback, D-100) divided by the hours of one
+   * business day (`calendar.business_hours`, D-175: 09:00–18:00 = 9 h), rounded up ({@link quoteResponseDaysOf}).
+   * Null without a product type, an SLA value or a usable business-hours window: the timing is then omitted.
    */
   private async quoteResponseDays(productTypeId: bigint | null): Promise<number | null> {
     if (productTypeId === null) return null;
@@ -497,14 +499,13 @@ export class StylesStoreService {
     if (cached && cached.until > now) return cached.days;
     let days: number | null = null;
     try {
-      const hours = Number(
-        (
-          await this.settings.at('rfq.sla_business_hours', {
-            scope: { type: 'product_type', id: productTypeId },
-          })
-        ).value,
-      );
-      days = Number.isFinite(hours) && hours > 0 ? Math.ceil(hours / 24) : null;
+      const hours = (
+        await this.settings.at('rfq.sla_business_hours', {
+          scope: { type: 'product_type', id: productTypeId },
+        })
+      ).value;
+      const window = (await this.settings.at('calendar.business_hours')).value;
+      days = quoteResponseDaysOf(hours, window);
     } catch (error) {
       if (!(error instanceof SettingNotFoundError)) throw error;
     }

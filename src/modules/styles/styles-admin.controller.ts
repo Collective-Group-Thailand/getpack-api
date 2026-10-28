@@ -137,15 +137,17 @@ export class AdminStylesController {
   @Can('styles.curate')
   @ApiEndpoint({
     id: 'admin.styles.backfillFitRanges',
-    summary: 'Fill empty fit ranges from approved recipes',
+    summary: 'Fill empty fit ranges from the system\'s own size data',
     description:
-      'C0b (owner decision 2026-10-28, DECISIONS-STAGE-A §9.1; curation D-246): each style whose inside fit range ' +
-      'is empty gets the approved recipe’s size range (D-241, mm, inside basis; the style’s own material class, else ' +
-      'what every complete class allows), through the same path as `admin.styles.update` — audited per style as ' +
-      '`style_base.curated` with source `recipe`. A range the business entered is never overwritten; a range filled ' +
-      'here earlier follows a newer approved recipe. Idempotent (a second run changes nothing); `dryRun` reports ' +
-      'without writing.',
-    implements: [...DECISIONS, 'D-246'],
+      'C0b / C1c (owner decisions 2026-10-28, DECISIONS-STAGE-A §9.1, §11.1; curation D-246): each style whose inside ' +
+      'fit range is empty gets one through the same path as `admin.styles.update` — audited per style as ' +
+      '`style_base.curated` — each bound taken from the first source that gives it: (a) the approved recipe’s size ' +
+      'range (D-241), (b) the style’s own standard sizes (its catalogue products’ standard sizes, the recipe’s ' +
+      'presets), (c) the production envelope (its pattern’s calculator size rules ∩ the dieline engine’s limits). ' +
+      'Each bound’s source is stored; nothing is mapped by hand. A range the business entered is never overwritten; ' +
+      'a backfilled range follows newer data. A style without all six bounds stays empty and is listed in ' +
+      '`incomplete`. Idempotent (a second run changes nothing); `dryRun` reports without writing (`changes` = preview).',
+    implements: [...DECISIONS, 'D-246', 'D-448'],
   })
   @ApiBody({ type: FitRangeBackfillDto, examples: { default: { value: { dryRun: true } } } })
   @ApiSuccess(200, {
@@ -154,11 +156,32 @@ export class AdminStylesController {
     example: {
       dryRun: true,
       considered: 122,
-      filled: ['PK-CB-01'],
+      filled: ['PK-SP-01'],
       refreshed: [],
-      unchanged: 0,
+      unchanged: 81,
       keptBusiness: [],
-      noRecipeRange: ['PK-CB-02'],
+      noRecipeRange: ['PK-LA-01'],
+      incomplete: [{ code: 'PK-LA-01', missing: ['fitMinLMm', 'fitMaxLMm', 'fitMinWMm', 'fitMaxWMm', 'fitMinHMm', 'fitMaxHMm'], conflicting: [] }],
+      bySource: { recipe: 81, standard_sizes: 0, production_envelope: 0, combined: 1 },
+      boundsBySource: { recipe: 490, standard_sizes: 2, production_envelope: 0 },
+      changes: [
+        {
+          styleId: STYLE_IDS.base,
+          code: 'PK-SP-01',
+          action: 'filled',
+          before: null,
+          after: { fitMinLMm: 60, fitMaxLMm: 400, fitMinWMm: 51, fitMaxWMm: 300, fitMinHMm: 25, fitMaxHMm: 35 },
+          source: 'combined',
+          bounds: {
+            fitMinLMm: { source: 'recipe', basis: ['recipe_size_range'] },
+            fitMaxLMm: { source: 'recipe', basis: ['recipe_size_range'] },
+            fitMinWMm: { source: 'recipe', basis: ['recipe_size_range'] },
+            fitMaxWMm: { source: 'recipe', basis: ['recipe_size_range'] },
+            fitMinHMm: { source: 'standard_sizes', basis: ['recipe_presets'] },
+            fitMaxHMm: { source: 'standard_sizes', basis: ['recipe_presets'] },
+          },
+        },
+      ],
     },
   })
   @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')

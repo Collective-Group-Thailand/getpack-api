@@ -11,7 +11,8 @@
  *      only added later (`PRODUCT_TYPE_OF`, D-407);
  *   4. the processes the recipes need, per material class, proposed for the UAT factory F9001 by Admin and verified by
  *      the Partner Manager against F9001's passing site visit — what makes a variant orderable instantly;
- *   4b. empty inside fit ranges filled from the approved recipes (C0b, DECISIONS-STAGE-A §9.1; source `recipe`);
+ *   4b. empty inside fit ranges filled (C0b/C1c, DECISIONS-STAGE-A §9.1, §11.1) — each bound from the approved recipe,
+ *       else the style's standard sizes, else the production envelope; each bound's source recorded;
  *   5. publishability recomputed: since D-407 every drawn, named variant is shown and designable; the ones F9001
  *      cannot make are offered as a quotation request.
  *
@@ -185,12 +186,14 @@ export async function publishUatStyles(
   log.push(`verified ${verified} capabilities for ${FACTORY}`);
   if (skipped.size > 0) log.push(`not in the process taxonomy (D-244): ${[...skipped].sort().join(' ')}`);
 
-  // 4b — C0b (DECISIONS-STAGE-A §9.1): empty fit ranges filled from the approved recipes through the curation path
-  // (audited, source `recipe`; a business-entered range is never touched; a no-op on a second run).
+  // 4b — C0b / C1c (DECISIONS-STAGE-A §9.1, §11.1): empty fit ranges filled through the curation path, each bound
+  // from (a) the approved recipe, (b) the standard sizes, (c) the production envelope (audited, per-bound source; a
+  // business-entered range is never touched; a no-op on a second run).
   const fit = await admin.backfillFitRanges(importer);
   log.push(
-    `fit ranges from recipes: ${fit.filled.length} filled, ${fit.refreshed.length} refreshed, ${fit.unchanged} unchanged, ` +
-      `${fit.keptBusiness.length} business, ${fit.noRecipeRange.length} without a complete recipe range`,
+    `fit ranges: ${fit.filled.length} filled, ${fit.refreshed.length} refreshed, ${fit.unchanged} unchanged, ` +
+      `${fit.keptBusiness.length} business, ${fit.incomplete.length} without a complete range; by source ` +
+      JSON.stringify(fit.bySource),
   );
 
   // 5 — publishability recomputed for every base (the master's bases without a recipe stay hidden).
