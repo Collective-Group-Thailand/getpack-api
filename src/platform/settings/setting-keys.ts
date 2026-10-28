@@ -198,6 +198,10 @@ export interface SettingValues {
     open: string;
     close: string;
   };
+  /** D-452 pieces the cart quantity stepper moves by (owner: 50). */
+  'storefront.cart_quantity_step': number;
+  /** D-452 coupon codes a cart may hold at once (owner: 3). */
+  'promotions.max_codes_per_cart': number;
   /** D-447 the add-on services the storefront features, in order (≤ 3 catalogue product slugs); unset = none chosen. */
   'storefront.featured_services': string[];
   /** D-448 (C1c) the style library page's staff-managed content: quick terms, swatches, trust section; unset = empty. */

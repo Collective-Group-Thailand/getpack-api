@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**122 settings** — 68 confirmed · 22 proposed · 4 pending the CPA (⚖) · 4 pending the business · 24 defined without a value (not set until their owner sets them).
+**124 settings** — 70 confirmed · 22 proposed · 4 pending the CPA (⚖) · 4 pending the business · 24 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -101,6 +101,7 @@
 | `privacy.response_days` | `30` | confirmed | superadmin | D-222 | D-222 calendar days to answer a PDPA data-subject request (export or deletion); ⚖ legal counsel may adjust |
 | `production.factory_acceptance_sla_business_days` | `1` | confirmed | superadmin | D-074 | D-074 time a factory has to accept a released job (business days) |
 | `promotions.code_attempt_limits` | `{"perCustomerPerHour":10,"perIpPerHour":30,"perDevicePerHour":10}` | proposed | superadmin | D-053 | D-053 abuse control: coupon code attempts allowed per customer, IP and device each hour |
+| `promotions.max_codes_per_cart` | `3` | confirmed | marketing | D-452, D-053 | D-452 coupon codes a cart may hold at once (D-053); the cart refuses one more with `promotions.code_invalid` (reason `too_many_codes`) and the storefront shows the limit from `CartDto.maxCodes` (owner C5 prompt: max 3) |
 | `qc.inspection_sampling` | `{"fullInspectionFromValue":"300000.00","sampledBandFromValue":"100000.00","sampledBandRatePct":"20","trialFactoryJobs":3,"trialFactoryRatePct":"100","highDefectRateThresholdPct":"3","highDefectWindowDays":90,"highDefectRatePct":"50","specialFinishOrFoodUpliftPp":"20","isoInspectionLevel":"II","aql":{"critical":"0","major":"2.5","minor":"4.0"}}` | confirmed | superadmin | D-076 | D-076 getpack risk-based inspection sampling (ISO 2859-1) |
 | `quotes.lever_quantity_multipliers` | `[2,5]` | proposed | superadmin | D-248 | D-248 quantity levers when the catalogue product has no preset quantity above the quoted: the largest quoted quantity × each multiplier |
 | `quotes.validity_days` | `15` | confirmed | superadmin | D-051 | D-051 quotation validity with price lock (days) |
@@ -117,6 +118,7 @@
 | `shipping.pallet_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 pallet used to count cartons per pallet (no legacy rule exists); not seeded — no pallet count until set |
 | `shipping.target_margin_pct` | `— (not set)` | not set | superadmin | D-040, D-013 | D-040 group 5 target shipping margin: suggested factory payout = customer rate × (1 − margin); not seeded — no group-5 suggestion until set |
 | `shipping.transit_days` | `{"default":{"min":3,"max":5},"zones":{}}` | pending_business | admin | D-013 | C4-API-3 / D-013 carrier transit working days per shipping zone (keyed by zone code; unlisted zones use `default`): arrival from = ready date + min, to = ready date + max, national business calendar. Proposed defaults: Bangkok & vicinity 1–2, Central & East 2–3, all other zones 3–5 — to be confirmed by Logistics |
+| `storefront.cart_quantity_step` | `50` | confirmed | admin | D-452 | D-452 pieces the cart quantity stepper (− / +) moves by (owner C5 prompt: step 50); typed quantities are any whole number within the product limits — the API prices the new quantity, the step only drives the buttons |
 | `storefront.featured_services` | `— (not set)` | not set | marketing | D-447 | D-447 the add-on services the storefront features (/products "บริการเสริม"), in order: up to 3 catalogue product slugs chosen by staff; unset = the catalogue's own service list (first 3) |
 | `storefront.style_library` | `— (not set)` | not set | marketing | D-448, D-246, D-010, D-125 | D-448 (C1c) the /styles page content staff keep: "ค้นหาบ่อย" terms, material swatches and the trust section (certificates with number, issuer and expiry, food-grade documents, production photos, customer logos with their permission, the tax-invoice note); edited in the back office by Admin or Marketing (styles.curate, D-246); unset = every part hidden |
 | `storefront.support_channels` | `{"hours":"ทุกวัน 09:00–18:00"}` | confirmed | cs_lead | D-221, D-005, D-447 | D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) are not seeded — null until the CS Lead sets them; the opening hours are the decided daily 09:00–18:00 (D-447) |

@@ -601,6 +601,10 @@
     "no_pending_reprice": {
       "title": "Nothing to confirm",
       "detail": "This item has no re-priced option waiting for confirmation."
+    },
+    "quantity_unavailable": {
+      "title": "Quantity cannot be changed",
+      "detail": "This item cannot change quantity in the cart (an RFQ quotation, a Studio design, a reorder or a price waiting for confirmation), or the quantity has no instant price; edit the spec or ask for a new quotation."
     }
   },
   "checkout": {

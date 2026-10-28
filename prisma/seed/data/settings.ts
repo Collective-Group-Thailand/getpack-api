@@ -114,6 +114,18 @@ export const SETTINGS: readonly SettingSeed[] = [
     confirmation: 'proposed',
   },
 
+  {
+    key: 'promotions.max_codes_per_cart',
+    valueType: 'integer',
+    value: 3,
+    valueSchema: { minimum: 1, maximum: 10 },
+    description:
+      'D-452 coupon codes a cart may hold at once (D-053); the cart refuses one more with `promotions.code_invalid` ' +
+      '(reason `too_many_codes`) and the storefront shows the limit from `CartDto.maxCodes` (owner C5 prompt: max 3)',
+    decisions: ['D-452', 'D-053'],
+    ownerRole: 'marketing',
+  },
+
   // --- Payments & payouts
   {
     key: 'payments.schedule_split_threshold',
@@ -1333,6 +1345,17 @@ export const SETTINGS: readonly SettingSeed[] = [
       'D-309 hours CS answers on the storefront (Asia/Bangkok): which days and the opening and closing time; decided daily 09:00–18:00 (D-447, GLOBAL-RULES §6), the CS Lead changes it from a date',
     decisions: ['D-309', 'D-221', 'D-447'],
     ownerRole: 'cs_lead',
+  },
+  {
+    key: 'storefront.cart_quantity_step',
+    valueType: 'integer',
+    value: 50,
+    valueSchema: { minimum: 1, maximum: 10000 },
+    description:
+      'D-452 pieces the cart quantity stepper (− / +) moves by (owner C5 prompt: step 50); typed quantities are any ' +
+      'whole number within the product limits — the API prices the new quantity, the step only drives the buttons',
+    decisions: ['D-452'],
+    ownerRole: 'admin',
   },
   {
     key: 'storefront.featured_services',
