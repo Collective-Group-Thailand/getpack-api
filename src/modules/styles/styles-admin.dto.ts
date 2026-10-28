@@ -225,6 +225,97 @@ export class StyleSynonymDto {
   term!: string;
 }
 
+/**
+ * Styles redesign C0: the per-style commercial data the /styles page shows (size search range, MOQ, sustainability
+ * facts). Business data only — every field nullable, nothing derived; the later CSV import writes the same fields.
+ */
+export class StyleCommercialDto {
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: null,
+    description: 'Inside length, minimum. Unit: mm.',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5000)
+  fitMinLMm!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: null, description: 'Unit: mm.' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5000)
+  fitMaxLMm!: number | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: null,
+    description: 'Inside width, minimum. Unit: mm.',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5000)
+  fitMinWMm!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: null, description: 'Unit: mm.' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5000)
+  fitMaxWMm!: number | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: null,
+    description: 'Inside height, minimum. Unit: mm.',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5000)
+  fitMinHMm!: number | null;
+
+  @ApiProperty({ type: 'integer', nullable: true, example: null, description: 'Unit: mm.' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(5000)
+  fitMaxHMm!: number | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: null,
+    description: 'Minimum order quantity (pieces)',
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(10_000_000)
+  moqUnits!: number | null;
+
+  @ApiProperty({ type: Boolean, nullable: true, example: null })
+  @IsOptional()
+  @IsBoolean()
+  recyclable!: boolean | null;
+
+  @ApiProperty({ type: Boolean, nullable: true, example: null })
+  @IsOptional()
+  @IsBoolean()
+  plasticFree!: boolean | null;
+
+  @ApiProperty({ type: [String], example: [], description: 'Certification codes (snake_case), e.g. `fsc`' })
+  @IsArray()
+  @ArrayMaxSize(20)
+  @Matches(/^[a-z][a-z0-9_]*$/, { each: true })
+  certifications!: string[];
+}
+
 export class AdminStyleBaseDetailDto extends AdminStyleBaseDto {
   @ApiProperty({ example: 'Four side panels + glue flap; …' })
   construction!: string;
@@ -267,6 +358,76 @@ export class AdminStyleBaseDetailDto extends AdminStyleBaseDto {
     description: 'Why active variants are not publishable (D-243)',
   })
   reasonCounts!: StyleReasonCountDto[];
+
+  @ApiProperty({
+    type: StyleCommercialDto,
+    description: 'Commercial data shown on /styles (styles redesign C0)',
+  })
+  commercial!: StyleCommercialDto;
+
+  @ApiProperty({
+    enum: ['recipe', 'business'],
+    enumName: 'StyleFitRangeSource',
+    nullable: true,
+    example: null,
+    description:
+      'Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the ' +
+      'approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / ' +
+      'the CSV (never overwritten by the backfill); null = no range. Read-only.',
+  })
+  fitRangeSource!: 'recipe' | 'business' | null;
+}
+
+/** C0b: `POST /v1/admin/styles/actions/backfill-fit-ranges`. */
+export class FitRangeBackfillDto {
+  @ApiPropertyOptional({
+    type: Boolean,
+    default: false,
+    example: true,
+    description: 'Report what would change without writing',
+  })
+  @IsOptional()
+  @IsBoolean()
+  dryRun?: boolean;
+}
+
+export class FitRangeBackfillResult {
+  @ApiProperty({ example: false })
+  dryRun!: boolean;
+
+  @ApiProperty({ type: 'integer', example: 122, description: 'Styles with an approved recipe' })
+  considered!: number;
+
+  @ApiProperty({
+    type: [String],
+    example: ['PK-CB-01'],
+    description: 'Codes whose empty range was filled from the recipe (source `recipe`)',
+  })
+  filled!: string[];
+
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'Codes whose earlier recipe range followed a newer approved recipe',
+  })
+  refreshed!: string[];
+
+  @ApiProperty({ type: 'integer', example: 0, description: 'Recipe ranges already in place' })
+  unchanged!: number;
+
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'Codes left alone because the business entered their range',
+  })
+  keptBusiness!: string[];
+
+  @ApiProperty({
+    type: [String],
+    example: ['PK-CB-02'],
+    description: 'Codes whose recipe states no complete size range (stay out of the size search)',
+  })
+  noRecipeRange!: string[];
 }
 
 export class AdminStyleVariantDto {
@@ -443,6 +604,19 @@ export const ADMIN_STYLE_DETAIL_EXAMPLE: AdminStyleBaseDetailDto = {
     { reason: 'names_not_approved', count: 228 },
     { reason: 'not_makeable', count: 228 },
   ],
+  commercial: {
+    fitMinLMm: null,
+    fitMaxLMm: null,
+    fitMinWMm: null,
+    fitMaxWMm: null,
+    fitMinHMm: null,
+    fitMaxHMm: null,
+    moqUnits: null,
+    recyclable: null,
+    plasticFree: null,
+    certifications: [],
+  },
+  fitRangeSource: null,
 };
 
 export const ADMIN_VARIANT_EXAMPLE: AdminStyleVariantDto = {
@@ -558,6 +732,17 @@ export class UpdateStyleDto {
   @ArrayMaxSize(30)
   @Matches(/^[a-z][a-z0-9_]*$/, { each: true })
   useCases?: string[];
+
+  @ApiPropertyOptional({
+    type: StyleCommercialDto,
+    description:
+      'Replaces the commercial data shown on /styles (styles redesign C0): every field, null = unknown. Each min ' +
+      'must not exceed its max.',
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => StyleCommercialDto)
+  commercial?: StyleCommercialDto;
 }
 
 /** D-411: a style library file uploaded through the admin (purpose `import`, JSON), previewed or confirmed. */

@@ -35,6 +35,8 @@ import {
   AdminStyleVariantQuery,
   ApproveNamesDto,
   ConfirmStyleImportDto,
+  FitRangeBackfillDto,
+  FitRangeBackfillResult,
   IMPORT_PREVIEW_EXAMPLE,
   IMPORT_RUN_EXAMPLE,
   SetStylePhotoDto,
@@ -104,8 +106,10 @@ export class AdminStylesController {
     summary: 'Curate a style-library base',
     description:
       'Marketing / Admin curation (D-246): featured, hidden (never published, D-243), order, Thai / English names and ' +
-      'descriptions, the getpack product type, search synonyms and use cases. Changing a name clears both name ' +
-      'approvals (D-212). Needs `If-Match` from `admin.styles.get`. Audited; publishability recomputed.',
+      'descriptions, the getpack product type, search synonyms and use cases, and the commercial data /styles shows ' +
+      '(`commercial`: inside size range for the size search, MOQ, sustainability facts — styles redesign C0, ' +
+      'DECISIONS-STAGE-A §4). Changing a name clears both name approvals (D-212). Needs `If-Match` from ' +
+      '`admin.styles.get`. Audited; publishability recomputed.',
     implements: [...DECISIONS, 'D-246', 'D-212'],
   })
   @ApiBody({
@@ -126,6 +130,40 @@ export class AdminStylesController {
     @Body() body: UpdateStyleDto,
   ) {
     return this.styles.update(staffOrPartner(actor), id, ifMatch, body);
+  }
+
+  @Post('actions/backfill-fit-ranges')
+  @HttpCode(200)
+  @Can('styles.curate')
+  @ApiEndpoint({
+    id: 'admin.styles.backfillFitRanges',
+    summary: 'Fill empty fit ranges from approved recipes',
+    description:
+      'C0b (owner decision 2026-10-28, DECISIONS-STAGE-A §9.1; curation D-246): each style whose inside fit range ' +
+      'is empty gets the approved recipe’s size range (D-241, mm, inside basis; the style’s own material class, else ' +
+      'what every complete class allows), through the same path as `admin.styles.update` — audited per style as ' +
+      '`style_base.curated` with source `recipe`. A range the business entered is never overwritten; a range filled ' +
+      'here earlier follows a newer approved recipe. Idempotent (a second run changes nothing); `dryRun` reports ' +
+      'without writing.',
+    implements: [...DECISIONS, 'D-246'],
+  })
+  @ApiBody({ type: FitRangeBackfillDto, examples: { default: { value: { dryRun: true } } } })
+  @ApiSuccess(200, {
+    description: 'What was (or, with `dryRun`, would be) filled',
+    type: FitRangeBackfillResult,
+    example: {
+      dryRun: true,
+      considered: 122,
+      filled: ['PK-CB-01'],
+      refreshed: [],
+      unchanged: 0,
+      keptBusiness: [],
+      noRecipeRange: ['PK-CB-02'],
+    },
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed')
+  async backfillFitRanges(@CurrentActor() actor: Actor, @Body() body: FitRangeBackfillDto) {
+    return this.styles.backfillFitRanges(staffOrPartner(actor), { dryRun: body.dryRun === true });
   }
 
   @Put(':styleId/photo')

@@ -1,4 +1,4 @@
-import { type UserActor } from '@common/context/actor';
+import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -10,13 +10,22 @@ import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 
 import { PUBLISH_REASONS } from './publishability';
+import {
+  type FitRange,
+  fitRangeFromRecipe,
+  type FitRangeSource,
+  isFitRangeEmpty,
+  sameFitRange,
+} from './style-fit';
 import { StylePublishingService } from './style-publishing.service';
 import {
   type AdminStyleBaseDetailDto,
   type AdminStyleBaseDto,
   type AdminStylePhotoDto,
   type AdminStyleVariantDto,
+  type FitRangeBackfillResult,
   type SetStylePhotoDto,
+  type StyleCommercialDto,
   type StyleImportRunDto,
   type UpdateStyleDto,
 } from './styles-admin.dto';
@@ -135,6 +144,19 @@ export class StylesAdminService {
         const hit = reasons.find((r) => r.reason === reason);
         return hit ? [{ reason, count: Number(hit.count) }] : [];
       }),
+      commercial: {
+        fitMinLMm: row.fitMinLMm,
+        fitMaxLMm: row.fitMaxLMm,
+        fitMinWMm: row.fitMinWMm,
+        fitMaxWMm: row.fitMaxWMm,
+        fitMinHMm: row.fitMinHMm,
+        fitMaxHMm: row.fitMaxHMm,
+        moqUnits: row.moqUnits,
+        recyclable: row.recyclable,
+        plasticFree: row.plasticFree,
+        certifications: row.certifications,
+      },
+      fitRangeSource: (row.fitRangeSource as FitRangeSource | null) ?? null,
     };
   }
 
@@ -265,65 +287,199 @@ export class StylesAdminService {
     await this.prisma.withTx(async (tx) => {
       const base = await this.row(tx, publicId);
       assertIfMatch(ifMatch, etagOf(base.publicId, base.rowVersion));
-      let productTypeId: bigint | null | undefined;
-      if (input.productTypeCode !== undefined) {
-        if (input.productTypeCode === null) productTypeId = null;
-        else {
-          const type = await tx.productType.findUnique({
-            where: { code: input.productTypeCode },
-            select: { id: true },
-          });
-          if (!type)
-            throw new DomainException('validation.failed', {
-              errors: [{ path: 'productTypeCode', code: 'exists', message: 'no such product type' }],
-            });
-          productTypeId = type.id;
-        }
-      }
-      const renamed =
-        (input.nameTh !== undefined && input.nameTh.trim() !== base.nameTh) ||
-        (input.nameEn !== undefined && input.nameEn.trim() !== base.nameEn);
-      await tx.styleBase.update({
-        where: { id: base.id },
-        data: {
-          ...(input.featured !== undefined && { featured: input.featured }),
-          ...(input.hidden !== undefined && { hidden: input.hidden }),
-          ...(input.sort !== undefined && { sort: input.sort }),
-          ...(input.nameTh !== undefined && { nameTh: input.nameTh.trim() }),
-          ...(input.nameEn !== undefined && { nameEn: input.nameEn.trim() }),
-          ...(input.descriptionTh !== undefined && { descriptionTh: input.descriptionTh?.trim() || null }),
-          ...(input.descriptionEn !== undefined && { descriptionEn: input.descriptionEn?.trim() || null }),
-          ...(productTypeId !== undefined && { productTypeId }),
-          ...(renamed && {
-            namesApprovedMarketingAt: null,
-            namesApprovedMarketingBy: null,
-            namesApprovedPrepressAt: null,
-            namesApprovedPrepressBy: null,
-          }),
-          updatedById: actor.userId,
-          rowVersion: { increment: 1 },
-        },
-      });
-      if (input.synonyms) {
-        await tx.styleSynonym.deleteMany({ where: { baseId: base.id } });
-        const unique = new Map(input.synonyms.map((x) => [`${x.locale}:${x.term.trim().toLowerCase()}`, x]));
-        await tx.styleSynonym.createMany({
-          data: [...unique.values()].map((x) => ({ baseId: base.id, locale: x.locale, term: x.term.trim() })),
-        });
-      }
-      if (input.useCases) {
-        await tx.styleUseCase.deleteMany({ where: { baseId: base.id } });
-        await tx.styleUseCase.createMany({
-          data: [...new Set(input.useCases)].map((code) => ({ baseId: base.id, code })),
-        });
-      }
-      await this.record(tx, base, 'style_base.curated', {
-        fields: Object.keys(input).filter((k) => input[k as keyof UpdateStyleDto] !== undefined),
-        namesApprovalCleared: renamed,
-      });
-      await this.publishing.recompute(tx, [base.id]);
+      await this.curate(tx, actor, base, input);
     });
     return this.get(publicId);
+  }
+
+  /**
+   * The one write path of curation (`admin.styles.update` and the C0b fit-range backfill): validated, audited
+   * (`style_base.curated`), evented and publishability recomputed in the caller's transaction. A changed fit range is
+   * marked `business` unless the caller is the recipe backfill (`fitRangeSource: 'recipe'`); a curation save that
+   * resends an unchanged range keeps its source, so saving the MOQ does not turn a recipe range into business data.
+   */
+  private async curate(
+    tx: Tx,
+    actor: Actor,
+    base: BaseRow,
+    input: UpdateStyleDto,
+    options: { fitRangeSource?: FitRangeSource } = {},
+  ): Promise<void> {
+    let productTypeId: bigint | null | undefined;
+    if (input.productTypeCode !== undefined) {
+      if (input.productTypeCode === null) productTypeId = null;
+      else {
+        const type = await tx.productType.findUnique({
+          where: { code: input.productTypeCode },
+          select: { id: true },
+        });
+        if (!type)
+          throw new DomainException('validation.failed', {
+            errors: [{ path: 'productTypeCode', code: 'exists', message: 'no such product type' }],
+          });
+        productTypeId = type.id;
+      }
+    }
+    if (input.commercial) assertCommercial(input.commercial);
+    const renamed =
+      (input.nameTh !== undefined && input.nameTh.trim() !== base.nameTh) ||
+      (input.nameEn !== undefined && input.nameEn.trim() !== base.nameEn);
+    const fit: FitRange | null = input.commercial
+      ? {
+          fitMinLMm: input.commercial.fitMinLMm ?? null,
+          fitMaxLMm: input.commercial.fitMaxLMm ?? null,
+          fitMinWMm: input.commercial.fitMinWMm ?? null,
+          fitMaxWMm: input.commercial.fitMaxWMm ?? null,
+          fitMinHMm: input.commercial.fitMinHMm ?? null,
+          fitMaxHMm: input.commercial.fitMaxHMm ?? null,
+        }
+      : null;
+    const fitChanged = fit !== null && !sameFitRange(fit, base);
+    const fitRangeSource: FitRangeSource | null | undefined =
+      fit === null
+        ? undefined
+        : isFitRangeEmpty(fit)
+          ? null
+          : fitChanged
+            ? (options.fitRangeSource ?? 'business')
+            : ((base.fitRangeSource as FitRangeSource | null) ?? options.fitRangeSource ?? 'business');
+    await tx.styleBase.update({
+      where: { id: base.id },
+      data: {
+        ...(input.featured !== undefined && { featured: input.featured }),
+        ...(input.hidden !== undefined && { hidden: input.hidden }),
+        ...(input.sort !== undefined && { sort: input.sort }),
+        ...(input.nameTh !== undefined && { nameTh: input.nameTh.trim() }),
+        ...(input.nameEn !== undefined && { nameEn: input.nameEn.trim() }),
+        ...(input.descriptionTh !== undefined && { descriptionTh: input.descriptionTh?.trim() || null }),
+        ...(input.descriptionEn !== undefined && { descriptionEn: input.descriptionEn?.trim() || null }),
+        ...(productTypeId !== undefined && { productTypeId }),
+        ...(input.commercial && {
+          ...fit,
+          fitRangeSource,
+          moqUnits: input.commercial.moqUnits ?? null,
+          recyclable: input.commercial.recyclable ?? null,
+          plasticFree: input.commercial.plasticFree ?? null,
+          certifications: [...new Set(input.commercial.certifications)],
+        }),
+        ...(renamed && {
+          namesApprovedMarketingAt: null,
+          namesApprovedMarketingBy: null,
+          namesApprovedPrepressAt: null,
+          namesApprovedPrepressBy: null,
+        }),
+        updatedById: actor.type === 'user' ? actor.userId : null,
+        rowVersion: { increment: 1 },
+      },
+    });
+    if (input.synonyms) {
+      await tx.styleSynonym.deleteMany({ where: { baseId: base.id } });
+      const unique = new Map(input.synonyms.map((x) => [`${x.locale}:${x.term.trim().toLowerCase()}`, x]));
+      await tx.styleSynonym.createMany({
+        data: [...unique.values()].map((x) => ({ baseId: base.id, locale: x.locale, term: x.term.trim() })),
+      });
+    }
+    if (input.useCases) {
+      await tx.styleUseCase.deleteMany({ where: { baseId: base.id } });
+      await tx.styleUseCase.createMany({
+        data: [...new Set(input.useCases)].map((code) => ({ baseId: base.id, code })),
+      });
+    }
+    await this.record(
+      tx,
+      base,
+      'style_base.curated',
+      {
+        fields: Object.keys(input).filter((k) => input[k as keyof UpdateStyleDto] !== undefined),
+        namesApprovalCleared: renamed,
+        ...(fitChanged && {
+          fitRange: { before: fitRangeOf(base), after: fit, source: fitRangeSource ?? null },
+        }),
+      },
+      actor,
+    );
+    await this.publishing.recompute(tx, [base.id]);
+  }
+
+  /**
+   * C0b (owner decision 2026-10-28, DECISIONS-STAGE-A §9.1): fills each style's empty inside fit range from its approved
+   * recipe's size range ({@link fitRangeFromRecipe}) through the curation path above — audited per style, source
+   * `recipe`. Never touches a business-entered range (source `business`, or any bound entered before sources existed);
+   * a range it filled earlier follows a newer approved recipe. Idempotent: a second run changes nothing. `dryRun`
+   * reports without writing.
+   */
+  async backfillFitRanges(actor: Actor, options: { dryRun?: boolean } = {}): Promise<FitRangeBackfillResult> {
+    const bases = await this.prisma.styleBase.findMany({
+      where: { recipes: { some: { approvedAt: { not: null } } } },
+      orderBy: { code: 'asc' },
+      select: {
+        publicId: true,
+        code: true,
+        materialClass: true,
+        fitMinLMm: true,
+        fitMaxLMm: true,
+        fitMinWMm: true,
+        fitMaxWMm: true,
+        fitMinHMm: true,
+        fitMaxHMm: true,
+        fitRangeSource: true,
+        recipes: {
+          where: { approvedAt: { not: null } },
+          orderBy: { version: 'desc' },
+          take: 1,
+          select: { sizeRanges: true },
+        },
+      },
+    });
+    const result: FitRangeBackfillResult = {
+      dryRun: options.dryRun === true,
+      considered: bases.length,
+      filled: [],
+      refreshed: [],
+      unchanged: 0,
+      keptBusiness: [],
+      noRecipeRange: [],
+    };
+    for (const b of bases) {
+      const business = b.fitRangeSource === 'business' || (b.fitRangeSource === null && !isFitRangeEmpty(b));
+      if (business) {
+        result.keptBusiness.push(b.code);
+        continue;
+      }
+      const range = fitRangeFromRecipe(b.materialClass, b.recipes[0]?.sizeRanges ?? null);
+      if (!range) {
+        result.noRecipeRange.push(b.code);
+        continue;
+      }
+      if (b.fitRangeSource === 'recipe' && sameFitRange(range, b)) {
+        result.unchanged += 1;
+        continue;
+      }
+      (b.fitRangeSource === 'recipe' ? result.refreshed : result.filled).push(b.code);
+      if (result.dryRun) continue;
+      await this.prisma.withTx(async (tx) => {
+        const base = await this.row(tx, b.publicId);
+        // Re-checked inside the transaction: a business value entered meanwhile wins.
+        if (base.fitRangeSource === 'business' || (base.fitRangeSource === null && !isFitRangeEmpty(base)))
+          return;
+        await this.curate(
+          tx,
+          actor,
+          base,
+          {
+            commercial: {
+              ...range,
+              moqUnits: base.moqUnits,
+              recyclable: base.recyclable,
+              plasticFree: base.plasticFree,
+              certifications: base.certifications,
+            },
+          },
+          { fitRangeSource: 'recipe' },
+        );
+      });
+    }
+    return result;
   }
 
   /**
@@ -465,6 +621,7 @@ export class StylesAdminService {
     base: { publicId: string; code: string },
     type: string,
     data: Record<string, unknown>,
+    actor?: Actor,
   ) {
     await this.audit.record(tx, {
       category: 'config',
@@ -472,13 +629,18 @@ export class StylesAdminService {
       resourceType: 'style_base',
       resourcePublicId: base.publicId,
       data: { code: base.code, ...data },
+      ...(actor && { actor }),
     });
-    await this.events.record(tx, {
-      type,
-      aggregateType: 'style_base',
-      aggregateId: base.publicId,
-      payload: { baseId: base.publicId, code: base.code, ...data },
-    });
+    await this.events.record(
+      tx,
+      {
+        type,
+        aggregateType: 'style_base',
+        aggregateId: base.publicId,
+        payload: { baseId: base.publicId, code: base.code, ...data },
+      },
+      actor,
+    );
   }
 }
 
@@ -501,3 +663,29 @@ function runDto(r: Prisma.StyleImportRunGetPayload<{ include: typeof RUN_INCLUDE
     decidedAt: iso(r.decidedAt),
   };
 }
+
+/** Each entered minimum must not exceed its maximum (the database checks it too). */
+export function assertCommercial(c: StyleCommercialDto): void {
+  const pairs = [
+    ['fitMinLMm', c.fitMinLMm, c.fitMaxLMm],
+    ['fitMinWMm', c.fitMinWMm, c.fitMaxWMm],
+    ['fitMinHMm', c.fitMinHMm, c.fitMaxHMm],
+  ] as const;
+  const errors = pairs
+    .filter(([, min, max]) => typeof min === 'number' && typeof max === 'number' && min > max)
+    .map(([path]) => ({
+      path: `commercial.${path}`,
+      code: 'max',
+      message: 'the minimum is above the maximum',
+    }));
+  if (errors.length > 0) throw new DomainException('validation.failed', { errors });
+}
+
+const fitRangeOf = (r: FitRange): FitRange => ({
+  fitMinLMm: r.fitMinLMm,
+  fitMaxLMm: r.fitMaxLMm,
+  fitMinWMm: r.fitMinWMm,
+  fitMaxWMm: r.fitMaxWMm,
+  fitMinHMm: r.fitMinHMm,
+  fitMaxHMm: r.fitMaxHMm,
+});
