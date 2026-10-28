@@ -67,8 +67,11 @@ export function fitOf(range: FitRange, product: ProductSizeMm): FitResult | null
   return null;
 }
 
-/** Where a style's fit range came from (C0b): the approved recipe's solver (backfill) or the business (curation, CSV). */
-export type FitRangeSource = 'recipe' | 'business';
+/**
+ * Where a style's fit range came from: a backfill source (C0b `recipe`; C1c `standard_sizes`, `production_envelope`,
+ * or `combined` when its bounds came from several — DECISIONS-STAGE-A §11.1) or the business (curation, CSV).
+ */
+export type FitRangeSource = 'recipe' | 'standard_sizes' | 'production_envelope' | 'combined' | 'business';
 
 const FIT_KEYS = ['fitMinLMm', 'fitMaxLMm', 'fitMinWMm', 'fitMaxWMm', 'fitMinHMm', 'fitMaxHMm'] as const;
 

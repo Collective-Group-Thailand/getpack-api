@@ -22,7 +22,7 @@ under the getpack brand for the full amount paid) and D-125 (a tax invoice per o
 
 | Item | Where | Who |
 |---|---|---|
-| 1–5 | Back office → Style library → library page settings (`store.style-library.settings`, edited with `styles.curate`). **Not built yet:** the endpoint is the open contract request `store.style-library.settings` (`getpack-web/docs/contract-requests.md`); until the API implements it the section shows the default tax-invoice note only. | Marketing (wording, logos, photos), Prepress / QA (certificates, food-grade documents) |
-| 3 (files) | Uploaded through the back office file upload (scanned, EXIF stripped), then picked in the settings above | Marketing |
+| 1–5 | Back office → คลังแบบกล่อง → เนื้อหาหน้าแบบกล่อง (`/style-library/content`, setting `storefront.style_library`, edited with `styles.curate` = Admin, Marketing; C1c, DECISIONS-STAGE-A §11.5). Each save is a new audited version with a reason; until something is entered the section shows the default tax-invoice note only. | Marketing (wording, logos, photos), Prepress / QA (certificates, food-grade documents) |
+| 3 (files) | Today the editor takes https links or getpack site paths; picking uploaded files there is a later step (open question C1c) | Marketing |
 | 6 | Back office → Style library → a style → commercial data (`PATCH /v1/admin/styles/{styleId}`, `commercial`), or the catalogue CSV once its importer exists. The style workspace screen does not show the commercial fields yet — enter them through the admin API until it does. | Marketing |
 | Quote response time (`{n}` on quote-only styles) | Back office → Settings → `rfq.sla_business_hours` (per product type, platform fallback; business hours, shown as whole working days) | Admin |

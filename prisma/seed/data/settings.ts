@@ -5,6 +5,7 @@
  * Money and percentages are decimal strings (CLAUDE.md); percentages are in percent (10 = 10 %).
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
+import { STYLE_LIBRARY_CONTENT_SCHEMA } from '../../../src/modules/styles/style-library-content';
 import { HERO_PRESETS } from './hero-presets';
 import { INTAKE_TERMS_V1 } from './intake-terms';
 import { STUDIO_PRINT_RULES } from './studio';
@@ -1347,6 +1348,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     description:
       'D-447 the add-on services the storefront features (/products "บริการเสริม"), in order: up to 3 catalogue product slugs chosen by staff; unset = the catalogue\'s own service list (first 3)',
     decisions: ['D-447'],
+    ownerRole: 'marketing',
+  },
+  {
+    key: 'storefront.style_library',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: STYLE_LIBRARY_CONTENT_SCHEMA,
+    description:
+      'D-448 (C1c) the /styles page content staff keep: "ค้นหาบ่อย" terms, material swatches and the trust section (certificates with number, issuer and expiry, food-grade documents, production photos, customer logos with their permission, the tax-invoice note); edited in the back office by Admin or Marketing (styles.curate, D-246); unset = every part hidden',
+    decisions: ['D-448', 'D-246', 'D-010', 'D-125'],
     ownerRole: 'marketing',
   },
   {

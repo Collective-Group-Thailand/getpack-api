@@ -13126,6 +13126,17 @@
             "example": false,
             "type": "boolean"
           },
+          "fitRangeBounds": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FitRangeBoundSourcesDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "C1c: for a backfilled range, the source and basis of each of the six bounds; null for a business range or none. Read-only."
+          },
           "fitRangeSource": {
             "anyOf": [
               {
@@ -13135,7 +13146,7 @@
                 "type": "null"
               }
             ],
-            "description": "Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / the CSV (never overwritten by the backfill); null = no range. Read-only.",
+            "description": "Where the fit range in `commercial` came from (C0b/C1c, DECISIONS-STAGE-A §9.1, §11.1): a backfill source — `recipe` (approved recipe range), `standard_sizes` (the style's standard sizes), `production_envelope` (calculator size rules ∩ dieline engine limits) or `combined` (bounds from several; see `fitRangeBounds`) — replaced by any value curation saves; `business` = entered by curation / the CSV, never overwritten by the backfill; null = no range. Read-only.",
             "example": null
           },
           "hidden": {
@@ -13341,7 +13352,8 @@
           "recipes",
           "reasonCounts",
           "commercial",
-          "fitRangeSource"
+          "fitRangeSource",
+          "fitRangeBounds"
         ],
         "type": "object"
       },
@@ -13497,6 +13509,50 @@
           "recipeVersion",
           "recipeApproved",
           "version"
+        ],
+        "type": "object"
+      },
+      "AdminStyleLibrarySettingsDto": {
+        "properties": {
+          "content": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleLibraryContentDto"
+              }
+            ],
+            "description": "The content in force (empty while unset)"
+          },
+          "effectiveFrom": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "settingId": {
+            "description": "The setting (`admin.settings.get`, version history); null before the reference seed ran",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "versionNo": {
+            "description": "Version in force; null = unset",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "content",
+          "versionNo",
+          "effectiveFrom",
+          "settingId"
         ],
         "type": "object"
       },
@@ -35884,6 +35940,35 @@
           "approved_proof_copy"
         ],
         "type": "string"
+      },
+      "CustomerLogoDto": {
+        "properties": {
+          "logoUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": "https://example.invalid/logo.svg",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "name": {
+            "example": "ร้านตัวอย่าง",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "permission": {
+            "description": "Where the customer's permission to show the logo is recorded — staff only, never published",
+            "example": "อีเมลอนุญาตจากลูกค้า 2026-10-01 (CS ticket …)",
+            "maxLength": 300,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "logoUrl",
+          "permission"
+        ],
+        "type": "object"
       },
       "CustomerOrderStatus": {
         "description": "THE status to show a customer (D-437), derived by the API from payment, artwork, production, shipment, receipt, claims and cancellation; every customer surface (overview, list, detail, e-mail, LINE) uses it. `status` is the stored fact status (staff)",
@@ -65363,8 +65448,31 @@
       },
       "FitRangeBackfillResult": {
         "properties": {
+          "boundsBySource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FitRangeSourceCountsDto"
+              }
+            ],
+            "description": "C1c: backfilled bounds per source"
+          },
+          "bySource": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/FitRangeSummaryCountsDto"
+              }
+            ],
+            "description": "C1c: backfilled styles (filled, refreshed or unchanged) per summary source"
+          },
+          "changes": {
+            "description": "C1c: what the run writes (or, with `dryRun`, would write)",
+            "items": {
+              "$ref": "#/components/schemas/FitRangeChangeDto"
+            },
+            "type": "array"
+          },
           "considered": {
-            "description": "Styles with an approved recipe",
+            "description": "Active styles",
             "example": 122,
             "type": "integer"
           },
@@ -65373,12 +65481,19 @@
             "type": "boolean"
           },
           "filled": {
-            "description": "Codes whose empty range was filled from the recipe (source `recipe`)",
+            "description": "Codes whose empty range was filled",
             "example": [
               "PK-CB-01"
             ],
             "items": {
               "type": "string"
+            },
+            "type": "array"
+          },
+          "incomplete": {
+            "description": "C1c: styles left empty, with what is missing",
+            "items": {
+              "$ref": "#/components/schemas/FitRangeIncompleteDto"
             },
             "type": "array"
           },
@@ -65391,9 +65506,10 @@
             "type": "array"
           },
           "noRecipeRange": {
-            "description": "Codes whose recipe states no complete size range (stay out of the size search)",
+            "deprecated": true,
+            "description": "Codes no source gives a complete range (stay out of the size search) — same as `incomplete[].code`",
             "example": [
-              "PK-CB-02"
+              "PK-LA-01"
             ],
             "items": {
               "type": "string"
@@ -65401,7 +65517,7 @@
             "type": "array"
           },
           "refreshed": {
-            "description": "Codes whose earlier recipe range followed a newer approved recipe",
+            "description": "Codes whose backfilled range followed newer data (or gained its per-bound sources)",
             "example": [],
             "items": {
               "type": "string"
@@ -65409,7 +65525,7 @@
             "type": "array"
           },
           "unchanged": {
-            "description": "Recipe ranges already in place",
+            "description": "Backfilled ranges already in place",
             "example": 0,
             "type": "integer"
           }
@@ -65421,7 +65537,244 @@
           "refreshed",
           "unchanged",
           "keptBusiness",
-          "noRecipeRange"
+          "noRecipeRange",
+          "incomplete",
+          "bySource",
+          "boundsBySource",
+          "changes"
+        ],
+        "type": "object"
+      },
+      "FitRangeBoundSourceDto": {
+        "properties": {
+          "basis": {
+            "description": "The data read: `recipe_size_range` (approved recipe solver range), `catalogue_standard_sizes` (standard sizes of the catalogue products of its pattern), `recipe_presets` (the approved recipe's preset sizes), `calculator_size_rules` (its pattern's size rules), `engine_limits` (the dieline engine's limits)",
+            "example": [
+              "recipe_size_range"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/StyleFitBasis"
+            },
+            "type": "array"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleFitBackfillSource"
+              }
+            ],
+            "example": "recipe"
+          }
+        },
+        "required": [
+          "source",
+          "basis"
+        ],
+        "type": "object"
+      },
+      "FitRangeBoundSourcesDto": {
+        "properties": {
+          "fitMaxHMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMaxLMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMaxWMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMinHMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMinLMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          },
+          "fitMinWMm": {
+            "$ref": "#/components/schemas/FitRangeBoundSourceDto"
+          }
+        },
+        "required": [
+          "fitMinLMm",
+          "fitMaxLMm",
+          "fitMinWMm",
+          "fitMaxWMm",
+          "fitMinHMm",
+          "fitMaxHMm"
+        ],
+        "type": "object"
+      },
+      "FitRangeChangeDto": {
+        "properties": {
+          "action": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleFitRangeChangeAction"
+              }
+            ],
+            "example": "filled"
+          },
+          "after": {
+            "$ref": "#/components/schemas/FitRangeValuesDto"
+          },
+          "before": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FitRangeValuesDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The range before (null = empty)"
+          },
+          "bounds": {
+            "$ref": "#/components/schemas/FitRangeBoundSourcesDto"
+          },
+          "code": {
+            "example": "PK-SP-01",
+            "type": "string"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StyleFitRangeSource"
+              }
+            ],
+            "example": "combined"
+          },
+          "styleId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "styleId",
+          "code",
+          "action",
+          "before",
+          "after",
+          "source",
+          "bounds"
+        ],
+        "type": "object"
+      },
+      "FitRangeIncompleteDto": {
+        "properties": {
+          "code": {
+            "example": "PK-LA-01",
+            "type": "string"
+          },
+          "conflicting": {
+            "description": "Dimensions (`length`, `width`, `height`) whose bounds, as the sources give them, leave no size",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "missing": {
+            "description": "Bounds no source gives (`fitMinLMm` … `fitMaxHMm`)",
+            "example": [
+              "fitMinHMm",
+              "fitMaxHMm"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "missing",
+          "conflicting"
+        ],
+        "type": "object"
+      },
+      "FitRangeSourceCountsDto": {
+        "properties": {
+          "production_envelope": {
+            "example": 0,
+            "type": "integer"
+          },
+          "recipe": {
+            "example": 81,
+            "type": "integer"
+          },
+          "standard_sizes": {
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recipe",
+          "standard_sizes",
+          "production_envelope"
+        ],
+        "type": "object"
+      },
+      "FitRangeSummaryCountsDto": {
+        "properties": {
+          "combined": {
+            "example": 9,
+            "type": "integer"
+          },
+          "production_envelope": {
+            "example": 0,
+            "type": "integer"
+          },
+          "recipe": {
+            "example": 81,
+            "type": "integer"
+          },
+          "standard_sizes": {
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "recipe",
+          "standard_sizes",
+          "production_envelope",
+          "combined"
+        ],
+        "type": "object"
+      },
+      "FitRangeValuesDto": {
+        "properties": {
+          "fitMaxHMm": {
+            "example": 35,
+            "type": "integer"
+          },
+          "fitMaxLMm": {
+            "example": 400,
+            "type": "integer"
+          },
+          "fitMaxWMm": {
+            "example": 300,
+            "type": "integer"
+          },
+          "fitMinHMm": {
+            "example": 25,
+            "type": "integer"
+          },
+          "fitMinLMm": {
+            "example": 60,
+            "type": "integer"
+          },
+          "fitMinWMm": {
+            "example": 50,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "fitMinLMm",
+          "fitMaxLMm",
+          "fitMinWMm",
+          "fitMaxWMm",
+          "fitMinHMm",
+          "fitMaxHMm"
         ],
         "type": "object"
       },
@@ -71888,6 +72241,30 @@
         ],
         "type": "object"
       },
+      "LocalisedTextDto": {
+        "properties": {
+          "en": {
+            "example": "A full tax invoice with every order",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "th": {
+            "example": "ใบกำกับภาษีเต็มรูปแบบทุกคำสั่งซื้อ",
+            "maxLength": 500,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "th",
+          "en"
+        ],
+        "type": "object"
+      },
       "LoyaltySummaryDto": {
         "properties": {
           "availablePoints": {
@@ -72421,6 +72798,40 @@
           "other"
         ],
         "type": "string"
+      },
+      "MaterialSwatchDto": {
+        "properties": {
+          "colour": {
+            "description": "Board colour (#RRGGBB)",
+            "example": "#C8A27A",
+            "pattern": "^#[0-9A-Fa-f]{6}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imageUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": null,
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "materialClass": {
+            "example": "corrugated",
+            "maxLength": 40,
+            "pattern": "^[a-z][a-z0-9_]*$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "materialClass",
+          "colour",
+          "imageUrl"
+        ],
+        "type": "object"
       },
       "MeasurementBasis": {
         "description": "Basis of w / l / d: internal, external or over_crease; another basis than internal is converted with the material caliper (D-182). Absent: internal (assumed, deprecated)",
@@ -85951,6 +86362,24 @@
           "H"
         ],
         "type": "string"
+      },
+      "QuickSearchTermDto": {
+        "properties": {
+          "label": {
+            "$ref": "#/components/schemas/LocalisedTextDto"
+          },
+          "query": {
+            "example": "เมลเลอร์",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "query"
+        ],
+        "type": "object"
       },
       "QuoteAdvisoryDto": {
         "properties": {
@@ -103365,6 +103794,27 @@
         ],
         "type": "string"
       },
+      "StoreCustomerLogoDto": {
+        "properties": {
+          "logoUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": "https://example.invalid/logo.svg",
+            "maxLength": 2000,
+            "type": "string"
+          },
+          "name": {
+            "example": "ร้านตัวอย่าง",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "logoUrl"
+        ],
+        "type": "object"
+      },
       "StoreFaqDto": {
         "properties": {
           "answerEn": {
@@ -105880,6 +106330,43 @@
         ],
         "type": "object"
       },
+      "StoreStyleLibrarySettingsDto": {
+        "properties": {
+          "compareLimit": {
+            "description": "Styles compared side by side (D-246)",
+            "example": 3,
+            "type": "integer"
+          },
+          "materialSwatches": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialSwatchDto"
+            },
+            "type": "array"
+          },
+          "quickSearch": {
+            "description": "\"ค้นหาบ่อย\" in this order; empty hides the row",
+            "items": {
+              "$ref": "#/components/schemas/QuickSearchTermDto"
+            },
+            "type": "array"
+          },
+          "trust": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/StoreTrustContentDto"
+              }
+            ],
+            "description": "Each part is hidden on the storefront while empty"
+          }
+        },
+        "required": [
+          "quickSearch",
+          "compareLimit",
+          "materialSwatches",
+          "trust"
+        ],
+        "type": "object"
+      },
       "StoreSupportChannelsDto": {
         "properties": {
           "email": {
@@ -106006,6 +106493,110 @@
           "replyChannel",
           "replyChannelChosen",
           "readByGetpackAt"
+        ],
+        "type": "object"
+      },
+      "StoreTrustCertificationDto": {
+        "properties": {
+          "documentUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": null,
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expiresOn": {
+            "description": "Last valid day (Asia/Bangkok); an expired certificate is not shown to customers",
+            "example": null,
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "issuer": {
+            "description": "Who issued it",
+            "example": null,
+            "maxLength": 200,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "number": {
+            "description": "The certificate's own number",
+            "example": null,
+            "maxLength": 120,
+            "minLength": 1,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "$ref": "#/components/schemas/LocalisedTextDto"
+          }
+        },
+        "required": [
+          "title",
+          "number",
+          "issuer",
+          "expiresOn",
+          "documentUrl"
+        ],
+        "type": "object"
+      },
+      "StoreTrustContentDto": {
+        "properties": {
+          "certifications": {
+            "description": "Not expired only",
+            "items": {
+              "$ref": "#/components/schemas/StoreTrustCertificationDto"
+            },
+            "type": "array"
+          },
+          "customerLogos": {
+            "description": "Logos the customer permitted",
+            "items": {
+              "$ref": "#/components/schemas/StoreCustomerLogoDto"
+            },
+            "type": "array"
+          },
+          "foodGrade": {
+            "items": {
+              "$ref": "#/components/schemas/TrustDocumentDto"
+            },
+            "type": "array"
+          },
+          "productionPhotos": {
+            "description": "Production-process photos (\"รูปงานจริงระหว่างผลิต\")",
+            "items": {
+              "$ref": "#/components/schemas/TrustPhotoDto"
+            },
+            "type": "array"
+          },
+          "taxInvoiceNote": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null = the storefront’s default note (D-010)"
+          }
+        },
+        "required": [
+          "certifications",
+          "foodGrade",
+          "productionPhotos",
+          "customerLogos",
+          "taxInvoiceNote"
         ],
         "type": "object"
       },
@@ -107355,7 +107946,7 @@
             "example": "instant"
           },
           "quoteResponseBusinessDays": {
-            "description": "C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style has no product type: then no timing is shown. Never a price or an estimate.",
+            "description": "C0b / C1c (D-100, D-175, D-220, DECISIONS-STAGE-A §9.3, §11.2): the first-response time of a quotation request for this style, in working days — `ceil(rfq.sla_business_hours ÷ hours of one business day)`, the SLA taken at its product type (platform fallback) and the day length from `calendar.business_hours` (09:00–18:00 = 9 h). Null when either setting is missing or unusable or the style has no product type: then no timing is shown. Never a price or an estimate.",
             "example": 2,
             "type": [
               "integer",
@@ -107739,7 +108330,7 @@
             "type": "array"
           },
           "quoteResponseBusinessDays": {
-            "description": "C0b (D-100, D-220, DECISIONS-STAGE-A §9.3): the first-response time of a quotation request for this style, in working days — `rfq.sla_business_hours` of its product type (platform fallback) in whole working days, the way the RFQ due time is counted (every hour of a working day). Null when the setting is not set or the style has no product type: then no timing is shown. Never a price or an estimate.",
+            "description": "C0b / C1c (D-100, D-175, D-220, DECISIONS-STAGE-A §9.3, §11.2): the first-response time of a quotation request for this style, in working days — `ceil(rfq.sla_business_hours ÷ hours of one business day)`, the SLA taken at its product type (platform fallback) and the day length from `calendar.business_hours` (09:00–18:00 = 9 h). Null when either setting is missing or unusable or the style has no product type: then no timing is shown. Never a price or an estimate.",
             "example": 2,
             "type": [
               "integer",
@@ -107939,6 +108530,25 @@
         ],
         "type": "object"
       },
+      "StyleFitBackfillSource": {
+        "enum": [
+          "recipe",
+          "standard_sizes",
+          "production_envelope"
+        ],
+        "type": "string"
+      },
+      "StyleFitBasis": {
+        "description": "The data read: `recipe_size_range` (approved recipe solver range), `catalogue_standard_sizes` (standard sizes of the catalogue products of its pattern), `recipe_presets` (the approved recipe's preset sizes), `calculator_size_rules` (its pattern's size rules), `engine_limits` (the dieline engine's limits)",
+        "enum": [
+          "recipe_size_range",
+          "catalogue_standard_sizes",
+          "recipe_presets",
+          "calculator_size_rules",
+          "engine_limits"
+        ],
+        "type": "string"
+      },
       "StyleFitDto": {
         "properties": {
           "insideHMm": {
@@ -107961,6 +108571,13 @@
           "insideHMm"
         ],
         "type": "object"
+      },
+      "StyleFitRangeChangeAction": {
+        "enum": [
+          "filled",
+          "refreshed"
+        ],
+        "type": "string"
       },
       "StyleFitRangeDto": {
         "properties": {
@@ -108001,9 +108618,12 @@
         "type": "object"
       },
       "StyleFitRangeSource": {
-        "description": "Where the fit range in `commercial` came from (C0b, DECISIONS-STAGE-A §9.1): `recipe` = filled from the approved recipe by the backfill (replaced by any value curation saves), `business` = entered by curation / the CSV (never overwritten by the backfill); null = no range. Read-only.",
+        "description": "Where the fit range in `commercial` came from (C0b/C1c, DECISIONS-STAGE-A §9.1, §11.1): a backfill source — `recipe` (approved recipe range), `standard_sizes` (the style's standard sizes), `production_envelope` (calculator size rules ∩ dieline engine limits) or `combined` (bounds from several; see `fitRangeBounds`) — replaced by any value curation saves; `business` = entered by curation / the CSV, never overwritten by the backfill; null = no range. Read-only.",
         "enum": [
           "recipe",
+          "standard_sizes",
+          "production_envelope",
+          "combined",
           "business"
         ],
         "type": "string"
@@ -108416,6 +109036,33 @@
           "rejected"
         ],
         "type": "string"
+      },
+      "StyleLibraryContentDto": {
+        "properties": {
+          "materialSwatches": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialSwatchDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "quickSearch": {
+            "items": {
+              "$ref": "#/components/schemas/QuickSearchTermDto"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "trust": {
+            "$ref": "#/components/schemas/TrustContentDto"
+          }
+        },
+        "required": [
+          "quickSearch",
+          "materialSwatches",
+          "trust"
+        ],
+        "type": "object"
       },
       "StyleListDto": {
         "properties": {
@@ -112352,6 +112999,100 @@
         ],
         "type": "object"
       },
+      "TrustContentDto": {
+        "properties": {
+          "certifications": {
+            "items": {
+              "$ref": "#/components/schemas/StoreTrustCertificationDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "customerLogos": {
+            "items": {
+              "$ref": "#/components/schemas/CustomerLogoDto"
+            },
+            "maxItems": 40,
+            "type": "array"
+          },
+          "foodGrade": {
+            "items": {
+              "$ref": "#/components/schemas/TrustDocumentDto"
+            },
+            "maxItems": 20,
+            "type": "array"
+          },
+          "productionPhotos": {
+            "items": {
+              "$ref": "#/components/schemas/TrustPhotoDto"
+            },
+            "maxItems": 24,
+            "type": "array"
+          },
+          "taxInvoiceNote": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "certifications",
+          "foodGrade",
+          "productionPhotos",
+          "customerLogos",
+          "taxInvoiceNote"
+        ],
+        "type": "object"
+      },
+      "TrustDocumentDto": {
+        "properties": {
+          "documentUrl": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": null,
+            "maxLength": 2000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "$ref": "#/components/schemas/LocalisedTextDto"
+          }
+        },
+        "required": [
+          "title",
+          "documentUrl"
+        ],
+        "type": "object"
+      },
+      "TrustPhotoDto": {
+        "properties": {
+          "alt": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              }
+            ],
+            "description": "Alt text (product and process only, GLOBAL-RULES §1)"
+          },
+          "url": {
+            "description": "An https link or a path on getpack’s own site",
+            "example": "/v1/store/catalog/images/0190a4b2-0000-7000-8000-000000000001",
+            "maxLength": 2000,
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "alt"
+        ],
+        "type": "object"
+      },
       "UnidentifiedReceiptDto": {
         "properties": {
           "amount": {
@@ -115979,6 +116720,31 @@
             "type": "array"
           }
         },
+        "type": "object"
+      },
+      "UpdateStyleLibrarySettingsDto": {
+        "properties": {
+          "content": {
+            "$ref": "#/components/schemas/StyleLibraryContentDto"
+          },
+          "effectiveFrom": {
+            "description": "From when (now or later); default now",
+            "example": "2026-11-01T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "reason": {
+            "description": "Why (kept with the version, audited)",
+            "example": "เพิ่มใบรับรอง FSC ที่ได้รับ",
+            "maxLength": 500,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "content",
+          "reason"
+        ],
         "type": "object"
       },
       "UpdateSubPatternDto": {
@@ -325596,7 +326362,7 @@
     },
     "/v1/admin/settings/{settingId}/versions": {
       "post": {
-        "description": "Adds a version effective from `effectiveFrom` (now or later). Only the setting's owner role may change it (Superadmin for platform thresholds, D-063). When the setting names an approval policy the version waits for approval (ADR-0006); otherwise it is approved at once. Audited; emits `setting.changed`.\n\nImplements: ADR-0005, D-063.",
+        "description": "Adds a version effective from `effectiveFrom` (now or later). Only the setting's owner role may change it (Superadmin for platform thresholds, D-063) — or Superadmin for any setting, acting on the owner's behalf (DECISIONS-STAGE-A §11.6, audited as the Superadmin). When the setting names an approval policy the version waits for approval (ADR-0006); otherwise it is approved at once. Audited; emits `setting.changed`.\n\nImplements: ADR-0005, D-063, D-448.",
         "operationId": "admin.settings.changeValue",
         "parameters": [
           {
@@ -344231,6 +344997,443 @@
         ]
       }
     },
+    "/v1/admin/style-library/settings": {
+      "get": {
+        "description": "C1c (DECISIONS-STAGE-A §11.5, D-448): the content in force of `storefront.style_library` with its version (staff fields included: certificate expiry, logo permission references). Empty while unset.\n\nImplements: D-448, D-246, D-010, D-125.",
+        "operationId": "admin.styleLibrary.getSettings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "content": {
+                    "materialSwatches": [],
+                    "quickSearch": [],
+                    "trust": {
+                      "certifications": [],
+                      "customerLogos": [],
+                      "foodGrade": [],
+                      "productionPhotos": [],
+                      "taxInvoiceNote": null
+                    }
+                  },
+                  "effectiveFrom": null,
+                  "settingId": null,
+                  "versionNo": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleLibrarySettingsDto"
+                }
+              }
+            },
+            "description": "The content in force",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Read the style library page content",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.read"
+        ]
+      },
+      "put": {
+        "description": "C1c (DECISIONS-STAGE-A §11.5, D-448; D-246: curation by Admin or Marketing with `styles.curate`): adds a version of `storefront.style_library` from `effectiveFrom` (now by default, never in the past) through the settings platform — validated against the setting’s schema, audited (`setting.changed` with before / after and the reason), evented, caches invalidated. Only real content: certificates, documents, photos and logos the business holds (logos need the customer’s permission, recorded in `permission`).\n\nImplements: D-448, D-246, D-010, D-125.",
+        "operationId": "admin.styleLibrary.updateSettings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "content": {
+                      "materialSwatches": [],
+                      "quickSearch": [],
+                      "trust": {
+                        "certifications": [],
+                        "customerLogos": [],
+                        "foodGrade": [],
+                        "productionPhotos": [],
+                        "taxInvoiceNote": {
+                          "en": "A full tax invoice with every order",
+                          "th": "ออกใบกำกับภาษีเต็มรูปแบบทุกคำสั่งซื้อ"
+                        }
+                      }
+                    },
+                    "reason": "ข้อความใบกำกับภาษีที่ฝ่ายบัญชีอนุมัติ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStyleLibrarySettingsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "content": {
+                    "materialSwatches": [],
+                    "quickSearch": [],
+                    "trust": {
+                      "certifications": [],
+                      "customerLogos": [],
+                      "foodGrade": [],
+                      "productionPhotos": [],
+                      "taxInvoiceNote": null
+                    }
+                  },
+                  "effectiveFrom": null,
+                  "settingId": null,
+                  "versionNo": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminStyleLibrarySettingsDto"
+                }
+              }
+            },
+            "description": "The content in force after the change",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "settings.pending_exists": {
+                    "$ref": "#/components/examples/problem.settings.pending_exists"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `settings.pending_exists`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "settings.backdated": {
+                    "$ref": "#/components/examples/problem.settings.backdated"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `settings.backdated`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Change the style library page content",
+        "tags": [
+          "admin.styles"
+        ],
+        "x-required-permissions": [
+          "styles.curate"
+        ]
+      }
+    },
     "/v1/admin/style-price-rules": {
       "get": {
         "description": "Which option values a calculator prices and how (D-268); filter by calculator or status.\n\nImplements: D-268, D-266.",
@@ -345804,7 +347007,7 @@
     },
     "/v1/admin/styles/actions/backfill-fit-ranges": {
       "post": {
-        "description": "C0b (owner decision 2026-10-28, DECISIONS-STAGE-A §9.1; curation D-246): each style whose inside fit range is empty gets the approved recipe’s size range (D-241, mm, inside basis; the style’s own material class, else what every complete class allows), through the same path as `admin.styles.update` — audited per style as `style_base.curated` with source `recipe`. A range the business entered is never overwritten; a range filled here earlier follows a newer approved recipe. Idempotent (a second run changes nothing); `dryRun` reports without writing.\n\nImplements: D-241, D-242, D-243, D-246.",
+        "description": "C0b / C1c (owner decisions 2026-10-28, DECISIONS-STAGE-A §9.1, §11.1; curation D-246): each style whose inside fit range is empty gets one through the same path as `admin.styles.update` — audited per style as `style_base.curated` — each bound taken from the first source that gives it: (a) the approved recipe’s size range (D-241), (b) the style’s own standard sizes (its catalogue products’ standard sizes, the recipe’s presets), (c) the production envelope (its pattern’s calculator size rules ∩ the dieline engine’s limits). Each bound’s source is stored; nothing is mapped by hand. A range the business entered is never overwritten; a backfilled range follows newer data. A style without all six bounds stays empty and is listed in `incomplete`. Idempotent (a second run changes nothing); `dryRun` reports without writing (`changes` = preview).\n\nImplements: D-241, D-242, D-243, D-246, D-448.",
         "operationId": "admin.styles.backfillFitRanges",
         "parameters": [
           {
@@ -345833,17 +347036,97 @@
             "content": {
               "application/json": {
                 "example": {
+                  "boundsBySource": {
+                    "production_envelope": 0,
+                    "recipe": 490,
+                    "standard_sizes": 2
+                  },
+                  "bySource": {
+                    "combined": 1,
+                    "production_envelope": 0,
+                    "recipe": 81,
+                    "standard_sizes": 0
+                  },
+                  "changes": [
+                    {
+                      "action": "filled",
+                      "after": {
+                        "fitMaxHMm": 35,
+                        "fitMaxLMm": 400,
+                        "fitMaxWMm": 300,
+                        "fitMinHMm": 25,
+                        "fitMinLMm": 60,
+                        "fitMinWMm": 51
+                      },
+                      "before": null,
+                      "bounds": {
+                        "fitMaxHMm": {
+                          "basis": [
+                            "recipe_presets"
+                          ],
+                          "source": "standard_sizes"
+                        },
+                        "fitMaxLMm": {
+                          "basis": [
+                            "recipe_size_range"
+                          ],
+                          "source": "recipe"
+                        },
+                        "fitMaxWMm": {
+                          "basis": [
+                            "recipe_size_range"
+                          ],
+                          "source": "recipe"
+                        },
+                        "fitMinHMm": {
+                          "basis": [
+                            "recipe_presets"
+                          ],
+                          "source": "standard_sizes"
+                        },
+                        "fitMinLMm": {
+                          "basis": [
+                            "recipe_size_range"
+                          ],
+                          "source": "recipe"
+                        },
+                        "fitMinWMm": {
+                          "basis": [
+                            "recipe_size_range"
+                          ],
+                          "source": "recipe"
+                        }
+                      },
+                      "code": "PK-SP-01",
+                      "source": "combined",
+                      "styleId": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001"
+                    }
+                  ],
                   "considered": 122,
                   "dryRun": true,
                   "filled": [
-                    "PK-CB-01"
+                    "PK-SP-01"
+                  ],
+                  "incomplete": [
+                    {
+                      "code": "PK-LA-01",
+                      "conflicting": [],
+                      "missing": [
+                        "fitMinLMm",
+                        "fitMaxLMm",
+                        "fitMinWMm",
+                        "fitMaxWMm",
+                        "fitMinHMm",
+                        "fitMaxHMm"
+                      ]
+                    }
                   ],
                   "keptBusiness": [],
                   "noRecipeRange": [
-                    "PK-CB-02"
+                    "PK-LA-01"
                   ],
                   "refreshed": [],
-                  "unchanged": 0
+                  "unchanged": 81
                 },
                 "schema": {
                   "$ref": "#/components/schemas/FitRangeBackfillResult"
@@ -346001,7 +347284,7 @@
             "staff": []
           }
         ],
-        "summary": "Fill empty fit ranges from approved recipes",
+        "summary": "Fill empty fit ranges from the system's own size data",
         "tags": [
           "admin.styles"
         ],
@@ -346053,6 +347336,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -346336,6 +347620,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -346677,6 +347962,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -346978,6 +348264,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -347282,6 +348569,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -347601,6 +348889,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -347934,6 +349223,7 @@
                   "descriptionTh": null,
                   "family": "tuck_end",
                   "featured": false,
+                  "fitRangeBounds": null,
                   "fitRangeSource": null,
                   "hidden": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000ae001",
@@ -570670,6 +571960,166 @@
         "summary": "Add a style to my favourites",
         "tags": [
           "store.styleFavourites"
+        ]
+      }
+    },
+    "/v1/store/style-library/settings": {
+      "get": {
+        "description": "C1c (owner decision 2026-10-28, DECISIONS-STAGE-A §11.5, D-448): the \"ค้นหาบ่อย\" terms, material swatches and the trust section (certificates with number, issuer and expiry, food-grade documents, production-process photos, customer logos the customer permitted, the tax-invoice note) from the effective-dated setting `storefront.style_library`; `compareLimit` is D-246’s 3. Empty while unset — every part is hidden; expired certificates are left out. Nothing here is generated; no factory names (D-050).\n\nImplements: D-448, D-246, D-010, D-125, D-050.",
+        "operationId": "store.styleLibrary.getSettings",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "compareLimit": 3,
+                  "materialSwatches": [],
+                  "quickSearch": [],
+                  "trust": {
+                    "certifications": [],
+                    "customerLogos": [],
+                    "foodGrade": [],
+                    "productionPhotos": [],
+                    "taxInvoiceNote": null
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/StoreStyleLibrarySettingsDto"
+                }
+              }
+            },
+            "description": "The content in force",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Get the style library page content staff keep",
+        "tags": [
+          "store.styles"
         ]
       }
     },

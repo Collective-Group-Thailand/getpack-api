@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
 
 import { DielineDownloadsService } from './dieline-downloads.service';
 import { ProcessCapabilitiesService } from './process-capabilities.service';
@@ -9,6 +10,7 @@ import { StyleDielinesService } from './style-dielines.service';
 import { StyleImportService } from './style-import.service';
 import { StyleImportUploadsService } from './style-import-uploads.service';
 import { StyleIntakesService } from './style-intakes.service';
+import { StyleLibrarySettingsService } from './style-library-settings.service';
 import { StyleMakeabilityService } from './style-makeability.service';
 import { StylePriceRulesService } from './style-price-rules';
 import { StylePublishingService } from './style-publishing.service';
@@ -31,6 +33,7 @@ const SERVICES = [
   StylesStoreService,
   ProcessCapabilitiesService,
   StyleCoverageService,
+  StyleLibrarySettingsService,
 ];
 
 /**
@@ -39,5 +42,5 @@ const SERVICES = [
  * runs the nightly recompute.
  */
 @Global()
-@Module({ providers: [...SERVICES, StylesJobs], exports: SERVICES })
+@Module({ imports: [SettingsAdminModule], providers: [...SERVICES, StylesJobs], exports: SERVICES })
 export class StylesModule {}
