@@ -1,3 +1,5 @@
+import { SettingNotFoundError } from '@platform/settings/settings.service';
+
 /**
  * C1c (owner decision 2026-10-28, DECISIONS-STAGE-A §11.2): the quotation first-response time shown on quote-only
  * styles — "ทีมงานตอบภายใน {n} วันทำการ" — is `ceil(rfq.sla_business_hours ÷ hours of one business day)`, the business
@@ -26,4 +28,31 @@ export function businessDayHours(window: unknown): number | null {
   const to = minutes(w['to']);
   if (from === null || to === null || to <= from) return null;
   return (to - from) / 60;
+}
+
+/** The part of the settings service the lookup reads. */
+export interface QuoteResponseSettings {
+  at(key: string, options?: { scope?: { type: 'product_type'; id: bigint } }): Promise<{ value: unknown }>;
+}
+
+/**
+ * The quotation first-response time of a product type in working days ({@link quoteResponseDaysOf}): its
+ * `rfq.sla_business_hours` (product-type scope, platform fallback, D-100) over `calendar.business_hours` (D-175). Null
+ * when a setting is missing or unusable — the timing is then omitted. Shared by the style cards (C0b / C1c) and the
+ * product page (C1f / C3, D-451).
+ */
+export async function quoteResponseDaysFor(
+  settings: QuoteResponseSettings,
+  productTypeId: bigint,
+): Promise<number | null> {
+  try {
+    const hours = (
+      await settings.at('rfq.sla_business_hours', { scope: { type: 'product_type', id: productTypeId } })
+    ).value;
+    const window = (await settings.at('calendar.business_hours')).value;
+    return quoteResponseDaysOf(hours, window);
+  } catch (error) {
+    if (error instanceof SettingNotFoundError) return null;
+    throw error;
+  }
 }

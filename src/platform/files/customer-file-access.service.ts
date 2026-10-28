@@ -26,10 +26,33 @@ export interface CustomerFileRef {
 
 export interface FileAccessLogFilter {
   orderId?: string;
+  /** C1f (D-451): the order's code, exact, case-insensitive. */
+  orderCode?: string;
   fileId?: string;
   actorId?: string;
+  /** C1f: one kind of customer file. */
+  fileKind?: 'customer_original' | 'production_copy' | 'approved_proof_copy';
+  /** C1f: true = only Superadmin accesses with a typed reason (D-449 (1)); false = only the others. */
+  withReason?: boolean;
   from?: Date;
   to?: Date;
+}
+
+/** C1f (D-451): the log's filter as Prisma conditions — shared by the list and its export. */
+export function fileAccessLogWhere(filter: FileAccessLogFilter): Prisma.CustomerFileAccessLogWhereInput[] {
+  const and: Prisma.CustomerFileAccessLogWhereInput[] = [];
+  if (filter.orderId) and.push({ order: { publicId: filter.orderId } });
+  if (filter.orderCode) and.push({ order: { orderCode: { equals: filter.orderCode, mode: 'insensitive' } } });
+  if (filter.fileId) and.push({ fileObject: { publicId: filter.fileId } });
+  if (filter.actorId)
+    and.push({
+      OR: [{ actorUser: { publicId: filter.actorId } }, { actorApiClient: { publicId: filter.actorId } }],
+    });
+  if (filter.fileKind) and.push({ fileKind: filter.fileKind });
+  if (filter.withReason !== undefined) and.push({ reason: filter.withReason ? { not: null } : null });
+  if (filter.from) and.push({ occurredAt: { gte: filter.from } });
+  if (filter.to) and.push({ occurredAt: { lt: filter.to } });
+  return and;
 }
 
 const LOG_INCLUDE = {
@@ -386,15 +409,7 @@ export class CustomerFileAccessService {
 
   /** Newest first, cursor-paginated (Superadmin, `customer_file_access_logs.read`). */
   async list(filter: FileAccessLogFilter, cursor: string | undefined, limit: number) {
-    const and: Prisma.CustomerFileAccessLogWhereInput[] = [];
-    if (filter.orderId) and.push({ order: { publicId: filter.orderId } });
-    if (filter.fileId) and.push({ fileObject: { publicId: filter.fileId } });
-    if (filter.actorId)
-      and.push({
-        OR: [{ actorUser: { publicId: filter.actorId } }, { actorApiClient: { publicId: filter.actorId } }],
-      });
-    if (filter.from) and.push({ occurredAt: { gte: filter.from } });
-    if (filter.to) and.push({ occurredAt: { lt: filter.to } });
+    const and = fileAccessLogWhere(filter);
     if (cursor) {
       const position = decodeCursor(cursor);
       const at = new Date(String(position['at']));

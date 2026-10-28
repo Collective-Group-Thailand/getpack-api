@@ -239,8 +239,10 @@ export class StoreCatalogController {
     description:
       'Patterns with their size constraints, the options it offers grouped by kind, standard sizes, images, videos and SEO meta. ' +
       'The starting price and `startingPriceAssumes` (lines and one-string `label`) are the default spec priced through ' +
-      'the configurator’s own path; with a default spec, `isDefault` marks the options it selects (D-441).',
-    implements: [...CATALOG, 'D-441'],
+      'the configurator’s own path; with a default spec, `isDefault` marks the options it selects (D-441). C1f ' +
+      '(D-451): a quote-only product carries `quoteResponseBusinessDays`, the same working-day answer time as the style ' +
+      'cards (DECISIONS-STAGE-A §9.3 / §11.2).',
+    implements: [...CATALOG, 'D-441', 'D-451'],
   })
   @ApiSuccess(200, {
     description: 'The product',
@@ -288,6 +290,7 @@ export class StoreCatalogController {
         { provider: 'youtube', url: 'https://www.youtube.com/watch?v=example', title: 'วิธีประกอบกล่อง' },
       ],
       seo: SEO,
+      quoteResponseBusinessDays: null,
     },
   })
   @ApiStandardErrors('http.not_found', 'validation.failed')

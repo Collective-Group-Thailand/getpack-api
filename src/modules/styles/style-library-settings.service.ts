@@ -84,12 +84,21 @@ export class StyleLibrarySettingsService {
   /**
    * C1e (§13.3): a document customers open from the trust section — an uploaded file the content in force publishes
    * (an expired certificate's document is not), uploaded, scanned clean and not purged; anything else is 404.
+   * C1f (§14.3): only a published purpose (`published_document` / `image`) whose metadata the worker has stripped —
+   * a file uploaded as a financial-record `document`, or one whose metadata could not be removed, is never served.
    */
   async document(fileId: string, now = new Date()): Promise<StyleLibraryDocument> {
     const { documents } = publicFileIds(await this.content(), bangkokDate(now));
     if (!documents.includes(fileId)) throw new DomainException('http.not_found');
     const file = await this.prisma.fileObject.findFirst({
-      where: { publicId: fileId, uploadStatus: 'uploaded', scanStatus: 'clean', purgedAt: null },
+      where: {
+        publicId: fileId,
+        uploadStatus: 'uploaded',
+        scanStatus: 'clean',
+        purgedAt: null,
+        purpose: { in: [...DOCUMENT_PURPOSES] },
+        metadataStrippedAt: { not: null },
+      },
       select: { storageKey: true, mimeType: true, sizeBytes: true, sha256: true, publicId: true },
     });
     if (!file || !DOCUMENT_MIME.test(file.mimeType)) throw new DomainException('http.not_found');
@@ -103,15 +112,23 @@ export class StyleLibrarySettingsService {
 
   /**
    * C1e (§13.3): every uploaded file the content references must be ready to publish — uploaded, not infected, of the
-   * right kind (pictures: purpose `image`, PNG / JPEG / WebP; documents: purpose `document` or `image`, PDF or a
-   * picture). External https links stay allowed for documents only (the setting's schema).
+   * right kind (pictures: purpose `image`, PNG / JPEG / WebP; documents: purpose `published_document` (C1f, §14.3:
+   * metadata stripped like images) or `image`, PDF or a picture). External https links stay allowed for documents only
+   * (the setting's schema).
    */
   private async assertFiles(content: StyleLibraryContent): Promise<void> {
     const refs = referencedFiles(content);
     if (refs.length === 0) return;
     const files = await this.prisma.fileObject.findMany({
       where: { publicId: { in: [...new Set(refs.map((r) => r.fileId))] } },
-      select: { publicId: true, uploadStatus: true, scanStatus: true, purgedAt: true, mimeType: true, purpose: true },
+      select: {
+        publicId: true,
+        uploadStatus: true,
+        scanStatus: true,
+        purgedAt: true,
+        mimeType: true,
+        purpose: true,
+      },
     });
     const byId = new Map(files.map((f) => [f.publicId, f]));
     const errors = refs.flatMap((ref) => {
@@ -121,7 +138,7 @@ export class StyleLibrarySettingsService {
       const kind =
         ref.kind === 'image'
           ? !!f && f.purpose === 'image' && IMAGE_MIME.test(f.mimeType)
-          : !!f && (f.purpose === 'document' || f.purpose === 'image') && DOCUMENT_MIME.test(f.mimeType);
+          : !!f && DOCUMENT_PURPOSES.has(f.purpose ?? '') && DOCUMENT_MIME.test(f.mimeType);
       return ready && kind
         ? []
         : [
@@ -131,7 +148,7 @@ export class StyleLibrarySettingsService {
               message:
                 ref.kind === 'image'
                   ? 'not an uploaded picture (purpose image: PNG, JPEG or WebP)'
-                  : 'not an uploaded document (purpose document or image: PDF or a picture)',
+                  : 'not an uploaded document (purpose published_document or image: PDF or a picture)',
             },
           ];
     });
@@ -150,6 +167,8 @@ export class StyleLibrarySettingsService {
 
 const IMAGE_MIME = /^image\/(png|jpeg|webp)$/;
 const DOCUMENT_MIME = /^(application\/pdf|image\/(png|jpeg|webp))$/;
+/** C1f (§14.3): purposes whose metadata the worker strips (`SCRUBBED_PURPOSES`) — the only ones a document may have. */
+const DOCUMENT_PURPOSES: ReadonlySet<string> = new Set(['published_document', 'image']);
 
 export interface StyleLibraryDocument {
   stream: Readable;
@@ -178,7 +197,10 @@ export function normalise(c: StyleLibraryContentDto): StyleLibraryContent {
         expiresOn: text(x.expiresOn),
         documentUrl: text(x.documentUrl),
       })),
-      foodGrade: c.trust.foodGrade.map((x) => ({ title: localised(x.title), documentUrl: text(x.documentUrl) })),
+      foodGrade: c.trust.foodGrade.map((x) => ({
+        title: localised(x.title),
+        documentUrl: text(x.documentUrl),
+      })),
       productionPhotos: c.trust.productionPhotos.map((x) => ({ url: x.url.trim(), alt: localised(x.alt) })),
       customerLogos: c.trust.customerLogos.map((x) => ({
         name: x.name.trim(),

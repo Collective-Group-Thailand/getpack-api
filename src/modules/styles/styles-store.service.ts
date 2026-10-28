@@ -8,10 +8,10 @@ import { imageUrl } from '@modules/catalog/store/store-catalog.service';
 import { type SpecLineDto } from '@modules/quotes/line-summary.dto';
 import { specLabel } from '@modules/quotes/spec-label';
 import { Injectable } from '@nestjs/common';
-import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
+import { SettingsService } from '@platform/settings/settings.service';
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
-import { quoteResponseDaysOf } from './quote-response-days';
+import { quoteResponseDaysFor } from './quote-response-days';
 import { isSizeClass, type SizeClass } from './size-classes';
 import { StyleAssetsService } from './style-assets.service';
 import { fitOf, hasFitRange, parseProductSize } from './style-fit';
@@ -498,18 +498,7 @@ export class StylesStoreService {
     const now = Date.now();
     const cached = this.responseDays.get(key);
     if (cached && cached.until > now) return cached.days;
-    let days: number | null = null;
-    try {
-      const hours = (
-        await this.settings.at('rfq.sla_business_hours', {
-          scope: { type: 'product_type', id: productTypeId },
-        })
-      ).value;
-      const window = (await this.settings.at('calendar.business_hours')).value;
-      days = quoteResponseDaysOf(hours, window);
-    } catch (error) {
-      if (!(error instanceof SettingNotFoundError)) throw error;
-    }
+    const days = await quoteResponseDaysFor(this.settings, productTypeId);
     this.responseDays.set(key, { days, until: now + 60_000 });
     return days;
   }

@@ -109,3 +109,12 @@ schema of `storefront.style_library` follows `STYLE_LIBRARY_CONTENT_SCHEMA`.
   kind) → `validation.failed` `fileReady`. `store.catalog.getImage` also serves pictures the content in force publishes;
   new public `GET /v1/store/style-library/documents/{fileId}` (`store.styleLibrary.getDocument`) serves published
   documents (expired certificates not), else 404. **Narrower than C1c** (no other site paths, no https pictures).
+
+## C1f (owner 2026-10-28 13:58 / 14:36, DECISIONS-STAGE-A §14, D-451)
+
+- `size-classes.ts`: PK-TG-03 is a `box` (`BOX_EXCEPTION_CODES`), keeps its recipe range.
+- Fit-range backfill: a `cylinder`'s diameter (L / W bounds) from source (c) `production_envelope` (engine limits ∩
+  calculator rules), never from presets / standard sizes (`withSizeClassSources`); height unchanged. Seed coverage 94 / 102.
+- File purpose `published_document` (PDF / picture, metadata stripped). Trust documents: `published_document` or
+  `image` only (`fileReady` otherwise); `store.styleLibrary.getDocument` serves only stripped files of those purposes.
+- `StoreProductDetailDto.quoteResponseBusinessDays` (quote-only products), the style cards' figure.

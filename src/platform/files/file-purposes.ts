@@ -59,6 +59,12 @@ export const FILE_PURPOSES = {
    * studio template thumbnails. Standard retention — not the financial-record years of `document`.
    */
   image: { retentionClass: 'standard', maxBytes: 20 * MiB, mimeTypes: IMAGES },
+  /**
+   * C1f (owner 2026-10-28 13:58, DECISIONS-STAGE-A §14.3): documents getpack publishes to everyone — the style
+   * library's trust-section certificates and food-grade documents. Their metadata (PDF Info / XMP, EXIF) is stripped
+   * like published images before anyone can read them; standard retention (not a financial record).
+   */
+  published_document: { retentionClass: 'standard', maxBytes: 50 * MiB, mimeTypes: [...PDF, ...IMAGES] },
   /** Images, logos, SVGs and fonts placed in an online design (B4.1, U-B0.1). */
   design_asset: {
     retentionClass: 'customer_content',
@@ -82,7 +88,7 @@ export type FilePurpose = keyof typeof FILE_PURPOSES;
 /**
  * D-442 (GLOBAL-RULES §1): uploads shared with customers or production whose identifying metadata (EXIF / GPS, XMP,
  * PDF Info) the worker removes before the file can be downloaded — QC / milestone / POD / claim photos and reports,
- * proofs, published images, avatars, dielines. Customer originals (`artwork`, `design_asset`) are kept as uploaded
+ * proofs, published images and documents (C1f), avatars, dielines. Customer originals (`artwork`, `design_asset`) are kept as uploaded
  * (production gets a scrubbed copy, `artwork_production_copies`); financial records (`slip`, `document`,
  * `brand_mark`, `signature`) and imports are never rewritten.
  */
@@ -90,6 +96,7 @@ export const SCRUBBED_PURPOSES: ReadonlySet<string> = new Set<FilePurpose>([
   'evidence',
   'proof',
   'image',
+  'published_document',
   'avatar',
   'dieline',
 ]);

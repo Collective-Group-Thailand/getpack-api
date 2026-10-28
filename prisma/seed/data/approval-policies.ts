@@ -20,16 +20,70 @@ export interface PolicySeed {
   steps: StepSeed[];
   /**
    * D-449 B (owner decision 2026-10-28): requests at or below this amount (THB) are approved at creation. Only on
-   * policies whose steps already have an amount condition. An existing database gets it once as a new version
-   * (`ensureApprovalPolicyAmendments`); afterwards only a Superadmin changes it in the policy editor.
+   * policies whose steps already have an amount condition. Version 1 of a new database gets the latest owner value;
+   * an existing database is brought to it as one new version (`ensureApprovalPolicyAmendments`, never editing a
+   * version), see {@link thresholdAmendmentOf}; afterwards only a Superadmin changes it in the policy editor.
    */
   autoApproveMaxAmount?: string;
+  /** The owner's threshold decisions for this policy, oldest first; the last one is `autoApproveMaxAmount`. */
+  autoApproveHistory?: readonly ThresholdDecision[];
 }
 
-/** Owner decision 2026-10-28 (C1d B): the approval threshold, ฿500,000.00. */
-export const OWNER_APPROVAL_THRESHOLD = '500000.00';
-export const OWNER_APPROVAL_THRESHOLD_REASON =
-  'Owner decision 2026-10-28 (D-449 B, DECISIONS-STAGE-A §12): requests of ≤ THB 500,000.00 skip the second approval';
+/** One owner decision about a policy's auto-approve amount: the amount and the reason its seed version carries. */
+export interface ThresholdDecision {
+  amount: string;
+  reason: string;
+}
+
+/** Owner decision 2026-10-28 (C1d B): the approval threshold, ฿500,000.00 (superseded for `credit_limit` by C1f). */
+export const OWNER_APPROVAL_THRESHOLD_C1D: ThresholdDecision = {
+  amount: '500000.00',
+  reason:
+    'Owner decision 2026-10-28 (D-449 B, DECISIONS-STAGE-A §12): requests of ≤ THB 500,000.00 skip the second approval',
+};
+/** Owner decision 2026-10-28 13:58 (C1f, D-451, DECISIONS-STAGE-A §14.5): `credit_limit` threshold ฿100,000.00. */
+export const OWNER_CREDIT_LIMIT_THRESHOLD_C1F: ThresholdDecision = {
+  amount: '100000.00',
+  reason:
+    'Owner decision 2026-10-28 13:58 (D-451, DECISIONS-STAGE-A §14.5): credit-limit requests of ≤ THB 100,000.00 skip the second approval',
+};
+/** @deprecated kept for readers of C1d; the seed uses {@link OWNER_CREDIT_LIMIT_THRESHOLD_C1F}. */
+export const OWNER_APPROVAL_THRESHOLD = OWNER_APPROVAL_THRESHOLD_C1D.amount;
+export const OWNER_APPROVAL_THRESHOLD_REASON = OWNER_APPROVAL_THRESHOLD_C1D.reason;
+
+/** A version as the amendment check reads it. */
+export interface VersionFacts {
+  reason: string;
+  autoApproveMaxAmount: string | null;
+  /** Null for a version the seed wrote; a person's id for one made in the policy editor. */
+  createdById: bigint | null;
+}
+
+/**
+ * Whether an existing database's policy gets the latest owner threshold as a new version, and which. Only when the
+ * value in force is still what the seed put there — a version the seed wrote (no author) that carries no amount (a
+ * database from before D-449, whose versions never had one) or an earlier owner amount. A value a Superadmin set,
+ * changed or removed in the editor always wins, and the seed never writes the same decision twice. Pure.
+ */
+export function thresholdAmendmentOf(
+  history: readonly ThresholdDecision[] | undefined,
+  inForce: VersionFacts | null,
+  versions: readonly VersionFacts[],
+): ThresholdDecision | null {
+  const latest = history?.at(-1);
+  if (!latest || !inForce) return null;
+  if (versions.some((v) => v.reason === latest.reason)) return null;
+  if (inForce.createdById !== null) return null;
+  const amount = inForce.autoApproveMaxAmount === null ? null : Number(inForce.autoApproveMaxAmount);
+  if (amount === Number(latest.amount)) return null;
+  if (amount === null)
+    return versions.some(
+      (v) => v.autoApproveMaxAmount !== null || history!.some((h) => h.reason === v.reason),
+    )
+      ? null
+      : latest;
+  return history!.slice(0, -1).some((h) => Number(h.amount) === amount) ? latest : null;
+}
 
 const pct = (op: string, value: string) => ({ field: 'pct', op, value });
 const notBelowFloor = { field: 'flags', op: 'excludes', value: 'below_margin_floor' };
@@ -83,7 +137,9 @@ export const APPROVAL_POLICIES: readonly PolicySeed[] = [
     description: 'B2B credit limits: up to THB 100,000 by Finance, above by C-Level (D-121)',
     decisions: ['D-121'],
     reason: 'Seed from D-121',
-    autoApproveMaxAmount: OWNER_APPROVAL_THRESHOLD,
+    // D-449 B, then C1f (owner: "I am the executive and the approver"): ฿100,000.00.
+    autoApproveMaxAmount: OWNER_CREDIT_LIMIT_THRESHOLD_C1F.amount,
+    autoApproveHistory: [OWNER_APPROVAL_THRESHOLD_C1D, OWNER_CREDIT_LIMIT_THRESHOLD_C1F],
     steps: [
       {
         name: 'Finance (≤ THB 100,000)',

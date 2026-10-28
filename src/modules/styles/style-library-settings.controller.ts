@@ -22,7 +22,13 @@ const ADMIN_EXAMPLE = {
   content: {
     quickSearch: [],
     materialSwatches: [],
-    trust: { certifications: [], foodGrade: [], productionPhotos: [], customerLogos: [], taxInvoiceNote: null },
+    trust: {
+      certifications: [],
+      foodGrade: [],
+      productionPhotos: [],
+      customerLogos: [],
+      taxInvoiceNote: null,
+    },
   },
   versionNo: null,
   effectiveFrom: null,
@@ -84,9 +90,10 @@ export class StoreStyleLibraryDocumentsController {
       'C1e (DECISIONS-STAGE-A §13.3, D-450; D-448): a certificate or food-grade document uploaded through the file ' +
       'service and referenced by the published content of `storefront.style_library` — served only while that ' +
       'content shows it (an expired certificate is not shown), the upload is complete and its malware scan is clean; ' +
-      'anything else is 404 (contract §3 "Files", the public-image rule of `store.catalog.getImage`). PDF or a ' +
-      'picture, inline, cacheable for an hour. No factory data (D-050).',
-    implements: ['D-450', 'D-448', 'D-050'],
+      'anything else is 404 (contract §3 "Files", the public-image rule of `store.catalog.getImage`). C1f (§14.3, ' +
+      'D-451): only a published purpose (`published_document` or `image`) whose metadata (PDF Info / XMP, EXIF) the ' +
+      'worker has stripped. PDF or a picture, inline, cacheable for an hour. No factory data (D-050).',
+    implements: ['D-451', 'D-450', 'D-448', 'D-050'],
   })
   @ApiProduces('application/pdf', 'image/png', 'image/jpeg', 'image/webp')
   @ApiResponse({
@@ -127,7 +134,11 @@ export class AdminStyleLibrarySettingsController {
       '(staff fields included: certificate expiry, logo permission references). Empty while unset.',
     implements: DECISIONS,
   })
-  @ApiSuccess(200, { description: 'The content in force', type: AdminStyleLibrarySettingsDto, example: ADMIN_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'The content in force',
+    type: AdminStyleLibrarySettingsDto,
+    example: ADMIN_EXAMPLE,
+  })
   @ApiStandardErrors('validation.failed')
   get(): Promise<AdminStyleLibrarySettingsDto> {
     return this.content.forAdmin();
@@ -145,10 +156,11 @@ export class AdminStyleLibrarySettingsController {
       'the reason), evented, caches invalidated. Only real content: certificates, documents, photos and logos the ' +
       'business holds (logos need the customer’s permission, recorded in `permission`). C1e (§13.3, D-450): photos, ' +
       'logos and swatches are uploaded pictures (`/v1/store/catalog/images/{fileId}`, purpose `image`); documents ' +
-      'are uploaded files (`/v1/store/style-library/documents/{fileId}`, purpose `document` or `image`) or an ' +
+      'are uploaded files (`/v1/store/style-library/documents/{fileId}`, C1f D-451: purpose `published_document` — ' +
+      'metadata stripped like images — or `image`) or an ' +
       'external https link; a referenced file that is not uploaded, infected or of the wrong kind is refused ' +
       '(`validation.failed`, code `fileReady`).',
-    implements: [...DECISIONS, 'D-450'],
+    implements: [...DECISIONS, 'D-450', 'D-451'],
   })
   @ApiBody({
     type: UpdateStyleLibrarySettingsDto,
@@ -159,7 +171,10 @@ export class AdminStyleLibrarySettingsController {
             ...ADMIN_EXAMPLE.content,
             trust: {
               ...ADMIN_EXAMPLE.content.trust,
-              taxInvoiceNote: { th: 'ออกใบกำกับภาษีเต็มรูปแบบทุกคำสั่งซื้อ', en: 'A full tax invoice with every order' },
+              taxInvoiceNote: {
+                th: 'ออกใบกำกับภาษีเต็มรูปแบบทุกคำสั่งซื้อ',
+                en: 'A full tax invoice with every order',
+              },
             },
           },
           reason: 'ข้อความใบกำกับภาษีที่ฝ่ายบัญชีอนุมัติ',
@@ -167,7 +182,11 @@ export class AdminStyleLibrarySettingsController {
       },
     },
   })
-  @ApiSuccess(200, { description: 'The content in force after the change', type: AdminStyleLibrarySettingsDto, example: ADMIN_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'The content in force after the change',
+    type: AdminStyleLibrarySettingsDto,
+    example: ADMIN_EXAMPLE,
+  })
   @ApiStandardErrors(
     'http.bad_request',
     'http.malformed_json',

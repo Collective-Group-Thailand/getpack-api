@@ -56,7 +56,8 @@ export class AdminListExportsController {
     id: 'admin.exports.create',
     summary: 'Export a staff list',
     description:
-      `Orders, customers, companies, shipments or claims with the list’s filters as XLSX or CSV (formula-safe), up ` +
+      `Orders, customers, companies, shipments, claims or (C1f, D-451) the customer file access log with the list’s ` +
+      `filters as XLSX or CSV (formula-safe), up ` +
       `to ${LIST_EXPORT_MAX_ROWS} rows, served by a 5-minute signed URL. Needs the list’s read permission and ` +
       '`reports.export`; contact details are left out of the file (PDPA). Audited (`export.generated`). Reports ' +
       'export through `admin.reports.export`.',

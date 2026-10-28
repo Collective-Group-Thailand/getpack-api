@@ -380,6 +380,20 @@ export class StoreProductDetailDto extends StoreProductCardDto {
 
   @ApiProperty({ type: StoreSeoDto, nullable: true })
   seo!: StoreSeoDto | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 2,
+    description:
+      'C1f (C3 open item; D-100, D-175, D-220, D-451, DECISIONS-STAGE-A §9.3, §11.2): for a quote-only product ' +
+      '(`availability = rfq`) the first-response time of a quotation request in working days — ' +
+      '`ceil(rfq.sla_business_hours ÷ hours of one business day)`, the SLA at its product type (platform fallback), ' +
+      'the day length from `calendar.business_hours` (09:00–18:00 = 9 h); the same figure as the style cards. Null ' +
+      'for instantly priced products and when a setting is missing or unusable (then no timing is shown). Never a ' +
+      'price or an estimate.',
+  })
+  quoteResponseBusinessDays!: number | null;
 }
 
 export class StoreProductListQuery extends PageQuery {

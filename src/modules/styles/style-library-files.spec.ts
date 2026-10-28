@@ -20,6 +20,7 @@ type File = {
   storageKey: string;
   sizeBytes: bigint;
   sha256: null;
+  metadataStrippedAt: Date | null;
 };
 const file = (n: number, over: Partial<File> = {}): File => ({
   publicId: ID(n),
@@ -31,6 +32,7 @@ const file = (n: number, over: Partial<File> = {}): File => ({
   storageKey: `k${n}`,
   sizeBytes: 10n,
   sha256: null,
+  metadataStrippedAt: new Date('2026-10-28T00:00:00Z'),
   ...over,
 });
 
@@ -40,14 +42,20 @@ function harness(files: File[], stored: unknown = null) {
     fileObject: {
       findMany: ({ where }: { where: { publicId: { in: string[] } } }) =>
         Promise.resolve(files.filter((f) => where.publicId.in.includes(f.publicId))),
-      findFirst: ({ where }: { where: { publicId: string; uploadStatus: string; scanStatus: string } }) =>
+      findFirst: ({
+        where,
+      }: {
+        where: { publicId: string; uploadStatus: string; scanStatus: string; purpose: { in: string[] } };
+      }) =>
         Promise.resolve(
           files.find(
             (f) =>
               f.publicId === where.publicId &&
               f.uploadStatus === where.uploadStatus &&
               f.scanStatus === where.scanStatus &&
-              f.purgedAt === null,
+              f.purgedAt === null &&
+              where.purpose.in.includes(f.purpose ?? '') &&
+              f.metadataStrippedAt !== null,
           ) ?? null,
         ),
     },
@@ -78,7 +86,7 @@ const content = (trust: Partial<typeof EMPTY_STYLE_LIBRARY_CONTENT.trust>) => ({
 
 describe('trust-section files (C1e, DECISIONS-STAGE-A §13.3)', () => {
   it('saves uploaded pictures and documents, and external https links for documents', async () => {
-    const h = harness([file(1), file(2, { mimeType: 'application/pdf', purpose: 'document' })]);
+    const h = harness([file(1), file(2, { mimeType: 'application/pdf', purpose: 'published_document' })]);
     await h.service.update(actor, {
       content: content({
         productionPhotos: [{ url: IMG(1), alt: T }],
@@ -102,7 +110,7 @@ describe('trust-section files (C1e, DECISIONS-STAGE-A §13.3)', () => {
     ['missing', [] as File[]],
     ['infected', [file(1, { scanStatus: 'infected' })]],
     ['not uploaded', [file(1, { uploadStatus: 'pending' })]],
-    ['a document, not a picture', [file(1, { mimeType: 'application/pdf', purpose: 'document' })]],
+    ['a document, not a picture', [file(1, { mimeType: 'application/pdf', purpose: 'published_document' })]],
     ['customer artwork', [file(1, { purpose: 'artwork' })]],
   ])('refuses a picture that is %s', async (_why, files) => {
     const h = harness(files);
@@ -127,7 +135,7 @@ describe('trust-section files (C1e, DECISIONS-STAGE-A §13.3)', () => {
     });
     const h = harness(
       [
-        file(2, { mimeType: 'application/pdf', purpose: 'document' }),
+        file(2, { mimeType: 'application/pdf', purpose: 'published_document' }),
         file(3, { mimeType: 'application/pdf' }),
       ],
       stored,
@@ -140,5 +148,37 @@ describe('trust-section files (C1e, DECISIONS-STAGE-A §13.3)', () => {
     await expect(harness([file(2)]).service.document(ID(2))).rejects.toMatchObject({
       code: 'http.not_found',
     });
+  });
+
+  it('refuses a document uploaded as a financial-record document, and never serves one (C1f, §14.3)', async () => {
+    const pdf = { mimeType: 'application/pdf', purpose: 'document' };
+    const h = harness([file(5, pdf)]);
+    await expect(
+      h.service.update(actor, {
+        content: content({
+          foodGrade: [{ title: T, documentUrl: DOC(5) }],
+        }),
+        reason: 'เอกสาร food grade',
+      }),
+    ).rejects.toMatchObject({
+      code: 'validation.failed',
+      errors: [expect.objectContaining({ path: 'content.trust.foodGrade.0.documentUrl', code: 'fileReady' })],
+    });
+    const published = content({ foodGrade: [{ title: T, documentUrl: DOC(5) }] });
+    await expect(harness([file(5, pdf)], published).service.document(ID(5))).rejects.toMatchObject({
+      code: 'http.not_found',
+    });
+    // Published purpose but its metadata could not be stripped (yet): not served either.
+    await expect(
+      harness(
+        [file(5, { ...pdf, purpose: 'published_document', metadataStrippedAt: null })],
+        published,
+      ).service.document(ID(5)),
+    ).rejects.toMatchObject({ code: 'http.not_found' });
+    const ok = await harness(
+      [file(5, { ...pdf, purpose: 'published_document' })],
+      published,
+    ).service.document(ID(5));
+    expect(ok.mimeType).toBe('application/pdf');
   });
 });

@@ -26,16 +26,11 @@ import {
   sameBoundSources,
   standardSizeBounds,
   summarySource,
+  withSizeClassSources,
 } from './fit-range-sources';
 import { PUBLISH_REASONS } from './publishability';
 import { insideRuleOf, isSizeClass, type SizeClass, sizeClassOf } from './size-classes';
-import {
-  type FitRange,
-  type FitRangeSource,
-  hasFitRange,
-  isFitRangeEmpty,
-  sameFitRange,
-} from './style-fit';
+import { type FitRange, type FitRangeSource, hasFitRange, isFitRangeEmpty, sameFitRange } from './style-fit';
 import { StylePublishingService } from './style-publishing.service';
 import {
   type AdminStyleBaseDetailDto,
@@ -327,7 +322,11 @@ export class StylesAdminService {
     actor: Actor,
     base: BaseRow,
     input: UpdateStyleDto,
-    options: { fitRangeSource?: FitRangeSource; fitRangeBounds?: FitBoundSources; sizeClass?: SizeClass } = {},
+    options: {
+      fitRangeSource?: FitRangeSource;
+      fitRangeBounds?: FitBoundSources;
+      sizeClass?: SizeClass;
+    } = {},
   ): Promise<void> {
     let productTypeId: bigint | null | undefined;
     if (input.productTypeCode !== undefined) {
@@ -373,21 +372,23 @@ export class StylesAdminService {
       fit === null
         ? undefined
         : backfill && options.fitRangeBounds
-          ? (options.fitRangeBounds)
+          ? options.fitRangeBounds
           : fitRangeSource === null || fitRangeSource === 'business'
             ? Prisma.DbNull
             : undefined;
     const sourceChanged = fitRangeSource !== undefined && fitRangeSource !== (base.fitRangeSource ?? null);
     // C1e (§13.2): a style whose size search does not apply takes no new range from curation.
     const sizeClass = options.sizeClass ?? sizeClassDto(base.sizeClass);
-    const classChanged = options.sizeClass !== undefined && options.sizeClass !== sizeClassDto(base.sizeClass);
+    const classChanged =
+      options.sizeClass !== undefined && options.sizeClass !== sizeClassDto(base.sizeClass);
     if (sizeClass === 'not_applicable' && fit !== null && fitChanged && !isFitRangeEmpty(fit) && !backfill)
       throw new DomainException('validation.failed', {
         errors: [
           {
             path: 'commercial.fitMinLMm',
             code: 'sizeSearchNotApplicable',
-            message: 'size search does not apply to this style (DECISIONS-STAGE-A §13.2): leave the fit range empty',
+            message:
+              'size search does not apply to this style (DECISIONS-STAGE-A §13.2): leave the fit range empty',
           },
         ],
       });
@@ -559,7 +560,9 @@ export class StylesAdminService {
           actor,
           base,
           commercial ? { commercial } : {},
-          fit && commercial ? { fitRangeSource: fit.source, fitRangeBounds: fit.bounds, sizeClass } : { sizeClass },
+          fit && commercial
+            ? { fitRangeSource: fit.source, fitRangeBounds: fit.bounds, sizeClass }
+            : { sizeClass },
         );
       });
     const EMPTY: FitRange = {
@@ -624,23 +627,32 @@ export class StylesAdminService {
       }
       const inside = recipe ? await this.insideSizes(recipe.recipe, sizeClass) : {};
       const rules = b.pattern ? sizeRulesOf(b.pattern.constraints) : null;
-      const merged = mergeFitRange({
-        recipe: recipeBounds(b.materialClass, recipe?.sizeRanges ?? null, sizeClass),
-        standard_sizes: standardSizeBounds(
-          (b.pattern?.catalogProducts ?? []).flatMap((p) =>
-            p.catalogProduct.standardSizes.map((z) => ({
-              lengthMm: Number(z.lengthMm),
-              widthMm: Number(z.widthMm),
-              heightMm: Number(z.heightMm),
-            })),
+      // C1f (§14.2): a cylinder's diameter comes from the production envelope, not its presets.
+      const merged = mergeFitRange(
+        withSizeClassSources(sizeClass, {
+          recipe: recipeBounds(b.materialClass, recipe?.sizeRanges ?? null, sizeClass),
+          standard_sizes: standardSizeBounds(
+            (b.pattern?.catalogProducts ?? []).flatMap((p) =>
+              p.catalogProduct.standardSizes.map((z) => ({
+                lengthMm: Number(z.lengthMm),
+                widthMm: Number(z.widthMm),
+                heightMm: Number(z.heightMm),
+              })),
+            ),
+            classSpan(
+              b.materialClass,
+              Object.fromEntries(Object.entries(inside).map(([k, v]) => [k, v.standard])),
+            ),
           ),
-          classSpan(b.materialClass, Object.fromEntries(Object.entries(inside).map(([k, v]) => [k, v.standard]))),
-        ),
-        production_envelope: productionEnvelopeBounds(
-          rules,
-          classSpan(b.materialClass, Object.fromEntries(Object.entries(inside).map(([k, v]) => [k, v.limits]))),
-        ),
-      });
+          production_envelope: productionEnvelopeBounds(
+            rules,
+            classSpan(
+              b.materialClass,
+              Object.fromEntries(Object.entries(inside).map(([k, v]) => [k, v.limits])),
+            ),
+          ),
+        }),
+      );
       if (!merged.range || !merged.bounds) {
         result.noRecipeRange.push(b.code);
         result.incomplete.push({ code: b.code, missing: merged.missing, conflicting: merged.conflicting });
@@ -659,7 +671,8 @@ export class StylesAdminService {
       if (
         b.fitRangeSource === source &&
         sameFitRange(merged.range, b) &&
-        (sameBoundSources(b.fitRangeBounds, merged.bounds) || (source === 'recipe' && b.fitRangeBounds === null))
+        (sameBoundSources(b.fitRangeBounds, merged.bounds) ||
+          (source === 'recipe' && b.fitRangeBounds === null))
       ) {
         if (classChanged) {
           change('classified', merged.range, null);

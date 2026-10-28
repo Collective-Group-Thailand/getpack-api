@@ -19,10 +19,22 @@ import { type FitRange, fitRangeFromRecipe } from './style-fit';
  * C1e (§13.2): bags and cylinders are read by their owner-approved mapping rule (`size-classes.ts`,
  * `inside-rules.ts`): a bag's width × gusset × height, a cylinder's diameter square × height — in every source that
  * states those values. Nothing else is mapped; a bound no source gives stays empty, and a style whose six bounds are not
- * all given stays out of the size search. Pure.
+ * all given stays out of the size search.
+ *
+ * C1f (owner 2026-10-28 13:58, DECISIONS-STAGE-A §14.2): a cylinder's diameter (its L and W bounds) comes from the
+ * production envelope — the dieline engine's limits for the style's class (e.g. ⌀ 30–89), with the calculator's size
+ * rules where they state one — instead of its preset / standard sizes, which only list a few cups
+ * ({@link withSizeClassSources}). Its height keeps the fallback order. A business range still wins. Pure.
  */
 
-export const FIT_BOUNDS = ['fitMinLMm', 'fitMaxLMm', 'fitMinWMm', 'fitMaxWMm', 'fitMinHMm', 'fitMaxHMm'] as const;
+export const FIT_BOUNDS = [
+  'fitMinLMm',
+  'fitMaxLMm',
+  'fitMinWMm',
+  'fitMaxWMm',
+  'fitMinHMm',
+  'fitMaxHMm',
+] as const;
 export type FitBound = (typeof FIT_BOUNDS)[number];
 
 /** Backfill sources in the fallback order. */
@@ -64,7 +76,11 @@ const positive = (v: unknown): v is number => typeof v === 'number' && Number.is
  * else the bounds the recipe states for the style's own class, else for a bound every class states, the narrowest.
  * C1e: read by the size class — {@link remapRecipeBounds}.
  */
-export function recipeBounds(materialClass: string, sizeRanges: unknown, sizeClass: SizeClass = 'box'): SourceBounds {
+export function recipeBounds(
+  materialClass: string,
+  sizeRanges: unknown,
+  sizeClass: SizeClass = 'box',
+): SourceBounds {
   return remapRecipeBounds(sizeClass, statedRecipeBounds(materialClass, sizeRanges));
 }
 
@@ -123,7 +139,7 @@ function statedRecipeBounds(materialClass: string, sizeRanges: unknown): SourceB
     } else {
       const all = Object.values(entries).map((c) => (c && typeof c === 'object' ? c[KEYS[k]] : null));
       if (all.length > 0 && all.every(positive))
-        value = k.startsWith('fitMin') ? Math.max(...(all)) : Math.min(...(all));
+        value = k.startsWith('fitMin') ? Math.max(...all) : Math.min(...all);
     }
     if (value !== null) out[k] = { value, basis };
   }
@@ -131,7 +147,10 @@ function statedRecipeBounds(materialClass: string, sizeRanges: unknown): SourceB
 }
 
 /** An inside span per material class → the style's own class, else (per dimension) what every class allows. */
-export function classSpan(materialClass: string, spans: Record<string, InsideSpan> | null | undefined): InsideSpan {
+export function classSpan(
+  materialClass: string,
+  spans: Record<string, InsideSpan> | null | undefined,
+): InsideSpan {
   const none: InsideSpan = { length: null, width: null, height: null };
   if (!spans || Object.keys(spans).length === 0) return none;
   if (spans[materialClass]) return spans[materialClass];
@@ -188,7 +207,10 @@ export interface CalculatorSizeRules {
  * (c) The production envelope: per bound, the narrowest of the calculator's size rules and the engine's limits that
  * state it (a size must pass both to be made). A bound neither states stays empty.
  */
-export function productionEnvelopeBounds(rules: CalculatorSizeRules | null, engine: InsideSpan | null): SourceBounds {
+export function productionEnvelopeBounds(
+  rules: CalculatorSizeRules | null,
+  engine: InsideSpan | null,
+): SourceBounds {
   const out: SourceBounds = {};
   const fromRules: Record<FitBound, number | null> = {
     fitMinLMm: rules?.minLMm ?? null,
@@ -219,6 +241,26 @@ export function productionEnvelopeBounds(rules: CalculatorSizeRules | null, engi
   return out;
 }
 
+/**
+ * §14.2: the sources as the size class reads them. A cylinder's standard sizes give no diameter bound, so the
+ * diameter falls through to the production envelope (source `production_envelope`, basis `engine_limits`); every other
+ * class, and a cylinder's height, are unchanged.
+ */
+export function withSizeClassSources(
+  sizeClass: SizeClass,
+  sources: Record<FitBackfillSource, SourceBounds>,
+): Record<FitBackfillSource, SourceBounds> {
+  if (sizeClass !== 'cylinder') return sources;
+  const {
+    fitMinLMm: _minL,
+    fitMaxLMm: _maxL,
+    fitMinWMm: _minW,
+    fitMaxWMm: _maxW,
+    ...height
+  } = sources.standard_sizes;
+  return { ...sources, standard_sizes: height };
+}
+
 export interface MergedFitRange {
   /** All six bounds, whole mm, min ≤ max — or null (stays out of the size search). */
   range: FitRange | null;
@@ -246,7 +288,9 @@ export function mergeFitRange(sources: Record<FitBackfillSource, SourceBounds>):
       continue;
     }
     const { value, basis } = sources[source][k]!;
-    values[k] = k.startsWith('fitMin') ? Math.ceil(value - 1e-9) : Math.min(MAX_FIT_MM, Math.floor(value + 1e-9));
+    values[k] = k.startsWith('fitMin')
+      ? Math.ceil(value - 1e-9)
+      : Math.min(MAX_FIT_MM, Math.floor(value + 1e-9));
     bounds[k] = { source, basis: [...basis] };
   }
   const conflicting = DIMS.filter(
@@ -255,7 +299,8 @@ export function mergeFitRange(sources: Record<FitBackfillSource, SourceBounds>):
       values[maxKey] !== undefined &&
       (values[minKey] < 1 || values[minKey] > values[maxKey]),
   ).map(([dim]) => dim);
-  if (missing.length > 0 || conflicting.length > 0) return { range: null, bounds: null, missing, conflicting };
+  if (missing.length > 0 || conflicting.length > 0)
+    return { range: null, bounds: null, missing, conflicting };
   return {
     range: Object.fromEntries(FIT_BOUNDS.map((k) => [k, values[k]!])) as unknown as FitRange,
     bounds: bounds as FitBoundSources,
