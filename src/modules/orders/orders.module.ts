@@ -4,6 +4,7 @@ import { AdminOrdersService } from './admin-orders.service';
 import { OrderOperationsService } from './order-operations.service';
 import { OrderRequoteService } from './order-requote.service';
 import { OrderLifecycleHooks, OrdersService } from './orders.service';
+import { PaymentOverdueReminder } from './payment-overdue-reminder';
 import { SpecSheetService } from './spec-sheet.service';
 
 /**
@@ -19,6 +20,7 @@ import { SpecSheetService } from './spec-sheet.service';
     OrderRequoteService,
     AdminOrdersService,
     SpecSheetService,
+    PaymentOverdueReminder,
   ],
   exports: [
     OrdersService,

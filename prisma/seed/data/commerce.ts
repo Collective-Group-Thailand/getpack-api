@@ -162,6 +162,11 @@ export const PAYMENT_FEATURE_FLAGS = [
     key: 'payments.slip_verify',
     description: 'Automatic slip verification (Slip2Go) — D-061 / D-176; off: slips go to Finance',
   },
+  {
+    key: 'orders.payment_overdue_reminder',
+    description:
+      'One reminder (e-mail / LINE) when an unpaid group passes its payment deadline, linking to "ตรวจราคาใหม่และชำระ" — D-453, D-436',
+  },
   // D-296: a stubbed adapter is a development aid — never on in production.
   {
     key: 'payments.twoc2p_ipp',

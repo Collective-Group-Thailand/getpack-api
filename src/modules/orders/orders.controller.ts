@@ -22,6 +22,7 @@ import { type Response } from 'express';
 
 import { orderEtag } from './order-operations.service';
 import { OrderRequoteService } from './order-requote.service';
+import { filterGroups, tabCounts } from './order-tabs';
 import {
   adminOrderDto,
   adminOrderGroupDto,
@@ -43,6 +44,9 @@ import {
   OrderGroupListQuery,
   REQUOTE_PREVIEW_EXAMPLE,
   RequotePreviewDto,
+  STORE_ORDER_TAB_COUNTS_EXAMPLE,
+  StoreOrderGroupListQuery,
+  StoreOrderTabCountsDto,
 } from './orders.dto';
 import { groupEtag, OrdersService } from './orders.service';
 
@@ -75,22 +79,53 @@ export class StoreOrdersController {
     summary: 'List my order groups',
     description:
       'Newest first; each group holds one order per configuration. The payment deadline is shown while unpaid ' +
-      '(D-060) and an overdue group is re-quoted, never cancelled (`paymentOverdue`, D-436).',
-    implements: DECISIONS,
+      '(D-060) and an overdue group is re-quoted, never cancelled (`paymentOverdue`, D-436). `tab` keeps the orders ' +
+      'of one tab of the account list and `q` searches the order or group code, the PO number and the product name ' +
+      '(D-453); with either, each group lists only its matching orders and `meta.total` counts those groups.',
+    implements: [...DECISIONS, 'D-453'],
   })
   @ApiPaginated(OrderGroupDto, { example: ORDER_GROUP_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async list(@CurrentActor() actor: Actor, @Query() q: OrderGroupListQuery) {
-    const { rows, total } = await this.orders.groups(
-      { customerUserId: customerId(actor), ...(q.status ? { status: q.status } : {}) },
-      q.page,
-      q.perPage,
-    );
+  async list(@CurrentActor() actor: Actor, @Query() q: StoreOrderGroupListQuery) {
+    const where = { customerUserId: customerId(actor), ...(q.status ? { status: q.status } : {}) };
     const ctx = await this.ctx();
+    if (q.tab || q.q?.trim()) {
+      // A tab or a search is a rule over the customer status (D-437), computed per order: the customer's groups
+      // are read whole and filtered here (one customer's orders; bounded by `orders.customerGroups`).
+      const all = (await this.orders.customerGroups(where)).map((g) => orderGroupDto(g, ctx));
+      const matched = filterGroups(all, q.tab, q.q);
+      return {
+        data: matched.slice((q.page - 1) * q.perPage, q.page * q.perPage),
+        meta: { page: q.page, perPage: q.perPage, total: matched.length },
+      };
+    }
+    const { rows, total } = await this.orders.groups(where, q.page, q.perPage);
     return {
       data: rows.map((g) => orderGroupDto(g, ctx)),
       meta: { page: q.page, perPage: q.perPage, total },
     };
+  }
+
+  @Get('order-tabs')
+  @ApiEndpoint({
+    id: 'store.orders.tabCounts',
+    summary: 'Count my orders per tab',
+    description:
+      'How many of my orders each tab of the account list holds (D-453): `active`, `todo` (I act next — the ' +
+      'account menu badge), `in_production`, `shipping`, `completed`, `cancelled`, and `claimInReview` (delivered, ' +
+      'claim being reviewed). Same rules as `store.orders.listGroups?tab=`.',
+    implements: [...DECISIONS, 'D-453'],
+  })
+  @ApiSuccess(200, {
+    description: 'Orders per tab',
+    type: StoreOrderTabCountsDto,
+    example: STORE_ORDER_TAB_COUNTS_EXAMPLE,
+  })
+  @ApiStandardErrors()
+  async tabCounts(@CurrentActor() actor: Actor): Promise<StoreOrderTabCountsDto> {
+    const ctx = await this.ctx();
+    const groups = await this.orders.customerGroups({ customerUserId: customerId(actor) });
+    return tabCounts(groups.map((g) => orderGroupDto(g, ctx)));
   }
 
   @Get('order-groups/:groupId')

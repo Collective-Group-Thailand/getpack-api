@@ -59,6 +59,10 @@ const MESSAGES: Record<string, Render> = {
   'order_group.cancelled': fixed('ยกเลิกคำสั่งซื้อ', 'Order cancelled'),
   'order_group.expired': fixed('คำสั่งซื้อหมดอายุเพราะยังไม่ชำระเงิน', 'Order expired unpaid'),
   'order_group.requoted': fixed('ตรวจราคาใหม่แล้ว พร้อมชำระเงิน', 'Price re-checked, ready to pay'),
+  'order_group.payment_overdue': fixed(
+    'เลยกำหนดชำระ ตรวจราคาใหม่และชำระได้ที่หน้าคำสั่งซื้อ',
+    'Payment deadline passed: re-check the price and pay on the order page',
+  ),
   'order.cancelled': fixed('ยกเลิกรายการสั่งผลิต', 'Order item cancelled'),
   'order.charge_added': fixed('เพิ่มค่าใช้จ่ายในคำสั่งซื้อ', 'Charge added to the order'),
   'order.repriced': fixed('ปรับราคาคำสั่งซื้อ', 'Order repriced'),
