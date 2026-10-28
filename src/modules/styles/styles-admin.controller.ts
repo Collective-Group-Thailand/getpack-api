@@ -144,10 +144,14 @@ export class AdminStylesController {
       '`style_base.curated` — each bound taken from the first source that gives it: (a) the approved recipe’s size ' +
       'range (D-241), (b) the style’s own standard sizes (its catalogue products’ standard sizes, the recipe’s ' +
       'presets), (c) the production envelope (its pattern’s calculator size rules ∩ the dieline engine’s limits). ' +
-      'Each bound’s source is stored; nothing is mapped by hand. A range the business entered is never overwritten; ' +
+      'Each bound’s source is stored. A range the business entered is never overwritten; ' +
       'a backfilled range follows newer data. A style without all six bounds stays empty and is listed in ' +
-      '`incomplete`. Idempotent (a second run changes nothing); `dryRun` reports without writing (`changes` = preview).',
-    implements: [...DECISIONS, 'D-246', 'D-448'],
+      '`incomplete`. Idempotent (a second run changes nothing); `dryRun` reports without writing (`changes` = preview). ' +
+      'C1e (§13.2, D-450): each style\'s size class is set from the documented rule and read by it — bags (PK-PG-*, ' +
+      'PK-PB-*) as width × gusset (depth) × height, cups / bowls / tubes (sized by a body diameter) as the diameter\'s ' +
+      'bounding square × height; labels, tags, sleeves, inserts and flat folders are `notApplicable` (no range — a ' +
+      'backfilled one is `cleared` — never in `incomplete`); `coverage` = applicable styles with a range.',
+    implements: [...DECISIONS, 'D-246', 'D-448', 'D-450'],
   })
   @ApiBody({ type: FitRangeBackfillDto, examples: { default: { value: { dryRun: true } } } })
   @ApiSuccess(200, {
@@ -158,12 +162,17 @@ export class AdminStylesController {
       considered: 122,
       filled: ['PK-SP-01'],
       refreshed: [],
-      unchanged: 81,
+      cleared: ['PK-SP-12'],
+      classified: [],
+      unchanged: 80,
       keptBusiness: [],
-      noRecipeRange: ['PK-LA-01'],
-      incomplete: [{ code: 'PK-LA-01', missing: ['fitMinLMm', 'fitMaxLMm', 'fitMinWMm', 'fitMaxWMm', 'fitMinHMm', 'fitMaxHMm'], conflicting: [] }],
-      bySource: { recipe: 81, standard_sizes: 0, production_envelope: 0, combined: 1 },
-      boundsBySource: { recipe: 490, standard_sizes: 2, production_envelope: 0 },
+      noRecipeRange: ['PK-PB-01'],
+      incomplete: [{ code: 'PK-PB-01', missing: ['fitMinLMm', 'fitMaxLMm', 'fitMinWMm', 'fitMaxWMm', 'fitMinHMm', 'fitMaxHMm'], conflicting: [] }],
+      notApplicable: ['PK-LA-01', 'PK-SP-12'],
+      bySource: { recipe: 80, standard_sizes: 0, production_envelope: 0, combined: 1 },
+      boundsBySource: { recipe: 484, standard_sizes: 2, production_envelope: 0 },
+      bySizeClass: { box: 81, bag: 1, cylinder: 0, not_applicable: 2 },
+      coverage: { applicable: 82, withRange: 81 },
       changes: [
         {
           styleId: STYLE_IDS.base,
@@ -180,6 +189,19 @@ export class AdminStylesController {
             fitMinHMm: { source: 'standard_sizes', basis: ['recipe_presets'] },
             fitMaxHMm: { source: 'standard_sizes', basis: ['recipe_presets'] },
           },
+          sizeClassBefore: 'box',
+          sizeClass: 'box',
+        },
+        {
+          styleId: STYLE_IDS.base,
+          code: 'PK-SP-12',
+          action: 'cleared',
+          before: { fitMinLMm: 150, fitMaxLMm: 330, fitMinWMm: 4, fitMaxWMm: 4, fitMinHMm: 200, fitMaxHMm: 450 },
+          after: null,
+          source: null,
+          bounds: null,
+          sizeClassBefore: 'box',
+          sizeClass: 'not_applicable',
         },
       ],
     },

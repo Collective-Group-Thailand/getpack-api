@@ -1,7 +1,11 @@
+import { type Readable } from 'node:stream';
+
 import { type UserActor } from '@common/context/actor';
+import { DomainException } from '@common/errors/domain.exception';
 import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService } from '@database/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
+import { Inject, Injectable } from '@nestjs/common';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 import { SettingsAdminService } from '@platform/settings/settings-admin.service';
 
@@ -9,6 +13,8 @@ import {
   contentOf,
   EMPTY_STYLE_LIBRARY_CONTENT,
   publicContent,
+  publicFileIds,
+  referencedFiles,
   STYLE_LIBRARY_SETTING,
   type StyleLibraryContent,
 } from './style-library-content';
@@ -30,6 +36,7 @@ export class StyleLibrarySettingsService {
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
     private readonly settingsAdmin: SettingsAdminService,
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
   async forStore(now = new Date()): Promise<StoreStyleLibrarySettingsDto> {
@@ -64,12 +71,71 @@ export class StyleLibrarySettingsService {
     actor: UserActor,
     input: { content: StyleLibraryContentDto; reason: string; effectiveFrom?: string },
   ): Promise<AdminStyleLibrarySettingsDto> {
+    const value = normalise(input.content);
+    await this.assertFiles(value);
     await this.settingsAdmin.changeFromEditor(actor, STYLE_LIBRARY_SETTING, {
-      value: normalise(input.content),
+      value,
       reason: input.reason.trim(),
       effectiveFrom: input.effectiveFrom ? new Date(input.effectiveFrom) : new Date(),
     });
     return this.forAdmin();
+  }
+
+  /**
+   * C1e (§13.3): a document customers open from the trust section — an uploaded file the content in force publishes
+   * (an expired certificate's document is not), uploaded, scanned clean and not purged; anything else is 404.
+   */
+  async document(fileId: string, now = new Date()): Promise<StyleLibraryDocument> {
+    const { documents } = publicFileIds(await this.content(), bangkokDate(now));
+    if (!documents.includes(fileId)) throw new DomainException('http.not_found');
+    const file = await this.prisma.fileObject.findFirst({
+      where: { publicId: fileId, uploadStatus: 'uploaded', scanStatus: 'clean', purgedAt: null },
+      select: { storageKey: true, mimeType: true, sizeBytes: true, sha256: true, publicId: true },
+    });
+    if (!file || !DOCUMENT_MIME.test(file.mimeType)) throw new DomainException('http.not_found');
+    return {
+      stream: await this.storage.getStream(file.storageKey),
+      mimeType: file.mimeType,
+      sizeBytes: file.sizeBytes,
+      etag: `"${file.sha256 ? Buffer.from(file.sha256).toString('hex') : file.publicId}"`,
+    };
+  }
+
+  /**
+   * C1e (§13.3): every uploaded file the content references must be ready to publish — uploaded, not infected, of the
+   * right kind (pictures: purpose `image`, PNG / JPEG / WebP; documents: purpose `document` or `image`, PDF or a
+   * picture). External https links stay allowed for documents only (the setting's schema).
+   */
+  private async assertFiles(content: StyleLibraryContent): Promise<void> {
+    const refs = referencedFiles(content);
+    if (refs.length === 0) return;
+    const files = await this.prisma.fileObject.findMany({
+      where: { publicId: { in: [...new Set(refs.map((r) => r.fileId))] } },
+      select: { publicId: true, uploadStatus: true, scanStatus: true, purgedAt: true, mimeType: true, purpose: true },
+    });
+    const byId = new Map(files.map((f) => [f.publicId, f]));
+    const errors = refs.flatMap((ref) => {
+      const f = byId.get(ref.fileId);
+      const ready =
+        !!f && f.uploadStatus === 'uploaded' && f.scanStatus !== 'infected' && f.purgedAt === null;
+      const kind =
+        ref.kind === 'image'
+          ? !!f && f.purpose === 'image' && IMAGE_MIME.test(f.mimeType)
+          : !!f && (f.purpose === 'document' || f.purpose === 'image') && DOCUMENT_MIME.test(f.mimeType);
+      return ready && kind
+        ? []
+        : [
+            {
+              path: ref.path,
+              code: 'fileReady',
+              message:
+                ref.kind === 'image'
+                  ? 'not an uploaded picture (purpose image: PNG, JPEG or WebP)'
+                  : 'not an uploaded document (purpose document or image: PDF or a picture)',
+            },
+          ];
+    });
+    if (errors.length) throw new DomainException('validation.failed', { errors });
   }
 
   private async content(): Promise<StyleLibraryContent> {
@@ -80,6 +146,16 @@ export class StyleLibrarySettingsService {
       throw error;
     }
   }
+}
+
+const IMAGE_MIME = /^image\/(png|jpeg|webp)$/;
+const DOCUMENT_MIME = /^(application\/pdf|image\/(png|jpeg|webp))$/;
+
+export interface StyleLibraryDocument {
+  stream: Readable;
+  mimeType: string;
+  sizeBytes: bigint;
+  etag: string;
 }
 
 const text = (v: string | null | undefined) => (typeof v === 'string' && v.trim() ? v.trim() : null);

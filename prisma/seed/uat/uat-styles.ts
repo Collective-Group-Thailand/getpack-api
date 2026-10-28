@@ -11,8 +11,9 @@
  *      only added later (`PRODUCT_TYPE_OF`, D-407);
  *   4. the processes the recipes need, per material class, proposed for the UAT factory F9001 by Admin and verified by
  *      the Partner Manager against F9001's passing site visit — what makes a variant orderable instantly;
- *   4b. empty inside fit ranges filled (C0b/C1c, DECISIONS-STAGE-A §9.1, §11.1) — each bound from the approved recipe,
- *       else the style's standard sizes, else the production envelope; each bound's source recorded;
+ *   4b. empty inside fit ranges filled (C0b/C1c/C1e, DECISIONS-STAGE-A §9.1, §11.1, §13.2) — each bound from the
+ *       approved recipe, else the style's standard sizes, else the production envelope, read by the style's size
+ *       class; each bound's source recorded;
  *   5. publishability recomputed: since D-407 every drawn, named variant is shown and designable; the ones F9001
  *      cannot make are offered as a quotation request.
  *
@@ -188,12 +189,15 @@ export async function publishUatStyles(
 
   // 4b — C0b / C1c (DECISIONS-STAGE-A §9.1, §11.1): empty fit ranges filled through the curation path, each bound
   // from (a) the approved recipe, (b) the standard sizes, (c) the production envelope (audited, per-bound source; a
-  // business-entered range is never touched; a no-op on a second run).
+  // business-entered range is never touched; a no-op on a second run). C1e (§13.2): each style's size class from the
+  // documented rule — bags and cylinders read by their mapping, labels / tags / sleeves / inserts / flat folders not
+  // applicable (a backfilled range on them is cleared).
   const fit = await admin.backfillFitRanges(importer);
   log.push(
-    `fit ranges: ${fit.filled.length} filled, ${fit.refreshed.length} refreshed, ${fit.unchanged} unchanged, ` +
-      `${fit.keptBusiness.length} business, ${fit.incomplete.length} without a complete range; by source ` +
-      JSON.stringify(fit.bySource),
+    `fit ranges: ${fit.filled.length} filled, ${fit.refreshed.length} refreshed, ${fit.cleared.length} cleared, ` +
+      `${fit.unchanged} unchanged, ${fit.keptBusiness.length} business, ${fit.incomplete.length} without a complete ` +
+      `range, ${fit.notApplicable.length} not applicable; coverage ${fit.coverage.withRange}/${fit.coverage.applicable}; ` +
+      `by source ${JSON.stringify(fit.bySource)}`,
   );
 
   // 5 — publishability recomputed for every base (the master's bases without a recipe stay hidden).

@@ -17,6 +17,7 @@ import {
 import { AdminStyleIntakesController, PartnerStyleIntakesController } from './style-intakes.controller';
 import {
   AdminStyleLibrarySettingsController,
+  StoreStyleLibraryDocumentsController,
   StoreStyleLibrarySettingsController,
 } from './style-library-settings.controller';
 import { AdminStylePriceRulesController } from './style-price-rules';
@@ -30,6 +31,7 @@ export const STYLES_STORE_CONTROLLERS: Type<unknown>[] = [
   StoreDielinesController,
   StoreStructuralRequestsController,
   StoreStyleLibrarySettingsController,
+  StoreStyleLibraryDocumentsController,
 ];
 
 /** `/v1/admin/*` controllers of the style library. */

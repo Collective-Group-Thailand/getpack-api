@@ -1,3 +1,5 @@
+import { type InsideRule } from './inside-rules';
+
 /**
  * The dieline engine (`@getpack/dieline`, published by `getpack-web`, D-002; consumed as a vendored, pinned bundle —
  * ADR-0010). It builds a style from its recipe for a size and a material into a flat dieline: drawings (SVG / DXF /
@@ -109,8 +111,9 @@ export interface InsideSpan {
 /**
  * C1c (DECISIONS-STAGE-A §11.1): the inside (closed) sizes a recipe's own data gives, per material class — `standard`
  * = the span of its presets (the style's standard sizes), `limits` = the span its solver's parameter limits allow;
- * both through the recipe's own `closedSize` (or its length/width/height parameters when it has none). A dimension the
- * recipe does not define (flat items, diameters, gussets without a closed size) stays null — never mapped by hand.
+ * both through the recipe's own `closedSize` (or, when it has none, its parameters read by the style's inside rule —
+ * C1e, `inside-rules.ts`: length/width/height; bags width × gusset × height; cylinders diameter square × height). A
+ * dimension neither gives (flat items) stays null.
  */
 export type RecipeInsideSizes = Record<string, { standard: InsideSpan; limits: InsideSpan }>;
 
@@ -150,8 +153,11 @@ export interface DielineEngine {
     designerPdf?: DesignerPdfOptions,
   ): Promise<RecipeBuild>;
   facts(recipe: StoredRecipe): Promise<RecipeFacts>;
-  /** C1c: inside size spans of the recipe's presets and solver limits, per material class ({@link RecipeInsideSizes}). */
-  insideSizes(recipe: StoredRecipe): Promise<RecipeInsideSizes>;
+  /**
+   * C1c: inside size spans of the recipe's presets and solver limits, per material class ({@link RecipeInsideSizes}).
+   * C1e: without a `closedSize`, the parameters are read by `rule` (`inside-rules.ts`: bag, cylinder; default as before).
+   */
+  insideSizes(recipe: StoredRecipe, rule?: InsideRule): Promise<RecipeInsideSizes>;
   thumbnails(request: RecipeBuildRequest, size: number): Promise<Thumbnails>;
   /** The engine's own recipes, grouped by the base code they name (for the recipe bundle, ADR-0010). */
   recipesByBase(): Promise<Record<string, unknown[]>>;

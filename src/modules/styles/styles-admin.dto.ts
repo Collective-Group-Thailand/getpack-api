@@ -20,6 +20,7 @@ import {
 } from 'class-validator';
 
 import { PRICE_REASONS, PUBLISH_REASONS } from './publishability';
+import { SIZE_CLASSES } from './size-classes';
 
 /** Style library staff DTOs (U3.B1, D-241–D-243). */
 
@@ -316,6 +317,14 @@ export class StyleCommercialDto {
   certifications!: string[];
 }
 
+/** C1e (DECISIONS-STAGE-A §13.2): how the size search reads a style. */
+const SIZE_CLASS_DESCRIPTION =
+  'C1e (DECISIONS-STAGE-A §13.2): how the size search reads the style — `box` (inside L × W × H as stated), `bag` ' +
+  '(paper / plastic bags: width × gusset (depth) × height), `cylinder` (cups, bowls, tubes: diameter × diameter ' +
+  'bounding square × height; the product\'s L × W is fitted inside the square) or `not_applicable` (labels, shrink ' +
+  'sleeves, tags, sleeves, inserts, flat folders: no fit range, left out of the size search, not counted as missing). ' +
+  'Set by the fit-range backfill from the documented rule. Read-only.';
+
 /** C0b/C1c: `style_bases.fit_range_source` values. */
 export const FIT_RANGE_SOURCES = ['recipe', 'standard_sizes', 'production_envelope', 'combined', 'business'] as const;
 /** C1c: the backfill sources, in the fallback order (DECISIONS-STAGE-A §11.1). */
@@ -439,6 +448,9 @@ export class AdminStyleBaseDetailDto extends AdminStyleBaseDto {
       'Read-only.',
   })
   fitRangeBounds!: FitRangeBoundSourcesDto | null;
+
+  @ApiProperty({ enum: SIZE_CLASSES, enumName: 'StyleSizeClass', example: 'box', description: SIZE_CLASS_DESCRIPTION })
+  sizeClass!: (typeof SIZE_CLASSES)[number];
 }
 
 /** C0b: `POST /v1/admin/styles/actions/backfill-fit-ranges`. */
@@ -475,7 +487,7 @@ export class FitRangeValuesDto {
   fitMaxHMm!: number;
 }
 
-/** C1c: one style the run fills or refreshes (the dry-run preview). */
+/** C1c: one style the run fills or refreshes (the dry-run preview); C1e: or clears / classifies. */
 export class FitRangeChangeDto {
   @ApiProperty({ type: String, format: 'uuid', example: STYLE_IDS.base })
   styleId!: string;
@@ -483,20 +495,43 @@ export class FitRangeChangeDto {
   @ApiProperty({ example: 'PK-SP-01' })
   code!: string;
 
-  @ApiProperty({ enum: ['filled', 'refreshed'], enumName: 'StyleFitRangeChangeAction', example: 'filled' })
-  action!: 'filled' | 'refreshed';
+  @ApiProperty({
+    enum: ['filled', 'refreshed', 'cleared', 'classified'],
+    enumName: 'StyleFitRangeChangeAction',
+    example: 'filled',
+    description:
+      '`filled` (empty → range), `refreshed` (a backfilled range follows newer data), `cleared` (C1e: a backfilled ' +
+      'range removed because size search does not apply), `classified` (C1e: only the size class changes)',
+  })
+  action!: 'filled' | 'refreshed' | 'cleared' | 'classified';
 
   @ApiProperty({ type: FitRangeValuesDto, nullable: true, description: 'The range before (null = empty)' })
   before!: FitRangeValuesDto | null;
 
-  @ApiProperty({ type: FitRangeValuesDto })
-  after!: FitRangeValuesDto;
+  @ApiProperty({ type: FitRangeValuesDto, nullable: true, description: 'The range after (null = empty)' })
+  after!: FitRangeValuesDto | null;
 
-  @ApiProperty({ enum: FIT_RANGE_SOURCES, enumName: 'StyleFitRangeSource', example: 'combined' })
-  source!: (typeof FIT_RANGE_SOURCES)[number];
+  @ApiProperty({
+    enum: FIT_RANGE_SOURCES,
+    enumName: 'StyleFitRangeSource',
+    nullable: true,
+    example: 'combined',
+    description: 'Source of the range after (null = no range)',
+  })
+  source!: (typeof FIT_RANGE_SOURCES)[number] | null;
 
-  @ApiProperty({ type: FitRangeBoundSourcesDto })
-  bounds!: FitRangeBoundSourcesDto;
+  @ApiProperty({
+    type: FitRangeBoundSourcesDto,
+    nullable: true,
+    description: 'Each bound\'s source when the run writes a range; null otherwise',
+  })
+  bounds!: FitRangeBoundSourcesDto | null;
+
+  @ApiProperty({ enum: SIZE_CLASSES, enumName: 'StyleSizeClass', example: 'box', description: 'C1e: size class before' })
+  sizeClassBefore!: (typeof SIZE_CLASSES)[number];
+
+  @ApiProperty({ enum: SIZE_CLASSES, enumName: 'StyleSizeClass', example: 'bag', description: 'C1e: size class after' })
+  sizeClass!: (typeof SIZE_CLASSES)[number];
 }
 
 /** C1c: a style the run cannot fill, and why. */
@@ -535,6 +570,34 @@ export class FitRangeSummaryCountsDto extends FitRangeSourceCountsDto {
   combined!: number;
 }
 
+/** C1e: styles per size class. */
+export class FitRangeSizeClassCountsDto {
+  @ApiProperty({ type: 'integer', example: 103 })
+  box!: number;
+
+  @ApiProperty({ type: 'integer', example: 10 })
+  bag!: number;
+
+  @ApiProperty({ type: 'integer', example: 3 })
+  cylinder!: number;
+
+  @ApiProperty({ type: 'integer', example: 6 })
+  not_applicable!: number;
+}
+
+/** C1e: the size search's coverage — styles it applies to, and how many of them have a complete range. */
+export class FitRangeCoverageDto {
+  @ApiProperty({ type: 'integer', example: 101, description: 'Active styles whose size search applies' })
+  applicable!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 93,
+    description: 'Of those, styles with all six bounds after the run (backfilled or business)',
+  })
+  withRange!: number;
+}
+
 export class FitRangeBackfillResult {
   @ApiProperty({ example: false })
   dryRun!: boolean;
@@ -556,6 +619,20 @@ export class FitRangeBackfillResult {
   })
   refreshed!: string[];
 
+  @ApiProperty({
+    type: [String],
+    example: ['PK-SP-12'],
+    description: 'C1e: codes whose backfilled range is removed because size search does not apply to them',
+  })
+  cleared!: string[];
+
+  @ApiProperty({
+    type: [String],
+    example: [],
+    description: 'C1e: codes whose size class changes while their range stays as it is',
+  })
+  classified!: string[];
+
   @ApiProperty({ type: 'integer', example: 0, description: 'Backfilled ranges already in place' })
   unchanged!: number;
 
@@ -574,8 +651,24 @@ export class FitRangeBackfillResult {
   })
   noRecipeRange!: string[];
 
-  @ApiProperty({ type: [FitRangeIncompleteDto], description: 'C1c: styles left empty, with what is missing' })
+  @ApiProperty({
+    type: [FitRangeIncompleteDto],
+    description: 'C1c: styles left empty, with what is missing (C1e: never a style whose size search does not apply)',
+  })
   incomplete!: FitRangeIncompleteDto[];
+
+  @ApiProperty({
+    type: [String],
+    example: ['PK-LA-01', 'PK-SP-12'],
+    description: 'C1e: codes whose size search does not apply (no range; not counted as missing)',
+  })
+  notApplicable!: string[];
+
+  @ApiProperty({ type: FitRangeSizeClassCountsDto, description: 'C1e: active styles per size class' })
+  bySizeClass!: FitRangeSizeClassCountsDto;
+
+  @ApiProperty({ type: FitRangeCoverageDto, description: 'C1e: applicable styles with a range / applicable styles' })
+  coverage!: FitRangeCoverageDto;
 
   @ApiProperty({
     type: FitRangeSummaryCountsDto,
@@ -778,6 +871,7 @@ export const ADMIN_STYLE_DETAIL_EXAMPLE: AdminStyleBaseDetailDto = {
   },
   fitRangeSource: null,
   fitRangeBounds: null,
+  sizeClass: 'box',
 };
 
 export const ADMIN_VARIANT_EXAMPLE: AdminStyleVariantDto = {

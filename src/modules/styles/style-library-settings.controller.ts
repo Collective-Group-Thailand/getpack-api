@@ -4,8 +4,9 @@ import { type Actor } from '@common/context/actor';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { staffOrPartner } from '@modules/partners/partner-actor';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, Header, Put } from '@nestjs/common';
-import { ApiBody } from '@nestjs/swagger';
+import { Body, Controller, Get, Header, Param, ParseUUIDPipe, Put, Res } from '@nestjs/common';
+import { ApiBody, ApiParam, ApiProduces, ApiResponse } from '@nestjs/swagger';
+import { type Response } from 'express';
 
 import {
   AdminStyleLibrarySettingsDto,
@@ -59,6 +60,57 @@ export class StoreStyleLibrarySettingsController {
   }
 }
 
+/**
+ * `/v1/store/style-library/documents/{fileId}` — C1e (owner decision 2026-10-28 12:07, DECISIONS-STAGE-A §13.3): a
+ * certificate or food-grade document staff uploaded for the trust section, served like the catalogue's public images.
+ */
+@ApiSurface('store', 'styles')
+@Controller('style-library/documents')
+export class StoreStyleLibraryDocumentsController {
+  constructor(private readonly content: StyleLibrarySettingsService) {}
+
+  @Get(':fileId')
+  @Public()
+  @ApiParam({
+    name: 'fileId',
+    format: 'uuid',
+    description: 'Uploaded document referenced by the trust section in force',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000d001',
+  })
+  @ApiEndpoint({
+    id: 'store.styleLibrary.getDocument',
+    summary: 'Get a trust-section document',
+    description:
+      'C1e (DECISIONS-STAGE-A §13.3, D-450; D-448): a certificate or food-grade document uploaded through the file ' +
+      'service and referenced by the published content of `storefront.style_library` — served only while that ' +
+      'content shows it (an expired certificate is not shown), the upload is complete and its malware scan is clean; ' +
+      'anything else is 404 (contract §3 "Files", the public-image rule of `store.catalog.getImage`). PDF or a ' +
+      'picture, inline, cacheable for an hour. No factory data (D-050).',
+    implements: ['D-450', 'D-448', 'D-050'],
+  })
+  @ApiProduces('application/pdf', 'image/png', 'image/jpeg', 'image/webp')
+  @ApiResponse({
+    status: 200,
+    description: 'The document bytes',
+    content: {
+      'application/pdf': { schema: { type: 'string', format: 'binary' }, example: '(binary PDF)' },
+      'image/png': { schema: { type: 'string', format: 'binary' }, example: '(binary image)' },
+      'image/jpeg': { schema: { type: 'string', format: 'binary' }, example: '(binary image)' },
+      'image/webp': { schema: { type: 'string', format: 'binary' }, example: '(binary image)' },
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async document(@Param('fileId', ParseUUIDPipe) fileId: string, @Res() res: Response): Promise<void> {
+    const doc = await this.content.document(fileId);
+    res.setHeader('Content-Type', doc.mimeType);
+    res.setHeader('Content-Length', doc.sizeBytes.toString());
+    res.setHeader('Content-Disposition', 'inline');
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('ETag', doc.etag);
+    doc.stream.pipe(res);
+  }
+}
+
 /** `/v1/admin/style-library/settings` — the back-office editor of that content (Admin, Marketing: `styles.curate`). */
 @ApiSurface('admin', 'styles')
 @Controller('style-library/settings')
@@ -91,8 +143,12 @@ export class AdminStyleLibrarySettingsController {
       'version of `storefront.style_library` from `effectiveFrom` (now by default, never in the past) through the ' +
       'settings platform — validated against the setting’s schema, audited (`setting.changed` with before / after and ' +
       'the reason), evented, caches invalidated. Only real content: certificates, documents, photos and logos the ' +
-      'business holds (logos need the customer’s permission, recorded in `permission`).',
-    implements: DECISIONS,
+      'business holds (logos need the customer’s permission, recorded in `permission`). C1e (§13.3, D-450): photos, ' +
+      'logos and swatches are uploaded pictures (`/v1/store/catalog/images/{fileId}`, purpose `image`); documents ' +
+      'are uploaded files (`/v1/store/style-library/documents/{fileId}`, purpose `document` or `image`) or an ' +
+      'external https link; a referenced file that is not uploaded, infected or of the wrong kind is refused ' +
+      '(`validation.failed`, code `fileReady`).',
+    implements: [...DECISIONS, 'D-450'],
   })
   @ApiBody({
     type: UpdateStyleLibrarySettingsDto,

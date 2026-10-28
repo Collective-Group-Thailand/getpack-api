@@ -81,3 +81,31 @@ Additive. Migration `20261225000001_c1c_fit_range_bounds` (+ `down.sql`, hand-wr
   platform: validated, audited, evented). Logos carry a staff-only `permission`.
 - **Superadmin (§11.6):** `admin.settings.changeValue` lets Superadmin change any setting (owner check), audited as them.
 
+
+## C1e — size classes, trust-section files (2026-10-28, DECISIONS-STAGE-A §13, D-450)
+
+Additive except where noted. Migration `20261227000001_c1e_style_size_classes` (+ `down.sql`, hand-written):
+`style_bases.size_class` text not null default `box` (check `box | bag | cylinder | not_applicable`); the definition
+schema of `storefront.style_library` follows `STYLE_LIBRARY_CONTENT_SCHEMA`.
+- **Size classes (§13.2):** `size-classes.ts` (the rule: PK-PG-* / PK-PB-* `bag`; recipe sized by a body diameter
+  `cylinder`; PK-LA-*, PK-TG-*, PK-SL-03, PK-IN-02, PK-CI-02, PK-DS-04, PK-SP-13, PK-SP-12 `not_applicable`; else `box`)
+  and `integrations/dieline/inside-rules.ts` (bag width × gusset × height, cylinder diameter square × height — the
+  smaller diameter of a tapered body; a recipe's `closedSize` wins). Engine port `insideSizes(recipe, rule?)`.
+  `recipeBounds(…, sizeClass)` reads a bag's recipe `width` range as the inside length, a cylinder's only for height.
+- **Backfill (`admin.styles.backfillFitRanges`, `pnpm styles:fit-ranges`, UAT seed 4b):** sets each style's class
+  (audited in `style_base.curated` as `sizeClass {before, after}`); `not_applicable` styles get no range (a backfilled
+  one is cleared, a business one kept) and never appear in `incomplete`. Result adds `cleared[]`, `classified[]`,
+  `notApplicable[]`, `bySizeClass`, `coverage {applicable, withRange}`; `changes[]` items add `sizeClassBefore`,
+  `sizeClass`, and `action` `cleared | classified`; **`changes[].after`, `.source`, `.bounds` are now nullable**.
+  Curation refuses a new fit range on a `not_applicable` style (`validation.failed`, `sizeSearchNotApplicable`).
+  Seed data: **93 of 101 applicable** (recipe 80, combined 13; bounds recipe 516, standard sizes 42); 21 not
+  applicable; 8 empty (PK-PB-01…08, `PREPRESS-SIZE-TASKS.md`).
+- **Store:** card `sizeClass`; `fit` for a cylinder = diameter × diameter × height (the product's larger side +
+  clearance); `fitRange` and `meta.sizeSearchStyles` leave `not_applicable` styles out. `admin.styles.get` adds `sizeClass`.
+- **Trust files (§13.3):** `storefront.style_library` pictures (`productionPhotos[].url`, `customerLogos[].logoUrl`,
+  `materialSwatches[].imageUrl`) must be `/v1/store/catalog/images/{fileId}` (uploaded, purpose `image`); documents
+  (`certifications[].documentUrl`, `foodGrade[].documentUrl`) `/v1/store/style-library/documents/{fileId}` (purpose
+  `document` or `image`) or an https link. `admin.styleLibrary.updateSettings` checks each file (uploaded, not infected,
+  kind) → `validation.failed` `fileReady`. `store.catalog.getImage` also serves pictures the content in force publishes;
+  new public `GET /v1/store/style-library/documents/{fileId}` (`store.styleLibrary.getDocument`) serves published
+  documents (expired certificates not), else 404. **Narrower than C1c** (no other site paths, no https pictures).

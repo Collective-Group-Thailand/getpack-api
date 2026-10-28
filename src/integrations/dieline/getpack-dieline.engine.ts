@@ -26,6 +26,7 @@ import {
   type StoredRecipe,
   type Thumbnails,
 } from './dieline-engine.port';
+import { insideFromParameters,type InsideRule } from './inside-rules';
 
 type Pt = [number, number];
 type Values = Record<string, unknown>;
@@ -231,11 +232,12 @@ export class GetpackDielineEngine implements DielineEngine {
   /**
    * C1c (DECISIONS-STAGE-A §11.1): the inside sizes the recipe's own data gives — its presets (`standard`) and the
    * solver's parameter limits (`limits`, a 5-point grid per limited parameter, corners included, other parameters at
-   * their defaults) — through the recipe's `closedSize` (the engine's inside closed size), or its own
-   * `length`/`width`/`height` parameters when it declares none. A size the engine cannot evaluate is skipped; a
-   * dimension with no finite positive value stays null.
+   * their defaults) — through the recipe's `closedSize` (the engine's inside closed size), or, when it declares none,
+   * its parameters read by `rule` (C1e §13.2, {@link insideFromParameters}: `length`/`width`/`height`; bags width ×
+   * gusset × height; cylinders diameter square × height). A size the engine cannot evaluate is skipped; a dimension
+   * with no finite positive value stays null.
    */
-  async insideSizes(stored: StoredRecipe): Promise<RecipeInsideSizes> {
+  async insideSizes(stored: StoredRecipe, rule: InsideRule = 'parameters'): Promise<RecipeInsideSizes> {
     const { pkg } = await this.engine();
     const out: RecipeInsideSizes = {};
     for (const r of this.parse(pkg, stored)) {
@@ -247,7 +249,7 @@ export class GetpackDielineEngine implements DielineEngine {
         const inside = (values: Values) => {
           const v = { ...(style.defaults ?? {}), ...values };
           if (style.closedSize) return style.closedSize(v, material);
-          return { length: v['length'], width: v['width'], height: v['height'] };
+          return insideFromParameters(rule, v);
         };
         const standard = new SpanBuilder();
         for (const p of style.presets ?? []) standard.add(() => inside(p.values));

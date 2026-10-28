@@ -12,6 +12,7 @@ import { SettingNotFoundError, SettingsService } from '@platform/settings/settin
 
 import { optionValues as priceOptions, PRICE_REASONS } from './publishability';
 import { quoteResponseDaysOf } from './quote-response-days';
+import { isSizeClass, type SizeClass } from './size-classes';
 import { StyleAssetsService } from './style-assets.service';
 import { fitOf, hasFitRange, parseProductSize } from './style-fit';
 import { StyleMakeabilityService } from './style-makeability.service';
@@ -144,7 +145,7 @@ export class StylesStoreService {
     }
     const useCaseGroups = useCaseGroupsOf(query.useCase);
     const fits = new Map<bigint, ReturnType<typeof fitOf>>();
-    if (product) for (const r of matched) fits.set(r.id, fitOf(r, product));
+    if (product) for (const r of matched) fits.set(r.id, fitOf(r, product, sizeClassOfRow(r)));
     matched = matched.filter((r) => {
       const opts = optionValues(r);
       return (
@@ -195,7 +196,7 @@ export class StylesStoreService {
       meta: {
         nextCursor:
           offset + query.limit < matched.length ? encodeCursor({ o: offset + query.limit, s: sort }) : null,
-        sizeSearchStyles: rows.filter(hasFitRange).length,
+        sizeSearchStyles: rows.filter((r) => sizeClassOfRow(r) !== 'not_applicable' && hasFitRange(r)).length,
       },
     };
   }
@@ -660,16 +661,18 @@ function card(
       : null,
     referenceCode: r.referenceVerifiedAt ? r.referenceCode : null,
     favourite: favourites === NOT_SIGNED_IN ? null : favourites.has(r.id),
-    fitRange: hasFitRange(r)
-      ? {
-          minLMm: r.fitMinLMm!,
-          maxLMm: r.fitMaxLMm!,
-          minWMm: r.fitMinWMm!,
-          maxWMm: r.fitMaxWMm!,
-          minHMm: r.fitMinHMm!,
-          maxHMm: r.fitMaxHMm!,
-        }
-      : null,
+    fitRange:
+      sizeClassOfRow(r) !== 'not_applicable' && hasFitRange(r)
+        ? {
+            minLMm: r.fitMinLMm!,
+            maxLMm: r.fitMaxLMm!,
+            minWMm: r.fitMinWMm!,
+            maxWMm: r.fitMaxWMm!,
+            minHMm: r.fitMinHMm!,
+            maxHMm: r.fitMaxHMm!,
+          }
+        : null,
+    sizeClass: sizeClassOfRow(r),
     moqUnits: r.moqUnits,
     fit: null,
     options: (() => {
@@ -677,6 +680,11 @@ function card(
       return [...[...closure].sort(), ...[...feature].sort()];
     })(),
   };
+}
+
+/** C1e (§13.2): the style's size class (an unknown value reads as `box`). */
+function sizeClassOfRow(r: { sizeClass: string }): SizeClass {
+  return isSizeClass(r.sizeClass) ? r.sizeClass : 'box';
 }
 
 /** A stored thumbnail of a variant (or, with `null`, of the style itself). */

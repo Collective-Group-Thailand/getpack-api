@@ -2,10 +2,14 @@ import { type Readable } from 'node:stream';
 
 import { DomainException } from '@common/errors/domain.exception';
 import { MoneyDecimal } from '@common/money/money';
+import { bangkokDate } from '@common/time/bangkok';
 import { AppConfig } from '@config/app-config';
 import { PrismaService } from '@database/prisma.service';
+import { Prisma } from '@generated/prisma/client';
 import { OBJECT_STORAGE, type ObjectStorage } from '@integrations/s3/object-storage.port';
+import { contentOf, publicFileIds, STYLE_LIBRARY_SETTING } from '@modules/styles/style-library-content';
 import { Inject, Injectable } from '@nestjs/common';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { HOME_PHOTOS_SLUG } from '../cms/home-photos';
 import { imageUrl } from './store-catalog.service';
@@ -32,7 +36,8 @@ const xml = (value: string) =>
  * published row references it, and only after its malware scan is clean (contract §3 "Files").
  * Of the home sections only `home-photos` counts: other `custom` configs may hold photos not yet cleared
  * for publication. A customer story's photo (D-311) is public only while the story is approved with the
- * customer's written permission on file.
+ * customer's written permission on file. C1e (DECISIONS-STAGE-A §13.3): a picture the style library page's content in
+ * force publishes (`storefront.style_library`: production photos, permitted customer logos, material swatches).
  */
 @Injectable()
 export class StoreMediaService {
@@ -40,6 +45,7 @@ export class StoreMediaService {
     private readonly prisma: PrismaService,
     private readonly config: AppConfig,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    private readonly settings: SettingsService,
   ) {}
 
   /**
@@ -48,6 +54,10 @@ export class StoreMediaService {
    * falls back to the original, so a card is never empty.
    */
   async image(filePublicId: string, size: 'full' | 'thumb' = 'full'): Promise<PublicImage> {
+    const styleLibrary = await this.styleLibraryImages();
+    const styleLibraryClause = styleLibrary.length
+      ? Prisma.sql`OR fo.public_id::text = ANY(${styleLibrary})`
+      : Prisma.empty;
     const [visible] = await this.prisma.$queryRaw<{ id: bigint }[]>`
       SELECT fo.id FROM file_objects fo
        WHERE fo.public_id = ${filePublicId}::uuid
@@ -81,6 +91,7 @@ export class StoreMediaService {
         OR EXISTS (SELECT 1 FROM home_customer_cases c
                     WHERE c.photo_file_id = fo.id AND c.status = 'approved'
                       AND c.consent_file_id IS NOT NULL AND c.deleted_at IS NULL)
+        ${styleLibraryClause}
          )`;
     if (!visible) throw new DomainException('http.not_found');
     const thumbnail =
@@ -101,6 +112,17 @@ export class StoreMediaService {
       sizeBytes: file.sizeBytes,
       etag: `"${file.sha256 ? Buffer.from(file.sha256).toString('hex') : file.publicId}"`,
     };
+  }
+
+  /** C1e: the pictures the style library page's content in force publishes (none while the setting is unset). */
+  private async styleLibraryImages(): Promise<string[]> {
+    try {
+      const value = (await this.settings.at(STYLE_LIBRARY_SETTING)).value;
+      return publicFileIds(contentOf(value), bangkokDate(new Date())).images;
+    } catch (error) {
+      if (error instanceof SettingNotFoundError) return [];
+      throw error;
+    }
   }
 
   /**
