@@ -207,3 +207,14 @@ Screenshots `docs/design/screenshots/C7/` (mock data): `prototype-{1440-light,10
 **e2e to run later:** `e2e/storefront-studio-hub.spec.ts` (new), `designer-smoke`, `designer-editor`, `a11y`, `journeys/studio.ts` (blank editor now `/studio/new?step=box`), `designer-account`, `storefront-studio*.spec.ts`, `storefront-styles` (bag/cup/label variants open), `storefront-configurator-v2` (postal box "ออกแบบในสตูดิโอ"), `storefront-home`.
 **Local checks for the owner:** api `pnpm db:seed` (setting row, pattern keys) + `pnpm test:int`; UAT `node docs/design/studio-redesign/set-pattern-dieline-keys.mjs` then `--confirm`; set `studio.featured_styles` in `/style-library/studio-featured`; on UAT open `/configure/uat-postal-box-b` → "ออกแบบในสตูดิโอ", a paper bag / cup / label from /styles → Studio; `/studio` at 1440/1054/390-dark, mini editor logo → "เปิดในสตูดิโอ" places it; Lighthouse mobile `/studio`; web `pnpm build`.
 **BLOCKED:** none.
+
+## C8 — editor Phase 1 → 3 (API `design/editor-redesign` from `main` ec5ce36b, 2026-10-29)
+
+Studio editor redesign (web block C8) needed one API change: the editor mode on the account (**D-456**).
+| Item | Status | Commit |
+|---|---|---|
+| `users.editor_mode` (`editor_mode` enum easy/pro, nullable; migration `20261229000001_c8_editor_mode`, hand-written) · `me.editorMode` (store/admin/partner) · `PATCH /v1/store/me/preferences { editorMode }` with `displayUnit` optional (≥ 1 field, else 422), audited + `user.preferences_updated` with only what changed | PASS (unit) | `2c4cf49` |
+Gates: typecheck ✓ (2 pre-existing errors in `src/modules/styles/studio-featured.spec.ts` on main, untouched), eslint + prettier ✓, unit `me.preferences.spec.ts` 3/3 + controller-docs + openapi-decorators ✓, `contract:build` + `contract:lint` ✓.
+Not built (contract requests in getpack-web `docs/contract-requests.md` §C8): server checks/render of the new document fields (C8-1), per-variant pricing (C8-2), quote for another print (C8-3), PDF/X-4 / .ai export and import (C8-4).
+**Local checks:** `pnpm db:migrate`, `pnpm test:int` (me endpoints), `pnpm test:e2e` (spec model).
+**BLOCKED:** none.
