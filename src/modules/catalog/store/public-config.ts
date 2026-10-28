@@ -57,6 +57,25 @@ export class ContactDto {
   email!: string | null;
 }
 
+/** D-447 (C1b): the entity that issues every customer tax invoice (D-010), from its own settings (D-092). */
+export class IssuerDto {
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'บริษัท ตัวอย่าง จำกัด',
+    description: '`entity.legal_name_th` of the default entity; null until set',
+  })
+  legalNameTh!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'Example Co., Ltd.',
+    description: '`entity.legal_name_en` of the default entity; null until set',
+  })
+  legalNameEn!: string | null;
+}
+
 /** D-309: figures the storefront states, each from one source; null where none is agreed. */
 export class PublicConfigDto {
   @ApiProperty({ type: MinOrderQtyDto })
@@ -111,6 +130,14 @@ export class PublicConfigDto {
 
   @ApiProperty({ type: ContactDto, description: 'From `storefront.support_channels` (D-221)' })
   contact!: ContactDto;
+
+  @ApiProperty({
+    type: IssuerDto,
+    description:
+      'D-447: the legal name of the entity that issues customer tax invoices (D-010, D-092 entity settings) — the ' +
+      'storefront names the company from here, never from its own copy',
+  })
+  issuer!: IssuerDto;
 }
 
 export const PUBLIC_CONFIG_EXAMPLE: PublicConfigDto = {
@@ -122,6 +149,7 @@ export const PUBLIC_CONFIG_EXAMPLE: PublicConfigDto = {
   supportReplyMinutes: null,
   templateCount: 42,
   contact: { phone: '0800000000', lineOaId: '@getpack-test', email: 'support@example.invalid' },
+  issuer: { legalNameTh: 'บริษัท ตัวอย่าง จำกัด', legalNameEn: 'Example Co., Ltd.' },
 };
 
 @Injectable()
@@ -149,11 +177,12 @@ export class PublicConfigService {
       this.settings.at('quotes.validity_days').then((s) => s.value),
       this.settings.at('claims.window_days').then((s) => s.value),
     ]);
-    const [proofDays, hours, replyMinutes, channels] = await Promise.all([
+    const [proofDays, hours, replyMinutes, channels, issuer] = await Promise.all([
       this.optional('artwork.first_proof_business_days'),
       this.optional('storefront.support_hours'),
       this.optional('support.reply_minutes'),
       this.catalog.supportChannels(),
+      this.issuer(),
     ]);
     return {
       minOrderQty: { custom: custom._min.quantityMin ?? null, readyStock: stock._min.minOrderQty ?? null },
@@ -166,7 +195,33 @@ export class PublicConfigService {
       supportReplyMinutes: replyMinutes ?? null,
       templateCount,
       contact: { phone: channels.phone, lineOaId: channels.lineOaId, email: channels.email },
+      issuer,
     };
+  }
+
+  /** D-447: the default entity's legal names (entity-scoped settings, D-092); null each until set. */
+  private async issuer(): Promise<IssuerDto> {
+    const entity = await this.prisma.entity.findFirst({
+      where: { isDefault: true, status: 'active' },
+      select: { id: true },
+    });
+    if (!entity) return { legalNameTh: null, legalNameEn: null };
+    const read = async (key: 'entity.legal_name_th' | 'entity.legal_name_en'): Promise<string | null> => {
+      try {
+        const value: unknown = (
+          await this.settings.at(key as never, { scope: { type: 'entity', id: entity.id } })
+        ).value;
+        return typeof value === 'string' && value.trim() !== '' ? value : null;
+      } catch (error) {
+        if (error instanceof SettingNotFoundError) return null;
+        throw error;
+      }
+    };
+    const [legalNameTh, legalNameEn] = await Promise.all([
+      read('entity.legal_name_th'),
+      read('entity.legal_name_en'),
+    ]);
+    return { legalNameTh, legalNameEn };
   }
 
   /** A setting defined without a value (no decision gives one) reads as null. */
@@ -198,9 +253,9 @@ export class StorePublicConfigController {
       'a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock ' +
       '(`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof ' +
       'turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template ' +
-      'library size and the contacts (D-221). Nothing about production partners — no count, coverage or ' +
+      'library size, the contacts (D-221) and the legal name of the invoicing entity (D-447). Nothing about production partners — no count, coverage or ' +
       'threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.',
-    implements: ['D-309', 'D-051', 'D-082', 'D-221', 'D-307', 'D-435'],
+    implements: ['D-309', 'D-051', 'D-082', 'D-221', 'D-307', 'D-435', 'D-447'],
   })
   @ApiSuccess(200, {
     description: 'Storefront figures',

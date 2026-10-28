@@ -1,5 +1,6 @@
 import { CodeNameRefDto } from '@common/dto/code-name-ref.dto';
 import { CART_EXAMPLE, CartDto } from '@modules/carts/carts.dto';
+import { SLUG } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional, OmitType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -79,6 +80,34 @@ export class SetBasketDetailsDto {
   notes?: string;
 }
 
+/**
+ * C1b (owner 2026-10-28, DECISIONS-STAGE-A §10.9): a product put in my draft basket from the storefront's quote tray,
+ * before its form is filled — exactly one of the two references.
+ */
+export class AddBasketProductDto {
+  @ApiPropertyOptional({
+    example: 'mailer-box-b',
+    maxLength: 120,
+    pattern: SLUG.source,
+    description: 'An active catalogue product. Never together with `stockProductSku`',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  @Matches(SLUG)
+  catalogProductSlug?: string;
+
+  @ApiPropertyOptional({
+    example: 'PKO-BTL-0250',
+    maxLength: 60,
+    description: 'An active stock product. Never together with `catalogProductSlug`',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(60)
+  stockProductSku?: string;
+}
+
 export class RfqBasketItemDto {
   @ApiProperty({ format: 'uuid', example: IDS.item })
   id!: string;
@@ -99,6 +128,25 @@ export class RfqBasketItemDto {
 
   @ApiProperty({ type: BasketDesignRefDto, nullable: true })
   design!: BasketDesignRefDto | null;
+
+  @ApiProperty({
+    example: false,
+    description:
+      'C1b (DECISIONS-STAGE-A §10.9): true for a product put in from the quote tray whose form is not filled yet ' +
+      '(`store.rfqBaskets.addProduct`); `specification` then holds only the product type and reference. Adding the ' +
+      'filled form of the same product (`store.rfqBaskets.addItem`) or replacing the line (`updateItem`) fills it; ' +
+      'the basket is not sent while a line is pending',
+  })
+  formPending!: boolean;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'paper_packaging',
+    description:
+      "C1b: the category of the line's product type (where its RFQ form is asked); null when it has none",
+  })
+  categoryCode!: string | null;
 
   @ApiProperty({
     type: RfqProductRefDto,
@@ -177,6 +225,8 @@ export const BASKET_EXAMPLE: RfqBasketDto = {
       productType: { id: IDS.type, code: 'paper_bag', nameTh: 'ถุงกระดาษ', nameEn: 'Paper bag' },
       specification: { spec: { material: 'kraft 150 gsm (fake)' }, quantities: [500, 1000] },
       design: null,
+      formPending: false,
+      categoryCode: 'paper_packaging',
       product: null,
       rfq: null,
     },

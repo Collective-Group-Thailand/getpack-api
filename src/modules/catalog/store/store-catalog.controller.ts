@@ -51,6 +51,7 @@ const TYPE_ID = '0192f3a0-7c1e-7d2a-9b1f-0000000c0004';
 /** D-307: real starting prices and their basis; no promotion, so no reference price. */
 const FACTS = {
   startingPricePerPiece: '4.50',
+  startingPricePerPieceExVat: '4.21',
   startingPriceAssumes: {
     quantity: 1000,
     specs: [

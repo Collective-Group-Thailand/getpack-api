@@ -49,7 +49,13 @@ export const PRICE_HINT_KINDS = ['catalog_product', 'stock_product'] as const;
 
 /** What a "starting from" price assumes — always shown with the figure (D-181). */
 export class PriceHintBasisDto {
-  @ApiProperty({ type: 'integer', example: 1000, description: 'Quantity the price per piece is for' })
+  @ApiProperty({
+    type: 'integer',
+    example: 1000,
+    description:
+      'Quantity the price per piece is for — for a stock product its minimum order quantity, the first price tier ' +
+      '(C1b, DECISIONS-STAGE-A §10.5); show it with the price ("สั่งขั้นต่ำ N")',
+  })
   quantity!: number;
 
   @ApiProperty({
@@ -110,6 +116,17 @@ export class PriceHintDto {
   })
   startingFromPerPiece!: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '4.00',
+    description:
+      "C1b (DECISIONS-STAGE-A §10.6): the same price per piece without VAT — the shared VAT helper's ex-VAT of " +
+      '`startingFromPerPiece` at the approved `vat_standard` rate, half-up to the satang. Null when ' +
+      '`startingFromPerPiece` is null or no rate is approved. For the storefront\'s "ราคารวม VAT / ไม่รวม VAT" switch.',
+  })
+  startingFromPerPieceExVat!: string | null;
+
   @ApiProperty({ enum: ['THB'], enumName: 'Currency', example: 'THB' })
   currency!: 'THB';
 
@@ -132,6 +149,7 @@ export const PRICE_HINT_EXAMPLE: PriceHintDto = {
   kind: 'catalog_product',
   productTypeCode: 'folding_carton',
   startingFromPerPiece: '4.28',
+  startingFromPerPieceExVat: '4.00',
   currency: 'THB',
   basis: {
     quantity: 1000,

@@ -15,9 +15,12 @@ import { QuoteEngineService } from '../quotes/quote-engine.service';
 import { StorePricingService } from '../quotes/store-pricing.service';
 import { defaultSpecConfiguration, defaultSpecQuantity } from './default-spec';
 import { type PriceHintDto, type PriceHintQuery, type PriceTiersDto } from './price-hints.dto';
+import { exVatFigure, vatStandardPct } from './vat-figures';
 
 /** Every calculator a hint can be priced with (D-220). */
 const HINTED = new Set(['folding', 'corrugate', 'label', 'tag_sleeve', 'pouch', 'service']);
+/** C1b: the calculator stock products are priced with (U-B6 standard product). */
+const STOCK_CALCULATOR = 'standard_product';
 
 /**
  * Settings whose change moves a store price (C0): the print limits the default spec is priced under (print config,
@@ -73,8 +76,18 @@ export class PriceHintsService {
     private readonly storePricing: StorePricingService,
   ) {}
 
-  /** Recomputes the hints of one product or of all products that have (or had) one. */
+  /**
+   * Recomputes the hints of one product or of all products that have (or had) one — and, for a full refresh, every
+   * stock product's too (C1b).
+   */
   async refresh(catalogProductId?: bigint): Promise<{ priced: number; cleared: number }> {
+    const catalogue = await this.refreshCatalogue(catalogProductId);
+    if (catalogProductId !== undefined) return catalogue;
+    const stock = await this.refreshStock();
+    return { priced: catalogue.priced + stock.priced, cleared: catalogue.cleared + stock.cleared };
+  }
+
+  private async refreshCatalogue(catalogProductId?: bigint): Promise<{ priced: number; cleared: number }> {
     const products = await this.prisma.catalogProduct.findMany({
       where: {
         ...(catalogProductId !== undefined ? { id: catalogProductId } : {}),
@@ -150,7 +163,81 @@ export class PriceHintsService {
     };
   }
 
-  /** The public read: one entry per requested product (stock products have no hint until their calculator ships). */
+  /**
+   * C1b (owner 2026-10-28, DECISIONS-STAGE-A §10.5): each active stock product's "starting from" price — its unit
+   * price at its minimum orderable quantity (the first price tier, never the cheapest high-volume tier), priced through
+   * the one store pricing path (`StorePricingService`, the price the cart gives for that quantity), cached in
+   * `stock_price_hints`. Not instant, not priceable or inactive → no row (the card shows no price, never an estimate).
+   */
+  async refreshStock(stockProductId?: bigint): Promise<{ priced: number; cleared: number }> {
+    const products = await this.prisma.stockProduct.findMany({
+      where: {
+        ...(stockProductId !== undefined
+          ? { id: stockProductId }
+          : { OR: [{ status: 'active' }, { priceHint: { isNot: null } }] }),
+      },
+      select: {
+        id: true,
+        publicId: true,
+        status: true,
+        minOrderQty: true,
+        productType: { select: { status: true, quoteMode: true, calculatorKey: true } },
+      },
+    });
+    let priced = 0;
+    let cleared = 0;
+    for (const p of products) {
+      const hint = await this.priceStock(p).catch((error: unknown) => {
+        this.logger.warn({ err: error, stockProductId: p.publicId }, 'stock price hint not computed');
+        return null;
+      });
+      if (hint) {
+        await this.prisma.stockPriceHint.upsert({
+          where: { stockProductId: p.id },
+          create: { stockProductId: p.id, ...hint },
+          update: hint,
+        });
+        priced += 1;
+      } else {
+        cleared += (await this.prisma.stockPriceHint.deleteMany({ where: { stockProductId: p.id } })).count;
+      }
+    }
+    return { priced, cleared };
+  }
+
+  private async priceStock(p: {
+    publicId: string;
+    status: string;
+    minOrderQty: number;
+    productType: { status: string; quoteMode: string; calculatorKey: string | null };
+  }): Promise<Omit<Prisma.StockPriceHintUncheckedCreateInput, 'stockProductId'> | null> {
+    if (
+      p.status !== 'active' ||
+      p.productType.status !== 'active' ||
+      p.productType.quoteMode !== 'instant' ||
+      p.productType.calculatorKey !== STOCK_CALCULATOR ||
+      !this.engine.hasCalculator(STOCK_CALCULATOR)
+    )
+      return null;
+    const at = new Date();
+    const quantity = Math.max(1, p.minOrderQty);
+    const { view } = await this.storePricing.price(
+      STOCK_CALCULATOR,
+      { stockProductId: p.publicId, quantities: [quantity] },
+      { at, log: false },
+    );
+    const step = view.steps.find((s) => s.quantity === quantity && s.instant && s.unitPrice !== null);
+    if (!step) return null;
+    return {
+      quantity,
+      unitPrice: step.unitPrice!,
+      leadTimeDays: step.leadTimeDays,
+      calculatorVersion: view.calculatorVersion,
+      computedAt: at,
+    };
+  }
+
+  /** The public read: one entry per requested product (catalogue and stock, C1b). */
   async list(query: PriceHintQuery): Promise<PriceHintDto[]> {
     const slugs = query.slugs ?? [];
     const skus = query.skus ?? [];
@@ -171,10 +258,11 @@ export class PriceHintsService {
     const stock = skus.length
       ? await this.prisma.stockProduct.findMany({
           where: { sku: { in: skus }, status: 'active', productType: { status: 'active' } },
-          select: { sku: true, productType: { select: { code: true } } },
+          select: { sku: true, productType: { select: { code: true } }, priceHint: true },
           orderBy: { sku: 'asc' },
         })
       : [];
+    const ratePct = await vatStandardPct(this.prisma);
     return [
       ...products.map((p): PriceHintDto => {
         const h = p.priceHint;
@@ -183,6 +271,7 @@ export class PriceHintsService {
           kind: 'catalog_product',
           productTypeCode: p.productType.code,
           startingFromPerPiece: h ? ceilMoney(h.unitPrice.toString()) : null,
+          startingFromPerPieceExVat: h ? exVatFigure(ceilMoney(h.unitPrice.toString()), ratePct) : null,
           currency: 'THB',
           basis: h
             ? {
@@ -199,18 +288,32 @@ export class PriceHintsService {
           computedAt: h ? toBangkokIso(h.computedAt) : null,
         };
       }),
-      // Stock products: the standard-product calculator prices them (U-B6), but the published "starting from" figure
-      // waits for the summary's delivery basis (`stock_product_price_summaries`, PROGRESS U-B6 standard product).
-      ...stock.map((s): PriceHintDto => ({
-        key: s.sku,
-        kind: 'stock_product',
-        productTypeCode: s.productType.code,
-        startingFromPerPiece: null,
-        currency: 'THB',
-        basis: null,
-        leadTimeBusinessDays: null,
-        computedAt: null,
-      })),
+      // Stock products (C1b, §10.5): the unit price at the minimum orderable quantity, labelled with that quantity.
+      ...stock.map((s): PriceHintDto => {
+        const h = s.priceHint;
+        const price = h ? ceilMoney(h.unitPrice.toString()) : null;
+        return {
+          key: s.sku,
+          kind: 'stock_product',
+          productTypeCode: s.productType.code,
+          startingFromPerPiece: price,
+          startingFromPerPieceExVat: exVatFigure(price, ratePct),
+          currency: 'THB',
+          basis: h
+            ? {
+                quantity: h.quantity,
+                sizeCode: null,
+                includesVat: true,
+                includesDelivery: false,
+                specs: [],
+                label: specLabel([], STOCK_CALCULATOR),
+              }
+            : null,
+          leadTimeBusinessDays:
+            h && h.leadTimeDays !== null ? { min: h.leadTimeDays, max: h.leadTimeDays } : null,
+          computedAt: h ? toBangkokIso(h.computedAt) : null,
+        };
+      }),
     ];
   }
 
@@ -334,6 +437,18 @@ export class PriceHintsService {
   async onSettingChanged(event: DomainEventEnvelope): Promise<void> {
     const key = event.payload['key'];
     if (typeof key === 'string' && PRICE_SETTING_KEYS.has(key)) await this.refresh();
+  }
+
+  /** C1b: a stock product's MOQ, status or type changed — its "starting from" price follows. */
+  @OnDomainEvent(['catalog.stock_product.updated'], {
+    consumer: 'pricing.price_hints.stock_product',
+  })
+  async onStockProductChanged(event: DomainEventEnvelope): Promise<void> {
+    const row = await this.prisma.stockProduct.findUnique({
+      where: { publicId: event.aggregateId },
+      select: { id: true },
+    });
+    if (row) await this.refreshStock(row.id);
   }
 
   @OnDomainEvent(['catalog.catalog_product.updated', 'catalog.catalog_product.created'], {

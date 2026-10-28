@@ -61,6 +61,17 @@ export class StoreCardFactsDto {
   })
   startingPricePerPiece!: string | null;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '4.21',
+    description:
+      "C1b (DECISIONS-STAGE-A §10.6): `startingPricePerPiece` without VAT — the shared VAT helper's ex-VAT of that " +
+      'figure at the approved `vat_standard` rate, half-up to the satang; null when there is no price or no rate. ' +
+      'For the "ราคารวม VAT / ไม่รวม VAT" switch; never derive it in the browser.',
+  })
+  startingPricePerPieceExVat!: string | null;
+
   @ApiProperty({ type: StartingPriceBasisDto, nullable: true })
   startingPriceAssumes!: StartingPriceBasisDto | null;
 
@@ -829,6 +840,25 @@ export class StoreSitemapEntryDto {
 }
 
 /** getpack's own support contacts (D-005), from the setting `storefront.support_channels` (D-221). */
+/** D-447 (C1b): the add-on services the storefront features — staff's choice, else none (the page uses its own list). */
+export class StoreFeaturedServicesDto {
+  @ApiProperty({
+    example: true,
+    description:
+      'True when staff chose the services (`storefront.featured_services`, Marketing); false = nothing chosen — the ' +
+      'storefront shows the catalogue\'s service list (first 3, catalogue order) and "ดูบริการทั้งหมด"',
+  })
+  curated!: boolean;
+
+  @ApiProperty({
+    type: [String],
+    example: ['graphic-design-service', 'mockup-sample'],
+    description:
+      "The chosen catalogue product slugs in staff's order (≤ 3), only those still active; empty when nothing is chosen",
+  })
+  slugs!: string[];
+}
+
 export class StoreSupportChannelsDto {
   @ApiProperty({
     type: String,

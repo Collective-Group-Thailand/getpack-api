@@ -197,6 +197,8 @@ export interface SettingValues {
     open: string;
     close: string;
   };
+  /** D-447 the add-on services the storefront features, in order (≤ 3 catalogue product slugs); unset = none chosen. */
+  'storefront.featured_services': string[];
   /** D-309 typical CS reply time within support hours (minutes); unset until the CS Lead sets it. */
   'support.reply_minutes': number;
   /** D-310 homepage Studio hero presets (product owner's values; catalogue mapping per environment). */

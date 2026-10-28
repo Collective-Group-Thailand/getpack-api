@@ -905,6 +905,9 @@ model RfqBasketItem {
   specification           Json
   designDocumentVersionId BigInt?  @map("design_document_version_id")
   rfqId                   BigInt?  @unique(map: "ux_rfq_basket_items__rfq_id") @map("rfq_id")
+  /// C1b (DECISIONS-STAGE-A §10.9): a product put in the basket from the quote tray whose form is not filled yet
+  /// (`specification` holds only the product type and reference). The basket is not sent while one is pending.
+  formPending             Boolean  @default(false) @map("form_pending")
   createdAt               DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt               DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 

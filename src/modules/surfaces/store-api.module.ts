@@ -12,6 +12,7 @@ import { StorePublicConfigController } from '@modules/catalog/store/public-confi
 import { StoreStatusLabelsController } from '@modules/catalog/store/status-labels.controller';
 import { StoreCatalogController } from '@modules/catalog/store/store-catalog.controller';
 import {
+  StoreFeaturedServicesController,
   StoreSitemapController,
   StoreSupportChannelsController,
 } from '@modules/catalog/store/store-site.controller';
@@ -71,6 +72,7 @@ import { RealtimeModule } from '@platform/realtime/realtime.module';
 
     StoreCatalogController,
     StoreSitemapController,
+    StoreFeaturedServicesController,
     StoreSupportChannelsController,
     StoreStatusLabelsController,
     StorePublicConfigController,

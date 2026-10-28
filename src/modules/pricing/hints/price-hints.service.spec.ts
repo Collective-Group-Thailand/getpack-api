@@ -118,3 +118,97 @@ describe('PriceHintsService tiers', () => {
     await expect(s.tiers('nope')).rejects.toMatchObject({ code: 'http.not_found' });
   });
 });
+
+/** C1b (DECISIONS-STAGE-A §10.5, D-447): a stock product's "starting from" = its unit price at its minimum order. */
+describe('PriceHintsService stock hints', () => {
+  const stock = (over: Record<string, unknown> = {}) => ({
+    id: 5n,
+    publicId: '0192f3a0-0000-7000-8000-000000000005',
+    status: 'active',
+    minOrderQty: 500,
+    productType: { status: 'active', quoteMode: 'instant', calculatorKey: 'standard_product' },
+    ...over,
+  });
+  const setup = (rows: unknown[], step: Record<string, unknown> | null) => {
+    const prisma = {
+      stockProduct: { findMany: jest.fn().mockResolvedValue(rows) },
+      stockPriceHint: {
+        upsert: jest.fn().mockResolvedValue({}),
+        deleteMany: jest.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    const engine = { hasCalculator: jest.fn().mockReturnValue(true) };
+    const price = jest.fn().mockResolvedValue({
+      view: { calculatorVersion: '1.0.0', steps: step ? [step] : [] },
+    });
+    const s = new PriceHintsService(prisma as never, engine as never, { price } as never);
+    return { s, prisma, price };
+  };
+
+  it('prices the minimum order quantity through the store path, without a calculate log', async () => {
+    const { s, prisma, price } = setup([stock()], {
+      quantity: 500,
+      instant: true,
+      unitPrice: '2.354',
+      leadTimeDays: 2,
+    });
+    await expect(s.refreshStock()).resolves.toEqual({ priced: 1, cleared: 0 });
+    expect(price).toHaveBeenCalledWith(
+      'standard_product',
+      { stockProductId: stock().publicId, quantities: [500] },
+      expect.objectContaining({ log: false }),
+    );
+    expect(prisma.stockPriceHint.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { stockProductId: 5n },
+        update: expect.objectContaining({ quantity: 500, unitPrice: '2.354', leadTimeDays: 2 }),
+      }),
+    );
+  });
+
+  it('clears the hint of an RFQ-only, inactive or unpriceable stock product — never an estimate', async () => {
+    for (const row of [
+      stock({ productType: { status: 'active', quoteMode: 'rfq', calculatorKey: 'standard_product' } }),
+      stock({ status: 'inactive' }),
+    ]) {
+      const { s, prisma, price } = setup([row], null);
+      await expect(s.refreshStock()).resolves.toEqual({ priced: 0, cleared: 1 });
+      expect(price).not.toHaveBeenCalled();
+      expect(prisma.stockPriceHint.upsert).not.toHaveBeenCalled();
+    }
+    const { s } = setup([stock()], { quantity: 500, instant: false, unitPrice: null, leadTimeDays: null });
+    await expect(s.refreshStock()).resolves.toEqual({ priced: 0, cleared: 1 });
+  });
+
+  it('lists a stock hint with its quantity basis and the ex-VAT figure', async () => {
+    const prisma = {
+      catalogProduct: { findMany: jest.fn().mockResolvedValue([]) },
+      stockProduct: {
+        findMany: jest.fn().mockResolvedValue([
+          {
+            sku: 'PKO-BTL-0250',
+            productType: { code: 'standard_product' },
+            priceHint: {
+              quantity: 500,
+              unitPrice: '2.354',
+              leadTimeDays: null,
+              computedAt: new Date('2026-10-28T02:00:00Z'),
+            },
+          },
+          { sku: 'PKO-CUP-0001', productType: { code: 'standard_product' }, priceHint: null },
+        ]),
+      },
+      taxRateVersion: { findFirst: jest.fn().mockResolvedValue({ ratePct: '7' }) },
+    };
+    const s = new PriceHintsService(prisma as never, {} as never, {} as never);
+    const [priced, none] = await s.list({ skus: ['PKO-BTL-0250', 'PKO-CUP-0001'] });
+    expect(priced).toMatchObject({
+      key: 'PKO-BTL-0250',
+      kind: 'stock_product',
+      startingFromPerPiece: '2.36',
+      startingFromPerPieceExVat: '2.21',
+      basis: { quantity: 500, includesVat: true, includesDelivery: false },
+    });
+    expect(none).toMatchObject({ startingFromPerPiece: null, startingFromPerPieceExVat: null, basis: null });
+  });
+});
