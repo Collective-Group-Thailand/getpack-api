@@ -12,6 +12,7 @@ import { UAT_GEOGRAPHY } from '../../prisma/seed/uat/uat-data';
 import { publishUatStyles } from '../../prisma/seed/uat/uat-styles';
 import { uploadSlipFile } from '../support/commerce-e2e';
 import { type FulfilmentApp, makePdf, uploadBytes, uploadPdf } from '../support/fulfilment-e2e';
+import { populateDesignRequests } from './populate-design-requests';
 import { populatePartnerZone } from './populate-partner';
 import {
   as,
@@ -1212,6 +1213,9 @@ describe('UAT populate (rehearsal data through the API)', () => {
       rfq,
       taxId,
     });
+
+    // RFQ baskets, standalone samples and structural design requests (customer detail pages).
+    await populateDesignRequests({ ctx, tokens, step, C });
 
     await step('second staff sign-in works for the maker-checker people of the seed', async () => {
       await staffSignIn(ctx, 'finance-manager-2@example.invalid');

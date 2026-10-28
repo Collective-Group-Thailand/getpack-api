@@ -164,6 +164,16 @@ person's data in UAT).
 | **R4** C05 floor display stand | declined `capability_missing` | UAT-20 (unmet demand) |
 | **R5** C07 printed OPP tape | CS asked for information | UAT-04 |
 | **R6** C01 serum box (folding cartons on RFQ until signed) | submitted | UAT-03 step 2 |
+| **RB1** C01 RFQ basket `UATRB-…-00001`: rigid gift box, rope-handle bag, printed tape | submitted; box and bag quoted (2 quantities each), tape waiting for CS | UAT-04 (basket, D-301): `/account/rfq-baskets/[id]`, accept items into the cart |
+| **RB2** C01 draft basket: paper tube, kraft food box | draft, no delivery postcode yet | `/rfq/basket` (set delivery, submit) |
+| **RB3** C06 RFQ basket `UATRB-…-00002`: twisted-handle bag, counter display | submitted, every item quoted | UAT-04: accept both into the cart |
+| **S1** C01 standalone sample with print | requested, waiting for CS Lead to quote | UAT-24 (D-254): `/account/samples/[id]`; admin quotes it |
+| **S2** C01 standalone sample without print | quoted (sample quotation, THB 450 net input) | UAT-24: buy it like a quotation |
+| **S3** C06 standalone sample with print | quoted, bought and paid by QR | UAT-24: the factory makes it next |
+| **SD1** C01 structural request (2-bottle serum carton) | submitted | D-273: `/account/structural-requests/[id]`; CS assigns |
+| **SD2** C01 structural request (6-bottle shipper) | assigned to Prepress | D-273: Prepress delivers a dieline |
+| **SD3** C07 structural request (hanging supplement box) | assigned, quoted by a service RFQ (design fee THB 3,500) | D-273: the customer accepts the fee |
+| **SD4** C01 structural request (lipstick box) | declined with a reason | D-273: the customer reads the reason |
 | B2B บริษัท ทดสอบ รีเทล จำกัด, threshold THB 10,000; C10's order C+8 × 2,000 | pending company approval | UAT-09 |
 | Referral code of C01, attributed by C13 | attributed, reward after the claim window | UAT-07 step 4 |
 | Two support conversations (C02, C06) | open, first-response clock running | UAT-16, ops signal `conversation_first_response_overdue` |
@@ -207,6 +217,16 @@ Rehearsal inputs, not business values: the capacity override (half the agreed ca
 (THB 600, typed by CS as for any sample), the agreement texts (placeholders until counsel's text, UAT-01) and the
 knowledge-base texts (drafts; the Partner team writes the final ones). The price-proposal and payout-card lines are
 the current lines with their values unchanged.
+
+### 6.2 Top-up of a database populated before RB / S / SD existed
+
+The RB, S and SD rows are created by `pnpm uat:populate` since 2026-10-28. A database populated earlier gets only
+them with the top-up (refuses to run if a basket already exists):
+
+```sh
+UAT_DATABASE_URL=postgresql://…/getpack_uat UAT_TOPUP_CONFIRM=uat-only UAT_SEED_PASSWORD=<same> \
+  pnpm uat:populate test/uat/top-up-design-requests
+```
 
 ## 7. Shortcuts and limits of the rehearsal
 
