@@ -13,3 +13,16 @@
 VAT: `src/common/money/vat.spec.ts` has ฿5,178.00 → ฿338.75 and ฿4,710.00 → ฿308.13 (pass).
 Gates: typecheck ✓, eslint (changed) ✓, unit `src/modules/styles`, `src/modules/pricing/hints`, `vat.spec` ✓, contract:build + contract:lint ✓. Not run: `test:int`, `test:e2e` (no Docker/DB).
 **Local checks for the owner:** `pnpm db:migrate` (hand-written SQL) · `pnpm test:int` (style-library, price-hints) · `pnpm test:e2e` · PATCH a style's `commercial` and GET `/v1/store/styles?size=120x80x50`.
+
+## C0b — owner decisions after C0 (API `design/styles-catalog-redesign`, 2026-10-28)
+
+Commit `d03c9023` (DECISIONS-STAGE-A §9; details in `docs/design/styles-redesign/API-CHANGES.md` "C0b"):
+- §9.1 fit-range backfill from approved recipes: shared `StylesAdminService.curate` (same path as `admin.styles.update`), `backfillFitRanges`, `POST /v1/admin/styles/actions/backfill-fit-ranges`,
+  `pnpm styles:fit-ranges [--confirm]`, UAT seed step 4b; column `style_bases.fit_range_source` (migration `20261223000001_style_fit_range_source` + down.sql, hand-written).
+  Seed data: 81 of 122 filled, 41 without a complete recipe range. Business values never overwritten; idempotent.
+- §9.3 `quoteResponseBusinessDays` on store style cards/detail (`rfq.sla_business_hours`, null when unset).
+- §9.4a base-level `dieline_svg` rendered by `styles.render_assets` at the default size (113 of 122 drawable).
+- §9.5 `StorePrintSideDto.quote` (colours beyond the instant price → `rfq_required`); `catalog.print_limits` untouched.
+- `docs/design/styles-redesign/TRUST-CONTENT-CHECKLIST.md`.
+Gates: typecheck ✓, eslint changed ✓, unit 265 ✓ (styles, print-model, pricing), contract:build + contract:lint ✓. No DB here.
+**Local checks:** `pnpm db:migrate`, `pnpm test:int`, `pnpm test:e2e` (incl. `dieline-downloads`), `pnpm styles:fit-ranges` dry run then `--confirm` on UAT, set `rfq.sla_business_hours`.
