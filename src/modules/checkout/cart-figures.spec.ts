@@ -1,8 +1,8 @@
 import { MoneyDecimal } from '@common/money/money';
 import fc from 'fast-check';
 
-import { goodsVat, tierHintOf } from './cart-figures';
-import { priceOrderLines, type QuoteOptionInput, totalsOf } from './order-pricing';
+import { goodsVat, previewDisplay, tierHintOf } from './cart-figures';
+import { discountLine, priceOrderLines, type QuoteOptionInput, totalsOf } from './order-pricing';
 
 /** An instant option like the folding engine produces: pieces + design fee incl. VAT, shipping VAT-exclusive. */
 const instant: QuoteOptionInput = {
@@ -87,5 +87,37 @@ describe('tierHintOf (D-452)', () => {
 
   it('is null at the cheapest tier', () => {
     expect(tierHintOf(options, { quantity: 1000, unitPrice: '14.96' })).toBeNull();
+  });
+});
+
+describe('previewDisplay (D-452)', () => {
+  it('goods − discounts + shipping = the order total, for any discount', () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 1_200_000 }),
+        fc.integer({ min: 0, max: 50_000 }),
+        (off, ship) => {
+          const lines = priceOrderLines(instant, new MoneyDecimal(ship).div(100), ctx);
+          const discounted = lines.map((l, i) =>
+            i === 0 ? discountLine(l, new MoneyDecimal(off).div(100)) : l,
+          );
+          const totals = totalsOf(discounted);
+          const display = previewDisplay(discounted);
+          expect(display.grossAmount).toBe(totals.grossAmount);
+          expect(display.vatAmount).toBe(totals.vatAmount);
+          expect(
+            new MoneyDecimal(display.goodsGrossAmount)
+              .sub(display.discountGrossAmount)
+              .add(display.shippingGrossAmount)
+              .toFixed(2),
+          ).toBe(totals.grossAmount);
+        },
+      ),
+    );
+  });
+
+  it('without discounts the goods are the quotation’s gross without its shipping', () => {
+    const display = previewDisplay(priceOrderLines(instant, new MoneyDecimal('120.00'), ctx));
+    expect(display).toMatchObject({ goodsGrossAmount: '13926.00', discountGrossAmount: '0.00' });
   });
 });

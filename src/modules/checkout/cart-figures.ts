@@ -1,6 +1,12 @@
 import { formatMoney, MoneyDecimal, type MoneyValue } from '@common/money/money';
 
-import { priceOrderLines, type QuoteOptionInput, shippedPerDestination } from './order-pricing';
+import {
+  type LineDraft,
+  priceOrderLines,
+  type QuoteOptionInput,
+  shippedPerDestination,
+  vatOf,
+} from './order-pricing';
 
 /**
  * D-452 (Stage C block C5): the cart summary's figures, from the same order pricing the checkout uses — never a
@@ -58,5 +64,44 @@ export function tierHintOf(
     quantity: next.quantity,
     unitPrice: D(next.unitPrice).toFixed(2),
     productGrossAmount: formatMoney(D(next.grossAmount).sub(D(next.shippingAmount))),
+  };
+}
+
+export interface PreviewDisplay {
+  goodsGrossAmount: string;
+  discountGrossAmount: string;
+  shippingGrossAmount: string;
+  vatAmount: string;
+  grossAmount: string;
+}
+
+/**
+ * The checkout summary rows incl. VAT (D-452): each line's gross before its discount is its gross after it plus the
+ * discount and the VAT the discount took off (`discountLine`), so goods − discounts + shipping = the order total exactly.
+ */
+export function previewDisplay(
+  lines: readonly Pick<
+    LineDraft,
+    'lineType' | 'discountAmount' | 'vatRatePct' | 'grossAmount' | 'vatAmount'
+  >[],
+): PreviewDisplay {
+  let goods = D(0);
+  let shipping = D(0);
+  let discount = D(0);
+  let vat = D(0);
+  for (const l of lines) {
+    const off = D(l.discountAmount).add(vatOf(D(l.discountAmount), l.vatRatePct));
+    const before = D(l.grossAmount).add(off);
+    if (l.lineType === 'shipping') shipping = shipping.add(before);
+    else goods = goods.add(before);
+    discount = discount.add(off);
+    vat = vat.add(l.vatAmount);
+  }
+  return {
+    goodsGrossAmount: formatMoney(goods),
+    discountGrossAmount: formatMoney(discount),
+    shippingGrossAmount: formatMoney(shipping),
+    vatAmount: formatMoney(vat),
+    grossAmount: formatMoney(goods.sub(discount).add(shipping)),
   };
 }

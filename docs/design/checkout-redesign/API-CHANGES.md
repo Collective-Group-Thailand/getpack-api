@@ -9,10 +9,13 @@ discount, points, tax or payment logic changed. Contract: `contract/openapi.json
 | C5-API-2 | `CartItemDto.quantityEditable`, `quantityLimits {min,max}` (catalogue `quantity_min/max`), `tierHint {quoteOptionId, quantity, unitPrice, productGrossAmount}` (the same locked quotation's smallest larger, cheaper option), `earliestShipDate` (quotation's, while ahead), `leadTimeDays`. | `carts.dto.ts`, `cart-views.ts` |
 | C5-API-3 | `POST /v1/store/cart/items/{itemId}/actions/change-quantity` `{quantity}` (`store.cart.changeQuantity`, admin twin; `If-Match`): existing option of the locked quotation, else a new saved quotation priced by the quote engine (today's price, new lock); one destination follows, a split is cleared; refuses RFQ / Studio pin / reorder / pending re-price (`cart.quantity_unavailable`, new 409). Event + activity `cart.item_quantity_changed`. | `carts.service.ts`, `carts.controller.ts` |
 | C5-API-4 | `POST /v1/store/cart/actions/estimate-shipping` `{postcode}` (`store.cart.estimateShipping`, 30/min/client): shipping of every item to the postcode incl. VAT (quote engine `destinationShipping`, customer rate card), zone name, ready date (as checkout promises it, D-436), arrival window (`shipping.transit_days`), unavailable items. Writes nothing. `DestinationShipping` now carries the zone (internal). | `cart-figures.service.ts`, `quote-engine.service.ts` |
+| C5-API-4b | Estimate also returns `totalGrossAmount` (goods + this shipping, before codes/points/promotions) and `vatAmount` (goods VAT + shipping VAT), so the cart summary never adds money in the browser. | `cart-figures.service.ts` |
+| C5-API-6 | `CheckoutPreviewDto.display {goodsGrossAmount, discountGrossAmount, shippingGrossAmount, vatAmount, grossAmount}` — the summary rows incl. VAT; goods − discount + shipping = `totals.grossAmount` exactly (property test). | `cart-figures.ts` `previewDisplay`, `checkout.controller.ts` |
 | C5-API-5 | Settings `promotions.max_codes_per_cart` = 3 (Marketing; was constant 5) and `storefront.cart_quantity_step` = 50 (Admin), effective-dated, audited; `SETTINGS-REVIEW.md` regenerated. | `prisma/seed/data/settings.ts`, `setting-keys.ts`, `promotion-codes.service.ts` |
 
 No migration (no schema change). Unit tests: `checkout/cart-figures.spec.ts` (cart VAT = checkout's lines; goods + shipping = the
-order total for any shipping; ฿5,178.00 → ฿338.75; tier hint), `carts/cart-views.spec.ts`.
+order total for any shipping; display rows add up to the total for any discount; ฿5,178.00 → ฿338.75; tier hint),
+`checkout/cart-figures.service.spec.ts` (estimate totals and VAT, unavailable items), `carts/cart-views.spec.ts`.
 
 **Owner must run locally:** `pnpm db:seed` (creates the two settings), `pnpm test:int` + `pnpm test:e2e` (cart and checkout
 specs, `promotions` code limit now 3), then on UAT check `changeQuantity` on an instant line (switch inside the quotation and a

@@ -4,10 +4,10 @@ import { PrismaService } from '@database/prisma.service';
 import { cartLimits } from '@modules/carts/cart-settings';
 import { cartDto, type CartExtras, quantityEditable } from '@modules/carts/cart-views';
 import { type CartDto, type CartShippingEstimateDto } from '@modules/carts/carts.dto';
-import { type CartItemRow, type CartRow } from '@modules/carts/carts.service';
+import { type CartItemRow, type CartRow, productGross } from '@modules/carts/carts.service';
 import { vatStandardPct } from '@modules/pricing/hints/vat-figures';
 import { QuoteEngineService } from '@modules/pricing/quotes/quote-engine.service';
-import { arrivalWindow, type TransitDaysValue,transitFor } from '@modules/pricing/quotes/transit-days';
+import { arrivalWindow, type TransitDaysValue, transitFor } from '@modules/pricing/quotes/transit-days';
 import { pricedConfiguration } from '@modules/quotes/quote-input';
 import { Injectable } from '@nestjs/common';
 import { BusinessCalendarService } from '@platform/calendar/business-calendar.service';
@@ -27,6 +27,14 @@ const optionInput = (item: CartItemRow): QuoteOptionInput => ({
   shippingAmount: item.quoteOption.shippingAmount?.toFixed(2) ?? null,
   result: (item.quoteOption.result ?? {}) as QuoteOptionInput['result'],
 });
+
+/** The VAT of an RFQ quotation's own shipping line (as `priceOrderLines` keeps it). */
+function rfqShippingVat(item: CartItemRow): MoneyValue {
+  const result = (item.quoteOption.result ?? {}) as QuoteOptionInput['result'];
+  if (result.shippingVatAmount !== undefined && result.shippingVatAmount !== null)
+    return D(result.shippingVatAmount);
+  return D(item.quoteOption.shippingAmount?.toString()).sub(D(result.shippingNetAmount));
+}
 
 /**
  * D-452 (Stage C block C5): the cart's summary figures and its shipping estimate. Everything comes from the
@@ -155,16 +163,26 @@ export class CartFigures {
     }
     const available = cart.items.length > 0 && unavailable.length === 0;
     const pct = available ? await vatStandardPct(this.prisma, now) : null;
-    const gross =
-      available && pct !== null
-        ? net.add(net.mul(pct).div(100).toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_UP)).add(rfqGross)
-        : null;
+    const shippingVat =
+      pct !== null ? net.mul(pct).div(100).toDecimalPlaces(2, MoneyDecimal.ROUND_HALF_UP) : null;
+    const gross = available && shippingVat !== null ? net.add(shippingVat).add(rfqGross) : null;
+    const goodsVat = gross ? await this.goodsVat(cart, now) : null;
+    const goodsGross = cart.items.reduce((a, i) => a.add(productGross(i)), D(0));
+    // An RFQ quotation's own shipping VAT is inside its option's VAT (order-pricing), so it counts here too.
+    const rfqShipVat = cart.items
+      .filter((i) => i.quote.source === 'rfq')
+      .reduce((a, i) => a.add(rfqShippingVat(i)), D(0));
     const readyDate = await this.readyDate(cart, now);
     const arrival = available && zone && readyDate ? await this.arrival(zone.code, readyDate, now) : null;
     return {
       postcode,
       available: gross !== null,
       shippingGrossAmount: gross ? formatMoney(gross) : null,
+      totalGrossAmount: gross ? formatMoney(goodsGross.add(gross)) : null,
+      vatAmount:
+        gross && goodsVat !== null && shippingVat !== null
+          ? formatMoney(D(goodsVat).add(shippingVat).add(rfqShipVat))
+          : null,
       zone: zone ? { th: zone.nameTh, en: zone.nameEn } : null,
       readyDate,
       arrival,

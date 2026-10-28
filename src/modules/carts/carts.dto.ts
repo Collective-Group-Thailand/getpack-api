@@ -587,6 +587,25 @@ export class CartShippingEstimateDto {
   shippingGrossAmount!: string | null;
 
   @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '13615.40',
+    description:
+      'The cart’s goods (`CartDto.productGrossAmount`) plus this shipping, incl. VAT, before codes, points and promotions ' +
+      '(those are the checkout preview’s); null when shipping is not available',
+  })
+  totalGrossAmount!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '890.73',
+    description:
+      'VAT included in `totalGrossAmount`: the goods’ VAT (`CartDto.vatAmount`) plus the shipping’s; null as above',
+  })
+  vatAmount!: string | null;
+
+  @ApiProperty({
     type: LocalisedLabelDto,
     nullable: true,
     description: 'The destination zone’s name (customer side only)',
@@ -619,6 +638,8 @@ export const SHIPPING_ESTIMATE_EXAMPLE: CartShippingEstimateDto = {
   postcode: '10110',
   available: true,
   shippingGrossAmount: '235.40',
+  totalGrossAmount: '13615.40',
+  vatAmount: '890.73',
   zone: { th: 'กรุงเทพฯ และปริมณฑล', en: 'Bangkok & vicinity' },
   readyDate: '2026-11-09',
   arrival: { from: '2026-11-10', to: '2026-11-11' },
