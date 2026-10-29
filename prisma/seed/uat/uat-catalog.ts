@@ -750,8 +750,9 @@ async function seedHeroPresets(tx: Tx): Promise<number> {
 }
 
 /**
- * C4-API-3: `shipping.transit_days` with the rehearsal zones as Logistics would enter them (proposed values, to be
- * confirmed): Bangkok & vicinity 1–2, Central & East 2–3 working days; every other zone keeps the default 3–5.
+ * C4-API-3: `shipping.transit_days` with the rehearsal zones as Logistics enters them — confirmed in D-460 (C12,
+ * owner-delegated 2026-10-29): Bangkok & vicinity 1–2, Central & East 2–3 working days; North / Northeast / South keep
+ * the default 3–5 (no remote / island zone in the rehearsal data, so no 4–7 entry).
  * Adds a version only when the one in force lists no zone yet, so re-running the seed adds nothing.
  */
 const UAT_TRANSIT_ZONES: Partial<Record<UatZoneCode, { min: number; max: number }>> = {
@@ -774,7 +775,7 @@ async function seedTransitDays(tx: Tx): Promise<number> {
       effectiveFrom: UAT_EFFECTIVE_FROM,
       status: 'approved',
       value: { default: { min: 3, max: 5 }, zones: UAT_TRANSIT_ZONES },
-      reason: 'UAT rehearsal: transit days per zone (C4-API-3, proposed — Logistics confirms)',
+      reason: 'UAT rehearsal: transit days per zone (C4-API-3; confirmed D-460)',
       decidedAt: new Date(),
     },
   });

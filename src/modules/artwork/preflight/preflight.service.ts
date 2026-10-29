@@ -12,7 +12,7 @@ import { type StoredPreflightReport } from '../artwork-views';
 import { boxHeight, boxWidth, type FileFacts, mmOf } from './facts';
 import { pdfFacts } from './pdf-facts';
 import { rasterFacts } from './raster-facts';
-import { type CheckResult, evaluate, type ExpectedSize, statusOf } from './rules';
+import { type CheckResult, evaluate, type ExpectedSize, profileOf, rulesFor, statusOf } from './rules';
 
 const BATCH = 5;
 /** A claimed submission is retried by another worker after this long (crash safety). */
@@ -80,6 +80,12 @@ export class PreflightService {
       include: { files: { include: { fileObject: true }, orderBy: { sort: 'asc' } }, order: true },
     });
     const rules = await this.settings.at('artwork.preflight_rules');
+    // C12 (D-460): the order's print profile (corrugated board has its own thresholds).
+    const productType = await this.prisma.productType.findUnique({
+      where: { id: submission.order.productTypeId },
+      select: { calculatorKey: true },
+    });
+    const applied = rulesFor(rules.value, profileOf({ calculatorKey: productType?.calculatorKey ?? null }));
     const expected = await this.expectedSize(submission.orderId);
     const reports: PreflightFileReportDto[] = [];
     const findings: Prisma.PreflightFindingCreateManyInput[] = [];
@@ -90,7 +96,7 @@ export class PreflightService {
         ? await this.factsOf(file.fileObject)
         : { kind: 'unsupported', reason: 'link' };
       if (facts.kind === 'error') unreadable = true;
-      const results = evaluate(facts, expected?.size ?? null, rules.value);
+      const results = evaluate(facts, expected?.size ?? null, applied);
       all.push(...results);
       reports.push({
         submissionFileId: file.publicId,

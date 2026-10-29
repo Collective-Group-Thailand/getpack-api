@@ -206,7 +206,12 @@ export class GetpackDielineEngine implements DielineEngine {
       material,
     );
     const q = this.quantities(pkg, dieline);
-    return { widthMm: q.blankWidthMm, heightMm: q.blankHeightMm, engineVersion: version };
+    return {
+      widthMm: q.blankWidthMm,
+      heightMm: q.blankHeightMm,
+      creaseMm: q.creaseMm,
+      engineVersion: version,
+    };
   }
 
   async build(

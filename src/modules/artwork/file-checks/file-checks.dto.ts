@@ -167,6 +167,16 @@ export class FileCheckRulesDto {
   @ApiProperty({ example: '3', description: 'Safe distance inside the cut and folds, mm' })
   safeZoneMm!: string;
 
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '5',
+    description:
+      'C12 (D-460): the safe distance on corrugated board (print profile `corrugated` of `artwork.preflight_rules`), ' +
+      'mm; null when the profile sets none (the safe distance above applies)',
+  })
+  corrugatedSafeZoneMm!: string | null;
+
   @ApiProperty({ example: '1', description: 'Size tolerance of detection and the size check, mm' })
   sizeToleranceMm!: string;
 

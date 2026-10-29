@@ -3,6 +3,7 @@ import {
   boxHeight,
   boxWidth,
   type FileFacts,
+  isCreaseName,
   isNonPrintingSpot,
   mmOf,
   type PageFacts,
@@ -52,6 +53,68 @@ export interface PreflightRules {
   minTextPt?: string | null;
   /** C9: text below this size must print in black only (no C/M/Y — no registration blur), pt; unset → unevaluated. */
   blackOnlyTextBelowPt?: string | null;
+  /**
+   * C12 (D-460): images below this effective resolution must be fixed (the check is failed as `block` whatever its
+   * severity); between it and `minEffectivePpi` the check keeps its own severity (warn). Unset → one threshold only.
+   */
+  blockBelowPpi?: number | null;
+  /**
+   * C12 (D-460): the smallest reversed (knock-out) text, pt — Prepress's profile value, stated in the print-file spec.
+   * The facts cannot tell reversed text yet, so no check reads it (the team checks it before production).
+   */
+  minTextReversedPt?: string | null;
+  /**
+   * C12 (D-460): thresholds that differ for a print profile (`corrugated` = corrugated board, flexo), over the ones
+   * above. Chosen per job by `profileOf` (the product's calculator / the style's material class).
+   */
+  profiles?: Partial<Record<PreflightProfile, PreflightThresholds>>;
+}
+
+/** C12 (D-460): the print profiles with their own thresholds. */
+export const PREFLIGHT_PROFILES = ['corrugated'] as const;
+export type PreflightProfile = (typeof PREFLIGHT_PROFILES)[number];
+export type PreflightThresholds = Partial<
+  Pick<
+    PreflightRules,
+    | 'bleedMm'
+    | 'safeZoneMm'
+    | 'minEffectivePpi'
+    | 'blockBelowPpi'
+    | 'minLineWidthPt'
+    | 'maxInkCoveragePct'
+    | 'minTextPt'
+    | 'minTextReversedPt'
+    | 'blackOnlyTextBelowPt'
+  >
+>;
+
+/**
+ * C12 (D-460): the profile of a job — `corrugated` for corrugated board (the `corrugate` calculator, or a style of the
+ * `corrugated` material class), else none (the base thresholds).
+ */
+export function profileOf(job: {
+  calculatorKey?: string | null;
+  materialClass?: string | null;
+}): PreflightProfile | null {
+  return job.calculatorKey === 'corrugate' || job.materialClass === 'corrugated' ? 'corrugated' : null;
+}
+
+/** The rules a job is checked with: the base thresholds, the profile's own over them (absent keys keep the base). */
+export function rulesFor(rules: PreflightRules, profile: PreflightProfile | null): PreflightRules {
+  const own = profile ? rules.profiles?.[profile] : undefined;
+  if (!own) return rules;
+  const defined = Object.fromEntries(Object.entries(own).filter(([, v]) => v !== undefined));
+  return { ...rules, ...defined };
+}
+
+/**
+ * C12 (D-460) what the job requires of the file beyond the thresholds: an own-file upload (the file check) must carry
+ * its die lines (cut, and creases when the product's dieline has creases).
+ */
+export interface EvaluateOptions {
+  requireDieLayer?: boolean;
+  /** The product's dieline has crease lines (the engine's blank); null/absent = unknown → creases not required. */
+  expectsCrease?: boolean | null;
 }
 
 /**
@@ -94,6 +157,7 @@ export function evaluate(
   expected: ExpectedSize | null,
   rules: PreflightRules,
   print: PrintMethodContext | null = null,
+  options: EvaluateOptions = {},
 ): CheckResult[] {
   if (facts.kind === 'unsupported' || facts.kind === 'error') {
     return PREFLIGHT_CHECKS.map((check) => notEvaluated(rules, check, null, facts.reason));
@@ -112,7 +176,7 @@ export function evaluate(
     results.push(smallText(page, rules));
     results.push(smallTextBlack(page, rules));
     results.push(notEvaluated(rules, 'barcode', page.page, 'barcode_not_read'));
-    results.push(dieLayer(page, rules));
+    results.push(dieLayer(page, rules, options));
   }
   return results;
 }
@@ -318,7 +382,11 @@ function resolution(page: PageFacts, rules: PreflightRules): CheckResult {
   const low = placed.filter((i) => ppiOf(i) < rules.minEffectivePpi);
   const lowest = placed.length ? Math.min(...placed.map(ppiOf)) : null;
   const worst = low.length ? low.reduce((a, b) => (ppiOf(b) < ppiOf(a) ? b : a)) : null;
-  return result(
+  // C12 (D-460): below `blockBelowPpi` the image must be replaced, whatever the check's own severity.
+  const blockPpi =
+    typeof rules.blockBelowPpi === 'number' && rules.blockBelowPpi > 0 ? rules.blockBelowPpi : null;
+  const mustFix = blockPpi !== null && lowest !== null && lowest < blockPpi;
+  const checked = result(
     rules,
     'low_resolution',
     page.page,
@@ -346,6 +414,14 @@ function resolution(page: PageFacts, rules: PreflightRules): CheckResult {
       ? `${low.length} image(s) below ${rules.minEffectivePpi} ppi (lowest ${Math.round(lowest!)} ppi)`
       : 'Image resolution is sufficient',
   );
+  if (!mustFix) return checked;
+  return {
+    ...checked,
+    severity: 'block',
+    measurements: { ...checked.measurements, blockBelowPpi: blockPpi },
+    messageTh: `ภาพความละเอียดต่ำเกินไป (ต่ำสุด ${Math.round(lowest)} ppi ต่ำกว่า ${blockPpi} ppi) ต้องเปลี่ยนเป็นภาพที่ละเอียดกว่านี้ ไม่อย่างนั้นงานพิมพ์จะแตก`,
+    messageEn: `Image resolution too low (lowest ${Math.round(lowest)} ppi, under ${blockPpi} ppi); replace it with a sharper image or the print will look pixelated`,
+  };
 }
 
 function rgb(page: PageFacts, rules: PreflightRules): CheckResult {
@@ -568,7 +644,32 @@ function smallTextBlack(page: PageFacts, rules: PreflightRules): CheckResult {
  * C9 die-cut on a non-printing layer: the die lines are found in a die spot colour (a separation the press does not
  * print, D-302). A file without them is not failed — the team matches it — but not passed either.
  */
-function dieLayer(page: PageFacts, rules: PreflightRules): CheckResult {
+function dieLayer(page: PageFacts, rules: PreflightRules, options: EvaluateOptions = {}): CheckResult {
+  const names = page.dieNames ?? [];
+  const creases = names.filter(isCreaseName);
+  const cuts = names.filter((n) => !isCreaseName(n));
+  if (options.requireDieLayer) {
+    // C12 (D-460): an own-file upload must carry its die lines — a cut (CutContour / Die spot colour or a layer named
+    // die) and, when the product's dieline has creases, the creases (Crease).
+    const missing = [
+      ...(cuts.length ? [] : ['cut']),
+      ...(options.expectsCrease && !creases.length ? ['crease'] : []),
+    ];
+    if (missing.length)
+      return result(
+        rules,
+        'die_layer',
+        page.page,
+        'fail',
+        { dieColours: names, missing },
+        missing.includes('cut')
+          ? 'ไม่พบเส้นไดคัทในไฟล์ ใส่เส้นตัดเป็นสีพิเศษชื่อ CutContour หรือ Die (หรือไว้บนเลเยอร์ชื่อ die) และเส้นพับเป็นสีพิเศษชื่อ Crease ตั้งเป็นพิมพ์ทับ (overprint)'
+          : 'ไม่พบเส้นพับในไฟล์ ใส่เส้นพับเป็นสีพิเศษชื่อ Crease แยกจากเส้นตัด ตั้งเป็นพิมพ์ทับ (overprint)',
+        missing.includes('cut')
+          ? 'No die lines in the file: put the cut in a spot colour named CutContour or Die (or on a layer named die) and the creases in a spot colour named Crease, set to overprint'
+          : 'No crease lines in the file: put the creases in a spot colour named Crease, apart from the cut, set to overprint',
+      );
+  }
   if (!page.dieBox) return notEvaluated(rules, 'die_layer', page.page, 'no_die');
   return result(
     rules,

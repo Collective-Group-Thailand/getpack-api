@@ -65801,6 +65801,14 @@
             },
             "type": "array"
           },
+          "corrugatedSafeZoneMm": {
+            "description": "C12 (D-460): the safe distance on corrugated board (print profile `corrugated` of `artwork.preflight_rules`), mm; null when the profile sets none (the safe distance above applies)",
+            "example": "5",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "extensions": {
             "description": "Accepted file extensions",
             "example": [
@@ -65831,6 +65839,7 @@
         "required": [
           "bleedMm",
           "safeZoneMm",
+          "corrugatedSafeZoneMm",
           "sizeToleranceMm",
           "maxBytes",
           "extensions",
@@ -537673,6 +537682,7 @@
                       "evaluated": false
                     }
                   ],
+                  "corrugatedSafeZoneMm": "5",
                   "extensions": [
                     ".pdf",
                     ".ai"
