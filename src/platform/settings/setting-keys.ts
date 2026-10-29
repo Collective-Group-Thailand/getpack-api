@@ -176,6 +176,27 @@ export interface SettingValues {
     minTextPt?: string | null;
     /** C9 (D-457): text below this size must be black only (no C/M/Y), pt; unset → `small_text_black` not evaluated. */
     blackOnlyTextBelowPt?: string | null;
+    /** D-460: images below this effective ppi must be fixed (block); unset → `minEffectivePpi` only. */
+    blockBelowPpi?: number | null;
+    /** D-460: smallest reversed (knock-out) text, pt — stated in the print-file spec; no automatic check reads it yet. */
+    minTextReversedPt?: string | null;
+    /** D-460: per print profile (`corrugated`), thresholds over the ones above. */
+    profiles?: Partial<
+      Record<
+        'corrugated',
+        {
+          bleedMm?: string;
+          safeZoneMm?: string;
+          minEffectivePpi?: number;
+          blockBelowPpi?: number | null;
+          minLineWidthPt?: string;
+          maxInkCoveragePct?: number;
+          minTextPt?: string | null;
+          minTextReversedPt?: string | null;
+          blackOnlyTextBelowPt?: string | null;
+        }
+      >
+    >;
   };
   /** Not seeded (B4.1): no prepress due time until set. */
   'artwork.prepress_sla_business_hours': number;

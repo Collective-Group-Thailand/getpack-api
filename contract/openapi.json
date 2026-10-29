@@ -37364,6 +37364,58 @@
         ],
         "type": "object"
       },
+      "DefaultTolerancesDto": {
+        "properties": {
+          "colourDeltaE": {
+            "description": "Colour ΔE2000 against the approved proof — `fulfilment.colour_tolerance_delta_e.standard` (D-186)",
+            "example": "3",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "colourDeltaEFlexo": {
+            "description": "Colour ΔE2000 on flexo-printed corrugated board — `fulfilment.colour_tolerance_delta_e.flexo`",
+            "example": "5",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantityPct": {
+            "description": "Quantity ± % (shortage and overage) — `fulfilment.tolerance_default_pct` (D-163); null until set",
+            "example": "5.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeMmMax": {
+            "description": "Largest of the same; null when none",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeMmMin": {
+            "description": "Smallest size tolerance ± mm over the product kinds that publish one — `fulfilment.dimensional_tolerance_mm` (D-186); null when none",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "quantityPct",
+          "sizeMmMin",
+          "sizeMmMax",
+          "colourDeltaE",
+          "colourDeltaEFlexo"
+        ],
+        "type": "object"
+      },
       "DefaultsDto": {
         "properties": {
           "companies": {
@@ -65801,6 +65853,14 @@
             },
             "type": "array"
           },
+          "corrugatedSafeZoneMm": {
+            "description": "C12 (D-460): the safe distance on corrugated board (print profile `corrugated` of `artwork.preflight_rules`), mm; null when the profile sets none (the safe distance above applies)",
+            "example": "5",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "extensions": {
             "description": "Accepted file extensions",
             "example": [
@@ -65831,6 +65891,7 @@
         "required": [
           "bleedMm",
           "safeZoneMm",
+          "corrugatedSafeZoneMm",
           "sizeToleranceMm",
           "maxBytes",
           "extensions",
@@ -87242,6 +87303,14 @@
             "description": "Published styles in the template library (the count `store.styles.list` shows)",
             "example": 42,
             "type": "integer"
+          },
+          "tolerances": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DefaultTolerancesDto"
+              }
+            ],
+            "description": "D-460 the default tolerances (settings, D-163 / D-186) the \"how we work\" block states; each part null until set. A job’s own tolerance is frozen on its quotation (D-021) and may differ"
           }
         },
         "required": [
@@ -87255,7 +87324,8 @@
           "contact",
           "roadmap",
           "paymentMethods",
-          "issuer"
+          "issuer",
+          "tolerances"
         ],
         "type": "object"
       },
@@ -537673,6 +537743,7 @@
                       "evaluated": false
                     }
                   ],
+                  "corrugatedSafeZoneMm": "5",
                   "extensions": [
                     ".pdf",
                     ".ai"
@@ -556060,7 +556131,14 @@
                     "tz": "Asia/Bangkok"
                   },
                   "supportReplyMinutes": null,
-                  "templateCount": 42
+                  "templateCount": 42,
+                  "tolerances": {
+                    "colourDeltaE": "3",
+                    "colourDeltaEFlexo": "5",
+                    "quantityPct": "5.00",
+                    "sizeMmMax": "3.00",
+                    "sizeMmMin": "1.00"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/PublicConfigDto"

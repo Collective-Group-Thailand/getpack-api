@@ -19,6 +19,7 @@ import {
   type DielineMaterial,
   type StoredRecipe,
 } from '@integrations/dieline/dieline-engine.port';
+import { profileOf, rulesFor } from '@modules/artwork/preflight/rules';
 import { canonical } from '@modules/catalog/imports/import-engine';
 import { sizeText, sizeValue } from '@modules/quotes/spec-label';
 import { BasisError, constructionFamily, convertSize } from '@modules/specs/dimension-conversion';
@@ -208,7 +209,8 @@ export class DielineDownloadsService {
   ) {
     const format = ENGINE_FORMAT[delivery];
     const engineVersion = await this.engine.version();
-    const designer = format === 'pdf' ? await this.designerPdf(variant, sizes, now) : undefined;
+    const designer =
+      format === 'pdf' ? await this.designerPdf(variant, sizes, now, materialClass) : undefined;
     const cacheKey = createHash('sha256')
       .update(
         JSON.stringify(
@@ -295,8 +297,13 @@ export class DielineDownloadsService {
     variant: VariantRow,
     sizes: { length: number; width: number; height: number },
     at: Date,
+    materialClass: string,
   ): Promise<DesignerPdfOptions> {
-    const rules = (await this.settings.at('artwork.preflight_rules', { at })).value;
+    // C12 (D-460): corrugated board has its own safe distance (print profile `corrugated`).
+    const rules = rulesFor(
+      (await this.settings.at('artwork.preflight_rules', { at })).value,
+      profileOf({ materialClass }),
+    );
     // The one size string (D-441, B-API-3): ยาว × กว้าง × สูง, mm, inner dimensions.
     const inside = sizeValue({ l: sizes.length, w: sizes.width, d: sizes.height }, 'internal').en;
     const size = `${sizeText({ l: sizes.length, w: sizes.width, d: sizes.height })} mm`;

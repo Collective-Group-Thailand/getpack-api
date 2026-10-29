@@ -26,6 +26,8 @@ export interface DetectionCandidate {
   heightMm: number;
   blankWidthMm: number;
   blankHeightMm: number;
+  /** C12 (D-460): the dieline has crease lines (the engine says so); absent when unknown. */
+  hasCreases?: boolean;
 }
 
 export interface DetectionMatch extends DetectionCandidate {

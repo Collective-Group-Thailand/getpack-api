@@ -56,6 +56,93 @@ export interface SettingSeed {
   syncConfirmation?: true;
 }
 
+/**
+ * D-460 (C12, DECISIONS-STAGE-A §17.1): the Prepress profile of `artwork.preflight_rules` — recommended by the assistant
+ * as head of Prepress, delegated by the owner 2026-10-29. Base thresholds (offset / digital on paper board) and the
+ * `corrugated` print profile (corrugated board, flexo) over them.
+ */
+export const PREFLIGHT_RULES_C12 = {
+  severities: {
+    size_mismatch: 'block',
+    missing_bleed: 'block',
+    // Warn below `minEffectivePpi`; below `blockBelowPpi` the engine fails it as must fix.
+    low_resolution: 'warn',
+    rgb_colour: 'warn',
+    fonts_not_embedded: 'block',
+    safe_zone: 'info',
+    thin_lines: 'info',
+    overprint: 'info',
+    ink_coverage: 'info',
+    ink_count: 'block',
+    small_text: 'warn',
+    small_text_black: 'warn',
+    barcode: 'info',
+    // Own-file uploads (the file check) must carry their die lines; the order's own submissions are matched by the team.
+    die_layer: 'block',
+  },
+  bleedMm: '3',
+  sizeToleranceMm: '1',
+  minEffectivePpi: 300,
+  blockBelowPpi: 150,
+  safeZoneMm: '3',
+  minLineWidthPt: '0.25',
+  maxInkCoveragePct: 300,
+  minTextPt: '6',
+  minTextReversedPt: '8',
+  blackOnlyTextBelowPt: '12',
+  profiles: {
+    corrugated: {
+      safeZoneMm: '5',
+      minEffectivePpi: 200,
+      blockBelowPpi: 100,
+      minTextPt: '7',
+      minLineWidthPt: '0.5',
+      maxInkCoveragePct: 240,
+    },
+  },
+} as const;
+
+/** The values the seed gave before D-460 (D-070 / D-459): a part still equal to these was never changed by a person. */
+const PREFLIGHT_BEFORE_C12 = {
+  severities: { fonts_not_embedded: 'info' },
+  bleedMm: '3',
+  minEffectivePpi: 300,
+  safeZoneMm: '3',
+  minLineWidthPt: '0.25',
+  maxInkCoveragePct: 300,
+} as const;
+
+/**
+ * D-460 seed amendment of `artwork.preflight_rules`: once (nothing while a print profile is already set), and per part
+ * only where nobody decided it — an unset threshold or severity is filled, a seed default is replaced, anything else is
+ * kept. Pure; exported for the unit test.
+ */
+export function amendPreflightRulesC12(current: unknown): unknown {
+  const value = current as Record<string, unknown> | null;
+  if (!value || typeof value !== 'object' || typeof value['severities'] !== 'object' || !value['severities'])
+    return undefined;
+  if (value['profiles'] !== undefined) return undefined;
+  const severities = { ...(value['severities'] as Record<string, string>) };
+  const decided = PREFLIGHT_RULES_C12.severities as Record<string, string>;
+  const before = PREFLIGHT_BEFORE_C12.severities as Record<string, string>;
+  for (const [check, severity] of Object.entries(decided))
+    if (severities[check] === undefined || severities[check] === before[check]) severities[check] = severity;
+  const next: Record<string, unknown> = { ...value, severities };
+  const unset = (v: unknown) => v === undefined || v === null || v === '';
+  for (const key of [
+    'bleedMm',
+    'minEffectivePpi',
+    'safeZoneMm',
+    'minLineWidthPt',
+    'maxInkCoveragePct',
+  ] as const)
+    if (unset(next[key]) || next[key] === PREFLIGHT_BEFORE_C12[key]) next[key] = PREFLIGHT_RULES_C12[key];
+  for (const key of ['blockBelowPpi', 'minTextPt', 'minTextReversedPt', 'blackOnlyTextBelowPt'] as const)
+    if (unset(next[key])) next[key] = PREFLIGHT_RULES_C12[key];
+  next['profiles'] = PREFLIGHT_RULES_C12.profiles;
+  return next;
+}
+
 /** One `shipping.transit_days` window: working days, `max` ≥ `min` (a lower `max` is read as `min`). */
 const TRANSIT_WINDOW_SCHEMA = {
   type: 'object',
@@ -238,40 +325,22 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'artwork.preflight_rules',
     valueType: 'json',
-    value: {
-      severities: {
-        size_mismatch: 'block',
-        missing_bleed: 'block',
-        low_resolution: 'warn',
-        rgb_colour: 'warn',
-        fonts_not_embedded: 'info',
-        safe_zone: 'info',
-        thin_lines: 'info',
-        overprint: 'info',
-        ink_coverage: 'info',
-        // D-459 (owner 2026-10-29, C11): inks the chosen print cannot print must be fixed before the cart.
-        ink_count: 'block',
-      },
-      bleedMm: '3',
-      sizeToleranceMm: '1',
-      minEffectivePpi: 300,
-      safeZoneMm: '3',
-      minLineWidthPt: '0.25',
-      maxInkCoveragePct: 300,
-    },
+    value: PREFLIGHT_RULES_C12,
     description:
-      'D-070 preflight: block on size mismatch or missing bleed, warn on low resolution or RGB; D-459: block on an ink count the chosen print cannot print; other checks report only (their severities and thresholds are Prepress’s); technical thresholds proposed (ADR-0009)',
-    decisions: ['D-070', 'D-459'],
-    confirmation: 'proposed',
-    // An existing database gets `ink_count: block` once, only while nobody has set an ink-count severity.
+      'D-070 preflight: block on size mismatch or missing bleed; D-459: block on an ink count the chosen print cannot print; ' +
+      'D-460 (C12, Prepress values recommended by the assistant, delegated by the owner 2026-10-29): bleed 3 mm, safe zone ' +
+      '3 mm (corrugated 5), images warn < 300 ppi and must fix < 150 (corrugated flexo 200 / 100), text ≥ 6 pt (reversed 8, ' +
+      'corrugated 7), small text below 12 pt in 100 % K only (warn), lines ≥ 0.25 pt (corrugated 0.5), ink coverage ≤ 300 % ' +
+      '(corrugated 240), fonts embedded or outlined (must fix), die lines on own-file uploads (must fix). Prepress may change ' +
+      'any of them from a date; the print-file spec is docs/design/upload-redesign/PRINT-FILE-SPEC.md',
+    decisions: ['D-070', 'D-459', 'D-460'],
+    syncConfirmation: true,
+    // An existing database gets the C12 profile once (D-460): only while no print profile is set, and each part only
+    // where the value in force is still the earlier seed default — a person's choice is kept.
     amendInForce: {
-      reason: 'Seed amendment from D-459: ink count defaults to "must fix" (owner 2026-10-29, C11)',
-      amend: (current) => {
-        const value = current as { severities?: Record<string, string> } | null;
-        if (!value || typeof value !== 'object' || !value.severities) return undefined;
-        if (value.severities['ink_count'] !== undefined) return undefined;
-        return { ...value, severities: { ...value.severities, ink_count: 'block' } };
-      },
+      reason:
+        'Seed amendment from D-460: Prepress thresholds and print profiles (delegated by the owner 2026-10-29, C12)',
+      amend: amendPreflightRulesC12,
     },
   },
   {
@@ -857,10 +926,12 @@ export const SETTINGS: readonly SettingSeed[] = [
     },
     description:
       'C4-API-3 / D-013 carrier transit working days per shipping zone (keyed by zone code; unlisted zones use `default`): ' +
-      'arrival from = ready date + min, to = ready date + max, national business calendar. Proposed defaults: ' +
-      'Bangkok & vicinity 1–2, Central & East 2–3, all other zones 3–5 — to be confirmed by Logistics',
-    decisions: ['D-013'],
-    confirmation: 'pending_business',
+      'arrival from = ready date + min, to = ready date + max, national business calendar. D-460 (C12, Logistics values ' +
+      'recommended by the assistant, delegated by the owner 2026-10-29): Bangkok & vicinity 1–2, Central & East 2–3, ' +
+      'North / Northeast / South 3–5 (= `default`), remote areas and islands 4–7 once a zone exists for them. Zones are ' +
+      'the rate card’s own codes (entered by Admin), so the seed holds the default only',
+    decisions: ['D-013', 'D-460'],
+    syncConfirmation: true,
     ownerRole: 'admin',
   },
   // --- Launch monitoring (B6.3, D-113). Operational thresholds, not business values: proposed, superadmin.

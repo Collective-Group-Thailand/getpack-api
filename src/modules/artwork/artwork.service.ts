@@ -28,6 +28,7 @@ import {
   type PrepressQueueItemDto,
 } from './artwork.dto';
 import { SUBMISSION_INCLUDE, type SubmissionRow } from './artwork-views';
+import { profileOf, rulesFor } from './preflight/rules';
 
 /** Artwork may change until it is approved and production starts (D-073). */
 const TAKES_ARTWORK: readonly string[] = ['waiting_payment', 'paid_for_production', 'artwork_approved'];
@@ -111,7 +112,15 @@ export class ArtworkService implements OnModuleInit {
   async rules(orderPublicId: string, customerUserId: bigint): Promise<ArtworkRulesDto> {
     const order = await this.orders.order({ publicId: orderPublicId }, customerUserId);
     const now = new Date();
-    const rules = (await this.settings.at('artwork.preflight_rules', { at: now })).value;
+    // C12 (D-460): the order's print profile (corrugated board has its own thresholds).
+    const productType = await this.prisma.productType.findUnique({
+      where: { id: order.productTypeId },
+      select: { calculatorKey: true },
+    });
+    const rules = rulesFor(
+      (await this.settings.at('artwork.preflight_rules', { at: now })).value,
+      profileOf({ calculatorKey: productType?.calculatorKey ?? null }),
+    );
     let checklist: ArtworkRulesDto['approvalChecklist'] = [];
     try {
       checklist = (await this.settings.at('artwork.approval_checklist', { at: now })).value ?? [];

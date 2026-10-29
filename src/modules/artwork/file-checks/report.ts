@@ -2,6 +2,7 @@ import { type FileFacts, isNonPrintingSpot } from '../preflight/facts';
 import {
   type CheckResult,
   evaluate,
+  type EvaluateOptions,
   type ExpectedSize,
   type PreflightCheck,
   type PreflightRules,
@@ -115,8 +116,9 @@ export function uploadReport(
   expected: ExpectedSize | null,
   rules: PreflightRules,
   print: PrintMethodContext | null,
+  options: EvaluateOptions = {},
 ): UploadReport {
-  const results = evaluate(facts, expected, rules, print);
+  const results = evaluate(facts, expected, rules, print, options);
   const items: ReportItem[] = [];
   for (const check of UPLOAD_CHECKS) {
     const own = results.filter((r) => r.check === check);

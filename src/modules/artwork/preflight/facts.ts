@@ -112,6 +112,9 @@ export const NON_PRINTING_SPOT_NAMES = [
 
 export const isDieSpot = (name: string) =>
   (DIE_SPOT_NAMES as readonly string[]).includes(name.trim().toLowerCase());
+/** C12 (D-460): the die names that mark creases (folds), as opposed to cuts. */
+export const isCreaseName = (name: string) =>
+  ['crease', 'creasing', 'fold'].includes(name.trim().toLowerCase());
 export const isNonPrintingSpot = (name: string) =>
   isDieSpot(name) || (NON_PRINTING_SPOT_NAMES as readonly string[]).includes(name.trim().toLowerCase());
 

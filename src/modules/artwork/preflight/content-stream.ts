@@ -203,6 +203,11 @@ export interface ResourceResolver {
   colourSpace(name: string): ColourSpaceInfo | null;
   xObject(name: string): XObjectInfo | null;
   extGState(name: string): { overprint: boolean } | null;
+  /**
+   * C12 (D-460): the name of the optional-content layer (OCG) a `/OC /name BDC` marked-content block refers to, from
+   * the resources' `Properties`; absent / null when it is not a layer.
+   */
+  layerName?(name: string): string | null;
 }
 
 export interface PaintFacts {
@@ -278,6 +283,7 @@ export function interpret(
   initial: Matrix = IDENTITY,
   depth = 0,
   visiting: Set<string> = new Set(),
+  inheritedLayer: string | null = null,
 ): PaintFacts {
   const stack: GState[] = [];
   let gs: GState = {
@@ -298,6 +304,14 @@ export function interpret(
   };
   let tlm: Matrix = IDENTITY;
   let leading = 0;
+  /**
+   * C12 (D-460): the marked-content blocks open now — a layer's name for `/OC` blocks, null for others. Paint inside a
+   * layer named like a die (`die`, `CutContour`, `Crease` …, {@link isDieSpot}) is the die, whatever its colour.
+   */
+  const marked: (string | null)[] = [];
+  const dieLayer = (): string | null =>
+    [...marked].reverse().find((n): n is string => !!n && isDieSpot(n)) ??
+    (inheritedLayer && isDieSpot(inheritedLayer) ? inheritedLayer : null);
 
   const num = (a: Operand | undefined) => (a?.t === 'num' ? a.v : 0);
   const space = (name: string): ColourSpaceInfo => {
@@ -306,6 +320,7 @@ export function interpret(
     return resources.colourSpace(name) ?? { family: 'other' };
   };
   const paint = (colour: ColourSpaceInfo, values: readonly number[] = []) => {
+    if (dieLayer()) return;
     if (colour.family === 'rgb') facts.rgbPaintOps++;
     for (const s of colour.spotNames ?? []) facts.spotNames.add(s);
     if (isDie(colour)) return;
@@ -316,8 +331,10 @@ export function interpret(
   };
   /** A painted path: in a die spot it widens the die's bounding box. */
   const paintPath = (colour: ColourSpaceInfo) => {
-    if (isDie(colour) && path.length) {
-      for (const name of colour.spotNames ?? []) if (isDieSpot(name)) facts.dieNames.add(name);
+    const layer = dieLayer();
+    if ((isDie(colour) || layer) && path.length) {
+      if (layer) facts.dieNames.add(layer);
+      else for (const name of colour.spotNames ?? []) if (isDieSpot(name)) facts.dieNames.add(name);
       const xs = path.map((p) => p.x);
       const ys = path.map((p) => p.y);
       const box: Box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
@@ -491,11 +508,31 @@ export function interpret(
           if (!x.imageMask) placeImage(name, x.widthPx, x.heightPx, x.colour);
         } else if (depth < MAX_FORM_DEPTH && !visiting.has(x.key)) {
           visiting.add(x.key);
-          interpret(x.content, x.resources, facts, multiply(x.matrix, gs.ctm), depth + 1, visiting);
+          interpret(
+            x.content,
+            x.resources,
+            facts,
+            multiply(x.matrix, gs.ctm),
+            depth + 1,
+            visiting,
+            dieLayer() ?? inheritedLayer,
+          );
           visiting.delete(x.key);
         }
         break;
       }
+      case 'BDC': {
+        const tag = args[0]?.t === 'name' ? args[0].v : '';
+        const prop = args[1]?.t === 'name' ? args[1].v : null;
+        marked.push(tag === 'OC' && prop ? (resources.layerName?.(prop) ?? null) : null);
+        break;
+      }
+      case 'BMC':
+        marked.push(null);
+        break;
+      case 'EMC':
+        marked.pop();
+        break;
       case 'BI': {
         const dict = inline ?? new Map<string, Operand>();
         const numOf = (...keys: string[]) => {
@@ -515,7 +552,7 @@ export function interpret(
       default:
         if (STROKE_OPS.has(op)) {
           // The die's own strokes are not printed lines (D-302), so they do not count as thin print.
-          if (!isDie(gs.stroke)) {
+          if (!isDie(gs.stroke) && !dieLayer()) {
             const width = gs.lineWidth * scale(gs.ctm);
             facts.minStrokeWidthPt =
               facts.minStrokeWidthPt === null ? width : Math.min(facts.minStrokeWidthPt, width);

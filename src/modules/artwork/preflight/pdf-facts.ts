@@ -4,12 +4,14 @@ import {
   PDFBool,
   PDFDict,
   PDFDocument,
+  PDFHexString,
   PDFName,
   PDFNumber,
   type PDFObject,
   PDFRawStream,
   PDFRef,
   PDFStream,
+  PDFString,
 } from 'pdf-lib';
 
 import {
@@ -221,7 +223,15 @@ function resolverFor(
   const colourSpaces = subDict(doc, resources, 'ColorSpace');
   const xObjects = subDict(doc, resources, 'XObject');
   const states = subDict(doc, resources, 'ExtGState');
+  const properties = subDict(doc, resources, 'Properties');
   return {
+    // C12 (D-460): `/OC /name BDC` → the optional-content group's `/Name` (the layer name Illustrator writes).
+    layerName: (name) => {
+      const group = subDict(doc, properties, name);
+      if (!group || nameOf(dictEntry(doc, group, 'Type')) !== 'OCG') return null;
+      const label = dictEntry(doc, group, 'Name');
+      return label instanceof PDFString || label instanceof PDFHexString ? label.decodeText() : null;
+    },
     colourSpace: (name) => {
       const entry = dictEntry(doc, colourSpaces, name);
       return entry === undefined ? null : colourSpaceOf(doc, entry);

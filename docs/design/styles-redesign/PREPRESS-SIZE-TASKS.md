@@ -34,6 +34,15 @@ done they stay out of the size search and are listed as "without a complete rang
 3. Then: release the bundle, run `pnpm styles:recipes-from-engine` → approve the recipes (Prepress) →
    `pnpm styles:fit-ranges` (dry run, then `--confirm`) and check the eight codes leave "without a complete range".
 
+## 1a. Proposed standard sizes for the plastic mailer bags (C12 — proposal, not product data)
+
+Recommended by the assistant as head of Prepress, delegated by the owner 2026-10-29 (DECISIONS-STAGE-A §17.1, D-460).
+For the mailer bags (PK-PB-06 poly mailer, PK-PB-07 bubble mailer) once the engine has the `flexible` class: inside
+**width × height in cm**, the closing flap not counted — **17×30, 20×30, 25×35, 28×42, 32×45, 38×52**. They are **not
+seeded** as catalogue products, standard sizes or fit ranges; PK-PB-01…08 keep an empty fit range until §1 is done.
+When the engine supports them, Prepress enters them as the products' standard sizes (back office) and approves the
+recipe presets; the fit-range backfill then takes its bounds from them (source b, §11.1).
+
 ## 2. Already covered by the C1e rules (no Prepress work)
 
 - Paper bags PK-PG-01 / 02 — width × gusset × height from the recipe range and presets.
@@ -46,3 +55,4 @@ done they stay out of the size search and are listed as "without a complete rang
 | Date | Item | Status |
 |---|---|---|
 | 2026-10-28 | §1 plastic bags | Open — waiting for Prepress |
+| 2026-10-29 | §1a mailer-bag sizes | Proposed (C12) — enter them once §1 is done |

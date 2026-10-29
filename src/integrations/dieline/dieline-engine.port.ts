@@ -35,6 +35,8 @@ export interface DesignerPdfOptions {
 export interface DielineBlank {
   widthMm: number;
   heightMm: number;
+  /** C12 (D-460): total crease length, mm (0 = a flat item with no folds); absent from engines that do not say. */
+  creaseMm?: number;
   engineVersion: string;
 }
 
