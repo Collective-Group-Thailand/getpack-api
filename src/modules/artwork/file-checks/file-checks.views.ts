@@ -37,6 +37,7 @@ function reportDto(report: UploadReport | null): FileCheckReportDto | null {
     blocking: report.blocking,
     page: report.page,
     expected: report.expected,
+    inks: report.inks ?? null,
   };
 }
 

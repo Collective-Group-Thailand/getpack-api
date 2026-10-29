@@ -1,4 +1,4 @@
-import { type FileFacts } from '../preflight/facts';
+import { type FileFacts, isNonPrintingSpot } from '../preflight/facts';
 import {
   type CheckResult,
   evaluate,
@@ -57,6 +57,41 @@ export interface UploadReport {
   page: { mediaBox: number[]; trimBox: number[] | null; dieBox: number[] | null } | null;
   /** The finished size the checks compared with (the chosen product and size), mm. */
   expected: ExpectedSize | null;
+  /** What the file prints with, read from its colours (all pages); null when the file could not be read. */
+  inks: FileInks | null;
+}
+
+/**
+ * The inks a file needs: process colour (CMYK with C/M/Y, RGB, colour images), its printed spot colours (die and
+ * helper layers excluded), and the method that prints it — `cmyk` for process work, `spot` for spot / black-only
+ * work, `none` for an empty file. A fact of the file, not a price: the page prices each method through the API.
+ */
+export interface FileInks {
+  process: boolean;
+  spotColours: string[];
+  recommended: 'none' | 'spot' | 'cmyk';
+}
+
+export function inksOf(facts: FileFacts): FileInks | null {
+  if (facts.kind !== 'pdf' && facts.kind !== 'raster') return null;
+  const process = facts.pages.some(
+    (p) =>
+      p.processPaint === true ||
+      p.rgbPaintOps > 0 ||
+      p.images.some((i) => i.colour === 'rgb' || i.colour === 'cmyk'),
+  );
+  const spotColours = [
+    ...new Set(facts.pages.flatMap((p) => p.spotNames).filter((n) => !isNonPrintingSpot(n))),
+  ].sort();
+  const painted = facts.pages.some(
+    (p) =>
+      (p.texts?.length ?? p.textOrigins.length) > 0 || p.images.length > 0 || p.minStrokeWidthPt !== null,
+  );
+  return {
+    process,
+    spotColours,
+    recommended: process ? 'cmyk' : spotColours.length || painted ? 'spot' : 'none',
+  };
 }
 
 const RANK: Record<CheckLevel, number> = { must_fix: 3, review: 2, not_checked: 1, pass: 0 };
@@ -128,5 +163,6 @@ export function uploadReport(
         }
       : null,
     expected,
+    inks: inksOf(facts),
   };
 }

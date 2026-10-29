@@ -89,6 +89,7 @@ const VERSION_EXAMPLE = {
     blocking: true,
     page: { mediaBox: [0, 0, 2934, 879], trimBox: null, dieBox: [0, 0, 2934, 879] },
     expected: { widthMm: 1035, heightMm: 310 },
+    inks: { process: true, spotColours: [], recommended: 'cmyk' },
   },
   cartItemId: null,
   createdAt: '2026-10-29T10:00:00+07:00',

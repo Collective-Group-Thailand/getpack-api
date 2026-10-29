@@ -218,6 +218,22 @@ describe('C9 report (the 12 checks)', () => {
     expect(report.items.find((i) => i.check === 'small_text_black')!.level).toBe('review');
   });
 
+  it('reads the inks the file needs and the method that prints it', () => {
+    expect(uploadReport(pdf(page({ processPaint: true })), expected, RULES, null).inks).toEqual({
+      process: true,
+      spotColours: [],
+      recommended: 'cmyk',
+    });
+    const spot = uploadReport(
+      pdf(page({ spotNames: ['CutContour', 'PANTONE 349 C', 'Bleed'] })),
+      expected,
+      RULES,
+      null,
+    );
+    expect(spot.inks).toEqual({ process: false, spotColours: ['PANTONE 349 C'], recommended: 'spot' });
+    expect(uploadReport({ kind: 'error', reason: 'unreadable' }, expected, RULES, null).inks).toBeNull();
+  });
+
   it('an unreadable file blocks; an unsupported one is left to the team', () => {
     expect(uploadReport({ kind: 'error', reason: 'encrypted' }, expected, RULES, null).blocking).toBe(true);
     const old = uploadReport({ kind: 'unsupported', reason: 'type' }, expected, RULES, null);

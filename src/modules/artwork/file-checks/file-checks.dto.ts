@@ -305,6 +305,30 @@ export class FileCheckPageDto {
   dieBox!: number[] | null;
 }
 
+export class FileCheckInksDto {
+  @ApiProperty({
+    example: true,
+    description: 'Process colour (CMYK with C/M/Y, RGB, colour images) is painted',
+  })
+  process!: boolean;
+
+  @ApiProperty({
+    type: [String],
+    example: ['PANTONE 349 C'],
+    description: 'Printed spot colours (die layers excluded)',
+  })
+  spotColours!: string[];
+
+  @ApiProperty({
+    enum: FILE_PRINT_METHODS,
+    enumName: 'PrintSideMethod',
+    example: 'cmyk',
+    description:
+      'The method that prints the file as it is: `cmyk` for process work, `spot` for spot or black-only work',
+  })
+  recommended!: string;
+}
+
 export class FileCheckReportDto {
   @ApiProperty({ type: [FileCheckItemDto], description: 'The 12 checks, in the page’s order' })
   items!: FileCheckItemDto[];
@@ -325,6 +349,13 @@ export class FileCheckReportDto {
       'The blank of the chosen product and size the checks compared with; null when none is chosen',
   })
   expected!: PreflightSizeDto | null;
+
+  @ApiProperty({
+    type: FileCheckInksDto,
+    nullable: true,
+    description: 'What the file prints with; null when unreadable',
+  })
+  inks!: FileCheckInksDto | null;
 }
 
 export class FileCheckVersionDto {
