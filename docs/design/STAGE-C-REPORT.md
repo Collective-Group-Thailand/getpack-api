@@ -294,3 +294,20 @@ Screenshots `docs/design/screenshots/C12/` (mock data; no prototype for this blo
 **e2e to run later:** `e2e/storefront-category.spec.ts` (intro + mode line, FAQ link), `e2e/storefront-business-pages.spec.ts` (partner clauses, non-solicitation FAQ), `storefront-upload.spec.ts` (corrugated safe zone), `storefront-styles.spec.ts` (trust block); API `pnpm test:e2e` (file checks: die lines now must-fix on uploads without them — fixtures may need CutContour).
 **Local checks for the owner:** api `pnpm db:seed` on a DB from `main` (expect `settings_amended` preflight rules, `settings_confirmed` preflight + transit days; re-run → nothing) + `pnpm test:int` + `pnpm test:e2e`; on UAT: `set-prepress-rules.mjs`, `set-transit-days.mjs`, `set-notice-wording.mjs` (dry run, then `--confirm`); upload a template PDF without CutContour → "ต้องแก้"; a corrugated job's safe-zone item says 5 มม.; web `pnpm build`; turn `FEATURE_PACKAGING_LANDINGS` on when ready; lawyer review of the drafts before production.
 **BLOCKED:** none.
+
+## C13 — automatic fit-range backfill (API `feat/fit-ranges-auto` from `main` 1049df15, 2026-10-29)
+
+Run unattended in the cloud (no DB / Redis / Docker). Spec = STAGE-C-CLOUD-NOTES "C13" 1–4 (owner 22:44, after a local `pnpm styles:fit-ranges` with `INTEGRATIONS_MODE=fake` gave 81/102 instead of 94/102). Decisions: D-461, DECISIONS-STAGE-A §18 (both repos — web docs mention the CLI).
+| Item | Status | Commit |
+|---|---|---|
+| 1a Worker job `styles.fit_ranges_sync`: queued 15 s after each worker start (deduplicated across replicas) + hourly; `DielineEngine.identity()` gives the vendored `bundleSha256`; differs from the last successful full run (audit row `styles.fit_ranges_synced`, resource `styles_fit_range_sync`) → full `backfillFitRanges` (confirm, actor `styles:fit-ranges-sync`), bundle stored in that audit row | PASS (unit) | `dc896d3f` |
+| 1b Events `style_import.applied`, `style_base.curated` / `recipe_approved` (person only), `catalog.pattern.*`, `catalog.standard_size.*` → affected codes into a Redis pending set + one debounced (60 s, extend/replace) run limited by the new `codes` option; `catalog.import_applied` → full run | PASS (unit) | `dc896d3f` |
+| 1c Fake or unavailable engine → skipped, one warning per process, nothing written, pending kept | PASS (unit) | `dc896d3f` |
+| 1d Failures: thrown → BullMQ retry 5× exponential from 30 s (`ScheduledJobOptions.retry`, new), Redis lock against parallel runs, start enqueue never fails the worker | PASS (unit) | `dc896d3f` |
+| 2 CLI: warning with the fake / unavailable engine; `--confirm` refused (exit 2) unless `--allow-fake` | PASS (unit, `cliEngineGate`) | `dc896d3f` |
+| 3 Tests `fit-range-sync.spec.ts` (sha change, same sha, fake/unavailable skip, codes filter, CLI refusal, events, debounce, failure, lock) + engine `identity()` cases | PASS | `dc896d3f` |
+| 4 Docs: RUNBOOK §7 row, D-461, DECISIONS-STAGE-A §18, PROGRESS | done | this commit |
+Gates: typecheck ✓, eslint + prettier on changed files ✓, unit (touched) 5 suites ✓, full unit 217 suites / 1618 tests ✓. No endpoint change → no contract build. No migration.
+**Assumptions (conservative):** the last-run state lives in the sync's own audit rows (indexed resource lookup) — no existing key-value table and the spec preferred no migration; an unavailable real engine is treated like the fake (skip / refuse); the admin endpoint `admin.styles.backfillFitRanges` is unchanged; a dropped audit partition only causes one more idempotent full run.
+**Local checks for the owner:** `pnpm test:int`; start the worker on UAT with the real engine → one `styles.fit_ranges_synced` audit row and 94/102 coverage, restart → no second run; edit a style's curation → one `styles.fit_ranges_synced_codes` row ~1 min later; `INTEGRATIONS_MODE=fake pnpm styles:fit-ranges --confirm` → refused.
+**BLOCKED:** none.
