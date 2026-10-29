@@ -7,6 +7,7 @@ import {
   type DielineBlank,
   type DielineDrawing,
   type DielineEngine,
+  type DielineEngineIdentity,
   type DielineFormat,
   type DielineMaterial,
   type DielineRequest,
@@ -65,6 +66,11 @@ export class FakeDielineEngine implements DielineEngine {
 
   version(): Promise<string> {
     return Promise.resolve('fake-dieline@0');
+  }
+
+  /** C13 (D-461): the fake has no bundle, presets or limits — fit-range backfills refuse it. */
+  identity(): Promise<DielineEngineIdentity> {
+    return Promise.resolve({ kind: 'fake', bundleSha256: null });
   }
 
   /** A flat (2L + 2W) × (H + W) blank: obviously fake quantities for the pipeline. */

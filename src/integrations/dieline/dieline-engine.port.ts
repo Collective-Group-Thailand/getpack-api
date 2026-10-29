@@ -150,10 +150,22 @@ export class DielineBuildError extends Error {
   }
 }
 
+/**
+ * C13 (D-461): which engine answers — the vendored bundle (its recorded `bundleSha256` from `VERSION.json`, null when
+ * the bundle is missing or does not match its record, i.e. the engine is unavailable) or the fake of tests and
+ * `INTEGRATIONS_MODE=fake` (no presets, no solver limits: never a source of fit ranges).
+ */
+export interface DielineEngineIdentity {
+  kind: 'vendored' | 'fake';
+  bundleSha256: string | null;
+}
+
 export interface DielineEngine {
   /** Loads the engine when needed; false when it is not installed. */
   available(): Promise<boolean>;
   version(): Promise<string>;
+  /** C13 (D-461): the engine's kind and bundle hash ({@link DielineEngineIdentity}); never throws. */
+  identity(): Promise<DielineEngineIdentity>;
   draw(request: DielineRequest): Promise<DielineDrawing>;
   /**
    * C9 (D-457): the flat blank of a legacy pattern key at a size — the bounding box of its die, mm — so an uploaded
