@@ -157,7 +157,7 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
     expect(owner.ownerRoleKey).toBe('cs_lead');
     await request(ctx.server)
       .get('/v1/store/support-channels')
-      .expect(200, { lineOaId: null, phone: null, email: null, hours: 'ทุกวัน 09:00–18:00' });
+      .expect(200, { lineOaId: null, phone: null, email: null, hours: 'ทุกวัน 09:00–18:00', office: null });
     await setSetting(ctx, 'storefront.support_channels', {
       lineOaId: '@getpack-test',
       phone: '0800000000',
@@ -170,6 +170,7 @@ describe('store catalogue reads (e2e, U-B0.1)', () => {
       phone: '0800000000',
       email: 'support@example.com',
       hours: null,
+      office: null,
     });
   });
 });
