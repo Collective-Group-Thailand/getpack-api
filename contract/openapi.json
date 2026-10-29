@@ -582050,9 +582050,6 @@
                   "idempotency.key_reused": {
                     "$ref": "#/components/examples/problem.idempotency.key_reused"
                   },
-                  "support.callback_unavailable": {
-                    "$ref": "#/components/examples/problem.support.callback_unavailable"
-                  },
                   "support.contact_required": {
                     "$ref": "#/components/examples/problem.support.contact_required"
                   },
@@ -582065,7 +582062,7 @@
                 }
               }
             },
-            "description": "Problem: `idempotency.key_reused`, `support.callback_unavailable`, `support.contact_required`, `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `support.contact_required`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"

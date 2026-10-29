@@ -1396,7 +1396,8 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'storefront.roadmap',
     valueType: 'json',
-    // D-458: the statuses the owner's business pack gives (C10): the 6 company-account features live and 5 "เร็ว ๆ นี้";
+    // D-458: the statuses the owner's business pack gives (C10): the 6 company-account features live; 5 "เร็ว ๆ นี้", plus
+    // the company catalogue and budgets the page demonstrates (pack Phase 4, not built yet);
     // getpack Factory: jobs from getpack and the 6 roles live, the other modules "กำลังพัฒนา" until Admin releases them.
     value: {
       business: [
@@ -1411,6 +1412,8 @@ export const SETTINGS: readonly SettingSeed[] = [
         { key: 'production_evidence', status: 'soon' },
         { key: 'etax_export', status: 'soon' },
         { key: 'api', status: 'soon' },
+        { key: 'company_catalogue', status: 'soon' },
+        { key: 'budgets', status: 'soon' },
       ],
       erpModules: [
         { key: 'getpack_jobs', status: 'live' },

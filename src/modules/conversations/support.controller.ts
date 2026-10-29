@@ -30,9 +30,9 @@ const ERRORS = [
   'http.malformed_json',
   'validation.failed',
   'support.contact_required',
-  'support.callback_unavailable',
   'http.too_many_requests',
 ] as const;
+const CONTACT_ERRORS = [...ERRORS, 'support.callback_unavailable'] as const;
 const LOOKUP_ERRORS = [
   'http.bad_request',
   'http.malformed_json',
@@ -103,7 +103,7 @@ export class StoreSupportController {
     },
   })
   @ApiSuccess(201, { description: 'Ticket opened', type: SupportTicketDto, example: SUPPORT_TICKET_EXAMPLE })
-  @ApiStandardErrors(...ERRORS)
+  @ApiStandardErrors(...CONTACT_ERRORS)
   contact(
     @OptionalActor() actor: Actor | undefined,
     @Body() body: SupportContactDto,
