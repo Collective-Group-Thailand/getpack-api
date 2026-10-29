@@ -1,4 +1,4 @@
-import { copyFile, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -190,5 +190,14 @@ describe('GetpackDielineEngine (vendored bundle, ADR-0010)', () => {
     );
     await writeFile(join(root, 'vendor/getpack-dieline/index.mjs'), 'export const RECIPES = [];');
     expect(await new GetpackDielineEngine(root).available()).toBe(false);
+    // C13 (D-461): an engine that did not load has no bundle to sync fit ranges with.
+    expect(await new GetpackDielineEngine(root).identity()).toEqual({ kind: 'vendored', bundleSha256: null });
+  });
+
+  it('names the recorded bundleSha256 of the bundle it loaded (C13, D-461)', async () => {
+    const meta = JSON.parse(
+      await readFile(join(process.cwd(), 'vendor/getpack-dieline/VERSION.json'), 'utf8'),
+    ) as { bundleSha256: string };
+    expect(await engine.identity()).toEqual({ kind: 'vendored', bundleSha256: meta.bundleSha256 });
   });
 });

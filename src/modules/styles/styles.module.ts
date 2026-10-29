@@ -1,7 +1,11 @@
+import { BullModule } from '@nestjs/bullmq';
 import { Global, Module } from '@nestjs/common';
+import { QUEUES } from '@platform/domain-events/worker/queues';
 import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
 
 import { DielineDownloadsService } from './dieline-downloads.service';
+import { FitRangeSyncService } from './fit-range-sync';
+import { FitRangeSyncJobs } from './fit-range-sync.jobs';
 import { ProcessCapabilitiesService } from './process-capabilities.service';
 import { StructuralRequestsService } from './structural-requests.service';
 import { StyleAssetsService } from './style-assets.service';
@@ -34,6 +38,7 @@ const SERVICES = [
   ProcessCapabilitiesService,
   StyleCoverageService,
   StyleLibrarySettingsService,
+  FitRangeSyncService,
 ];
 
 /**
@@ -44,3 +49,13 @@ const SERVICES = [
 @Global()
 @Module({ imports: [SettingsAdminModule], providers: [...SERVICES, StylesJobs], exports: SERVICES })
 export class StylesModule {}
+
+/**
+ * The worker's part (C13, D-461): the automatic fit-range backfill — a run at start, an hourly check of the dieline
+ * bundle and debounced runs after style / catalogue changes.
+ */
+@Module({
+  imports: [BullModule.registerQueue({ name: QUEUES.maintenance })],
+  providers: [FitRangeSyncJobs],
+})
+export class StylesWorkerModule {}

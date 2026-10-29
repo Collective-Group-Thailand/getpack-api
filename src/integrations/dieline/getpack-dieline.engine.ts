@@ -12,6 +12,7 @@ import {
   DielineBuildError,
   type DielineDrawing,
   type DielineEngine,
+  type DielineEngineIdentity,
   DielineEngineUnavailableError,
   type DielineFormat,
   type DielineMaterial,
@@ -155,7 +156,8 @@ const round = (n: number, d = 2) => Math.round(n * 10 ** d) / 10 ** d;
  * use with a dynamic `import()`. Without the bundle the engine reports itself unavailable (callers answer 501).
  */
 export class GetpackDielineEngine implements DielineEngine {
-  private loaded: Promise<{ pkg: DielinePackage; version: string } | null> | null = null;
+  private loaded: Promise<{ pkg: DielinePackage; version: string; bundleSha256: string } | null> | null =
+    null;
 
   constructor(private readonly root = process.cwd()) {}
 
@@ -165,6 +167,11 @@ export class GetpackDielineEngine implements DielineEngine {
 
   async version(): Promise<string> {
     return (await this.engine()).version;
+  }
+
+  /** C13 (D-461): the recorded hash of the bundle that loaded (verified on load); null when it did not load. */
+  async identity(): Promise<DielineEngineIdentity> {
+    return { kind: 'vendored', bundleSha256: (await this.load())?.bundleSha256 ?? null };
   }
 
   async draw(request: DielineRequest): Promise<DielineDrawing> {
@@ -484,7 +491,7 @@ export class GetpackDielineEngine implements DielineEngine {
     return engine;
   }
 
-  private load(): Promise<{ pkg: DielinePackage; version: string } | null> {
+  private load(): Promise<{ pkg: DielinePackage; version: string; bundleSha256: string } | null> {
     this.loaded ??= (async () => {
       try {
         const dir = join(this.root, 'vendor', 'getpack-dieline');
@@ -498,7 +505,11 @@ export class GetpackDielineEngine implements DielineEngine {
         const pkg = (await import(pathToFileURL(join(dir, 'index.mjs')).href)) as DielinePackage;
         // The library's styles drawn like the core ones (the bundle carries `@getpack/dieline/library`).
         pkg.registerLibrary?.();
-        return { pkg, version: `${PACKAGE}@${meta.version}+${meta.bundleSha256.slice(0, 8)}` };
+        return {
+          pkg,
+          version: `${PACKAGE}@${meta.version}+${meta.bundleSha256.slice(0, 8)}`,
+          bundleSha256: meta.bundleSha256,
+        };
       } catch {
         return null;
       }

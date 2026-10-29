@@ -470,11 +470,15 @@ export class StylesAdminService {
    * bound's source is stored (`fit_range_bounds`), the summary in `fit_range_source`. Never touches a business-entered
    * range (source `business`, or any bound entered before sources existed); a range it filled earlier follows newer
    * data. A style whose six bounds are not all given stays empty and is listed with what is missing. Idempotent (a
-   * second run changes nothing); `dryRun` reports without writing.
+   * second run changes nothing); `dryRun` reports without writing. C13 (D-461): `codes` limits the run to those style
+   * codes (the automatic sync after an import or a curation change); the counts then cover only those styles.
    */
-  async backfillFitRanges(actor: Actor, options: { dryRun?: boolean } = {}): Promise<FitRangeBackfillResult> {
+  async backfillFitRanges(
+    actor: Actor,
+    options: { dryRun?: boolean; codes?: readonly string[] } = {},
+  ): Promise<FitRangeBackfillResult> {
     const bases = await this.prisma.styleBase.findMany({
-      where: { status: 'active' },
+      where: { status: 'active', ...(options.codes && { code: { in: [...options.codes] } }) },
       orderBy: { code: 'asc' },
       select: {
         publicId: true,
