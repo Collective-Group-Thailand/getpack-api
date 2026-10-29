@@ -26,11 +26,50 @@ const PRINT_WORDS: Record<HeroPrint, { th: string; en: string }> = {
 };
 
 export interface HeroSize {
-  /** Index in `sizesMm` — the size id is `<shape>:s<index>`. */
+  /**
+   * Index in `sizesMm`, or in the shape's `standardSizeCodes` when it names its product's standard sizes (D-459) —
+   * the size id is `<shape>:s<index>`.
+   */
   index: number;
   lengthMm: number;
   widthMm: number;
   heightMm: number;
+  /** D-459: the catalogue's own name of a standard size ("เบอร์ A (20×14×6 ซม.)"); absent for a typed size. */
+  nameTh?: string;
+}
+
+/**
+ * D-459 (C11): the sizes a shape offers — its product's standard sizes with the shape's `standardSizeCodes`, in that
+ * order (the catalogue's millimetres and names, never typed numbers); a shape without codes, or whose product has none
+ * of them, offers the typed `sizesMm`. Pure, for tests.
+ */
+export function shapeSizeCandidates(
+  presets: Pick<Presets, 'sizesMm'>,
+  shape: Pick<Presets['shapes'][number], 'standardSizeCodes'>,
+  standardSizes: readonly {
+    code: string;
+    name: string;
+    lengthMm: number;
+    widthMm: number;
+    heightMm: number;
+  }[],
+): HeroSize[] {
+  const fromCatalogue = (shape.standardSizeCodes ?? []).flatMap((code, index) => {
+    const size = standardSizes.find((s) => s.code === code);
+    return size
+      ? [
+          {
+            index,
+            lengthMm: size.lengthMm,
+            widthMm: size.widthMm,
+            heightMm: size.heightMm,
+            nameTh: size.name,
+          },
+        ]
+      : [];
+  });
+  if (fromCatalogue.length > 0) return fromCatalogue;
+  return presets.sizesMm.map((s, index) => ({ index, lengthMm: s.w, widthMm: s.d, heightMm: s.h }));
 }
 
 /** One hero shape resolved against its live configurator: only what the product can price. */
@@ -174,8 +213,7 @@ export class HeroPresetsService {
       .filter((q) => (min === null || q >= min) && (max === null || q <= max));
     if (materials.size === 0 || prints.size === 0 || qtys.length === 0) return null;
     const sizes: HeroSize[] = [];
-    for (const [index, s] of presets.sizesMm.entries()) {
-      const size = { index, lengthMm: s.w, widthMm: s.d, heightMm: s.h };
+    for (const size of shapeSizeCandidates(presets, shape, configurator.standardSizes)) {
       if (await this.sizeAccepted(configurator, pattern.id, size, [...materials.values()], qtys[0]!))
         sizes.push(size);
     }
@@ -279,7 +317,7 @@ export class HeroPresetsService {
           id: `${s.id}:s${size.index}`,
           shapeId: s.id,
           code: `s${size.index}`,
-          labelTh: sizeLabelTh(size),
+          labelTh: size.nameTh ?? sizeLabelTh(size),
           lengthMm: size.lengthMm,
           widthMm: size.widthMm,
           heightMm: size.heightMm,

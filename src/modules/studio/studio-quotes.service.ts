@@ -33,6 +33,8 @@ export interface StudioQuoteInput {
   targetPricePerUnit?: string;
   /** The hash of the quote shown before this change: the answer explains the difference. */
   previousSpecHash?: string;
+  /** D-459: a "what if" spec priced instead of the version's (checked against its box); nothing is saved. */
+  alternativeSpec?: Record<string, unknown>;
 }
 
 export interface StudioQuoteResult {
@@ -77,7 +79,14 @@ export class StudioQuotesService {
 
   async quote(actor: UserActor, designId: string, body: StudioQuoteInput): Promise<StudioQuoteResult> {
     await this.rateLimit(actor.userId);
-    const p = await this.input(actor, designId, body.quantities, body.deliveryPostcode, body.versionNo);
+    const p = await this.input(
+      actor,
+      designId,
+      body.quantities,
+      body.deliveryPostcode,
+      body.versionNo,
+      body.alternativeSpec,
+    );
     const previous = body.previousSpecHash ? await this.snapshot(body.previousSpecHash) : null;
     const base = {
       specHash: p.hash,
@@ -93,6 +102,20 @@ export class StudioQuotesService {
         reasons: previous ? changeReasons(previous.input, p.input) : [],
         changes: [],
       };
+
+    // D-459 "what if" (e.g. "เปลี่ยนเป็น CMYK" before it is applied): priced by the same path, nothing saved or cached.
+    if (body.alternativeSpec) {
+      const calculation = await this.price(p.input, actor, body.targetPricePerUnit);
+      const before = previous ? (previous.result as unknown as QuoteCalculationDto) : null;
+      return {
+        ...base,
+        mode: 'instant',
+        calculation,
+        cached: false,
+        reasons: previous ? changeReasons(previous.input, p.input) : [],
+        changes: before ? unitChanges(before, calculation) : [],
+      };
+    }
 
     const hashBytes = Buffer.from(p.hash, 'hex');
     const existing = await this.prisma.studioQuoteSnapshot.findUnique({ where: { specHash: hashBytes } });
@@ -214,6 +237,7 @@ export class StudioQuotesService {
     quantities: number[],
     deliveryPostcode: string | undefined,
     versionNo: number | undefined,
+    alternativeSpec?: Record<string, unknown>,
   ): Promise<Priced> {
     const doc = await this.prisma.designDocument.findFirst({
       where: { publicId: designId, ownerUserId: actor.userId, deletedAt: null },
@@ -236,7 +260,7 @@ export class StudioQuotesService {
     const box = version.box as unknown as StudioBox;
     const { configuration, problems } = studioConfiguration(
       box,
-      version.spec as Record<string, unknown>,
+      alternativeSpec ?? (version.spec as Record<string, unknown>),
       doc.pattern?.publicId ?? null,
       quantities,
     );
