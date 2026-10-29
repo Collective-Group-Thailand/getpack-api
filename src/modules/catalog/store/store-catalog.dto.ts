@@ -895,7 +895,8 @@ export class StoreSupportChannelsDto {
     type: String,
     nullable: true,
     example: null,
-    description: 'D-458 the office customers may visit by appointment (one line); null until the CS Lead sets it',
+    description:
+      'D-458 the office customers may visit by appointment (one line); null until the CS Lead sets it',
   })
   office!: string | null;
 }
