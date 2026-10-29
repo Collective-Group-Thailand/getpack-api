@@ -16,6 +16,8 @@ const LINKS: Record<InboxSurface, Record<string, Link>> = {
         ? `/account/orders/${p['orderId']}${p['dueAt'] ? '?requote=1' : ''}`
         : '/account/orders',
     rfq: (id) => `/account/rfqs/${id}`,
+    // D-459: a finished file check opens its workspace on the upload page.
+    file_check: (id) => `/studio/upload?check=${id}`,
     conversation: (id) => `/account/messages/${id}`,
     claim: (id, p) =>
       typeof p['orderId'] === 'string' ? `/account/orders/${p['orderId']}/claims/${id}` : null,
