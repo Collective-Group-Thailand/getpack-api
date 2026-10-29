@@ -71,7 +71,8 @@ export function assertSettingValue(
 /**
  * `pnpm db:seed` — reference and configuration data for every environment (B1.2 step 3).
  * Idempotent: it creates what is missing and never changes what exists (admins own the data after
- * the first run), except the permission catalogue, which the code owns.
+ * the first run), except the permission catalogue, which the code owns, and the owner decisions a setting seed
+ * carries as `fillIfUnset` / `amendInForce` / `syncConfirmation` (a new version, never over a person's choice — D-459).
  */
 export async function seedReference(prisma: PrismaClient, entity: EntitySeedInput): Promise<SeedReport> {
   return prisma.$transaction(

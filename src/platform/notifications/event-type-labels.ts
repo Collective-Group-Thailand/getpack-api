@@ -5,6 +5,8 @@
 const DOMAINS: Record<string, { th: string; en: string }> = {
   approval: { th: 'คำขออนุมัติ', en: 'Approval' },
   artwork: { th: 'ไฟล์งาน', en: 'Artwork' },
+  // D-459: a finished file check (the upload page's check before ordering, D-457).
+  file_check: { th: 'ตรวจไฟล์งาน', en: 'File check' },
   proof: { th: 'แบบตัวอย่าง', en: 'Proof' },
   design: { th: 'งานออกแบบ', en: 'Design' },
   design_service: { th: 'บริการออกแบบ', en: 'Design service' },
