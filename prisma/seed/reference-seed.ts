@@ -218,6 +218,14 @@ async function ensureSetting(
       });
       count('settings_filled');
     }
+    if (seed.syncConfirmation && existing.confirmationStatus !== (seed.confirmation ?? 'confirmed')) {
+      await tx.setting.update({
+        where: { id: existing.id },
+        data: { confirmationStatus: seed.confirmation ?? 'confirmed', decisionRefs: seed.decisions },
+      });
+      count('settings_confirmed');
+    }
+    if (seed.amendInForce) await amendSetting(tx, existing.id, seed, count);
     return;
   }
   await tx.setting.create({
@@ -246,6 +254,46 @@ async function ensureSetting(
     },
   });
   count('settings');
+}
+
+/**
+ * C11 (D-459): one new approved version from now with the value `seed.amendInForce.amend` gives for the value in force
+ * (see {@link SettingSeed.amendInForce}); nothing while a change waits for approval, nothing when `amend` has nothing to
+ * add. The amended value is checked against the seed's type like any seeded value.
+ */
+async function amendSetting(
+  tx: Tx,
+  settingId: bigint,
+  seed: SettingSeed,
+  count: (what: string) => void,
+): Promise<void> {
+  const pending = await tx.settingVersion.count({
+    where: { settingId, status: { in: ['draft', 'proposed', 'pending_acceptance'] } },
+  });
+  if (pending > 0) return;
+  const now = new Date();
+  const [last, inForce] = await Promise.all([
+    tx.settingVersion.findFirst({ where: { settingId }, orderBy: { versionNo: 'desc' } }),
+    tx.settingVersion.findFirst({
+      where: { settingId, status: 'approved', effectiveFrom: { lte: now } },
+      orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+    }),
+  ]);
+  const value = seed.amendInForce!.amend(inForce ? inForce.value : null);
+  if (value === undefined) return;
+  assertSettingValue({ ...seed, value });
+  await tx.settingVersion.create({
+    data: {
+      settingId,
+      versionNo: (last?.versionNo ?? 0) + 1,
+      effectiveFrom: now,
+      status: 'approved',
+      value: value as Prisma.InputJsonValue,
+      reason: seed.amendInForce!.reason,
+      decidedAt: now,
+    },
+  });
+  count('settings_amended');
 }
 
 async function ensurePermissionsAndRoles(tx: Tx, count: (what: string, n?: number) => void): Promise<void> {

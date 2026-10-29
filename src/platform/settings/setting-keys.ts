@@ -179,6 +179,8 @@ export interface SettingValues {
   };
   /** Not seeded (B4.1): no prepress due time until set. */
   'artwork.prepress_sla_business_hours': number;
+  /** D-459 (DECISIONS-STAGE-A §1): days the files of a file check that never became an order are kept. */
+  'artwork.file_check_retention_days': number;
   /** D-071 hired design delivery target and maximum. */
   'design.hired_design_sla': { targetBusinessDays: number; maxBusinessDays: number };
   'design.free_revision_rounds': number;
@@ -231,7 +233,14 @@ export interface SettingValues {
   'support.reply_minutes': number;
   /** D-310 homepage Studio hero presets (product owner's values; catalogue mapping per environment). */
   'catalog.hero_presets': {
-    shapes: { id: 'mailer' | 'lid' | 'tuck'; labelTh: string; styleCode?: string; productSlug?: string }[];
+    shapes: {
+      id: 'mailer' | 'lid' | 'tuck';
+      labelTh: string;
+      styleCode?: string;
+      productSlug?: string;
+      /** D-459: the shape's sizes are its product's standard sizes with these codes (catalogue values, in order). */
+      standardSizeCodes?: string[];
+    }[];
     sizesMm: { w: number; d: number; h: number }[];
     materials: { id: 'kraft350' | 'art350' | 'corrE'; labelTh: string; optionCodes?: string[] }[];
     prints: { id: 'none' | 'one' | 'full'; labelTh: string; optionCodes?: string[] }[];

@@ -6,7 +6,7 @@
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
 import { STYLE_LIBRARY_CONTENT_SCHEMA } from '../../../src/modules/styles/style-library-content';
-import { HERO_PRESETS } from './hero-presets';
+import { HERO_PRESETS, heroPresetsAmendment } from './hero-presets';
 import { INTAKE_TERMS_V1 } from './intake-terms';
 import { STUDIO_PRINT_RULES } from './studio';
 
@@ -41,6 +41,19 @@ export interface SettingSeed {
    * after the setting was first defined with `unset`). Never touches a setting that has a version.
    */
   fillIfUnset?: true;
+  /**
+   * C11 (D-459): bring a database whose setting already has a version in line with a later owner decision, without
+   * touching what anyone set: `amend` gets the value in force and returns the value of ONE new effective-dated
+   * version from now (approved, `reason`), or `undefined` when there is nothing to add — it must return `undefined`
+   * once its own change is in force (idempotent) and whenever a person already decided the part it is about.
+   * Skipped while a version is pending approval. History is never edited.
+   */
+  amendInForce?: { reason: string; amend: (current: unknown) => unknown };
+  /**
+   * C11 (D-459): an existing row also takes this seed's `confirmation` (e.g. a routing the owner confirmed after it
+   * was seeded as proposed). Metadata only — the value is never changed by it.
+   */
+  syncConfirmation?: true;
 }
 
 /** One `shipping.transit_days` window: working days, `max` ≥ `min` (a lower `max` is read as `min`). */
@@ -236,6 +249,8 @@ export const SETTINGS: readonly SettingSeed[] = [
         thin_lines: 'info',
         overprint: 'info',
         ink_coverage: 'info',
+        // D-459 (owner 2026-10-29, C11): inks the chosen print cannot print must be fixed before the cart.
+        ink_count: 'block',
       },
       bleedMm: '3',
       sizeToleranceMm: '1',
@@ -245,9 +260,29 @@ export const SETTINGS: readonly SettingSeed[] = [
       maxInkCoveragePct: 300,
     },
     description:
-      'D-070 preflight: block on size mismatch or missing bleed, warn on low resolution or RGB; other checks report only; technical thresholds proposed (ADR-0009)',
-    decisions: ['D-070'],
+      'D-070 preflight: block on size mismatch or missing bleed, warn on low resolution or RGB; D-459: block on an ink count the chosen print cannot print; other checks report only (their severities and thresholds are Prepress’s); technical thresholds proposed (ADR-0009)',
+    decisions: ['D-070', 'D-459'],
     confirmation: 'proposed',
+    // An existing database gets `ink_count: block` once, only while nobody has set an ink-count severity.
+    amendInForce: {
+      reason: 'Seed amendment from D-459: ink count defaults to "must fix" (owner 2026-10-29, C11)',
+      amend: (current) => {
+        const value = current as { severities?: Record<string, string> } | null;
+        if (!value || typeof value !== 'object' || !value.severities) return undefined;
+        if (value.severities['ink_count'] !== undefined) return undefined;
+        return { ...value, severities: { ...value.severities, ink_count: 'block' } };
+      },
+    },
+  },
+  {
+    key: 'artwork.file_check_retention_days',
+    valueType: 'integer',
+    // DECISIONS-STAGE-A §1 (owner 2026-10-25): files of unordered drafts are kept 90 days; D-459 applies it to checks.
+    value: 90,
+    valueSchema: { minimum: 1, maximum: 3650 },
+    description:
+      'D-459 days the files uploaded to a file check (D-457) that never became an order are kept after the check was last touched; then the purge job deletes them (DECISIONS-STAGE-A §1: unordered drafts 90 days)',
+    decisions: ['D-459', 'D-457'],
   },
   {
     key: 'artwork.prepress_sla_business_hours',
@@ -1318,8 +1353,9 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'support.topic_queues',
     valueType: 'json',
-    // D-458 proposed routing (C10, owner autorun): sales leads and quotations to Sales, files to Prepress, payments to
-    // Finance, factory applications to the Partner team; everything else stays with CS. The CS Lead confirms/changes it.
+    // D-458 routing (C10): sales leads and quotations to Sales, files to Prepress, payments to Finance, factory
+    // applications to the Partner team; everything else stays with CS. Confirmed by the owner 2026-10-29 (C11, D-459);
+    // the CS Lead may still change it from a date.
     value: {
       default: 'cs',
       topics: {
@@ -1346,9 +1382,9 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-458 the team queue each contact-form topic is routed to (the CS inbox filters by queue); `default` for topics not listed. Proposed routing — the CS Lead confirms or changes it from a date',
-    decisions: ['D-458', 'D-221'],
-    confirmation: 'proposed',
+      'D-458 the team queue each contact-form topic is routed to (the CS inbox filters by queue); `default` for topics not listed. Routing confirmed by the owner (D-459, 2026-10-29) — the CS Lead may change it from a date',
+    decisions: ['D-458', 'D-459', 'D-221'],
+    syncConfirmation: true,
     ownerRole: 'cs_lead',
   },
   {
@@ -1371,8 +1407,13 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'support.callback_slots',
     valueType: 'json',
-    value: null,
-    unset: true,
+    // D-459 (owner 2026-10-29, C11): three call-back windows, Asia/Bangkok, within the support hours 09:00–18:00.
+    value: [
+      { key: 'morning', from: '09:00', to: '12:00' },
+      { key: 'midday', from: '12:00', to: '15:00' },
+      { key: 'afternoon', from: '15:00', to: '18:00' },
+    ],
+    fillIfUnset: true,
     valueSchema: {
       type: 'array',
       maxItems: 6,
@@ -1388,9 +1429,8 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-458 the call-back windows CS offers on the contact form (Asia/Bangkok, on the next 5 business days); no decision gives them — unset: the contact form offers no call-back until the CS Lead sets them',
-    decisions: ['D-458', 'D-221'],
-    confirmation: 'pending_business',
+      'D-458 the call-back windows CS offers on the contact form (Asia/Bangkok, on the next 5 business days); D-459 (owner 2026-10-29): 09:00–12:00, 12:00–15:00, 15:00–18:00 — the CS Lead may change them from a date; unset: no call-back offered',
+    decisions: ['D-458', 'D-459', 'D-221'],
     ownerRole: 'cs_lead',
   },
   {
@@ -1530,8 +1570,10 @@ export const SETTINGS: readonly SettingSeed[] = [
   {
     key: 'studio.featured_styles',
     valueType: 'json',
-    value: null,
-    unset: true,
+    // D-459 (owner 2026-10-29, C11): rank by usage once 200 Studio designs were started within 90 days; the admins'
+    // list stays empty for the Admin to choose (until then, and until either, the section stays hidden).
+    value: { styles: [], usage: { minDesigns: 200, windowDays: 90 } },
+    fillIfUnset: true,
     valueSchema: {
       type: 'object',
       additionalProperties: false,
@@ -1562,8 +1604,8 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-455 (C7, DECISIONS-STAGE-A §2) the Studio "แบบที่คนเริ่มบ่อย": the style codes admins pick, in order, each on/off (the first 6 published ones that are on are shown); once Studio designs started within usage.windowDays reach usage.minDesigns the section ranks by them instead (null = never); unset = the section is hidden (no popularity is claimed without data)',
-    decisions: ['D-455', 'D-286'],
+      'D-455 (C7, DECISIONS-STAGE-A §2) the Studio "แบบที่คนเริ่มบ่อย": the style codes admins pick, in order, each on/off (the first 6 published ones that are on are shown); once Studio designs started within usage.windowDays reach usage.minDesigns the section ranks by them instead (null = never); unset = the section is hidden (no popularity is claimed without data). D-459: usage threshold 200 designs within 90 days; the list is the Admin’s',
+    decisions: ['D-455', 'D-459', 'D-286'],
     ownerRole: 'admin',
   },
   {
@@ -1640,6 +1682,12 @@ export const SETTINGS: readonly SettingSeed[] = [
               labelTh: { type: 'string', minLength: 1, maxLength: 40 },
               styleCode: { type: 'string', pattern: '^PK-[A-Z0-9]{2,8}-[0-9]{2,3}$' },
               productSlug: { type: 'string', maxLength: 120 },
+              standardSizeCodes: {
+                type: 'array',
+                minItems: 1,
+                maxItems: 6,
+                items: { type: 'string', minLength: 1, maxLength: 40 },
+              },
             },
           },
         },
@@ -1702,9 +1750,14 @@ export const SETTINGS: readonly SettingSeed[] = [
       },
     },
     description:
-      'D-310 the homepage Studio hero (product owner, 2026-10-08): shapes (by style code or catalogue product), inside sizes W×D×H mm, boards and prints with their labels, quantities and the default selection. Which product a shape opens (`productSlug` / `styleCode`) and which material / ink options a board or print means (`optionCodes`) are mapped by Admin per catalogue; an entry the catalogue cannot price is dropped on read. Priced by store.quotes.calculate',
-    decisions: ['D-310', 'D-043'],
+      'D-310 the homepage Studio hero (product owner, 2026-10-08): shapes (by style code or catalogue product), inside sizes W×D×H mm, boards and prints with their labels, quantities and the default selection. Which product a shape opens (`productSlug` / `styleCode`) and which material / ink options a board or print means (`optionCodes`) are mapped by Admin per catalogue; an entry the catalogue cannot price is dropped on read. Priced by store.quotes.calculate. D-459: a shape may name its product’s standard sizes (`standardSizeCodes`) instead of typed sizes — the mailer offers the postal sizes A–D',
+    decisions: ['D-310', 'D-043', 'D-459'],
     ownerRole: 'admin',
+    amendInForce: {
+      reason:
+        "Seed amendment from D-459: the mailer's sizes are its product's postal sizes A–D (owner 2026-10-29, C11)",
+      amend: heroPresetsAmendment,
+    },
   },
   {
     key: 'notifications.deep_link_ttl_hours',
