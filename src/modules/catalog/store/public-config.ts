@@ -7,6 +7,7 @@ import { Controller, Get, Header, Injectable } from '@nestjs/common';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { type SettingKey, type SettingValues } from '@platform/settings/setting-keys';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
+import Decimal from 'decimal.js';
 
 import { StoreCatalogService } from './store-catalog.service';
 
@@ -57,6 +58,54 @@ export class ContactDto {
 
   @ApiProperty({ type: String, nullable: true, example: 'support@example.invalid' })
   email!: string | null;
+}
+
+/** D-460 (C12): the platform's default tolerances, for "how we work" — a job's own figures are on its quotation. */
+export class DefaultTolerancesDto {
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '5.00',
+    description:
+      'Quantity ± % (shortage and overage) — `fulfilment.tolerance_default_pct` (D-163); null until set',
+  })
+  quantityPct!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '1.00',
+    description:
+      'Smallest size tolerance ± mm over the product kinds that publish one — `fulfilment.dimensional_tolerance_mm` ' +
+      '(D-186); null when none',
+  })
+  sizeMmMin!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3.00',
+    description: 'Largest of the same; null when none',
+  })
+  sizeMmMax!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '3',
+    description:
+      'Colour ΔE2000 against the approved proof — `fulfilment.colour_tolerance_delta_e.standard` (D-186)',
+  })
+  colourDeltaE!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '5',
+    description:
+      'Colour ΔE2000 on flexo-printed corrugated board — `fulfilment.colour_tolerance_delta_e.flexo`',
+  })
+  colourDeltaEFlexo!: string | null;
 }
 
 /** D-447 (C1b): the entity that issues every customer tax invoice (D-010), from its own settings (D-092). */
@@ -206,6 +255,14 @@ export class PublicConfigDto {
       'storefront names the company from here, never from its own copy',
   })
   issuer!: IssuerDto;
+
+  @ApiProperty({
+    type: DefaultTolerancesDto,
+    description:
+      'D-460 the default tolerances (settings, D-163 / D-186) the "how we work" block states; each part null until ' +
+      'set. A job’s own tolerance is frozen on its quotation (D-021) and may differ',
+  })
+  tolerances!: DefaultTolerancesDto;
 }
 
 export const PUBLIC_CONFIG_EXAMPLE: PublicConfigDto = {
@@ -235,6 +292,13 @@ export const PUBLIC_CONFIG_EXAMPLE: PublicConfigDto = {
     branchCode: '00000',
     addressTh: 'ที่อยู่ตัวอย่าง',
   },
+  tolerances: {
+    quantityPct: '5.00',
+    sizeMmMin: '1.00',
+    sizeMmMax: '3.00',
+    colourDeltaE: '3',
+    colourDeltaEFlexo: '5',
+  },
 };
 
 @Injectable()
@@ -263,15 +327,17 @@ export class PublicConfigService {
       this.settings.at('quotes.validity_days').then((s) => s.value),
       this.settings.at('claims.window_days').then((s) => s.value),
     ]);
-    const [proofDays, hours, replyMinutes, channels, issuer, roadmap, methods] = await Promise.all([
-      this.optional('artwork.first_proof_business_days'),
-      this.optional('storefront.support_hours'),
-      this.optional('support.reply_minutes'),
-      this.catalog.supportChannels(),
-      this.issuer(),
-      this.optional('storefront.roadmap'),
-      this.payments.offeredMethods(),
-    ]);
+    const [proofDays, hours, replyMinutes, channels, issuer, roadmap, methods, tolerances] =
+      await Promise.all([
+        this.optional('artwork.first_proof_business_days'),
+        this.optional('storefront.support_hours'),
+        this.optional('support.reply_minutes'),
+        this.catalog.supportChannels(),
+        this.issuer(),
+        this.optional('storefront.roadmap'),
+        this.payments.offeredMethods(),
+        this.tolerances(),
+      ]);
     return {
       minOrderQty: { custom: custom._min.quantityMin ?? null, readyStock: stock._min.minOrderQty ?? null },
       priceLockDays: priceLock,
@@ -292,6 +358,28 @@ export class PublicConfigService {
         .filter((m) => m.available && m.method !== 'card_instalment_2c2p')
         .map((m) => m.method),
       issuer,
+      tolerances,
+    };
+  }
+
+  /** D-460: the platform defaults (D-163, D-186) — strings as stored, the size range by decimal comparison. */
+  private async tolerances(): Promise<DefaultTolerancesDto> {
+    const [pct, sizes, colour] = await Promise.all([
+      this.optional('fulfilment.tolerance_default_pct'),
+      this.optional('fulfilment.dimensional_tolerance_mm'),
+      this.optional('fulfilment.colour_tolerance_delta_e'),
+    ]);
+    const mm = Object.values(sizes ?? {})
+      .filter((v): v is string => typeof v === 'string' && /^\d+(\.\d+)?$/.test(v))
+      .map((v) => new Decimal(v))
+      .sort((a, b) => a.comparedTo(b));
+    const text = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? v : null);
+    return {
+      quantityPct: pct === null || pct === undefined ? null : new Decimal(String(pct)).toFixed(2),
+      sizeMmMin: mm.length ? mm[0]!.toFixed(2) : null,
+      sizeMmMax: mm.length ? mm[mm.length - 1]!.toFixed(2) : null,
+      colourDeltaE: text(colour?.standard),
+      colourDeltaEFlexo: text(colour?.flexo),
     };
   }
 
