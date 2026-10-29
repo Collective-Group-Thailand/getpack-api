@@ -192,7 +192,13 @@ Additive for the storefront (no field removed). One migration: `20261231000001_c
 | `admin.conversations.list` | + `?queue=`; `ConversationTicketDto.queue` |
 
 Settings (all effective-dated, audited): `support.topic_queues` (CS Lead, seeded **proposed**), `support.reply_business_days_by_topic`
-(CS Lead, unset), `support.callback_slots` (CS Lead, unset → no call back), `storefront.roadmap` (Admin, seeded from the pack).
+(CS Lead, unset), `support.callback_slots` (CS Lead, unset → no call back), `storefront.roadmap` (Admin, seeded from the pack:
+business `team` `reorder` `approval` `credit` `invoices` `branches` live; `brand_lock` `stock_alert` `production_evidence`
+`etax_export` `api` `company_catalogue` `budgets` soon; ERP `getpack_jobs` `roles` live, the rest `in_development`).
+`support.callback_unavailable` is returned by `store.support.contact` only (not by the hand-off).
+
+Web (C10): /business, /contact and /partner-with-us read these; every form posts `store.support.contact` with its topic
+(`business` sales form, `partnership` factory application, the 8 contact intents); the tracking box posts `lookup` / `add-info`.
 
 ```json
 GET /v1/store/support/contact-options → 200
