@@ -1,4 +1,13 @@
-import { type Box, boxHeight, boxWidth, type FileFacts, mmOf, type PageFacts, PT_PER_MM } from './facts';
+import {
+  type Box,
+  boxHeight,
+  boxWidth,
+  type FileFacts,
+  isNonPrintingSpot,
+  mmOf,
+  type PageFacts,
+  PT_PER_MM,
+} from './facts';
 
 /**
  * D-070 preflight rules over extracted facts (ADR-0009). Pure: the same facts, expected size and rules
@@ -16,6 +25,13 @@ export const PREFLIGHT_CHECKS = [
   'thin_lines',
   'overprint',
   'ink_coverage',
+  // C9 (D-457): the rest of the upload page's 12 checks — one engine for the upload pre-check, the order's
+  // submissions and the Studio print file (GLOBAL-RULES §5).
+  'ink_count',
+  'small_text',
+  'small_text_black',
+  'barcode',
+  'die_layer',
 ] as const;
 export type PreflightCheck = (typeof PREFLIGHT_CHECKS)[number];
 export type Severity = 'block' | 'warn' | 'info';
@@ -29,6 +45,22 @@ export interface PreflightRules {
   safeZoneMm: string;
   minLineWidthPt: string;
   maxInkCoveragePct: number;
+  /**
+   * C9 (D-457): the smallest text size that prints legibly, pt. Prepress's profile value — unset (absent or null)
+   * leaves `small_text` unevaluated (never a value of ours, D-278 pattern).
+   */
+  minTextPt?: string | null;
+  /** C9: text below this size must print in black only (no C/M/Y — no registration blur), pt; unset → unevaluated. */
+  blackOnlyTextBelowPt?: string | null;
+}
+
+/**
+ * C9 (D-457): what the order prints with, for `ink_count` — none, spot colour(s) (how many) or CMYK (+ spots). From the
+ * spec the customer chose; absent → the check is not evaluated (the order's own submissions carry no method yet).
+ */
+export interface PrintMethodContext {
+  method: 'none' | 'spot' | 'cmyk';
+  spotColours: number;
 }
 
 /** Finished (trim) size the artwork must have: the dieline template sent to the customer. */
@@ -61,6 +93,7 @@ export function evaluate(
   facts: FileFacts,
   expected: ExpectedSize | null,
   rules: PreflightRules,
+  print: PrintMethodContext | null = null,
 ): CheckResult[] {
   if (facts.kind === 'unsupported' || facts.kind === 'error') {
     return PREFLIGHT_CHECKS.map((check) => notEvaluated(rules, check, null, facts.reason));
@@ -75,6 +108,11 @@ export function evaluate(
     results.push(thinLines(page, rules));
     results.push(overprint(page, rules));
     results.push(notEvaluated(rules, 'ink_coverage', page.page, 'needs_rasteriser'));
+    results.push(inkCount(page, rules, print));
+    results.push(smallText(page, rules));
+    results.push(smallTextBlack(page, rules));
+    results.push(notEvaluated(rules, 'barcode', page.page, 'barcode_not_read'));
+    results.push(dieLayer(page, rules));
   }
   return results;
 }
@@ -136,6 +174,22 @@ const REASONS: Record<string, [string, string]> = {
     'ไม่ทราบขอบตัดของงาน จึงตรวจระยะปลอดภัยไม่ได้',
     'The trim edge is unknown, so the safe zone is not checked',
   ],
+  no_print_method: [
+    'ยังไม่ได้เลือกระบบพิมพ์ จึงยังไม่ได้เทียบจำนวนสี',
+    'No print method chosen yet, so the ink count is not compared',
+  ],
+  no_rule: [
+    'ทีมเตรียมพิมพ์ยังไม่ได้กำหนดเกณฑ์ข้อนี้ ทีมจะตรวจให้ก่อนผลิต',
+    'Prepress has not set this threshold yet; the team checks it before production',
+  ],
+  barcode_not_read: [
+    'บาร์โค้ดและ QR ทีมเตรียมพิมพ์ตรวจให้ก่อนผลิต',
+    'Barcodes and QR codes are checked by Prepress before production',
+  ],
+  no_die: [
+    'ไม่พบเส้นไดคัทในไฟล์ (สีพิเศษ CutContour / Crease) ทีมจะเทียบกับแบบกล่องให้',
+    'No die lines found in the file (CutContour / Crease spot colours); the team matches it to the box style',
+  ],
 };
 
 function notEvaluated(
@@ -168,8 +222,10 @@ function sizeAndBleed(page: PageFacts, expected: ExpectedSize | null, rules: Pre
   const tolerance = Number(rules.sizeToleranceMm);
   const bleedRequired = Number(rules.bleedMm);
   const out: CheckResult[] = [];
-  if (page.trimBox) {
-    const trim = orientedMm(page.trimBox, expected);
+  // C9: without a TrimBox, the file's own die lines (painted in a die spot) are its finished size.
+  const trimBox = page.trimBox ?? page.dieBox ?? null;
+  if (trimBox) {
+    const trim = orientedMm(trimBox, expected);
     if (!expected) out.push(notEvaluated(rules, 'size_mismatch', page.page, 'no_dieline'));
     else {
       const ok =
@@ -196,10 +252,10 @@ function sizeAndBleed(page: PageFacts, expected: ExpectedSize | null, rules: Pre
     }
     const outer = page.bleedBox ?? page.mediaBox;
     const sides = [
-      page.trimBox[0] - outer[0],
-      page.trimBox[1] - outer[1],
-      outer[2] - page.trimBox[2],
-      outer[3] - page.trimBox[3],
+      trimBox[0] - outer[0],
+      trimBox[1] - outer[1],
+      outer[2] - trimBox[2],
+      outer[3] - trimBox[3],
     ].map((pt) => mmOf(pt));
     const least = Math.min(...sides);
     out.push(bleedResult(rules, page.page, least, bleedRequired));
@@ -261,6 +317,7 @@ function resolution(page: PageFacts, rules: PreflightRules): CheckResult {
     Math.min(i.widthPx / (i.placedWidthPt / 72), i.heightPx / (i.placedHeightPt / 72));
   const low = placed.filter((i) => ppiOf(i) < rules.minEffectivePpi);
   const lowest = placed.length ? Math.min(...placed.map(ppiOf)) : null;
+  const worst = low.length ? low.reduce((a, b) => (ppiOf(b) < ppiOf(a) ? b : a)) : null;
   return result(
     rules,
     'low_resolution',
@@ -271,6 +328,16 @@ function resolution(page: PageFacts, rules: PreflightRules): CheckResult {
       lowImages: low.length,
       lowestPpi: lowest === null ? null : Math.round(lowest),
       minPpi: rules.minEffectivePpi,
+      ...(worst?.x !== undefined && worst.y !== undefined
+        ? {
+            at: [round(worst.x + worst.placedWidthPt / 2), round(worst.y + worst.placedHeightPt / 2)],
+            placedMm: [round(mmOf(worst.placedWidthPt)), round(mmOf(worst.placedHeightPt))],
+            neededPx: [
+              Math.ceil((worst.placedWidthPt / 72) * rules.minEffectivePpi),
+              Math.ceil((worst.placedHeightPt / 72) * rules.minEffectivePpi),
+            ],
+          }
+        : {}),
     },
     low.length
       ? `ภาพ ${low.length} ภาพมีความละเอียดต่ำ (ต่ำสุด ${Math.round(lowest!)} ppi จากที่แนะนำ ${rules.minEffectivePpi} ppi)`
@@ -317,7 +384,7 @@ function fonts(page: PageFacts, rules: PreflightRules): CheckResult {
 }
 
 function safeZone(page: PageFacts, expected: ExpectedSize | null, rules: PreflightRules): CheckResult {
-  let trim: Box | null = page.trimBox;
+  let trim: Box | null = page.trimBox ?? page.dieBox ?? null;
   if (!trim && expected) {
     const cx = (page.mediaBox[0] + page.mediaBox[2]) / 2;
     const cy = (page.mediaBox[1] + page.mediaBox[3]) / 2;
@@ -331,15 +398,21 @@ function safeZone(page: PageFacts, expected: ExpectedSize | null, rules: Preflig
   if (!trim) return notEvaluated(rules, 'safe_zone', page.page, 'no_trim');
   const margin = Number(rules.safeZoneMm) * PT_PER_MM;
   const box = trim;
-  const near = page.textOrigins.filter(
+  const nearPoints = page.textOrigins.filter(
     (p) => p.x < box[0] + margin || p.x > box[2] - margin || p.y < box[1] + margin || p.y > box[3] - margin,
-  ).length;
+  );
+  const near = nearPoints.length;
   return result(
     rules,
     'safe_zone',
     page.page,
     near ? 'fail' : 'pass',
-    { textRuns: page.textOrigins.length, nearEdge: near, safeZoneMm: Number(rules.safeZoneMm) },
+    {
+      textRuns: page.textOrigins.length,
+      nearEdge: near,
+      safeZoneMm: Number(rules.safeZoneMm),
+      ...(nearPoints[0] ? { at: [round(nearPoints[0].x), round(nearPoints[0].y)] } : {}),
+    },
     near
       ? `ข้อความ ${near} จุดอยู่ใกล้ขอบตัดเกิน ${rules.safeZoneMm} มม. อาจถูกตัด`
       : 'ข้อความอยู่ในระยะปลอดภัย',
@@ -377,5 +450,133 @@ function overprint(page: PageFacts, rules: PreflightRules): CheckResult {
     { overprint: page.overprint },
     page.overprint ? 'มีการตั้งค่าพิมพ์ทับ (overprint) กรุณาตรวจสอบว่าตั้งใจ' : 'ไม่มีการพิมพ์ทับ',
     page.overprint ? 'Overprint is set; check it is intended' : 'No overprint',
+  );
+}
+
+/** A rule value Prepress has set (a positive number), else null — the check is then not evaluated. */
+function ruleNumber(value: string | null | undefined): number | null {
+  if (value === null || value === undefined || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+/**
+ * C9 (D-457) ink count vs print method: printed spot colours (die and helper layers excluded) and process colour
+ * against the method chosen. Black-only work fits any method; colour work needs CMYK; spot work needs as many spot
+ * colours as it uses (or CMYK, which matches them).
+ */
+function inkCount(page: PageFacts, rules: PreflightRules, print: PrintMethodContext | null): CheckResult {
+  if (!print) return notEvaluated(rules, 'ink_count', page.page, 'no_print_method');
+  const spots = page.spotNames.filter((n) => !isNonPrintingSpot(n));
+  const process = page.processPaint === true;
+  const fileNeeds: 'none' | 'black' | 'spot' | 'cmyk' = process
+    ? 'cmyk'
+    : spots.length
+      ? 'spot'
+      : page.texts?.length || page.images.length || (page.minStrokeWidthPt ?? null) !== null
+        ? 'black'
+        : 'none';
+  let ok: boolean;
+  if (print.method === 'cmyk') ok = true;
+  else if (print.method === 'spot') ok = !process && spots.length <= Math.max(print.spotColours, 1);
+  else ok = fileNeeds === 'none';
+  const measurements = {
+    process,
+    spotColours: spots,
+    fileNeeds,
+    method: print.method,
+    methodSpots: print.spotColours,
+  };
+  return result(
+    rules,
+    'ink_count',
+    page.page,
+    ok ? 'pass' : 'fail',
+    measurements,
+    ok
+      ? 'สีในไฟล์ตรงกับระบบพิมพ์ที่เลือก'
+      : process
+        ? 'ไฟล์มีภาพหรือสีหลายสี (CMYK) แต่ระบบพิมพ์ที่เลือกพิมพ์ได้ไม่ครบ ต้องพิมพ์ 4 สี หรือเปลี่ยนงานให้ใช้สีเดียว'
+        : print.method === 'none'
+          ? 'ไฟล์มีงานพิมพ์ แต่เลือกไม่พิมพ์'
+          : `ไฟล์ใช้สีพิเศษ ${spots.length} สี มากกว่าที่ระบบพิมพ์ที่เลือกพิมพ์ได้`,
+    ok
+      ? 'The file’s inks match the chosen print method'
+      : process
+        ? 'The file has colour images or process colour; it needs CMYK printing, or a one-colour artwork'
+        : print.method === 'none'
+          ? 'The file has artwork but no printing is chosen'
+          : `The file uses ${spots.length} spot colours, more than the chosen method prints`,
+  );
+}
+
+/** C9 text ≥ Prepress's minimum size (`minTextPt`). */
+function smallText(page: PageFacts, rules: PreflightRules): CheckResult {
+  const min = ruleNumber(rules.minTextPt);
+  if (min === null) return notEvaluated(rules, 'small_text', page.page, 'no_rule');
+  const texts = (page.texts ?? []).filter((t) => t.sizePt > 0);
+  const small = texts.filter((t) => t.sizePt < min);
+  const smallest = small.length ? small.reduce((a, b) => (b.sizePt < a.sizePt ? b : a)) : null;
+  return result(
+    rules,
+    'small_text',
+    page.page,
+    small.length ? 'fail' : 'pass',
+    {
+      textRuns: texts.length,
+      small: small.length,
+      smallestPt: smallest ? round(smallest.sizePt) : null,
+      minPt: min,
+      ...(smallest ? { at: [round(smallest.x), round(smallest.y)] } : {}),
+    },
+    small.length
+      ? `ตัวอักษร ${small.length} จุดเล็กกว่า ${min} pt (เล็กสุด ${round(smallest!.sizePt)} pt) อาจอ่านไม่ออกเมื่อพิมพ์`
+      : `ตัวอักษรไม่เล็กกว่า ${min} pt`,
+    small.length
+      ? `${small.length} text run(s) below ${min} pt (smallest ${round(smallest!.sizePt)} pt) may not be legible`
+      : `No text below ${min} pt`,
+  );
+}
+
+/** C9 small text in black only: text below `blackOnlyTextBelowPt` must not be rich black or process colour. */
+function smallTextBlack(page: PageFacts, rules: PreflightRules): CheckResult {
+  const below = ruleNumber(rules.blackOnlyTextBelowPt);
+  if (below === null) return notEvaluated(rules, 'small_text_black', page.page, 'no_rule');
+  const texts = (page.texts ?? []).filter((t) => t.sizePt > 0 && t.sizePt < below);
+  const bad = texts.filter((t) => t.plates === 'process' || t.plates === 'rgb');
+  return result(
+    rules,
+    'small_text_black',
+    page.page,
+    bad.length ? 'fail' : 'pass',
+    {
+      smallTextRuns: texts.length,
+      notBlackOnly: bad.length,
+      belowPt: below,
+      ...(bad[0] ? { at: [round(bad[0].x), round(bad[0].y)] } : {}),
+    },
+    bad.length
+      ? `ตัวอักษรเล็ก ${bad.length} จุดใช้สีผสม (มี C M Y) ควรเป็นสีดำ K 100% อย่างเดียว ไม่อย่างนั้นอาจพิมพ์ไม่คม`
+      : 'ตัวอักษรเล็กใช้สีดำล้วน',
+    bad.length
+      ? `${bad.length} small text run(s) use process colour; set them in 100% K only so they print sharp`
+      : 'Small text is black only',
+  );
+}
+
+/**
+ * C9 die-cut on a non-printing layer: the die lines are found in a die spot colour (a separation the press does not
+ * print, D-302). A file without them is not failed — the team matches it — but not passed either.
+ */
+function dieLayer(page: PageFacts, rules: PreflightRules): CheckResult {
+  if (!page.dieBox) return notEvaluated(rules, 'die_layer', page.page, 'no_die');
+  return result(
+    rules,
+    'die_layer',
+    page.page,
+    'pass',
+    { dieColours: page.dieNames ?? [] },
+    `เส้นไดคัทอยู่บนสีพิเศษที่ไม่พิมพ์ (${(page.dieNames ?? []).join(', ')})`,
+    `Die lines are on a non-printing spot colour (${(page.dieNames ?? []).join(', ')})`,
   );
 }

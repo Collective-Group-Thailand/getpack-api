@@ -61,6 +61,18 @@ export function cartItemDto(item: CartItemRow, now = new Date(), extras?: CartEx
       ? { orderId: item.reorderOfOrder.publicId, orderCode: item.reorderOfOrder.orderCode }
       : null,
     reusesApprovedArtwork: item.reuseArtworkProofId !== null,
+    checkedFile: item.fileCheckVersion
+      ? {
+          fileCheckId: item.fileCheckVersion.fileCheck.publicId,
+          variantNo: item.fileCheckVersion.variantNo,
+          versionNo: item.fileCheckVersion.versionNo,
+          originalFileId: item.fileCheckVersion.fileObject.publicId,
+          // No derived print file is made yet (auto-fixes are not offered): the original is the print file.
+          printFileId: item.fileCheckVersion.fileObject.publicId,
+          reportId: item.fileCheckVersion.publicId,
+          fileName: item.fileCheckVersion.fileObject.originalName,
+        }
+      : null,
     priceLockedUntil: toBangkokIso(item.priceLockedUntil),
     priceLocked: item.priceLockedUntil > now,
     pendingReprice:

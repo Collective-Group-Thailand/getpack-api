@@ -1,4 +1,11 @@
-import { type ColourFamily, type ColourSpaceInfo, type ImageFact } from './facts';
+import {
+  type Box,
+  type ColourFamily,
+  type ColourSpaceInfo,
+  type ImageFact,
+  isDieSpot,
+  type TextFact,
+} from './facts';
 
 /**
  * A small PDF content-stream interpreter (ADR-0009): just enough of ISO 32000-1 §8–9 to know what is
@@ -205,19 +212,49 @@ export interface PaintFacts {
   minStrokeWidthPt: number | null;
   overprint: boolean;
   textOrigins: { x: number; y: number }[];
+  /** C9 (D-457): text runs with size and plates, the die paths' bounding box and the process paint. */
+  texts: TextFact[];
+  dieBox: Box | null;
+  dieNames: Set<string>;
+  processPaint: boolean;
 }
 
 /** Bounds against hostile files (technical, not business values). */
 const MAX_FORM_DEPTH = 12;
 const MAX_TEXT_ORIGINS = 2_000;
+const MAX_PATH_POINTS = 50_000;
 
 interface GState {
   ctm: Matrix;
   lineWidth: number;
   fill: ColourSpaceInfo;
   stroke: ColourSpaceInfo;
+  /** The operands of the last fill / stroke colour (`k`, `g`, `sc` …), to tell black-only from process. */
+  fillValues: number[];
+  strokeValues: number[];
   overprint: boolean;
+  fontSize: number;
 }
+
+/** The plates a colour lands on: black only, process (C/M/Y), a spot, RGB or other. */
+function platesOf(colour: ColourSpaceInfo, values: readonly number[]): TextFact['plates'] {
+  switch (colour.family) {
+    case 'gray':
+      return 'k';
+    case 'cmyk': {
+      const [c = 0, m = 0, y = 0] = values;
+      return c > 0 || m > 0 || y > 0 ? 'process' : 'k';
+    }
+    case 'spot':
+      return 'spot';
+    case 'rgb':
+      return 'rgb';
+    default:
+      return 'other';
+  }
+}
+
+const isDie = (colour: ColourSpaceInfo) => (colour.spotNames ?? []).some(isDieSpot);
 
 const DEVICE: Record<string, ColourFamily> = {
   DeviceRGB: 'rgb',
@@ -248,9 +285,17 @@ export function interpret(
     lineWidth: 1,
     fill: { family: 'gray' },
     stroke: { family: 'gray' },
+    fillValues: [0],
+    strokeValues: [0],
     overprint: false,
+    fontSize: 0,
   };
   let tm: Matrix = IDENTITY;
+  /** The current path's points in page space (for the die's bounding box). */
+  let path: { x: number; y: number }[] = [];
+  const addPoint = (x: number, y: number) => {
+    if (path.length < MAX_PATH_POINTS) path.push(apply(gs.ctm, x, y));
+  };
   let tlm: Matrix = IDENTITY;
   let leading = 0;
 
@@ -260,15 +305,44 @@ export function interpret(
     if (device) return { family: device };
     return resources.colourSpace(name) ?? { family: 'other' };
   };
-  const paint = (colour: ColourSpaceInfo) => {
+  const paint = (colour: ColourSpaceInfo, values: readonly number[] = []) => {
     if (colour.family === 'rgb') facts.rgbPaintOps++;
     for (const s of colour.spotNames ?? []) facts.spotNames.add(s);
+    if (isDie(colour)) return;
+    // The die is drawn with overprint on its spot plate by design (D-302); overprint counts on printed colour only.
+    if (gs.overprint) facts.overprint = true;
+    if (colour.family === 'rgb' || (colour.family === 'cmyk' && platesOf(colour, values) === 'process'))
+      facts.processPaint = true;
+  };
+  /** A painted path: in a die spot it widens the die's bounding box. */
+  const paintPath = (colour: ColourSpaceInfo) => {
+    if (isDie(colour) && path.length) {
+      for (const name of colour.spotNames ?? []) if (isDieSpot(name)) facts.dieNames.add(name);
+      const xs = path.map((p) => p.x);
+      const ys = path.map((p) => p.y);
+      const box: Box = [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)];
+      facts.dieBox = facts.dieBox
+        ? [
+            Math.min(facts.dieBox[0], box[0]),
+            Math.min(facts.dieBox[1], box[1]),
+            Math.max(facts.dieBox[2], box[2]),
+            Math.max(facts.dieBox[3], box[3]),
+          ]
+        : box;
+    }
   };
   const scale = (m: Matrix) => Math.sqrt(Math.abs(m[0] * m[3] - m[1] * m[2]));
   const showText = () => {
-    if (facts.textOrigins.length < MAX_TEXT_ORIGINS)
-      facts.textOrigins.push(apply(multiply(tm, gs.ctm), 0, 0));
-    paint(gs.fill);
+    const at = apply(multiply(tm, gs.ctm), 0, 0);
+    if (facts.textOrigins.length < MAX_TEXT_ORIGINS) facts.textOrigins.push(at);
+    if (facts.texts.length < MAX_TEXT_ORIGINS)
+      facts.texts.push({
+        x: at.x,
+        y: at.y,
+        sizePt: Math.abs(gs.fontSize) * scale(multiply(tm, gs.ctm)),
+        plates: platesOf(gs.fill, gs.fillValues),
+      });
+    paint(gs.fill, gs.fillValues);
   };
   const placeImage = (name: string, widthPx: number, heightPx: number, colour: ColourSpaceInfo) => {
     const m = gs.ctm;
@@ -279,8 +353,12 @@ export function interpret(
       placedWidthPt: Math.hypot(m[0], m[1]),
       placedHeightPt: Math.hypot(m[2], m[3]),
       colour: colour.family,
+      x: m[4],
+      y: m[5],
     });
     paint(colour);
+    if (colour.family !== 'gray' && colour.family !== 'spot' && colour.family !== 'other')
+      facts.processPaint = true;
   };
 
   for (const { op, args, inline } of parseContent(content)) {
@@ -300,50 +378,79 @@ export function interpret(
       case 'gs': {
         const name = args[0]?.t === 'name' ? args[0].v : '';
         const state = resources.extGState(name);
-        if (state?.overprint) {
-          gs = { ...gs, overprint: true };
-          facts.overprint = true;
-        }
+        if (state) gs = { ...gs, overprint: state.overprint };
         break;
       }
       case 'rg':
-        gs = { ...gs, fill: { family: 'rgb' } };
+        gs = { ...gs, fill: { family: 'rgb' }, fillValues: args.map(num) };
         paint(gs.fill);
         break;
       case 'RG':
-        gs = { ...gs, stroke: { family: 'rgb' } };
+        gs = { ...gs, stroke: { family: 'rgb' }, strokeValues: args.map(num) };
         paint(gs.stroke);
         break;
       case 'k':
-        gs = { ...gs, fill: { family: 'cmyk' } };
+        gs = { ...gs, fill: { family: 'cmyk' }, fillValues: args.map(num) };
         break;
       case 'K':
-        gs = { ...gs, stroke: { family: 'cmyk' } };
+        gs = { ...gs, stroke: { family: 'cmyk' }, strokeValues: args.map(num) };
         break;
       case 'g':
-        gs = { ...gs, fill: { family: 'gray' } };
+        gs = { ...gs, fill: { family: 'gray' }, fillValues: args.map(num) };
         break;
       case 'G':
-        gs = { ...gs, stroke: { family: 'gray' } };
+        gs = { ...gs, stroke: { family: 'gray' }, strokeValues: args.map(num) };
         break;
       case 'cs':
-        gs = { ...gs, fill: space(args[0]?.t === 'name' ? args[0].v : '') };
+        gs = { ...gs, fill: space(args[0]?.t === 'name' ? args[0].v : ''), fillValues: [] };
         break;
       case 'CS':
-        gs = { ...gs, stroke: space(args[0]?.t === 'name' ? args[0].v : '') };
+        gs = { ...gs, stroke: space(args[0]?.t === 'name' ? args[0].v : ''), strokeValues: [] };
         break;
       case 'sc':
       case 'scn':
-        paint(gs.fill);
+        gs = { ...gs, fillValues: args.filter((a) => a.t === 'num').map(num) };
+        paint(gs.fill, gs.fillValues);
         break;
       case 'SC':
       case 'SCN':
-        paint(gs.stroke);
+        gs = { ...gs, strokeValues: args.filter((a) => a.t === 'num').map(num) };
+        paint(gs.stroke, gs.strokeValues);
+        break;
+      case 'Tf':
+        gs = { ...gs, fontSize: num(args[1]) };
+        break;
+      case 'm':
+      case 'l':
+        addPoint(num(args[0]), num(args[1]));
+        break;
+      case 'c':
+        addPoint(num(args[0]), num(args[1]));
+        addPoint(num(args[2]), num(args[3]));
+        addPoint(num(args[4]), num(args[5]));
+        break;
+      case 'v':
+      case 'y':
+        addPoint(num(args[0]), num(args[1]));
+        addPoint(num(args[2]), num(args[3]));
+        break;
+      case 're': {
+        const [x, y, w, h] = args.map(num) as [number, number, number, number];
+        addPoint(x, y);
+        addPoint(x + w, y + h);
+        addPoint(x + w, y);
+        addPoint(x, y + h);
+        break;
+      }
+      case 'n':
+        path = [];
         break;
       case 'f':
       case 'F':
       case 'f*':
-        paint(gs.fill);
+        paint(gs.fill, gs.fillValues);
+        paintPath(gs.fill);
+        path = [];
         break;
       case 'BT':
         tm = IDENTITY;
@@ -407,11 +514,19 @@ export function interpret(
       }
       default:
         if (STROKE_OPS.has(op)) {
-          const width = gs.lineWidth * scale(gs.ctm);
-          facts.minStrokeWidthPt =
-            facts.minStrokeWidthPt === null ? width : Math.min(facts.minStrokeWidthPt, width);
-          paint(gs.stroke);
-          if (op !== 'S' && op !== 's') paint(gs.fill);
+          // The die's own strokes are not printed lines (D-302), so they do not count as thin print.
+          if (!isDie(gs.stroke)) {
+            const width = gs.lineWidth * scale(gs.ctm);
+            facts.minStrokeWidthPt =
+              facts.minStrokeWidthPt === null ? width : Math.min(facts.minStrokeWidthPt, width);
+          }
+          paint(gs.stroke, gs.strokeValues);
+          paintPath(gs.stroke);
+          if (op !== 'S' && op !== 's') {
+            paint(gs.fill, gs.fillValues);
+            paintPath(gs.fill);
+          }
+          path = [];
         }
     }
   }
@@ -426,5 +541,9 @@ export function emptyPaintFacts(): PaintFacts {
     minStrokeWidthPt: null,
     overprint: false,
     textOrigins: [],
+    texts: [],
+    dieBox: null,
+    dieNames: new Set(),
+    processPaint: false,
   };
 }

@@ -85,7 +85,16 @@ describe('content stream (ADR-0009)', () => {
       },
     );
     expect(facts.images).toEqual([
-      { name: 'Im1', widthPx: 600, heightPx: 300, placedWidthPt: 144, placedHeightPt: 72, colour: 'cmyk' },
+      {
+        name: 'Im1',
+        widthPx: 600,
+        heightPx: 300,
+        placedWidthPt: 144,
+        placedHeightPt: 72,
+        colour: 'cmyk',
+        x: 10,
+        y: 10,
+      },
     ]);
     expect(facts.minStrokeWidthPt).toBeCloseTo(0.1);
     expect(facts.rgbPaintOps).toBeGreaterThan(0);

@@ -71,6 +71,12 @@ enum PreflightCheck {
   thin_lines
   overprint
   ink_coverage
+  /// C9 (D-457): the rest of the 12 upload checks.
+  ink_count
+  small_text
+  small_text_black
+  barcode
+  die_layer
 
   @@map("preflight_check")
 }
@@ -2323,4 +2329,82 @@ model ToolingRemake {
   @@index([productionJobId], map: "ix_tooling_remakes__production_job_id")
   @@index([reportedById], map: "ix_tooling_remakes__reported_by")
   @@map("tooling_remakes")
+}
+
+/// C9 (D-457) state of one file version's check before ordering.
+enum FileCheckStatus {
+  queued
+  running
+  done
+  failed
+
+  @@map("file_check_status")
+}
+
+/// C9 (D-457, GLOBAL-RULES §6): a customer's own-file check before ordering — the spec chosen (product, standard size,
+/// print method) and the files, each a variant of the same order with its versions. The page polls it; nothing here
+/// is visible to staff until the checked file becomes an order's artwork (D-444 unchanged).
+model FileCheck {
+  id               BigInt    @id(map: "pk_file_checks") @default(autoincrement())
+  publicId         String    @unique(map: "ux_file_checks__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  customerUserId   BigInt    @map("customer_user_id")
+  /// The product the customer orders (chosen, or taken from the detection); null until known.
+  catalogProductId BigInt?   @map("catalog_product_id")
+  /// The product's standard size code (`standard_sizes.code`) the customer orders.
+  standardSizeCode String?   @map("standard_size_code")
+  /// `none` | `spot` | `cmyk` — the print method the customer chose, for the ink-count check.
+  printMethod      String?   @map("print_method")
+  printSpotColours Int?      @map("print_spot_colours") @db.SmallInt
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int       @default(1) @map("row_version")
+
+  customer       User               @relation("FileCheckCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_checks__customer_user_id")
+  catalogProduct CatalogProduct?    @relation("FileCheckCatalogProduct", fields: [catalogProductId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_checks__catalog_product_id")
+  versions       FileCheckVersion[]
+
+  @@index([customerUserId, createdAt], map: "ix_file_checks__customer_user_id__created_at")
+  @@index([catalogProductId], map: "ix_file_checks__catalog_product_id")
+  @@map("file_checks")
+}
+
+/// C9 (D-457): one uploaded file of a check — variant `variant_no` (each file is one variant of the same order), version
+/// `version_no` (a corrected file re-checked). Facts, detection and the 12-check report are stored per run; the
+/// original file is never modified.
+model FileCheckVersion {
+  id           BigInt          @id(map: "pk_file_check_versions") @default(autoincrement())
+  publicId     String          @unique(map: "ux_file_check_versions__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  fileCheckId  BigInt          @map("file_check_id")
+  variantNo    Int             @map("variant_no") @db.SmallInt
+  versionNo    Int             @map("version_no") @db.SmallInt
+  fileObjectId BigInt          @map("file_object_id")
+  status       FileCheckStatus @default(queued)
+  /// 0–5: the pipeline stage reached (read · die lines · match · checks · ready), for the page's progress.
+  stage        Int             @default(0) @db.SmallInt
+  attempts     Int             @default(0) @db.SmallInt
+  lockedUntil  DateTime?       @map("locked_until") @db.Timestamptz(6)
+  /// Extracted facts (pages, boxes, die box, texts, inks) — kept so a spec change re-evaluates without re-reading.
+  facts        Json?
+  /// What the die lines say: the matching product and standard size, or none.
+  detection    Json?
+  /// The check report (12 checks, levels, measurements) for the spec in force.
+  report       Json?
+  /// Setting versions the checks used, per run.
+  refs         Json?
+  error        String?
+  removedAt    DateTime?       @map("removed_at") @db.Timestamptz(6)
+  /// The cart line this version was ordered with (the checked file goes with it to the order's artwork).
+  cartItemId   BigInt?         @unique(map: "ux_file_check_versions__cart_item_id") @map("cart_item_id")
+  createdAt    DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  completedAt  DateTime?       @map("completed_at") @db.Timestamptz(6)
+  updatedAt    DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  fileCheck  FileCheck  @relation(fields: [fileCheckId], references: [id], onDelete: Cascade, onUpdate: Restrict, map: "fk_file_check_versions__file_check_id")
+  fileObject FileObject @relation("FileCheckVersionFile", fields: [fileObjectId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_check_versions__file_object_id")
+  cartItem   CartItem?  @relation("FileCheckVersionCartItem", fields: [cartItemId], references: [id], onDelete: SetNull, onUpdate: Restrict, map: "fk_file_check_versions__cart_item_id")
+
+  @@unique([fileCheckId, variantNo, versionNo], map: "ux_file_check_versions__file_check_id__variant_no__version_no")
+  @@index([fileObjectId], map: "ix_file_check_versions__file_object_id")
+  @@index([status, lockedUntil], map: "ix_file_check_versions__queue", where: raw("(status = ANY (ARRAY['queued'::file_check_status, 'running'::file_check_status]))"))
+  @@map("file_check_versions")
 }

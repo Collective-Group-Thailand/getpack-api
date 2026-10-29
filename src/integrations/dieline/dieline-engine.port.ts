@@ -32,6 +32,12 @@ export interface DesignerPdfOptions {
   keywords?: string[];
 }
 
+export interface DielineBlank {
+  widthMm: number;
+  heightMm: number;
+  engineVersion: string;
+}
+
 export interface DielineDrawing {
   body: Buffer;
   mimeType: string;
@@ -147,6 +153,11 @@ export interface DielineEngine {
   available(): Promise<boolean>;
   version(): Promise<string>;
   draw(request: DielineRequest): Promise<DielineDrawing>;
+  /**
+   * C9 (D-457): the flat blank of a legacy pattern key at a size — the bounding box of its die, mm — so an uploaded
+   * file's die lines can be matched to a product and standard size. Same build as {@link draw}.
+   */
+  blank(request: Omit<DielineRequest, 'format'>): Promise<DielineBlank>;
   build(
     request: RecipeBuildRequest,
     formats: DielineFormat[],

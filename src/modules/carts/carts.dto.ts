@@ -346,6 +346,14 @@ export class CartItemDto {
   })
   reusesApprovedArtwork!: boolean;
 
+  @ApiProperty({
+    type: () => CartCheckedFileDto,
+    nullable: true,
+    description:
+      'C9 (D-457): the own file checked before ordering that this line orders; it becomes the order’s artwork',
+  })
+  checkedFile!: CartCheckedFileDto | null;
+
   @TimestampField('2026-10-16T10:00:00+07:00')
   priceLockedUntil!: string;
 
@@ -515,6 +523,7 @@ export const CART_ITEM_EXAMPLE: CartItemDto = {
   mockupOption: 'none',
   reorderOf: null,
   reusesApprovedArtwork: false,
+  checkedFile: null,
   priceLockedUntil: '2026-10-16T10:00:00+07:00',
   priceLocked: true,
   pendingReprice: null,
@@ -645,3 +654,39 @@ export const SHIPPING_ESTIMATE_EXAMPLE: CartShippingEstimateDto = {
   arrival: { from: '2026-11-10', to: '2026-11-11' },
   unavailableItemIds: [],
 };
+
+/** C9 (D-457) the checked own file a cart line orders. */
+export class CartCheckedFileDto {
+  @ApiProperty({ format: 'uuid', example: '0192f3a0-7c1e-7d2a-9b1f-0000000fcc01' })
+  fileCheckId!: string;
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  variantNo!: number;
+
+  @ApiProperty({ type: 'integer', example: 2 })
+  versionNo!: number;
+
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000fc001',
+    description: 'The original file',
+  })
+  originalFileId!: string;
+
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000fc001',
+    description: 'The file production prints — the original until auto-fixes make a derived print file',
+  })
+  printFileId!: string;
+
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-0000000fcf02',
+    description: 'The check report (version id)',
+  })
+  reportId!: string;
+
+  @ApiProperty({ example: 'baan_box_v2.pdf' })
+  fileName!: string;
+}

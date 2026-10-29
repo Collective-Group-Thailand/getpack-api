@@ -172,6 +172,10 @@ export interface SettingValues {
     safeZoneMm: string;
     minLineWidthPt: string;
     maxInkCoveragePct: number;
+    /** C9 (D-457): Prepress's smallest legible text size, pt; unset → `small_text` is not evaluated. */
+    minTextPt?: string | null;
+    /** C9 (D-457): text below this size must be black only (no C/M/Y), pt; unset → `small_text_black` not evaluated. */
+    blackOnlyTextBelowPt?: string | null;
   };
   /** Not seeded (B4.1): no prepress due time until set. */
   'artwork.prepress_sla_business_hours': number;

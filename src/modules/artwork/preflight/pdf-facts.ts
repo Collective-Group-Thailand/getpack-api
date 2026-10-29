@@ -72,6 +72,10 @@ export async function pdfFacts(bytes: Uint8Array): Promise<FileFacts> {
         minStrokeWidthPt: paint.minStrokeWidthPt,
         overprint: paint.overprint,
         textOrigins: paint.textOrigins,
+        texts: paint.texts,
+        dieBox: paint.dieBox,
+        dieNames: [...paint.dieNames].sort(),
+        processPaint: paint.processPaint,
       });
     }
     return { kind: 'pdf', pages, pageCount: all.length, truncated: all.length > MAX_PAGES };

@@ -27,6 +27,15 @@ export const CART_INCLUDE = {
       designDocument: { select: { publicId: true } },
       designDocumentVersion: { select: { versionNo: true } },
       reorderOfOrder: { select: { publicId: true, orderCode: true } },
+      fileCheckVersion: {
+        select: {
+          publicId: true,
+          variantNo: true,
+          versionNo: true,
+          fileCheck: { select: { publicId: true } },
+          fileObject: { select: { publicId: true, originalName: true } },
+        },
+      },
     },
   },
   codes: { orderBy: { id: 'asc' } },

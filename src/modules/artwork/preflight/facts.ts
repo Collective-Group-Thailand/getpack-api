@@ -24,6 +24,21 @@ export interface ImageFact {
   placedWidthPt: number;
   placedHeightPt: number;
   colour: ColourFamily;
+  /** C9: where it is placed (page space, points; the transformation's origin), for the check's marker. */
+  x?: number;
+  y?: number;
+}
+
+/**
+ * C9 (D-457): one text run as painted — its origin, its effective size (the font size through the text and
+ * transformation matrices) and which plates its fill lands on: `k` = black only (gray, or CMYK with no C/M/Y),
+ * `process` = CMYK with C, M or Y (rich black, colour), `spot`, `rgb`, `other`.
+ */
+export interface TextFact {
+  x: number;
+  y: number;
+  sizePt: number;
+  plates: 'k' | 'process' | 'spot' | 'rgb' | 'other';
 }
 
 export interface FontFact {
@@ -48,7 +63,57 @@ export interface PageFacts {
   overprint: boolean;
   /** Text origins in page space (a bounded sample). */
   textOrigins: { x: number; y: number }[];
+  /** C9: text runs with their size and plates (a bounded sample); absent in facts extracted before C9. */
+  texts?: TextFact[];
+  /**
+   * C9: the bounding box of the die (cut / crease) paths painted in a die spot colour (`CutContour`, `Crease` … —
+   * {@link DIE_SPOT_NAMES}); null when the file has none. The file's own dieline, read for detection (D-457).
+   */
+  dieBox?: Box | null;
+  /** C9: the die spot colours the die paths use. */
+  dieNames?: string[];
+  /** C9: anything painted in process colour (CMYK with C/M/Y, RGB, colour images) — the job needs CMYK printing. */
+  processPaint?: boolean;
 }
+
+/**
+ * The spot colours a die line is drawn in: the ones the getpack templates use (D-302: `CutContour`, `Crease`, `Perf`,
+ * `HalfCut`; the engine's `Perforation`) and the common prepress names. Technical vocabulary, compared without case.
+ */
+export const DIE_SPOT_NAMES = [
+  'cutcontour',
+  'crease',
+  'perf',
+  'perforation',
+  'halfcut',
+  'cut',
+  'die',
+  'dieline',
+  'diecut',
+  'die cut',
+  'die-cut',
+  'thru-cut',
+  'thrucut',
+  'kiss cut',
+  'kisscut',
+  'fold',
+  'creasing',
+] as const;
+/** Helper layers a template carries that never print (D-302 `Glue`, `Bleed`, `Safe`). */
+export const NON_PRINTING_SPOT_NAMES = [
+  'glue',
+  'bleed',
+  'safe',
+  'safe zone',
+  'safezone',
+  'dimension',
+  'dimensions',
+] as const;
+
+export const isDieSpot = (name: string) =>
+  (DIE_SPOT_NAMES as readonly string[]).includes(name.trim().toLowerCase());
+export const isNonPrintingSpot = (name: string) =>
+  isDieSpot(name) || (NON_PRINTING_SPOT_NAMES as readonly string[]).includes(name.trim().toLowerCase());
 
 export type FileFacts =
   | { kind: 'pdf'; pages: PageFacts[]; pageCount: number; truncated: boolean }
