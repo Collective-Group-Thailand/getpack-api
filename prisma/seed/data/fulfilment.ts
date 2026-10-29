@@ -13,6 +13,11 @@ export const FULFILMENT_FEATURE_FLAGS = [
     description:
       'Customer assistant (U5.B5, D-218 / D-306) — off at launch; outside local it switches on only after ADR-0012 and a passing evaluation',
   },
+  {
+    key: 'artwork.file_check_notify',
+    description:
+      'E-mail / LINE to the customer when a file check finishes, for when they left the upload page (D-459, D-457) — off until the wording is approved',
+  },
 ] as const;
 
 export interface RouteStepSeed {

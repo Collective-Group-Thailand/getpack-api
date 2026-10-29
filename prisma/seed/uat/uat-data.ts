@@ -538,7 +538,10 @@ export const UAT_DIECUTS: readonly { code: string; nameTh: string; nameEn: strin
 
 // --- Catalogue products ---------------------------------------------------------------------------------------
 
-/** A size row: length × width × height in mm (labels, tags and sheets leave height 0). */
+/**
+ * A size row: length × width × height in mm (labels, tags and sheets leave height 0). Names state the dimensions in the
+ * spec-label order: L × W × H for boxes (C2b, D-454), L × W for flat items (C11, D-459); pouches keep W × H.
+ */
 export type SizeSeed = [code: string, name: string, l: number, w: number, h: number];
 
 export interface ProductSeed {
@@ -742,7 +745,7 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     finishes: ['dev-matt', 'uat-gloss-opp'],
     sizes: [
       ['NAMECARD', 'ขนาดนามบัตร (9×5.5 ซม.)', 90, 55, 0],
-      ['A6', 'A6 (10.5×14.8 ซม.)', 148, 105, 0],
+      ['A6', 'A6 (14.8×10.5 ซม.)', 148, 105, 0],
     ],
     quantities: { min: 500, presets: [500, 1000, 2000, 5000] },
     template: 'online_template',
@@ -896,8 +899,8 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     finishes: ['dev-matt'],
     diecuts: ['dev-diecut', 'uat-diecut-oval'],
     sizes: [
-      ['40x80', '4×8 ซม.', 80, 40, 0],
-      ['60x100', '6×10 ซม.', 100, 60, 0],
+      ['40x80', '8×4 ซม.', 80, 40, 0],
+      ['60x100', '10×6 ซม.', 100, 60, 0],
     ],
     quantities: LABEL_QTY,
   },
@@ -910,7 +913,7 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     materials: ['uat-art-paper-label', 'uat-kraft-label'],
     finishes: ['uat-gloss-opp'],
     diecuts: ['uat-diecut-oval'],
-    sizes: [['40x60', 'วงรี 4×6 ซม.', 60, 40, 0]],
+    sizes: [['40x60', 'วงรี 6×4 ซม.', 60, 40, 0]],
     quantities: LABEL_QTY,
   },
   // Tags & sleeves
@@ -926,9 +929,9 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     diecuts: ['dev-diecut'],
     assemblies: ['dev-hole-3mm'],
     sizes: [
-      ['40x70', '4×7 ซม.', 70, 40, 0],
-      ['50x90', '5×9 ซม.', 90, 50, 0],
-      ['55x85', '5.5×8.5 ซม.', 85, 55, 0],
+      ['40x70', '7×4 ซม.', 70, 40, 0],
+      ['50x90', '9×5 ซม.', 90, 50, 0],
+      ['55x85', '8.5×5.5 ซม.', 85, 55, 0],
     ],
     quantities: { min: 300, presets: [300, 1000, 3000, 5000] },
     template: 'online_template',
@@ -944,8 +947,8 @@ export const UAT_PRODUCTS: readonly ProductSeed[] = [
     finishes: ['dev-matt'],
     diecuts: ['dev-diecut'],
     sizes: [
-      ['S', 'สำหรับกล่องข้าว 650 มล. (7×28 ซม.)', 280, 70, 0],
-      ['L', 'สำหรับกล่องข้าว 1,000 มล. (8×32 ซม.)', 320, 80, 0],
+      ['S', 'สำหรับกล่องข้าว 650 มล. (28×7 ซม.)', 280, 70, 0],
+      ['L', 'สำหรับกล่องข้าว 1,000 มล. (32×8 ซม.)', 320, 80, 0],
     ],
     quantities: { min: 300, presets: [300, 1000, 3000, 5000] },
   },

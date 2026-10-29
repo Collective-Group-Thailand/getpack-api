@@ -69,6 +69,25 @@ export class StudioQuoteRequestDto {
   @IsString()
   @Matches(/^[0-9a-f]{64}$/)
   previousSpecHash?: string;
+
+  @ApiPropertyOptional({
+    type: 'object',
+    additionalProperties: true,
+    example: {
+      patternId: '0190a1b2-0000-7000-8000-000000000002',
+      l: 200,
+      w: 140,
+      d: 60,
+      parts: [{ printFront: [{ inkColourId: '0190a1b2-0000-7000-8000-000000000008', area: 'all_round' }] }],
+    },
+    description:
+      'D-459 (C11) "what if": price this calculator spec for the same design version instead of the version’s own — ' +
+      'e.g. the Studio’s "เปลี่ยนเป็น CMYK" before it is applied. Checked against the version’s box like the saved ' +
+      'spec (style, sizes, basis, material, print sides). Nothing is saved: no snapshot, no quotation, nothing cached.',
+  })
+  @IsOptional()
+  @IsObject()
+  alternativeSpec?: Record<string, unknown>;
 }
 
 export class SaveStudioQuoteDto {

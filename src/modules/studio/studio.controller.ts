@@ -357,12 +357,34 @@ export class StoreStudioController {
       '5 minutes. With `previousSpecHash` the answer explains the change (reason codes and unit prices before / now). ' +
       'A type without an instant price answers `mode: rfq` — ask for a quotation instead. Limited to 60 a minute ' +
       '(D-277). The calculation carries `specs` and `specLabel` — the spec priced, in the configurator’s words ' +
-      '(e.g. "… · 150 × 100 × 80 มม. (ด้านใน) · … · ไม่พิมพ์" for an empty draft) — from the one store pricing path (D-441).',
-    implements: [...DECISIONS, 'D-441'],
+      '(e.g. "… · 150 × 100 × 80 มม. (ด้านใน) · … · ไม่พิมพ์" for an empty draft) — from the one store pricing path (D-441). ' +
+      'With `alternativeSpec` it prices that spec for the same version instead — a "what if" such as "เปลี่ยนเป็น CMYK" ' +
+      'shown before it is applied (D-459): same box checks and pricing path, nothing saved or cached; with ' +
+      '`previousSpecHash` (the price on screen) `changes` gives the unit prices now / with the alternative.',
+    implements: [...DECISIONS, 'D-441', 'D-459'],
   })
   @ApiBody({
     type: StudioQuoteRequestDto,
-    examples: { default: { value: { quantities: [1000, 3000], deliveryPostcode: '10110' } } },
+    examples: {
+      default: { value: { quantities: [1000, 3000], deliveryPostcode: '10110' } },
+      whatIf: {
+        summary: 'The same version with CMYK printing (nothing saved)',
+        value: {
+          quantities: [1000],
+          versionNo: 3,
+          previousSpecHash: '9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08',
+          alternativeSpec: {
+            patternId: '0190a1b2-0000-7000-8000-000000000002',
+            l: 200,
+            w: 140,
+            d: 60,
+            parts: [
+              { printFront: [{ inkColourId: '0190a1b2-0000-7000-8000-000000000008', area: 'all_round' }] },
+            ],
+          },
+        },
+      },
+    },
   })
   @ApiSuccess(200, { description: 'Studio quote', type: StudioQuoteDto, example: STUDIO_QUOTE_EXAMPLE })
   @ApiStandardErrors(...PRICE_ERRORS, 'studio.rate_limited')

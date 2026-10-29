@@ -10,6 +10,7 @@ import { CartsService } from '@modules/carts/carts.service';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
+import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';
 import { FilesService } from '@platform/files/files.service';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 import { SettingsService } from '@platform/settings/settings.service';
@@ -27,6 +28,8 @@ export const MAX_VARIANTS = 20;
 export const MAX_VERSIONS = 50;
 /** The pipeline's stages: read · die lines · match · checks · ready (the page's progress). */
 export const STAGE_COUNT = 5;
+/** D-459 (C11): e-mail / LINE to the customer when a file check finishes; seeded off until the wording is approved. */
+export const FILE_CHECK_NOTIFY_FLAG = 'artwork.file_check_notify';
 const BATCH = 4;
 /** A claimed version is retried by another worker after this long (crash safety). */
 const LEASE_MS = 5 * 60_000;
@@ -98,6 +101,7 @@ export class FileChecksService {
     private readonly artwork: ArtworkService,
     private readonly events: DomainEvents,
     private readonly activity: ActivityLogService,
+    private readonly flags: FeatureFlagsService,
     @Inject(DIELINE_ENGINE) private readonly engine: DielineEngine,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
@@ -529,6 +533,12 @@ export class FileChecksService {
       engineVersion,
     };
 
+    // D-459 (C11): with the flag on, the finished check is also told to the customer (e-mail / LINE route on
+    // `file_check.checked`, condition `payload.notify`) — for when they left the page before it finished.
+    const notifyTo = (await this.flags.isEnabled(FILE_CHECK_NOTIFY_FLAG))
+      ? await this.prisma.user.findUnique({ where: { id: check.customerUserId }, select: { publicId: true } })
+      : null;
+
     await this.prisma.withTx(async (tx) => {
       const current = await tx.fileCheckVersion.findUniqueOrThrow({ where: { id } });
       if (current.status !== 'running') return; // removed or re-queued meanwhile
@@ -566,6 +576,7 @@ export class FileChecksService {
             review: report.counts.review,
             pass: report.counts.pass,
             notChecked: report.counts.not_checked,
+            ...(notifyTo && { notify: true, customerId: notifyTo.publicId }),
           },
         },
         systemActor('artwork.file_check'),

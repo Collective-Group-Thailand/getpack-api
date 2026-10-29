@@ -96,11 +96,38 @@ describe('seed data (B1.2 step 3)', () => {
       // UX r2 Phase 4 (D-309): storefront figures CS / Prepress have not given yet.
       'artwork.first_proof_business_days': 'pending_business',
       'support.reply_minutes': 'pending_business',
-      // C10 (D-458): proposed contact routing; per-topic targets and call-back windows not given yet.
-      'support.topic_queues': 'proposed',
+      // C10 (D-458): per-topic targets not given yet (the routing and call-back windows: confirmed, D-459).
       'support.reply_business_days_by_topic': 'pending_business',
-      'support.callback_slots': 'pending_business',
     });
+  });
+
+  it('C11 (D-459): seeds the decided call-back windows, confirms the routing and makes the ink count must-fix', () => {
+    const byKey = (key: string) => SETTINGS.find((s) => s.key === key)!;
+    expect(byKey('support.callback_slots')).toMatchObject({
+      fillIfUnset: true,
+      value: [
+        { key: 'morning', from: '09:00', to: '12:00' },
+        { key: 'midday', from: '12:00', to: '15:00' },
+        { key: 'afternoon', from: '15:00', to: '18:00' },
+      ],
+    });
+    expect(byKey('support.topic_queues')).toMatchObject({ syncConfirmation: true });
+    expect(byKey('support.topic_queues').confirmation).toBeUndefined();
+    expect(byKey('support.reply_business_days_by_topic').unset).toBe(true);
+    expect(byKey('studio.featured_styles')).toMatchObject({
+      fillIfUnset: true,
+      value: { styles: [], usage: { minDesigns: 200, windowDays: 90 } },
+    });
+    const rules = byKey('artwork.preflight_rules');
+    expect((rules.value as { severities: Record<string, string> }).severities['ink_count']).toBe('block');
+    const amend = rules.amendInForce!.amend;
+    const old = { severities: { size_mismatch: 'block' }, bleedMm: '3' };
+    const amended = amend(old) as { severities: Record<string, string> };
+    expect(amended).toEqual({ severities: { size_mismatch: 'block', ink_count: 'block' }, bleedMm: '3' });
+    expect(amend(amended)).toBeUndefined();
+    // Prepress's own choice (even "info") is never overwritten.
+    expect(amend({ severities: { ink_count: 'info' } })).toBeUndefined();
+    expect(amend(null)).toBeUndefined();
   });
 
   it('does not seed values a decision leaves open', () => {

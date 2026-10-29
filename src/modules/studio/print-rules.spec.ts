@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { STUDIO_PRINT_RULES } from '../../../prisma/seed/data/studio';
-import { activeRules, evaluateDocument, type PrintRule } from './print-rules';
+import { activeRules, documentInks, evaluateDocument, type PrintRule } from './print-rules';
 
 const rules = (printMethod: string | null = 'digital') =>
   activeRules(STUDIO_PRINT_RULES, { printMethod, materialClass: 'paperboard' });
@@ -99,5 +99,76 @@ describe('studio print rules (D-278)', () => {
       { ruleId: 'spot_colour_count', severity: 'warn', elementId: '', details: { colours: 3, max: 2 } },
     ]);
     expect(evaluateDocument({ pages: [] }, flexo, { assetPx: new Map() })).toEqual([]);
+  });
+
+  describe('D-459 (C8-1): hidden elements, gradients and one-ink images', () => {
+    const catalogue = {
+      rules: STUDIO_PRINT_RULES.rules.map((r) =>
+        r.id === 'spot_colour_count'
+          ? { ...r, thresholds: { maxColours: 2 } }
+          : r.id === 'min_text_size'
+            ? { ...r, thresholds: { minPt: 6 } }
+            : r,
+      ),
+    };
+    const flexo = activeRules(catalogue, { printMethod: 'flexo', materialClass: null });
+    const evaluate = (elements: unknown[], pattern: unknown = { kind: 'none' }) =>
+      evaluateDocument({ content: { pattern, elements } }, flexo, { assetPx: new Map() }).filter(
+        (f) => f.ruleId === 'spot_colour_count' || f.ruleId === 'min_text_size',
+      );
+
+    it('skips hidden elements in every check and in the ink count', () => {
+      expect(
+        evaluate([
+          { id: 'a', type: 'text', fill: '#000000', fontSize: 5 },
+          { id: 'h1', type: 'text', fill: '#ff0000', fontSize: 0.5, hidden: true },
+          { id: 'h2', type: 'rect', fill: '#00ff00', stroke: '#0000ff', strokeWidth: 1, hidden: true },
+        ]),
+      ).toEqual([]);
+    });
+
+    it('counts a gradient’s two ends and asks for process printing', () => {
+      expect(
+        evaluate([
+          { id: 'g', type: 'rect', fill: '#000000', fillGradient: { from: '#ff0000', to: '#0000ff' } },
+        ]),
+      ).toEqual([
+        {
+          ruleId: 'spot_colour_count',
+          severity: 'warn',
+          elementId: '',
+          details: { colours: 2, max: 2, process: true },
+        },
+      ]);
+    });
+
+    it('counts a one-ink image as one ink; a colour image needs process printing', () => {
+      expect(
+        evaluate([
+          { id: 'm', type: 'image', mono: true },
+          { id: 't', type: 'text', fill: '#000000' },
+        ]),
+      ).toEqual([]);
+      expect(evaluate([{ id: 'p', type: 'image' }])[0]?.details).toEqual({
+        colours: 0,
+        max: 2,
+        process: true,
+      });
+    });
+
+    it('does not print an open path’s fill or a stroke of width 0', () => {
+      expect(
+        evaluate([
+          { id: 'o', type: 'shape', open: true, fill: '#ff0000', stroke: '#000000', strokeWidth: 1 },
+          { id: 'r', type: 'rect', fill: '#00ff00', stroke: '#0000ff', strokeWidth: 0 },
+        ]),
+      ).toEqual([]);
+      expect(
+        documentInks([{ type: 'rect', fill: '#00ff00', stroke: '#0000ff' }], {
+          kind: 'solid',
+          color: '#ffffff',
+        }),
+      ).toEqual({ colours: new Set(['#00ff00', '#0000ff', '#ffffff']), process: false });
+    });
   });
 });

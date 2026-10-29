@@ -14,6 +14,10 @@
  *      L × W × H ("เบอร์ 00 (14×9.75×6 ซม.)") — the order of the spec label (GLOBAL-RULES §5, ยาว × กว้าง × สูง). Only
  *      when the three numbers are exactly the size's width, length and height in cm and the width ≠ the length; a
  *      name that is already L × W × H, a pouch (W × H by its own spec label) and 2-D names are left alone and listed.
+ *   d. C11 (owner 2026-10-29, DECISIONS-STAGE-A §16.5, D-459): flat items' size names (labels, hang tags, the A6 card,
+ *      the food-tray sleeve — sizes with height 0) written W × L ("A6 (10.5×14.8 ซม.)", "ป้าย 4×7 ซม.") are rewritten
+ *      L × W ("A6 (14.8×10.5 ซม.)") like the flat spec label (ยาว × กว้าง). Only when the two numbers are exactly the
+ *      size's width and length in cm and they differ; pouches (product type `flexible_pouch`) keep W × H.
  *
  *   API_URL=https://<uat-api-host> ADMIN_EMAIL=… ADMIN_PASSWORD=… \
  *     node docs/design/category-redesign/fix-catalogue-data.mjs            # dry run (default): reports only
@@ -28,11 +32,6 @@ const API_URL = (process.env.API_URL ?? '').replace(/\/+$/, '');
 const EMAIL = process.env.ADMIN_EMAIL ?? '';
 const PASSWORD = process.env.ADMIN_PASSWORD ?? '';
 const CONFIRM = process.argv.includes('--confirm');
-
-if (!API_URL || !EMAIL || !PASSWORD) {
-  console.error('Set API_URL, ADMIN_EMAIL and ADMIN_PASSWORD.');
-  process.exit(2);
-}
 
 let token = '';
 
@@ -124,9 +123,26 @@ export function lwhName(size) {
   return size.name.replace(m[0], `${m[2]}×${m[1]}×${m[3]}`);
 }
 
+const PAIR = /(?<![\d.×])(\d+(?:\.\d+)?)\s*×\s*(\d+(?:\.\d+)?)(?![\d.]*\s*×)/;
+
+/** d. A flat size's name in L × W order, or null when it is not a W × L name of this size (pure). */
+export function lwName(size) {
+  if (Number(size.heightMm ?? 0) !== 0 || TRIPLE.test(size.name ?? '')) return null;
+  const m = PAIR.exec(size.name ?? '');
+  if (!m) return null;
+  const [a, b] = [Number(m[1]), Number(m[2])];
+  const [l, w] = [cm(size.lengthMm), cm(size.widthMm)];
+  if (w === l || a !== w || b !== l) return null;
+  return size.name.replace(m[0], `${m[2]}×${m[1]}`);
+}
+
 const stripDev = (name) => (typeof name === 'string' && name.startsWith('[DEV] ') ? name.slice(6) : null);
 
 async function main() {
+  if (!API_URL || !EMAIL || !PASSWORD) {
+    console.error('Set API_URL, ADMIN_EMAIL and ADMIN_PASSWORD.');
+    process.exit(2);
+  }
   const login = await call('POST', '/v1/auth/staff/login', { body: { email: EMAIL, password: PASSWORD } });
   if (!login.json?.accessToken) throw new Error(`sign-in of ${EMAIL} returned no access token (MFA or a challenge?)`);
   token = login.json.accessToken;
@@ -192,7 +208,22 @@ async function main() {
         changes++;
         await patch(`/v1/admin/catalog/standard-sizes/${size.id}`, { name }, `${p.slug} ${size.code} "${size.name}"`);
       } else if (!TRIPLE.test(size.name ?? '') && /×/.test(size.name ?? '')) {
-        console.log(`  review (2-D, not changed): ${p.slug} ${size.code} "${size.name}" = L ${size.lengthMm} × W ${size.widthMm} mm`);
+        console.log(`  2-D (see d.): ${p.slug} ${size.code} "${size.name}" = L ${size.lengthMm} × W ${size.widthMm} mm`);
+      }
+    }
+  }
+
+  console.log('\nd. Flat size names W × L → L × W (not pouches):');
+  const types = await all('/v1/admin/catalog/product-types');
+  const pouchTypes = new Set(types.filter((t) => t.code === 'flexible_pouch').map((t) => t.id));
+  for (const p of products) {
+    if (pouchTypes.has(p.productTypeId)) continue;
+    const sizes = await all(`/v1/admin/catalog/standard-sizes?catalogProductId=${p.id}`);
+    for (const size of sizes) {
+      const name = lwName(size);
+      if (name !== null && name !== size.name) {
+        changes++;
+        await patch(`/v1/admin/catalog/standard-sizes/${size.id}`, { name }, `${p.slug} ${size.code} "${size.name}"`);
       }
     }
   }

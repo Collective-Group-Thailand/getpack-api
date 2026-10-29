@@ -363,6 +363,22 @@ const ROWS: Row[] = [
     ),
     linkLabel: { th: 'ตรวจราคาใหม่และชำระ', en: 'Re-check price and pay' },
   },
+  {
+    // D-459 (C11): a file check finished — e.g. after the customer left the upload page. The worker marks the event
+    // `notify` only while the flag artwork.file_check_notify is on (seeded off until the wording is approved).
+    ...C(
+      'file_check.checked',
+      ['email', 'line'],
+      { th: 'ผลตรวจไฟล์งานพิมพ์พร้อมแล้ว', en: 'Your artwork file check is ready' },
+      {
+        th: 'ระบบตรวจไฟล์งานพิมพ์ของคุณเสร็จแล้ว เปิดดูผลตรวจและสิ่งที่ต้องแก้ก่อนสั่งผลิตได้ที่ getpack',
+        en: 'The check of your artwork file has finished. See the result and anything to fix before ordering on getpack',
+      },
+      'Customer: a file check finished (D-459, D-457; flag artwork.file_check_notify)',
+    ),
+    conditions: { 'payload.notify': true },
+    linkLabel: { th: 'ดูผลตรวจไฟล์', en: 'See the file check' },
+  },
   C(
     'points.expiring',
     ['email'],

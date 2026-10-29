@@ -52,7 +52,7 @@ export function activeRules(
   );
 }
 
-type El = Record<string, unknown> & { id?: unknown; type?: unknown };
+export type El = Record<string, unknown> & { id?: unknown; type?: unknown };
 
 /** The server's fast checks over a document (rules evaluated on `document` only). */
 export function evaluateDocument(
@@ -65,7 +65,10 @@ export function evaluateDocument(
   },
 ): Finding[] {
   const content = (document as { content?: { elements?: unknown; pattern?: unknown } } | null)?.content;
-  const elements = Array.isArray(content?.elements) ? (content.elements as El[]) : [];
+  // D-459 (C8-1): a hidden element is neither printed, checked nor priced.
+  const elements = (Array.isArray(content?.elements) ? (content.elements as El[]) : []).filter(
+    (el) => el['hidden'] !== true,
+  );
   const findings: Finding[] = [];
   const on = (id: string) => rules.find((r) => r.id === id && r.evaluatedOn.includes('document'));
   const scale = (el: El, k: 'scaleX' | 'scaleY') => Math.abs(num(el[k]) ?? 1) || 1;
@@ -158,25 +161,55 @@ export function evaluateDocument(
   const spots = on('spot_colour_count');
   const maxColours = spots ? num(spots.thresholds!['maxColours']) : null;
   if (spots && maxColours !== null) {
-    const colours = new Set<string>();
-    const add = (c: unknown) => {
-      if (typeof c === 'string' && c !== '' && c !== 'transparent') colours.add(c.toLowerCase());
-    };
-    for (const el of elements) for (const k of ['fill', 'stroke', 'background']) add(el[k]);
-    const pattern = content?.pattern as { kind?: string; color?: string; background?: string } | undefined;
-    if (pattern && pattern.kind !== 'none') {
-      add(pattern.color);
-      add(pattern.background);
-    }
-    if (colours.size > maxColours)
+    const inks = documentInks(elements, content?.pattern);
+    if (inks.colours.size > maxColours || inks.process)
       findings.push({
         ruleId: spots.id,
         severity: spots.severity,
         elementId: '',
-        details: { colours: colours.size, max: maxColours },
+        details: { colours: inks.colours.size, max: maxColours, ...(inks.process && { process: true }) },
       });
   }
   return findings;
+}
+
+/**
+ * D-459 (C8-1) the inks a document prints with, as the spot-colour rule counts them (getpack-web `spotColours`, the
+ * same arithmetic): every flat fill, stroke (of a width above 0) and background of the visible elements and the
+ * background pattern (a solid one: its colour); a gradient's two ends; an open path's fill is not printed; a one-ink
+ * image (`mono`) is one ink of its own. Continuous
+ * tone — a gradient or a colour image — needs process (CMYK) printing, which spot inks cannot print (`process`).
+ */
+export function documentInks(elements: El[], pattern: unknown): { colours: Set<string>; process: boolean } {
+  const colours = new Set<string>();
+  let process = false;
+  const add = (c: unknown) => {
+    if (typeof c === 'string' && c !== '' && c !== 'transparent') colours.add(c.toLowerCase());
+  };
+  for (const el of elements) {
+    if (el['hidden'] === true) continue;
+    if (el.type === 'image') {
+      if (el['mono'] === true) colours.add('mono-image');
+      else process = true;
+      continue;
+    }
+    const gradient = el['fillGradient'] as { from?: unknown; to?: unknown } | undefined;
+    if (gradient && typeof gradient === 'object') {
+      process = true;
+      add(gradient.from);
+      add(gradient.to);
+    } else if (el['open'] !== true) add(el['fill']);
+    // A stroke of width 0 paints nothing; a document without widths keeps the older count (every stroke colour).
+    const width = num(el['strokeWidth']);
+    if (width === null || width > 0) add(el['stroke']);
+    add(el['background']);
+  }
+  const p = pattern as { kind?: string; color?: string; background?: string } | undefined;
+  if (p && p.kind !== 'none') {
+    add(p.color);
+    if (p.kind !== 'solid') add(p.background);
+  }
+  return { colours, process };
 }
 
 const round = (n: number) => Math.round(n * 100) / 100;

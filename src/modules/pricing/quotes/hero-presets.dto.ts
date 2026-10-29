@@ -55,10 +55,19 @@ export class HeroSizeDto {
   @ApiProperty({ enum: HERO_SHAPES, enumName: 'HeroShape', example: 'mailer' })
   shapeId!: string;
 
-  @ApiProperty({ example: 's0', description: 'The preset size’s index, as `s<index>`' })
+  @ApiProperty({
+    example: 's0',
+    description:
+      'The preset size’s index, as `s<index>` (in `standardSizeCodes` when the shape names them, D-459)',
+  })
   code!: string;
 
-  @ApiProperty({ example: '18×12×5 ซม.', description: 'Inside W × D × H in centimetres' })
+  @ApiProperty({
+    example: '18×12×5 ซม.',
+    description:
+      'Inside W × D × H in centimetres; for a shape offering its product’s standard sizes, the catalogue’s own size ' +
+      'name, e.g. "เบอร์ A (20×14×6 ซม.)" (D-459)',
+  })
   labelTh!: string;
 
   @ApiProperty({ example: 200, description: 'Inside length (mm, D-182)' })
