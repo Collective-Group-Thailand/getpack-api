@@ -13,6 +13,7 @@ overrides:
   multer@<2.5.0: ^2.5.0
   mysql2@<3.22.0: ^3.22.0
   source-map-js@<1.2.2: ^1.2.2
+  systeminformation@<5.33.16: ^5.33.16
   undici@>=6 <6.29.1: ^6.29.1
   undici@>=7 <7.29.1: ^7.29.1
   zod@>=4 <4.6.6: ^4.6.6
@@ -7720,8 +7721,8 @@ packages:
     resolution: {integrity: sha512-0OJWD12D7XX3KUg1DYkMaTTjSTo2k/mhIYI3HlBlceXSMcJhW/1qO735fPKS5prcyjvn57Ub151vvASYXpQrEw==}
     engines: {node: '>=18'}
 
-  systeminformation@5.33.13:
-    resolution: {integrity: sha512-GtyakkchTQKymM1WeAB652zi3rM1q00RKdc+jZe9KGstuc/mWUwAnQGN/RE5gVYvHIR8xYOUIUD9irVKDtA0wA==}
+  systeminformation@5.33.18:
+    resolution: {integrity: sha512-SF8DBQx3ypa8zDqZlezpHQ6M2g7TrqSEWpAtC4OsHCdLmi7J2WdxaSbA8/DJyEn2l/CHPrW0VFenoqoDccrw6g==}
     engines: {node: '>=10.0.0'}
     os: [darwin, linux, win32, freebsd, openbsd, netbsd, sunos, android]
     hasBin: true
@@ -10166,7 +10167,7 @@ snapshots:
     dependencies:
       '@opentelemetry/api': 1.9.1
       '@opentelemetry/instrumentation': 0.222.0(@opentelemetry/api@1.9.1)
-      systeminformation: 5.33.13
+      systeminformation: 5.33.18
     transitivePeerDependencies:
       - supports-color
 
@@ -17738,7 +17739,7 @@ snapshots:
 
   system-architecture@1.0.0: {}
 
-  systeminformation@5.33.13: {}
+  systeminformation@5.33.18: {}
 
   tabbable@6.5.0: {}
 

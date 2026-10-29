@@ -411,9 +411,21 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
     const salesIds = (sales.body as { data: { id: string }[] }).data.map((c) => c.id);
     expect(salesIds).toContain(stored.conversation.publicId);
 
-    // No call-back windows are set: a call back is refused.
+    // The seeded call-back windows (D-459) on the next 5 business days; a day not offered is refused.
     const options = await pub().get('/v1/store/support/contact-options').expect(200);
-    expect(options.body).toMatchObject({ replyBusinessDays: expect.any(Number), callback: null });
+    expect(options.body).toMatchObject({
+      replyBusinessDays: expect.any(Number),
+      callback: {
+        days: expect.any(Array),
+        slots: [
+          { key: 'morning', from: '09:00', to: '12:00' },
+          { key: 'midday', from: '12:00', to: '15:00' },
+          { key: 'afternoon', from: '15:00', to: '18:00' },
+        ],
+      },
+    });
+    expect(options.body.callback.days).toHaveLength(5);
+    expect(options.body.callback.days).not.toContain('2099-01-01');
     const refused = await pub()
       .post('/v1/store/support/actions/contact')
       .set('Idempotency-Key', randomUUID())
