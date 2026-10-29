@@ -1395,6 +1395,14 @@
     "contact_required": {
       "title": "Contact details required",
       "detail": "Give your name and a phone number or e-mail so CS can reach you"
+    },
+    "ticket_not_found": {
+      "title": "Request not found",
+      "detail": "Check the request number and the phone or e-mail you sent it with."
+    },
+    "callback_unavailable": {
+      "title": "A call back is not available then",
+      "detail": "Pick one of the days and windows offered and give a mobile number."
     }
   },
   "configurations": {

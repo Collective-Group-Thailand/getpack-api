@@ -892,10 +892,11 @@ export class StoreCatalogService {
         phone: text(value.phone),
         email: text(value.email),
         hours: text(value.hours),
+        office: text(value.office),
       };
     } catch (error) {
       if (error instanceof SettingNotFoundError)
-        return { lineOaId: null, phone: null, email: null, hours: null };
+        return { lineOaId: null, phone: null, email: null, hours: null, office: null };
       throw error;
     }
   }

@@ -96,6 +96,10 @@ describe('seed data (B1.2 step 3)', () => {
       // UX r2 Phase 4 (D-309): storefront figures CS / Prepress have not given yet.
       'artwork.first_proof_business_days': 'pending_business',
       'support.reply_minutes': 'pending_business',
+      // C10 (D-458): proposed contact routing; per-topic targets and call-back windows not given yet.
+      'support.topic_queues': 'proposed',
+      'support.reply_business_days_by_topic': 'pending_business',
+      'support.callback_slots': 'pending_business',
     });
   });
 

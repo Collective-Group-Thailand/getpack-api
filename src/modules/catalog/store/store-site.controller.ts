@@ -55,9 +55,10 @@ export class StoreSupportChannelsController {
     id: 'store.support.getChannels',
     summary: 'Get the ways to reach getpack CS',
     description:
-      'getpack’s own LINE Official Account, phone, e-mail and opening hours (D-005), from the setting ' +
-      '`storefront.support_channels` kept by the CS Lead (D-221). A field is null until it is set.',
-    implements: ['D-221', 'D-005'],
+      'getpack’s own LINE Official Account, phone, e-mail, opening hours and the office visited by appointment ' +
+      '(D-005, D-458), from the setting `storefront.support_channels` kept by the CS Lead (D-221). A field is null ' +
+      'until it is set.',
+    implements: ['D-221', 'D-005', 'D-458'],
   })
   @ApiSuccess(200, {
     description: 'Support channels',
@@ -67,6 +68,7 @@ export class StoreSupportChannelsController {
       phone: '0800000000',
       email: 'support@example.com',
       hours: 'จันทร์–ศุกร์ 09:00–18:00',
+      office: null,
     },
   })
   @ApiStandardErrors('validation.failed')

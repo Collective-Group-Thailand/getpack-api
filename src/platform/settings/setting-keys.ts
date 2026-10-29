@@ -191,9 +191,22 @@ export interface SettingValues {
     phone?: string | null;
     email?: string | null;
     hours?: string | null;
+    /** D-458 the office line customers may visit by appointment; null until the CS Lead sets it. */
+    office?: string | null;
   };
   /** D-221 first-response target of a contact-form / hand-off conversation, in business days. */
   'support.first_response_business_days': number;
+  /** D-458 the team queue each contact topic is routed to (`default` for unlisted topics). */
+  'support.topic_queues': { default: string; topics: Record<string, string> };
+  /** D-458 first-response target per contact topic, business days; unset / unlisted → `support.first_response_business_days`. */
+  'support.reply_business_days_by_topic': Record<string, number>;
+  /** D-458 the call-back windows CS offers (Asia/Bangkok); unset = no call-back on the contact form. */
+  'support.callback_slots': { key: string; from: string; to: string }[];
+  /** D-458 what the storefront says is live / coming: business features and getpack Factory modules (config, hard rule 5). */
+  'storefront.roadmap': {
+    business: { key: string; status: 'live' | 'soon' }[];
+    erpModules: { key: string; status: 'live' | 'in_development' }[];
+  };
   /** D-309 first-proof turnaround Prepress commits to (business days); unset until Prepress sets it. */
   'artwork.first_proof_business_days': number;
   /** D-309 CS answering hours on the storefront (Asia/Bangkok); unset until the CS Lead sets them. */

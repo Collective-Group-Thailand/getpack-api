@@ -302,6 +302,26 @@ export class ConversationsService implements OnModuleInit {
     return conversation;
   }
 
+  /**
+   * D-458: more information a requester adds to their contact ticket (`store.support.addInfo`) — an inbound message
+   * on the ticket's conversation, from the customer when signed in, else from the guest's contact conversation.
+   */
+  async appendToTicket(
+    tx: Tx,
+    conversation: Conversation,
+    body: string,
+    customerUserId: bigint | null,
+  ): Promise<void> {
+    await this.inbound(tx, conversation, {
+      kind: 'text',
+      body,
+      providerMessageId: null,
+      sentAt: new Date(),
+      senderUserId: customerUserId,
+      via: customerUserId ? 'web' : null,
+    });
+  }
+
   /** D-301: the conversation of a submitted RFQ basket (in the submission's transaction), with its first message. */
   async openBasketThread(
     tx: Tx,

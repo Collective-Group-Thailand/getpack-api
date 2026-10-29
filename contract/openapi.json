@@ -5149,6 +5149,17 @@
           "type": "https://errors.getpack/styles.variant_not_found"
         }
       },
+      "problem.support.callback_unavailable": {
+        "summary": "support.callback_unavailable",
+        "value": {
+          "code": "support.callback_unavailable",
+          "detail": "เลือกวันและช่วงเวลาที่มีให้เลือก และใส่เบอร์มือถือ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "โทรกลับในเวลานี้ไม่ได้",
+          "type": "https://errors.getpack/support.callback_unavailable"
+        }
+      },
       "problem.support.contact_required": {
         "summary": "support.contact_required",
         "value": {
@@ -5158,6 +5169,17 @@
           "status": 422,
           "title": "ต้องมีช่องทางติดต่อ",
           "type": "https://errors.getpack/support.contact_required"
+        }
+      },
+      "problem.support.ticket_not_found": {
+        "summary": "support.ticket_not_found",
+        "value": {
+          "code": "support.ticket_not_found",
+          "detail": "ตรวจเลขเรื่อง และเบอร์โทรหรืออีเมลที่ใช้ตอนส่งเรื่องอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 404,
+          "title": "ไม่พบเรื่องนี้",
+          "type": "https://errors.getpack/support.ticket_not_found"
         }
       },
       "problem.tax.gl_difference": {
@@ -28787,6 +28809,11 @@
             "example": false,
             "type": "boolean"
           },
+          "queue": {
+            "description": "D-458 the team queue the topic was routed to (`support.topic_queues`)",
+            "example": "cs",
+            "type": "string"
+          },
           "respondBy": {
             "example": "2026-10-21T10:00:00+07:00",
             "format": "date-time",
@@ -28813,6 +28840,7 @@
           "ticketNo",
           "source",
           "topic",
+          "queue",
           "contactName",
           "contactPhone",
           "contactEmail",
@@ -71647,6 +71675,22 @@
       },
       "IssuerDto": {
         "properties": {
+          "addressTh": {
+            "description": "D-458 `entity.address_th`, the registered address printed on documents; null until set",
+            "example": "ที่อยู่ตัวอย่าง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "branchCode": {
+            "description": "D-458 `entity.branch_code` (00000 = head office); null until set",
+            "example": "00000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "legalNameEn": {
             "description": "`entity.legal_name_en` of the default entity; null until set",
             "example": "Example Co., Ltd.",
@@ -71662,11 +71706,22 @@
               "string",
               "null"
             ]
+          },
+          "taxId": {
+            "description": "D-458 `entity.tax_id` of the default entity (13 digits, shown in full — DECISIONS §3); null until set",
+            "example": "0000000000000",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "legalNameTh",
-          "legalNameEn"
+          "legalNameEn",
+          "taxId",
+          "branchCode",
+          "addressTh"
         ],
         "type": "object"
       },
@@ -79798,6 +79853,7 @@
         "type": "string"
       },
       "PaymentMethod": {
+        "description": "D-458 the payment methods anyone can start a payment with now (feature flags, D-176) — instalments excluded (hidden until live, DECISIONS §3); the business page lists these and nothing else",
         "enum": [
           "scb_qr",
           "scb_qr_cross_bank",
@@ -87132,6 +87188,16 @@
           "minOrderQty": {
             "$ref": "#/components/schemas/MinOrderQtyDto"
           },
+          "paymentMethods": {
+            "description": "D-458 the payment methods anyone can start a payment with now (feature flags, D-176) — instalments excluded (hidden until live, DECISIONS §3); the business page lists these and nothing else",
+            "example": [
+              "bank_transfer_slip"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PaymentMethod"
+            },
+            "type": "array"
+          },
           "priceLockDays": {
             "description": "Days a quotation’s price stays locked — `quotes.validity_days` (D-051)",
             "example": 15,
@@ -87144,6 +87210,14 @@
               "integer",
               "null"
             ]
+          },
+          "roadmap": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoadmapDto"
+              }
+            ],
+            "description": "D-458 `storefront.roadmap` (Admin): empty lists while unset — the pages then show no status chips"
           },
           "supportHours": {
             "anyOf": [
@@ -87179,6 +87253,8 @@
           "supportReplyMinutes",
           "templateCount",
           "contact",
+          "roadmap",
+          "paymentMethods",
           "issuer"
         ],
         "type": "object"
@@ -95206,6 +95282,61 @@
           "declaredAt"
         ],
         "type": "object"
+      },
+      "RoadmapDto": {
+        "properties": {
+          "business": {
+            "description": "Company-account features, in display order",
+            "items": {
+              "$ref": "#/components/schemas/RoadmapItemDto"
+            },
+            "type": "array"
+          },
+          "erpModules": {
+            "description": "getpack Factory modules, in display order",
+            "items": {
+              "$ref": "#/components/schemas/RoadmapItemDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "business",
+          "erpModules"
+        ],
+        "type": "object"
+      },
+      "RoadmapItemDto": {
+        "properties": {
+          "key": {
+            "description": "The feature / module key the storefront has copy for",
+            "example": "brand_lock",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/RoadmapStatus"
+              }
+            ],
+            "description": "`live`; `soon` = \"เร็ว ๆ นี้\" (business features); `in_development` = \"กำลังพัฒนา\" (factory modules)",
+            "example": "soon"
+          }
+        },
+        "required": [
+          "key",
+          "status"
+        ],
+        "type": "object"
+      },
+      "RoadmapStatus": {
+        "description": "`live`; `soon` = \"เร็ว ๆ นี้\" (business features); `in_development` = \"กำลังพัฒนา\" (factory modules)",
+        "enum": [
+          "live",
+          "soon",
+          "in_development"
+        ],
+        "type": "string"
       },
       "RoleDto": {
         "properties": {
@@ -108186,6 +108317,14 @@
               "null"
             ]
           },
+          "office": {
+            "description": "D-458 the office customers may visit by appointment (one line); null until the CS Lead sets it",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "phone": {
             "example": "0800000000",
             "type": [
@@ -108198,7 +108337,8 @@
           "lineOaId",
           "phone",
           "email",
-          "hours"
+          "hours",
+          "office"
         ],
         "type": "object"
       },
@@ -112499,7 +112639,7 @@
         ],
         "type": "string"
       },
-      "SupportContactDto": {
+      "SupportAddInfoDto": {
         "properties": {
           "contact": {
             "allOf": [
@@ -112507,7 +112647,202 @@
                 "$ref": "#/components/schemas/SupportContactPersonDto"
               }
             ],
+            "description": "A guest proves the ticket is theirs with the phone or e-mail they left (`name` is ignored); a signed-in customer reads their own tickets without it"
+          },
+          "message": {
+            "example": "แนบเลขพัสดุเพิ่มค่ะ",
+            "maxLength": 5000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "ticketNo": {
+            "example": "CS-2610-00001",
+            "pattern": "^[A-Z]{2,8}-[0-9]{4}-[0-9]{3,8}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketNo",
+          "message"
+        ],
+        "type": "object"
+      },
+      "SupportCallbackDto": {
+        "properties": {
+          "date": {
+            "description": "One of `store.support.contactOptions` `callback.days`",
+            "example": "2026-10-21",
+            "format": "date",
+            "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+            "type": "string"
+          },
+          "slot": {
+            "description": "One of `store.support.contactOptions` `callback.slots[].key`",
+            "example": "morning",
+            "pattern": "^[a-z0-9_]{1,20}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "slot"
+        ],
+        "type": "object"
+      },
+      "SupportCallbackOptionsDto": {
+        "properties": {
+          "days": {
+            "description": "The next 5 business days of the national calendar (D-161), Asia/Bangkok dates",
+            "example": [
+              "2026-10-21",
+              "2026-10-22",
+              "2026-10-23",
+              "2026-10-26",
+              "2026-10-27"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "slots": {
+            "description": "`support.callback_slots` (CS Lead)",
+            "items": {
+              "$ref": "#/components/schemas/SupportCallbackSlotDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "days",
+          "slots"
+        ],
+        "type": "object"
+      },
+      "SupportCallbackSlotDto": {
+        "properties": {
+          "from": {
+            "example": "09:00",
+            "pattern": "^\\d{2}:\\d{2}$",
+            "type": "string"
+          },
+          "key": {
+            "example": "morning",
+            "type": "string"
+          },
+          "to": {
+            "example": "12:00",
+            "pattern": "^\\d{2}:\\d{2}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "SupportContactDetailsDto": {
+        "properties": {
+          "capabilities": {
+            "description": "Factory application: what the factory produces (product type codes or storefront keys)",
+            "example": [
+              "corrugated_box"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "type": "array"
+          },
+          "company": {
+            "description": "Company / factory name",
+            "example": "บริษัท ตัวอย่าง จำกัด",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "currentSystem": {
+            "description": "Factory application: the system the factory runs today (storefront key)",
+            "example": "spreadsheet",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,59}$",
+            "type": "string"
+          },
+          "insideSize": {
+            "description": "Quotation: inside size as typed",
+            "example": "200 × 150 × 80 มม.",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "interests": {
+            "description": "Sales form: what the company is interested in (storefront keys)",
+            "example": [
+              "credit",
+              "branches"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 12,
+            "type": "array"
+          },
+          "monthlyVolume": {
+            "description": "Monthly volume bucket the storefront offers (e.g. `under_1000`, `1000_5000`)",
+            "example": "1000_5000",
+            "pattern": "^[a-z0-9][a-z0-9_-]{0,59}$",
+            "type": "string"
+          },
+          "postcode": {
+            "description": "Shipping: destination postcode",
+            "example": "10110",
+            "pattern": "^[0-9]{5}$",
+            "type": "string"
+          },
+          "product": {
+            "description": "Quotation: the product asked about",
+            "example": "กล่องไปรษณีย์",
+            "maxLength": 200,
+            "type": "string"
+          },
+          "province": {
+            "example": "กรุงเทพมหานคร",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "maximum": 10000000,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "SupportContactDto": {
+        "properties": {
+          "callback": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportCallbackDto"
+              }
+            ],
+            "description": "D-458 required with `replyChannel: callback`"
+          },
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportContactPersonDto"
+              }
+            ],
             "description": "Required for a guest; a signed-in customer is reached through the account"
+          },
+          "details": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportContactDetailsDto"
+              }
+            ],
+            "description": "D-458 the intent’s own fields"
           },
           "message": {
             "example": "สอบถามกำหนดส่งค่ะ",
@@ -112521,6 +112856,15 @@
             "maxLength": 40,
             "type": "string"
           },
+          "replyChannel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportReplyChannel"
+              }
+            ],
+            "description": "D-458 how to answer; `callback` needs a phone and `callback`, and only while call-back slots are set",
+            "example": "line"
+          },
           "topic": {
             "description": "The storefront’s topic key (e.g. order_status, quotation, artwork, other)",
             "example": "order_status",
@@ -112531,6 +112875,52 @@
         "required": [
           "topic",
           "message"
+        ],
+        "type": "object"
+      },
+      "SupportContactOptionsDto": {
+        "properties": {
+          "callback": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SupportCallbackOptionsDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null while `support.callback_slots` is not set: the form offers no call back"
+          },
+          "replyBusinessDays": {
+            "description": "First-response target in business days — `support.first_response_business_days` (D-221)",
+            "example": 1,
+            "type": "integer"
+          },
+          "replyBusinessDaysByTopic": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "description": "Per-topic first-response targets (`support.reply_business_days_by_topic`); a topic not listed uses `replyBusinessDays`",
+            "example": {},
+            "type": "object"
+          },
+          "teamStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SupportTeamStatusDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null while `storefront.support_hours` is not set"
+          }
+        },
+        "required": [
+          "replyBusinessDays",
+          "replyBusinessDaysByTopic",
+          "teamStatus",
+          "callback"
         ],
         "type": "object"
       },
@@ -112661,6 +113051,38 @@
         ],
         "type": "object"
       },
+      "SupportReplyChannel": {
+        "description": "D-458 how to answer; `callback` needs a phone and `callback`, and only while call-back slots are set",
+        "enum": [
+          "line",
+          "email",
+          "callback"
+        ],
+        "type": "string"
+      },
+      "SupportTeamStatusDto": {
+        "properties": {
+          "nextOpenAt": {
+            "description": "When CS answers next; null while open (or no open day within two weeks)",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "openNow": {
+            "description": "CS answers right now (`storefront.support_hours`, Asia/Bangkok)",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "openNow",
+          "nextOpenAt"
+        ],
+        "type": "object"
+      },
       "SupportTicketDto": {
         "properties": {
           "conversationId": {
@@ -112720,12 +113142,99 @@
         ],
         "type": "object"
       },
+      "SupportTicketLookupDto": {
+        "properties": {
+          "contact": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportContactPersonDto"
+              }
+            ],
+            "description": "A guest proves the ticket is theirs with the phone or e-mail they left (`name` is ignored); a signed-in customer reads their own tickets without it"
+          },
+          "ticketNo": {
+            "example": "CS-2610-00001",
+            "pattern": "^[A-Z]{2,8}-[0-9]{4}-[0-9]{3,8}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketNo"
+        ],
+        "type": "object"
+      },
       "SupportTicketSource": {
         "enum": [
           "contact_form",
           "handoff"
         ],
         "type": "string"
+      },
+      "SupportTicketStage": {
+        "description": "`answered` once getpack replied (or closed the conversation), `in_progress` once someone took it, else `received`",
+        "enum": [
+          "received",
+          "in_progress",
+          "answered"
+        ],
+        "type": "string"
+      },
+      "SupportTicketStatusDto": {
+        "properties": {
+          "answeredAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lineUrl": {
+            "description": "Continue on LINE with the ticket number; null until the OA is set",
+            "example": "https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "respondBy": {
+            "example": "2026-10-21T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SupportTicketStage"
+              }
+            ],
+            "description": "`answered` once getpack replied (or closed the conversation), `in_progress` once someone took it, else `received`",
+            "example": "received"
+          },
+          "ticketNo": {
+            "example": "CS-2610-00001",
+            "type": "string"
+          },
+          "topic": {
+            "example": "order",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ticketNo",
+          "topic",
+          "stage",
+          "createdAt",
+          "respondBy",
+          "answeredAt",
+          "lineUrl"
+        ],
+        "type": "object"
       },
       "TagSleeveConfigurationDto": {
         "properties": {
@@ -214425,7 +214934,7 @@
     },
     "/v1/admin/conversations": {
       "get": {
-        "description": "Latest activity first. Filters: status, assignee, subject (support / order / design / RFQ / RFQ basket, D-300), channel, the subject’s company, first-response state (waiting in time, overdue, answered — D-221) and `q` (customer or LINE name, contains). Each thread carries its SLA timers, reply channel and participants.\n\nImplements: D-151, D-143, D-300, D-221.",
+        "description": "Latest activity first. Filters: status, assignee, subject (support / order / design / RFQ / RFQ basket, D-300), channel, the subject’s company, first-response state (waiting in time, overdue, answered — D-221), the queue of its contact ticket (D-458) and `q` (customer or LINE name, contains). Each thread carries its SLA timers, reply channel and participants.\n\nImplements: D-151, D-143, D-300, D-221, D-458.",
         "operationId": "admin.conversations.list",
         "parameters": [
           {
@@ -214527,6 +215036,17 @@
             "required": false,
             "schema": {
               "$ref": "#/components/schemas/ConversationSlaState"
+            }
+          },
+          {
+            "description": "D-458 threads with a contact ticket routed to this queue (`support.topic_queues`)",
+            "in": "query",
+            "name": "queue",
+            "required": false,
+            "schema": {
+              "example": "sales",
+              "pattern": "^[a-z][a-z0-9_]{0,39}$",
+              "type": "string"
             }
           },
           {
@@ -555456,7 +555976,7 @@
     },
     "/v1/store/public-config": {
       "get": {
-        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size, the contacts (D-221) and the legal name of the invoicing entity (D-447). Nothing about production partners — no count, coverage or threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-307, D-435, D-447.",
+        "description": "Every figure has one source and is null without one — the storefront then leaves the sentence out, never a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock (`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template library size, the contacts (D-221), the invoicing entity’s legal name, tax id, branch and registered address (D-447, D-458), what the business and getpack Factory pages say is live (`storefront.roadmap`, D-458) and the payment methods offered now (D-458). Nothing about production partners — no count, coverage or threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.\n\nImplements: D-309, D-051, D-082, D-221, D-307, D-435, D-447, D-458.",
         "operationId": "store.publicConfig.get",
         "parameters": [
           {
@@ -555475,15 +555995,43 @@
                     "phone": "0800000000"
                   },
                   "issuer": {
+                    "addressTh": "ที่อยู่ตัวอย่าง",
+                    "branchCode": "00000",
                     "legalNameEn": "Example Co., Ltd.",
-                    "legalNameTh": "บริษัท ตัวอย่าง จำกัด"
+                    "legalNameTh": "บริษัท ตัวอย่าง จำกัด",
+                    "taxId": "0000000000000"
                   },
                   "minOrderQty": {
                     "custom": 500,
                     "readyStock": 1
                   },
+                  "paymentMethods": [
+                    "bank_transfer_slip"
+                  ],
                   "priceLockDays": 15,
                   "proofSlaBusinessDays": null,
+                  "roadmap": {
+                    "business": [
+                      {
+                        "key": "team",
+                        "status": "live"
+                      },
+                      {
+                        "key": "brand_lock",
+                        "status": "soon"
+                      }
+                    ],
+                    "erpModules": [
+                      {
+                        "key": "getpack_jobs",
+                        "status": "live"
+                      },
+                      {
+                        "key": "stock",
+                        "status": "in_development"
+                      }
+                    ]
+                  },
                   "supportHours": {
                     "close": "18:00",
                     "days": "mon_fri",
@@ -580677,7 +581225,7 @@
     },
     "/v1/store/support-channels": {
       "get": {
-        "description": "getpack’s own LINE Official Account, phone, e-mail and opening hours (D-005), from the setting `storefront.support_channels` kept by the CS Lead (D-221). A field is null until it is set.\n\nImplements: D-221, D-005.",
+        "description": "getpack’s own LINE Official Account, phone, e-mail, opening hours and the office visited by appointment (D-005, D-458), from the setting `storefront.support_channels` kept by the CS Lead (D-221). A field is null until it is set.\n\nImplements: D-221, D-005, D-458.",
         "operationId": "store.support.getChannels",
         "parameters": [
           {
@@ -580692,6 +581240,7 @@
                   "email": "support@example.com",
                   "hours": "จันทร์–ศุกร์ 09:00–18:00",
                   "lineOaId": "@getpack-test",
+                  "office": null,
                   "phone": "0800000000"
                 },
                 "schema": {
@@ -580786,10 +581335,10 @@
         ]
       }
     },
-    "/v1/store/support/actions/contact": {
+    "/v1/store/support/actions/add-info": {
       "post": {
-        "description": "The contact form, for guests and customers: opens a CS ticket on a CS conversation (D-221) — a signed-in customer’s own chat, a new one for a guest, who leaves a name and a phone or e-mail. Answers the ticket number, the first-response target (`support.first_response_business_days` business days, D-175) and a LINE link carrying only the ticket number. Rate-limited per client (429 with `Retry-After`).\n\nImplements: D-221, D-175.",
-        "operationId": "store.support.contact",
+        "description": "D-458 \"เพิ่มข้อมูลในเรื่องนี้\": a message added to my contact ticket’s conversation (the same ownership check as `store.support.lookupTicket`); it reopens the conversation for CS. Audited (`support.ticket_info_added`) with the event of the same name; no contact details in either (PDPA). Rate-limited per client.\n\nImplements: D-458, D-221.",
+        "operationId": "store.support.addInfo",
         "parameters": [
           {
             "$ref": "#/components/parameters/IdempotencyKey"
@@ -580805,12 +581354,305 @@
                 "default": {
                   "value": {
                     "contact": {
+                      "name": "-",
+                      "phone": "0000000000"
+                    },
+                    "message": "แนบเลขพัสดุเพิ่มค่ะ",
+                    "ticketNo": "CS-2610-00001"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SupportAddInfoDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "answeredAt": null,
+                  "createdAt": "2026-10-20T10:00:00+07:00",
+                  "lineUrl": "https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001",
+                  "respondBy": "2026-10-21T10:00:00+07:00",
+                  "stage": "received",
+                  "ticketNo": "CS-2610-00001",
+                  "topic": "order"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketStatusDto"
+                }
+              }
+            },
+            "description": "Ticket status",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "support.ticket_not_found": {
+                    "$ref": "#/components/examples/problem.support.ticket_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `support.ticket_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Add information to my request",
+        "tags": [
+          "store.support"
+        ]
+      }
+    },
+    "/v1/store/support/actions/contact": {
+      "post": {
+        "description": "The contact form, for guests and customers: opens a CS ticket on a CS conversation (D-221) — a signed-in customer’s own chat, a new one for a guest, who leaves a name and a phone or e-mail. Answers the ticket number, the first-response target (`support.first_response_business_days` business days, D-175) and a LINE link carrying only the ticket number. Rate-limited per client (429 with `Retry-After`). D-458: the intent’s own fields (`details`: company, volume, interests, capabilities, province, current system, product, quantity, inside size, postcode), the reply channel and a call-back slot are stored with the ticket; the ticket is routed to the topic’s queue (`support.topic_queues`) and its target follows the topic (`support.reply_business_days_by_topic`). A call back needs a phone and one of the offered days and windows (`support.callback_unavailable`). References stay `CS-YYMM-NNNNN` for every topic (D-440).\n\nImplements: D-221, D-175, D-440, D-458.",
+        "operationId": "store.support.contact",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "callback": {
+                  "value": {
+                    "callback": {
+                      "date": "2026-10-21",
+                      "slot": "morning"
+                    },
+                    "contact": {
+                      "name": "สมชาย ทดสอบ",
+                      "phone": "0000000000"
+                    },
+                    "message": "สอบถามการชำระเงินค่ะ",
+                    "orderCode": "PK-2610-0001-01",
+                    "replyChannel": "callback",
+                    "topic": "payment"
+                  }
+                },
+                "default": {
+                  "value": {
+                    "contact": {
                       "name": "สมชาย ทดสอบ",
                       "phone": "0000000000"
                     },
                     "message": "สอบถามกำหนดส่งค่ะ",
                     "orderCode": "PK-2610-0001-01",
                     "topic": "order_status"
+                  }
+                },
+                "sales": {
+                  "value": {
+                    "contact": {
+                      "email": "someone@example.test",
+                      "name": "สมชาย ทดสอบ",
+                      "phone": "0000000000"
+                    },
+                    "details": {
+                      "company": "บริษัท ตัวอย่าง จำกัด",
+                      "interests": [
+                        "credit",
+                        "branches"
+                      ],
+                      "monthlyVolume": "1000_5000"
+                    },
+                    "message": "สนใจเปิดบัญชีบริษัท 4 สาขา",
+                    "replyChannel": "email",
+                    "topic": "business"
                   }
                 }
               },
@@ -580957,6 +581799,9 @@
                   "idempotency.key_reused": {
                     "$ref": "#/components/examples/problem.idempotency.key_reused"
                   },
+                  "support.callback_unavailable": {
+                    "$ref": "#/components/examples/problem.support.callback_unavailable"
+                  },
                   "support.contact_required": {
                     "$ref": "#/components/examples/problem.support.contact_required"
                   },
@@ -580969,7 +581814,7 @@
                 }
               }
             },
-            "description": "Problem: `idempotency.key_reused`, `support.contact_required`, `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `support.callback_unavailable`, `support.contact_required`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -581205,6 +582050,9 @@
                   "idempotency.key_reused": {
                     "$ref": "#/components/examples/problem.idempotency.key_reused"
                   },
+                  "support.callback_unavailable": {
+                    "$ref": "#/components/examples/problem.support.callback_unavailable"
+                  },
                   "support.contact_required": {
                     "$ref": "#/components/examples/problem.support.contact_required"
                   },
@@ -581217,7 +582065,7 @@
                 }
               }
             },
-            "description": "Problem: `idempotency.key_reused`, `support.contact_required`, `validation.failed`",
+            "description": "Problem: `idempotency.key_reused`, `support.callback_unavailable`, `support.contact_required`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -581270,6 +582118,384 @@
         },
         "security": [],
         "summary": "Hand the guided help over to CS",
+        "tags": [
+          "store.support"
+        ]
+      }
+    },
+    "/v1/store/support/actions/lookup": {
+      "post": {
+        "description": "D-458: the stage of a contact ticket (ได้รับเรื่อง → กำลังดำเนินการ → ตอบกลับแล้ว) for the person who sent it: a signed-in customer reads their own tickets; a guest gives the phone or e-mail they left. Any other ticket — or none — is `support.ticket_not_found` (never confirms a ticket exists). A POST so the phone or e-mail never travels in a URL. Rate-limited per client.\n\nImplements: D-458, D-221.",
+        "operationId": "store.support.lookupTicket",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "contact": {
+                      "name": "-",
+                      "phone": "0000000000"
+                    },
+                    "ticketNo": "CS-2610-00001"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SupportTicketLookupDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "answeredAt": null,
+                  "createdAt": "2026-10-20T10:00:00+07:00",
+                  "lineUrl": "https://line.me/R/oaMessage/%40getpack-fake/?CS-2610-00001",
+                  "respondBy": "2026-10-21T10:00:00+07:00",
+                  "stage": "received",
+                  "ticketNo": "CS-2610-00001",
+                  "topic": "order"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SupportTicketStatusDto"
+                }
+              }
+            },
+            "description": "Ticket status",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "support.ticket_not_found": {
+                    "$ref": "#/components/examples/problem.support.ticket_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `support.ticket_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Where my request stands",
+        "tags": [
+          "store.support"
+        ]
+      }
+    },
+    "/v1/store/support/contact-options": {
+      "get": {
+        "description": "D-458: the first-response target (`support.first_response_business_days`, per topic from `support.reply_business_days_by_topic`), whether CS answers right now and when it answers next (`storefront.support_hours`, Asia/Bangkok, national calendar for `business_days`), and the call-back days (next 5 business days) and windows (`support.callback_slots`; null while unset — no call back offered). Anonymous, cacheable 60 s.\n\nImplements: D-458, D-221, D-309, D-161.",
+        "operationId": "store.support.contactOptions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "callback": null,
+                  "replyBusinessDays": 1,
+                  "replyBusinessDaysByTopic": {},
+                  "teamStatus": {
+                    "nextOpenAt": "2026-10-21T09:00:00+07:00",
+                    "openNow": false
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SupportContactOptionsDto"
+                }
+              }
+            },
+            "description": "Contact options",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "What the contact form offers now",
         "tags": [
           "store.support"
         ]

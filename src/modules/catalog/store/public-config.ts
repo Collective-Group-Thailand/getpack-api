@@ -1,6 +1,8 @@
 import { Public } from '@common/auth/auth.decorators';
 import { ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { PrismaService } from '@database/prisma.service';
+import { PAYMENT_METHODS } from '@modules/payments/payments.dto';
+import { PaymentsService } from '@modules/payments/payments.service';
 import { Controller, Get, Header, Injectable } from '@nestjs/common';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { type SettingKey, type SettingValues } from '@platform/settings/setting-keys';
@@ -74,6 +76,54 @@ export class IssuerDto {
     description: '`entity.legal_name_en` of the default entity; null until set',
   })
   legalNameEn!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '0000000000000',
+    description:
+      'D-458 `entity.tax_id` of the default entity (13 digits, shown in full — DECISIONS §3); null until set',
+  })
+  taxId!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '00000',
+    description: 'D-458 `entity.branch_code` (00000 = head office); null until set',
+  })
+  branchCode!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'ที่อยู่ตัวอย่าง',
+    description: 'D-458 `entity.address_th`, the registered address printed on documents; null until set',
+  })
+  addressTh!: string | null;
+}
+
+export class RoadmapItemDto {
+  @ApiProperty({ example: 'brand_lock', description: 'The feature / module key the storefront has copy for' })
+  key!: string;
+
+  @ApiProperty({
+    enum: ['live', 'soon', 'in_development'],
+    enumName: 'RoadmapStatus',
+    example: 'soon',
+    description:
+      '`live`; `soon` = "เร็ว ๆ นี้" (business features); `in_development` = "กำลังพัฒนา" (factory modules)',
+  })
+  status!: string;
+}
+
+/** D-458: what /business and /partner-with-us say is live — a config, never copy (pack hard rule 5). */
+export class RoadmapDto {
+  @ApiProperty({ type: [RoadmapItemDto], description: 'Company-account features, in display order' })
+  business!: RoadmapItemDto[];
+
+  @ApiProperty({ type: [RoadmapItemDto], description: 'getpack Factory modules, in display order' })
+  erpModules!: RoadmapItemDto[];
 }
 
 /** D-309: figures the storefront states, each from one source; null where none is agreed. */
@@ -132,6 +182,24 @@ export class PublicConfigDto {
   contact!: ContactDto;
 
   @ApiProperty({
+    type: RoadmapDto,
+    description:
+      'D-458 `storefront.roadmap` (Admin): empty lists while unset — the pages then show no status chips',
+  })
+  roadmap!: RoadmapDto;
+
+  @ApiProperty({
+    enum: PAYMENT_METHODS,
+    enumName: 'PaymentMethod',
+    isArray: true,
+    example: ['bank_transfer_slip'],
+    description:
+      'D-458 the payment methods anyone can start a payment with now (feature flags, D-176) — instalments excluded ' +
+      '(hidden until live, DECISIONS §3); the business page lists these and nothing else',
+  })
+  paymentMethods!: string[];
+
+  @ApiProperty({
     type: IssuerDto,
     description:
       'D-447: the legal name of the entity that issues customer tax invoices (D-010, D-092 entity settings) — the ' +
@@ -149,7 +217,24 @@ export const PUBLIC_CONFIG_EXAMPLE: PublicConfigDto = {
   supportReplyMinutes: null,
   templateCount: 42,
   contact: { phone: '0800000000', lineOaId: '@getpack-test', email: 'support@example.invalid' },
-  issuer: { legalNameTh: 'บริษัท ตัวอย่าง จำกัด', legalNameEn: 'Example Co., Ltd.' },
+  roadmap: {
+    business: [
+      { key: 'team', status: 'live' },
+      { key: 'brand_lock', status: 'soon' },
+    ],
+    erpModules: [
+      { key: 'getpack_jobs', status: 'live' },
+      { key: 'stock', status: 'in_development' },
+    ],
+  },
+  paymentMethods: ['bank_transfer_slip'],
+  issuer: {
+    legalNameTh: 'บริษัท ตัวอย่าง จำกัด',
+    legalNameEn: 'Example Co., Ltd.',
+    taxId: '0000000000000',
+    branchCode: '00000',
+    addressTh: 'ที่อยู่ตัวอย่าง',
+  },
 };
 
 @Injectable()
@@ -158,6 +243,7 @@ export class PublicConfigService {
     private readonly prisma: PrismaService,
     private readonly settings: SettingsService,
     private readonly catalog: StoreCatalogService,
+    private readonly payments: PaymentsService,
   ) {}
 
   async get(): Promise<PublicConfigDto> {
@@ -177,12 +263,14 @@ export class PublicConfigService {
       this.settings.at('quotes.validity_days').then((s) => s.value),
       this.settings.at('claims.window_days').then((s) => s.value),
     ]);
-    const [proofDays, hours, replyMinutes, channels, issuer] = await Promise.all([
+    const [proofDays, hours, replyMinutes, channels, issuer, roadmap, methods] = await Promise.all([
       this.optional('artwork.first_proof_business_days'),
       this.optional('storefront.support_hours'),
       this.optional('support.reply_minutes'),
       this.catalog.supportChannels(),
       this.issuer(),
+      this.optional('storefront.roadmap'),
+      this.payments.offeredMethods(),
     ]);
     return {
       minOrderQty: { custom: custom._min.quantityMin ?? null, readyStock: stock._min.minOrderQty ?? null },
@@ -195,6 +283,14 @@ export class PublicConfigService {
       supportReplyMinutes: replyMinutes ?? null,
       templateCount,
       contact: { phone: channels.phone, lineOaId: channels.lineOaId, email: channels.email },
+      roadmap: {
+        business: (roadmap?.business ?? []).map((i) => ({ key: i.key, status: i.status })),
+        erpModules: (roadmap?.erpModules ?? []).map((i) => ({ key: i.key, status: i.status })),
+      },
+      // Instalments stay hidden until live (DECISIONS-STAGE-A §3) whatever their flag says.
+      paymentMethods: methods
+        .filter((m) => m.available && m.method !== 'card_instalment_2c2p')
+        .map((m) => m.method),
       issuer,
     };
   }
@@ -205,8 +301,16 @@ export class PublicConfigService {
       where: { isDefault: true, status: 'active' },
       select: { id: true },
     });
-    if (!entity) return { legalNameTh: null, legalNameEn: null };
-    const read = async (key: 'entity.legal_name_th' | 'entity.legal_name_en'): Promise<string | null> => {
+    if (!entity)
+      return { legalNameTh: null, legalNameEn: null, taxId: null, branchCode: null, addressTh: null };
+    const read = async (
+      key:
+        | 'entity.legal_name_th'
+        | 'entity.legal_name_en'
+        | 'entity.tax_id'
+        | 'entity.branch_code'
+        | 'entity.address_th',
+    ): Promise<string | null> => {
       try {
         const value: unknown = (
           await this.settings.at(key as never, { scope: { type: 'entity', id: entity.id } })
@@ -217,11 +321,14 @@ export class PublicConfigService {
         throw error;
       }
     };
-    const [legalNameTh, legalNameEn] = await Promise.all([
+    const [legalNameTh, legalNameEn, taxId, branchCode, addressTh] = await Promise.all([
       read('entity.legal_name_th'),
       read('entity.legal_name_en'),
+      read('entity.tax_id'),
+      read('entity.branch_code'),
+      read('entity.address_th'),
     ]);
-    return { legalNameTh, legalNameEn };
+    return { legalNameTh, legalNameEn, taxId, branchCode, addressTh };
   }
 
   /** A setting defined without a value (no decision gives one) reads as null. */
@@ -253,9 +360,11 @@ export class StorePublicConfigController {
       'a number of its own (D-309): minimum quantities from the catalogue (D-307), the price lock ' +
       '(`quotes.validity_days`, D-051), the claim window (`claims.window_days`, D-082), the first-proof ' +
       'turnaround, support hours and reply time (settings kept by Prepress and the CS Lead), the template ' +
-      'library size, the contacts (D-221) and the legal name of the invoicing entity (D-447). Nothing about production partners — no count, coverage or ' +
+      'library size, the contacts (D-221), the invoicing entity’s legal name, tax id, branch and registered address ' +
+      '(D-447, D-458), what the business and getpack Factory pages say is live (`storefront.roadmap`, D-458) and the ' +
+      'payment methods offered now (D-458). Nothing about production partners — no count, coverage or ' +
       'threshold (D-435). Anonymous, cacheable 5 minutes; a matching `If-None-Match` gets 304.',
-    implements: ['D-309', 'D-051', 'D-082', 'D-221', 'D-307', 'D-435', 'D-447'],
+    implements: ['D-309', 'D-051', 'D-082', 'D-221', 'D-307', 'D-435', 'D-447', 'D-458'],
   })
   @ApiSuccess(200, {
     description: 'Storefront figures',

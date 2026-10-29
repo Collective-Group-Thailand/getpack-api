@@ -916,7 +916,7 @@ export class PaymentsService implements OnModuleInit {
   }
 
   /** The methods a customer can start a payment with, and whether each is offered now (feature flags, D-176). */
-  async offeredMethods(actor: Actor): Promise<{ method: PaymentMethod; available: boolean }[]> {
+  async offeredMethods(actor?: Actor): Promise<{ method: PaymentMethod; available: boolean }[]> {
     const out: { method: PaymentMethod; available: boolean }[] = [];
     for (const [method, rule] of Object.entries(METHODS) as [PaymentMethod, { flag: string | null }][]) {
       out.push({ method, available: rule.flag === null || (await this.flags.isEnabled(rule.flag, actor)) });
