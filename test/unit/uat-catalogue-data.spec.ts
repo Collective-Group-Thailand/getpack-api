@@ -23,6 +23,21 @@ describe('UAT catalogue data (C2b)', () => {
     expect(checked).toBeGreaterThan(20);
   });
 
+  it('writes flat items’ names L × W (labels, hang tags, the A6 card, the food-tray sleeve); pouches keep W × H (C11)', () => {
+    const pair = /(?<![\d.×])(\d+(?:\.\d+)?)×(\d+(?:\.\d+)?)(?![\d.]*×)/;
+    let checked = 0;
+    for (const { product, size } of sizes) {
+      const [code, name, l, w, h] = size;
+      const m = pair.exec(name);
+      if (!m || h !== 0 || product.type === 'flexible_pouch') continue;
+      checked++;
+      expect([product.slug, code, Number(m[1]) * 10, Number(m[2]) * 10]).toEqual([product.slug, code, l, w]);
+    }
+    expect(checked).toBeGreaterThanOrEqual(15);
+    const snack = UAT_PRODUCTS.find((p) => p.slug === 'uat-snack-3side-pouch')!;
+    expect(snack.sizes?.[0]).toEqual(['10x15', '10×15 ซม.', 150, 100, 0]);
+  });
+
   it('describes the postal box print options as its print model offers them (1 spot colour or CMYK)', () => {
     const postal = UAT_PRODUCTS.find((p) => p.slug === 'uat-postal-box-b')!;
     expect(postal.inks).toEqual(['uat-black', 'dev-cmyk']);
