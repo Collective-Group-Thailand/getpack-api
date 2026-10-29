@@ -24,13 +24,7 @@ import {
   type SupportTicketLookupDto,
   type SupportTicketStatusDto,
 } from './support.dto';
-import {
-  callbackDays,
-  contactMatches,
-  queueFor,
-  teamStatus,
-  ticketStage,
-} from './support-contact.rules';
+import { callbackDays, contactMatches, queueFor, teamStatus, ticketStage } from './support-contact.rules';
 
 interface TicketInput {
   source: SupportTicketSource;
