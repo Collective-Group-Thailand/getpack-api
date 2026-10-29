@@ -1,0 +1,1338 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>getpack พอร์ทัลลูกค้า</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@500;600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+:root{
+  --bg:#F6F5F1; --surface:#FFFFFF; --surface-2:#EFEEE9; --stage:#EDECE6;
+  --fg:#16201B; --fg-2:#4A554F; --fg-3:#7B847F; --line:#E3E1DA; --line-2:#CFCDC5;
+  --brand:#17573F; --brand-hover:#0E4430; --brand-tint:#E2EDE7; --on-brand:#FFFFFF;
+  --instant:#8F530E; --instant-tint:#F6EAD9;
+  --shadow:0 1px 2px rgba(22,32,27,.06),0 8px 24px -12px rgba(22,32,27,.18);
+  --f-display:"Anuphan","IBM Plex Sans Thai",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai","Anuphan",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+  --r-sm:8px; --r-md:12px; --r-lg:16px;
+  --gutter:max(16px,env(safe-area-inset-left,0px));
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0F1412; --surface:#161C19; --surface-2:#1D2521; --stage:#212925;
+  --fg:#ECEFEC; --fg-2:#B5BEB8; --fg-3:#89938D; --line:#29322D; --line-2:#3A453F;
+  --brand:#56BC91; --brand-hover:#71CCA4; --brand-tint:#17322A; --on-brand:#06120C;
+  --instant:#E7AA60; --instant-tint:#33271A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F1412; --surface:#161C19; --surface-2:#1D2521; --stage:#212925;
+  --fg:#ECEFEC; --fg-2:#B5BEB8; --fg-3:#89938D; --line:#29322D; --line-2:#3A453F;
+  --brand:#56BC91; --brand-hover:#71CCA4; --brand-tint:#17322A; --on-brand:#06120C;
+  --instant:#E7AA60; --instant-tint:#33271A;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 10px 28px -12px rgba(0,0,0,.6); color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:15px/1.6 var(--f-body);-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--surface)}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1360px;margin:0 auto;padding-left:var(--gutter);padding-right:max(16px,env(safe-area-inset-right,0px))}
+.ico{width:20px;height:20px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* prototype ribbon */
+.proto{background:var(--fg);color:var(--bg);font-size:13px}
+.proto .wrap{display:flex;align-items:center;gap:12px;min-height:36px;padding-block:4px}
+.proto b{font-weight:600;white-space:nowrap}
+.proto button{margin-left:auto;background:none;border:1px solid color-mix(in srgb,var(--bg) 35%,transparent);border-radius:99px;padding:2px 12px;color:var(--bg);font-size:13px;white-space:nowrap}
+.proto span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* header */
+.hdr{position:sticky;top:env(safe-area-inset-top,0px);z-index:50;background:color-mix(in srgb,var(--surface) 92%,transparent);backdrop-filter:saturate(1.4) blur(12px);border-bottom:1px solid var(--line)}
+.hdr .wrap{display:flex;align-items:center;gap:28px;height:64px}
+.logo{font:700 26px/1 var(--f-display);letter-spacing:-.03em;color:var(--fg);text-decoration:none;display:flex;align-items:center;gap:2px;flex:none}
+.logo i{display:inline-block;width:9px;height:9px;border-radius:2px;background:var(--brand);transform:translateY(-9px) rotate(45deg)}
+.nav{display:flex;gap:4px;min-width:0}
+.nav a{padding:8px 12px;border-radius:8px;color:var(--fg-2);text-decoration:none;font-weight:500;font-size:14.5px;white-space:nowrap}
+.nav a:hover{background:var(--surface-2);color:var(--fg)}
+.nav a[aria-current]{color:var(--fg);background:var(--surface-2)}
+.hright{margin-left:auto;display:flex;align-items:center;gap:6px;flex:none}
+.ibtn{position:relative;width:40px;height:40px;display:grid;place-items:center;border-radius:10px;border:0;background:none;color:var(--fg-2)}
+.ibtn:hover{background:var(--surface-2);color:var(--fg)}
+.ibtn .dot{position:absolute;top:6px;right:5px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:var(--brand);color:var(--on-brand);font:600 10.5px/17px var(--f-body);text-align:center}
+.lang{height:40px;padding:0 10px;border:0;background:none;border-radius:10px;color:var(--fg-2);font-weight:600;font-size:13px;display:flex;align-items:center;gap:6px}
+.lang:hover{background:var(--surface-2)}
+.avatar{width:34px;height:34px;border-radius:50%;background:var(--brand-tint);color:var(--brand);font:600 13px/34px var(--f-body);text-align:center;border:0;margin:0 6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 18px;border-radius:10px;border:1px solid transparent;font-weight:600;font-size:14.5px;white-space:nowrap;text-decoration:none}
+.btn-primary{background:var(--brand);color:var(--on-brand)}
+.btn-primary:hover{background:var(--brand-hover)}
+.btn-ghost{background:var(--surface);border-color:var(--line-2);color:var(--fg)}
+.btn-ghost:hover{border-color:var(--fg-3)}
+.menu-btn{display:none}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line-2);background:var(--surface);border-radius:99px;padding:5px 14px;font-size:13.5px;color:var(--fg-2)}
+.chip[aria-pressed="true"]{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.switch{appearance:none;width:34px;height:20px;border-radius:10px;background:var(--line-2);position:relative;cursor:pointer;transition:background .15s;flex:none;margin:0}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:14px;height:14px;border-radius:50%;background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.25);transition:translate .15s}
+.switch:checked{background:var(--brand)}.switch:checked::after{translate:14px 0}
+.dlg-f{display:flex;gap:10px;justify-content:flex-end;padding:12px 24px 20px;flex-wrap:wrap}
+/* rfq tray + toast + dialog */
+.tray{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:40;display:flex;align-items:center;gap:14px;padding:10px 10px 10px 18px;border-radius:16px;background:var(--fg);color:var(--bg);box-shadow:0 18px 40px -12px rgba(0,0,0,.45);max-width:calc(100% - 32px);transition:translate .25s,opacity .25s}
+.tray[hidden]{display:flex!important;opacity:0;pointer-events:none;translate:-50% 24px}
+.tray p{margin:0;font-size:14px;white-space:nowrap}
+.tray p b{font-variant-numeric:tabular-nums}
+.tray .btn{height:38px;background:var(--bg);color:var(--fg)}
+.tray .x{border:0;background:none;color:var(--bg);opacity:.7;font-size:13px}
+.toast{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));translate:-50% 0;z-index:45;background:var(--surface);color:var(--fg);border:1px solid var(--line-2);box-shadow:var(--shadow);padding:10px 16px;border-radius:10px;font-size:13.5px}
+dialog{border:0;padding:0;border-radius:20px;background:var(--surface);color:var(--fg);width:min(720px,calc(100% - 32px));max-height:calc(100% - 48px);box-shadow:0 30px 80px -20px rgba(0,0,0,.5)}
+dialog::backdrop{background:rgba(10,15,12,.5)}
+.dlg-h{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--surface)}
+.dlg-h h2{font:600 20px var(--f-display);margin:0}
+.dlg-b{padding:8px 24px 24px}
+.dlg-b h3{font:600 15px var(--f-display);margin:20px 0 6px;color:var(--brand)}
+.dlg-b ul{margin:0;padding-left:20px;color:var(--fg-2);font-size:14px;display:flex;flex-direction:column;gap:4px}
+.dlg-b .note{margin-top:20px;padding:12px 14px;border-radius:10px;background:var(--instant-tint);font-size:13.5px}
+.chat{position:fixed;right:calc(20px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:41;transition:bottom .25s}
+.tray:not([hidden])~.chat{bottom:calc(92px + env(safe-area-inset-bottom,0px))}
+.chat>button{display:inline-flex;align-items:center;gap:8px;height:48px;padding:0 18px 0 14px;border-radius:24px;border:0;background:#06C755;color:#fff;font-weight:600;font-size:14.5px;box-shadow:0 12px 30px -10px rgba(6,120,60,.6)}
+.chat>button .ico{width:22px;height:22px}
+.chat-pop{position:absolute;right:0;bottom:60px;width:290px;max-width:calc(100vw - 32px);background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 24px 60px -18px rgba(0,0,0,.4);padding:18px}
+.chat-pop h3{font:600 16px var(--f-display);margin:0 0 4px}
+.chat-pop p{margin:0 0 12px;font-size:13.5px;color:var(--fg-2)}
+
+@media (max-width:1180px){.nav a{padding:8px 9px}.hdr .wrap{gap:18px}}
+@media (max-width:1040px){
+  .nav{display:none}.menu-btn{display:grid}
+  .head-grid,.calc{grid-template-columns:minmax(0,1fr)}
+  .modes,.factors{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .steps{grid-template-columns:repeat(2,minmax(0,1fr))}.step:nth-child(2){border-right:0}.step:nth-child(-n+2){border-bottom:1px solid var(--line)}
+  .svc{grid-template-columns:minmax(0,1fr)}
+  .faq{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .hdr .cta,.lang,.avatar{display:none}
+  .hdr .wrap{height:58px}
+  .secnav{top:calc(env(safe-area-inset-top,0px) + 58px)}
+  .head{padding-block:20px 0}
+  .modes{grid-template-columns:minmax(0,1fr);gap:8px}
+  .mode{flex-direction:row;flex-wrap:wrap;align-items:center;gap:6px 12px;padding:14px}
+  .mode p{flex-basis:100%}.mode small{margin-top:0}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .cbody{padding:12px}.card h3{font-size:14.5px}.pr b{font-size:18px}.cfoot{flex-direction:column}
+  .calc-in,.calc-out{padding:20px}
+  .factors,.steps{grid-template-columns:minmax(0,1fr)}.step{border-right:0;border-bottom:1px solid var(--line)}
+  .tb-r{margin-left:0;width:100%}.tb-r .select{flex:1}.tb-r select{width:100%}
+  .cta-band{grid-template-columns:minmax(0,1fr);padding:24px}
+  .chat>button span{display:none}.chat>button{padding:0 13px}
+  .tray p{font-size:13px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+/* ---------- /account + /account/orders + order detail ---------- */
+/* Layout: account shell (compact grouped nav) · orders: to-do strip, status tabs, search/filters, order cards with stage tracker · detail: header, timeline with evidence, delivery, payment, documents, reorder */
+:root{--ok:#1F7A57;--ok-tint:#E1F0E8;--warn:#9A6210;--warn-tint:#FBF0DC;--err:#B8352B;--err-tint:#FBE4E1;--info:#2F5FD0;--info-tint:#E3EAFB}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--ok:#4CC08F;--ok-tint:#173328;--warn:#E3A84B;--warn-tint:#33281A;--err:#F07468;--err-tint:#3A1D1A;--info:#7EA2FF;--info-tint:#1B2440}}
+:root[data-theme="dark"]{--ok:#4CC08F;--ok-tint:#173328;--warn:#E3A84B;--warn-tint:#33281A;--err:#F07468;--err-tint:#3A1D1A;--info:#7EA2FF;--info-tint:#1B2440}
+[hidden]{display:none!important}
+.samplechip{display:inline-block;font:500 11px var(--f-mono);padding:1px 7px;border-radius:6px;border:1px dashed var(--line-2);color:var(--fg-3);white-space:nowrap;vertical-align:middle}
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);gap:28px;padding-block:28px 96px;align-items:start}
+/* nav */
+.anav{position:sticky;top:88px;display:flex;flex-direction:column;gap:2px}
+.me{display:flex;gap:12px;align-items:center;padding:6px 8px 14px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.me .av{width:42px;height:42px;border-radius:50%;background:var(--brand-tint);color:var(--brand);display:grid;place-items:center;font:600 15px var(--f-display);flex:none}
+.me b{display:block;font-weight:600}.me small{color:var(--fg-3);font-size:12.5px}
+.anav a{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:10px;color:var(--fg-2);text-decoration:none;font-size:14.5px;font-weight:500}
+.anav a:hover{background:var(--surface-2);color:var(--fg)}
+.anav a[aria-current]{background:var(--surface);color:var(--fg);box-shadow:var(--shadow);font-weight:600}
+.anav a .ico{width:18px;height:18px}
+.anav a .cnt{margin-left:auto;min-width:22px;height:22px;border-radius:11px;background:var(--brand);color:var(--on-brand);font:600 11.5px/22px var(--f-body);text-align:center;padding:0 6px}
+.anav a .cnt.w{background:var(--warn-tint);color:var(--warn)}
+.anav .sub{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);padding:14px 10px 4px}
+.anav .out{margin-top:10px;color:var(--fg-3)}
+/* page head */
+.ph{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.ph h1{font:700 clamp(28px,3vw,36px)/1.1 var(--f-display);letter-spacing:-.02em;margin:0}
+.ph p{margin:6px 0 0;color:var(--fg-2)}
+/* todo strip */
+.todo{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:22px}
+.td{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:16px;display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:start}
+.td .ic{width:40px;height:40px;border-radius:11px;display:grid;place-items:center}
+.td .ic .ico{width:20px;height:20px}
+.td.pay .ic{background:var(--err-tint);color:var(--err)}.td.file .ic{background:var(--info-tint);color:var(--info)}.td.recv .ic{background:var(--ok-tint);color:var(--ok)}
+.td b{display:block;font-weight:600;font-size:14.5px}.td small{display:block;color:var(--fg-3);font-size:12.5px;margin-top:2px}
+.td .acts{grid-column:1/-1;display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.td .btn{height:36px;font-size:13.5px;padding:0 14px}
+.late{display:inline-block;font:600 11.5px var(--f-body);padding:1px 8px;border-radius:99px;background:var(--err-tint);color:var(--err);margin-left:4px}
+/* tools */
+.tools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.tabs3{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--surface-2);overflow-x:auto;scrollbar-width:none;max-width:100%}
+.tabs3 button{border:0;background:none;border-radius:9px;padding:7px 12px;font-weight:500;font-size:13.5px;color:var(--fg-2);white-space:nowrap;display:inline-flex;gap:6px;align-items:center}
+.tabs3 button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08);font-weight:600}
+.tabs3 .n{font:600 11.5px var(--f-mono);color:var(--fg-3)}
+.srch{position:relative;flex:1;min-width:200px;max-width:360px;margin-left:auto}
+.srch input{width:100%;height:40px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 12px 0 36px;font-size:14px;color:var(--fg)}
+.srch .ico{position:absolute;left:11px;top:11px;width:18px;height:18px;color:var(--fg-3)}
+/* group + order cards */
+.grp{border:1px dashed var(--line-2);border-radius:20px;padding:12px;margin-bottom:14px;display:flex;flex-direction:column;gap:10px}
+.grp-h{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:2px 6px}
+.grp-h b{font-weight:600}.grp-h small{color:var(--fg-3);font-size:13px}
+.oc{border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:18px;display:grid;grid-template-columns:72px minmax(0,1fr) auto;gap:16px;align-items:start;cursor:pointer;transition:border-color .15s}
+.oc:hover{border-color:var(--fg-3)}
+.oc .th{width:72px;height:72px;border-radius:14px;background:var(--stage);display:grid;place-items:center}
+.oc .th svg{width:62px;height:62px}
+.oc h3{margin:0;font:600 16px var(--f-display)}
+.oc .meta{display:flex;gap:6px 14px;flex-wrap:wrap;font-size:13px;color:var(--fg-3);margin-top:4px}
+.oc .meta code{font:500 12.5px var(--f-mono);color:var(--fg-2)}
+.oc .right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;text-align:right}
+.oc .tot{font:700 18px var(--f-display);font-variant-numeric:tabular-nums}
+.oc .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.oc .acts .btn{height:36px;font-size:13.5px;padding:0 14px}
+.pill{display:inline-flex;align-items:center;gap:6px;font:600 12.5px var(--f-body);padding:3px 10px;border-radius:99px}
+.pill i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.pill.pay{background:var(--err-tint);color:var(--err)}.pill.ship{background:var(--info-tint);color:var(--info)}.pill.prod{background:var(--warn-tint);color:var(--warn)}.pill.done{background:var(--ok-tint);color:var(--ok)}
+/* stage tracker */
+.stg{grid-column:2/-1;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:6px;margin-top:4px}
+.stg div{display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--fg-3);min-width:0}
+.stg i{height:6px;border-radius:3px;background:var(--surface-2)}
+.stg .d i{background:var(--brand)}.stg .d{color:var(--fg-2)}
+.stg .c i{background:linear-gradient(90deg,var(--brand) 50%,var(--surface-2) 50%)}.stg .c{color:var(--fg);font-weight:600}
+.stg .x i{background:var(--err)}.stg .x{color:var(--err);font-weight:600}
+.stg span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.due{font-size:12.5px;color:var(--fg-3)}.due b{color:var(--fg-2);font-weight:600}
+.empty{border:1px dashed var(--line-2);border-radius:18px;padding:36px;text-align:center;color:var(--fg-3)}
+/* detail */
+.back{display:inline-flex;gap:6px;align-items:center;color:var(--fg-2);text-decoration:none;font-size:14px;margin-bottom:12px;background:none;border:0;padding:0}
+.back .ico{width:16px;height:16px;rotate:180deg}
+.dh{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-bottom:18px}
+.dh h1{font:700 clamp(24px,2.6vw,32px)/1.15 var(--f-display);margin:6px 0 0;letter-spacing:-.02em}
+.dh .meta{display:flex;gap:6px 16px;flex-wrap:wrap;color:var(--fg-3);font-size:13.5px;margin-top:6px}
+.dh .acts{display:flex;gap:8px;flex-wrap:wrap}
+.dgrid{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.box{border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:20px;display:flex;flex-direction:column;gap:14px}
+.box h2{font:600 17px var(--f-display);margin:0;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{display:grid;grid-template-columns:32px 1fr;gap:12px;position:relative;padding-bottom:18px}
+.tl li:not(:last-child)::after{content:"";position:absolute;left:15px;top:32px;bottom:2px;width:2px;background:var(--line)}
+.tl li.d:not(:last-child)::after{background:var(--brand)}
+.tl .n{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line-2);background:var(--surface);z-index:1}
+.tl .n .ico{width:16px;height:16px}
+.tl li.d .n{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.tl li.c .n{border-color:var(--brand);color:var(--brand);box-shadow:0 0 0 4px var(--brand-tint)}
+.tl b{font-weight:600}.tl .t{font-size:12.5px;color:var(--fg-3);margin-left:8px;font-family:var(--f-mono)}
+.tl p{margin:2px 0 0;font-size:13.5px;color:var(--fg-2)}
+.ev{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.ev .ph2{width:96px;height:72px;border-radius:10px;background:var(--stage);display:grid;place-items:center;overflow:hidden;border:1px solid var(--line);cursor:pointer;padding:0}
+.ev .ph2 svg{width:100%;height:100%}
+.ev .rep{display:flex;gap:10px;align-items:center;padding:8px 12px;border-radius:10px;background:var(--ok-tint);color:var(--ok);font-size:13px;font-weight:600}
+.ship{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sh{border-radius:14px;background:var(--surface-2);padding:12px;font-size:13px;display:flex;flex-direction:column;gap:4px}
+.sh b{font-weight:600;font-size:14px}.sh small{color:var(--fg-3)}
+.kv2{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:13.5px;margin:0}
+.kv2 dt{color:var(--fg-3)}.kv2 dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.kv2 .tot{font-weight:700;font-size:15px;color:var(--fg)}
+.spec{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:center}
+.spec .pv{border-radius:14px;background:var(--stage);height:110px;display:grid;place-items:center}.spec .pv svg{width:100px;height:100px}
+.docs2{display:flex;flex-direction:column}
+.doc{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px}
+.doc:first-child{border-top:0}
+.doc .ic{width:34px;height:34px;border-radius:9px;background:var(--surface-2);display:grid;place-items:center;color:var(--fg-2)}.doc .ic .ico{width:17px;height:17px}
+.doc b{font-weight:600;display:block}.doc small{color:var(--fg-3);font-size:12px}
+.doc .btn{height:32px;font-size:12.5px;padding:0 10px}
+.inst{display:flex;flex-direction:column;gap:8px}
+.ins{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:10px 12px;border-radius:12px;border:1px solid var(--line);font-size:13.5px}
+.ins small{color:var(--fg-3)}.ins .amt{font-weight:700;text-align:right}
+.ins.due{border-color:var(--err);background:color-mix(in srgb,var(--err-tint) 50%,var(--surface))}
+.claim{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;background:var(--surface-2);font-size:13.5px}
+.claim .ico{width:18px;height:18px;color:var(--fg-2);flex:none;margin-top:2px}
+.reo{display:flex;flex-direction:column;gap:10px}
+.togrow{display:flex;justify-content:space-between;align-items:center;gap:12px;font-size:13.5px}
+.qrst{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.qrst div{border-radius:12px;background:var(--surface-2);padding:10px;text-align:center}
+.qrst b{display:block;font:700 20px var(--f-display)}.qrst small{color:var(--fg-3);font-size:12px}
+.msg{display:flex;flex-direction:column;gap:8px}
+.bub{max-width:88%;padding:10px 12px;border-radius:14px;font-size:13.5px}
+.bub.them{background:var(--surface-2);align-self:flex-start;border-bottom-left-radius:4px}
+.bub.me2{background:var(--brand);color:var(--on-brand);align-self:flex-end;border-bottom-right-radius:4px}
+.bub small{display:block;opacity:.7;font-size:11.5px;margin-top:2px}
+.compose{display:flex;gap:8px}.compose input{flex:1;min-width:0;height:40px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 12px;color:var(--fg)}
+.lb{position:fixed;inset:0;background:rgba(8,12,10,.8);z-index:70;display:grid;place-items:center;padding:24px}
+.lb .in{max-width:720px;width:100%;background:var(--surface);border-radius:18px;overflow:hidden}
+.lb .in .img{background:var(--stage);aspect-ratio:4/3;display:grid;place-items:center}.lb .in .img svg{width:80%;height:80%}
+.lb .in p{margin:0;padding:14px 18px;font-size:14px;display:flex;justify-content:space-between;gap:10px}
+/* added features */
+.lineb{display:flex;gap:14px;align-items:center;padding:14px 16px;border-radius:16px;background:linear-gradient(120deg,color-mix(in srgb,#06C755 12%,var(--surface)),var(--surface));border:1px solid var(--line);margin-bottom:18px;flex-wrap:wrap}
+.lineb .ic{width:40px;height:40px;border-radius:11px;background:#06C755;color:#fff;display:grid;place-items:center;flex:none}.lineb .ic .ico{width:22px;height:22px}
+.lineb b{font-weight:600;display:block}.lineb small{color:var(--fg-2);font-size:13px}
+.lineb .btn{margin-left:auto;height:38px}
+.lineb.on{background:var(--ok-tint)}
+.spend{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;margin-top:24px}
+.sp{border:1px solid var(--line);border-radius:18px;background:var(--surface);padding:18px;display:flex;flex-direction:column;gap:10px}
+.sp h3{margin:0;font:600 16px var(--f-display);display:flex;justify-content:space-between;gap:10px;align-items:center}
+.sp .big{font:700 26px var(--f-display);font-variant-numeric:tabular-nums}
+.bars2{display:flex;align-items:flex-end;gap:10px;height:90px}
+.bars2 div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11.5px;color:var(--fg-3)}
+.bars2 i{width:100%;border-radius:6px 6px 2px 2px;background:var(--brand);min-height:3px}
+.bars2 .z i{background:var(--surface-2)}
+.edit{display:flex;flex-direction:column;gap:12px}
+.edit .row{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;font-size:14px}
+.qtyx{display:inline-flex;align-items:center;border:1px solid var(--line-2);border-radius:10px;overflow:hidden}
+.qtyx button{width:34px;height:36px;border:0;background:var(--surface-2);font-size:16px;color:var(--fg)}
+.qtyx span{min-width:70px;text-align:center;font:600 14px var(--f-mono)}
+.diff{display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:var(--surface-2);font-size:13.5px}
+.diff b{font-variant-numeric:tabular-nums}
+.proof{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.proof figure{margin:0;border-radius:12px;background:var(--stage);padding:10px;display:flex;flex-direction:column;gap:6px;position:relative}
+.proof figure svg{width:100%;height:120px}
+.proof figcaption{font-size:12px;color:var(--fg-3)}
+.proof .pin{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--info);color:#fff;display:grid;place-items:center;font:700 11px var(--f-body);border:2px solid #fff}
+.slots2{display:flex;gap:6px;flex-wrap:wrap}
+.slots2 button{border:1px solid var(--line-2);background:var(--surface);border-radius:10px;padding:6px 10px;font-size:13px;color:var(--fg-2)}
+.slots2 button[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+dialog.gd{width:min(520px,calc(100% - 32px))}
+.gd .body{padding:8px 24px 20px;display:flex;flex-direction:column;gap:12px}
+.gd .body label{display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--fg-2)}
+.gd .body input[type=text]{height:42px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 12px;color:var(--fg);font:500 13px var(--f-mono)}
+.gd .opt2{display:grid;grid-template-columns:18px 1fr;gap:10px;padding:10px 12px;border:1px solid var(--line-2);border-radius:10px;cursor:pointer;font-size:13.5px}
+.gd .opt2:has(input:checked){border-color:var(--fg);box-shadow:inset 0 0 0 1px var(--fg)}
+.gd .opt2 input{accent-color:var(--brand);margin:3px 0 0}
+.gd .opt2 small{display:block;color:var(--fg-3)}
+.gd .warnbox{padding:10px 12px;border-radius:10px;background:var(--warn-tint);font-size:13px}
+@media (max-width:640px){.spend{grid-template-columns:minmax(0,1fr)}.lineb .btn{margin-left:0;width:100%}.proof{grid-template-columns:minmax(0,1fr)}}
+/* responsive */
+@media (max-width:1100px){.dgrid{grid-template-columns:minmax(0,1fr)}.todo{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:900px){.shell{grid-template-columns:minmax(0,1fr);gap:16px;padding-top:12px}
+  .anav{position:static;flex-direction:row;overflow-x:auto;scrollbar-width:none;gap:4px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+  .anav .me,.anav .sub,.anav .out{display:none}.anav a{flex:none;padding:8px 12px;font-size:13.5px}}
+@media (max-width:640px){.oc{grid-template-columns:56px minmax(0,1fr);padding:14px;gap:12px}.oc .th{width:56px;height:56px}.oc .th svg{width:48px;height:48px}.oc .right{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;text-align:left;flex-wrap:wrap}
+  .stg{grid-column:1/-1;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}.stg span{font-size:10.5px}
+  .srch{max-width:none;margin-left:0;flex-basis:100%}.ship{grid-template-columns:minmax(0,1fr)}.qrst b{font-size:17px}.spec{grid-template-columns:90px 1fr}.spec .pv{height:90px}.box{padding:16px}.dh .acts{width:100%}.dh .acts .btn{flex:1}}
+.card{position:relative;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);overflow:hidden;transition:box-shadow .2s,border-color .2s,translate .2s}
+.card:hover{box-shadow:var(--shadow);border-color:var(--line-2);translate:0 -2px}
+.stage{position:relative;aspect-ratio:4/3;background:var(--stage);display:grid;place-items:center}
+.stage svg{width:62%;height:78%}
+.badge{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 9px 3px 7px;border-radius:99px}
+.badge .ico{width:13px;height:13px;stroke-width:2}
+.badge.instant{background:var(--instant-tint);color:var(--instant)}
+.badge.stock{background:var(--brand-tint);color:var(--brand)}
+.cbody{padding:14px 16px 16px;display:flex;flex-direction:column;gap:4px;flex:1}
+.cat-l{font-size:12px;color:var(--fg-3)}
+.card h3{font:600 16px/1.4 var(--f-display);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.8em}
+.card h3 a{color:inherit;text-decoration:none}
+.card h3 a::after{content:"";position:absolute;inset:0}
+.pr{margin-top:8px;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.pr small{font-size:12.5px;color:var(--fg-3)}
+.pr b{font:600 22px var(--f-display);color:var(--brand);font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.pr .q{font:500 14px var(--f-body);color:var(--fg-2)}
+.meta{display:flex;gap:4px 12px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-2);margin-top:4px}
+.meta span{display:inline-flex;align-items:center;gap:5px}
+.meta .ico{width:14px;height:14px;color:var(--fg-3)}
+.cfoot{display:flex;gap:8px;margin-top:14px;position:relative;z-index:1}
+.cfoot .btn{height:36px;font-size:13.5px;padding:0 12px;flex:1}
+.btn-soft{background:var(--surface-2);color:var(--fg);border-color:transparent}
+.btn-soft:hover{background:var(--line)}
+.btn-soft[aria-pressed="true"]{background:var(--brand-tint);color:var(--brand)}
+
+/* ---------- portal round: /track + /account/* menus ---------- */
+/* Layout: same account shell as account-orders · each menu = page head + segmented tabs + list of cards (no wide tables) · detail opens in a side sheet on desktop, full screen on phone */
+.proto .themes{display:inline-flex;gap:2px;margin-left:auto}
+.proto .themes button{margin:0;border-radius:99px;padding:2px 10px}
+.proto .themes button[aria-pressed="true"]{background:var(--bg);color:var(--fg)}
+.proto #notesBtn{margin-left:6px}
+@media (max-width:640px){.proto span.d{display:none}.proto .wrap{flex-wrap:wrap;row-gap:4px}.proto .themes{margin-left:0}.proto .themes button{padding:2px 8px}.proto #notesBtn{margin-left:auto}}
+.hdr .login{font-weight:600;font-size:14px;color:var(--fg);text-decoration:none;padding:8px 10px;border-radius:8px}
+.seg{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--surface-2);overflow-x:auto;scrollbar-width:none;max-width:100%;margin-bottom:16px;width:max-content}
+.seg button{border:0;background:none;border-radius:9px;padding:7px 12px;font-weight:500;font-size:13.5px;color:var(--fg-2);white-space:nowrap;display:inline-flex;gap:6px;align-items:center}
+.seg button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.08);font-weight:600}
+.seg .n{font:600 11.5px var(--f-mono);color:var(--fg-3)}
+.seg .n.w{color:var(--warn)}
+.list{display:flex;flex-direction:column;gap:10px}
+.row{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:16px;display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:14px;align-items:start}
+.row.click{cursor:pointer}.row.click:hover{border-color:var(--fg-3)}
+.row .th{width:52px;height:52px;border-radius:12px;background:var(--stage);display:grid;place-items:center;color:var(--fg-2)}
+.row .th svg{width:44px;height:44px}.row .th .ico{width:22px;height:22px}
+.row h3{margin:0;font:600 15.5px/1.35 var(--f-display)}
+.row .sub2{font-size:13px;color:var(--fg-3);margin-top:3px;display:flex;flex-wrap:wrap;gap:4px 12px}
+.row .sub2 code{font:500 12.5px var(--f-mono);color:var(--fg-2)}
+.row .side{display:flex;flex-direction:column;align-items:flex-end;gap:8px;text-align:right}
+.row .amt{font:700 17px var(--f-display);font-variant-numeric:tabular-nums}
+.row .amt small{display:block;font:500 11.5px var(--f-body);color:var(--fg-3)}
+.row .acts{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.row .acts .btn{height:34px;font-size:13px;padding:0 12px}
+.row .note{grid-column:2/-1;font-size:13px;color:var(--fg-2);padding:10px 12px;border-radius:12px;background:var(--surface-2);display:flex;gap:10px;align-items:flex-start}
+.row .note .ico{width:17px;height:17px;flex:none;margin-top:2px}
+.row .note.w{background:var(--warn-tint);color:var(--fg)}.row .note.w .ico{color:var(--warn)}
+.row .note.i{background:var(--info-tint);color:var(--fg)}.row .note.i .ico{color:var(--info)}
+.pill.wait{background:var(--warn-tint);color:var(--warn)}.pill.info{background:var(--info-tint);color:var(--info)}.pill.mute{background:var(--surface-2);color:var(--fg-3)}
+.lock{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--fg-2)}
+.lock .meter{width:64px;height:5px;border-radius:3px;background:var(--surface-2);overflow:hidden}.lock .meter i{display:block;height:100%;background:var(--brand)}
+.lock.late .meter i{background:var(--err)}
+.btn-sm{height:34px;font-size:13px;padding:0 12px}
+.btn-link{border:0;background:none;color:var(--brand);font-weight:600;font-size:13.5px;padding:0;text-decoration:underline;text-underline-offset:3px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stat{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:4px}
+.stat small{color:var(--fg-3);font-size:12.5px}.stat b{font:700 24px var(--f-display);font-variant-numeric:tabular-nums}
+.stat .sm{font-size:12.5px;color:var(--fg-2)}
+.bar2{height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden}.bar2 i{display:block;height:100%;background:var(--brand)}
+.sec2{margin-top:24px}.sec2>h2{font:600 18px var(--f-display);margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.sec2>p.lede2{margin:-4px 0 12px;color:var(--fg-2);font-size:14px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filters select,.filters input{height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 10px;font-size:13.5px;color:var(--fg);min-width:0}
+.filters .srch{margin-left:0}
+.chipf{border:1px solid var(--line-2);background:var(--surface);border-radius:99px;padding:5px 12px;font-size:13px;color:var(--fg-2);white-space:nowrap}
+.chipf[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.kv3{display:grid;grid-template-columns:minmax(0,150px) minmax(0,1fr);gap:8px 16px;font-size:13.5px;margin:0}
+.kv3 dt{color:var(--fg-3)}.kv3 dd{margin:0;overflow-wrap:anywhere}
+.callout{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border-radius:14px;font-size:13.5px}
+.callout .ico{flex:none;width:20px;height:20px;margin-top:1px}
+.callout.w{background:var(--warn-tint)}.callout.w .ico{color:var(--warn)}
+.callout.i{background:var(--info-tint)}.callout.i .ico{color:var(--info)}
+.callout.ok{background:var(--ok-tint)}.callout.ok .ico{color:var(--ok)}
+.callout.e{background:var(--err-tint)}.callout.e .ico{color:var(--err)}
+.callout b{font-weight:600}.callout p{margin:2px 0 0;color:var(--fg-2)}
+.callout .btn{margin-left:auto;flex:none}
+/* sheet (detail) */
+.sheet{position:fixed;inset:0;z-index:65;display:flex;justify-content:flex-end;background:rgba(10,15,12,.45)}
+.sheet .pane{width:min(640px,100%);height:100%;background:var(--bg);overflow-y:auto;box-shadow:-20px 0 60px -20px rgba(0,0,0,.4);display:flex;flex-direction:column}
+.sheet .sh-h{position:sticky;top:0;z-index:2;background:var(--surface);border-bottom:1px solid var(--line);padding:14px 20px;padding-top:calc(14px + env(safe-area-inset-top,0px));display:flex;align-items:center;gap:12px}
+.sheet .sh-h h2{font:600 18px var(--f-display);margin:0;flex:1;min-width:0}
+.sheet .sh-b{padding:18px 20px 32px;padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.sheet .sh-f{position:sticky;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:12px 20px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+/* thread */
+.thread{display:flex;flex-direction:column;gap:10px}
+.msgx{max-width:86%;display:flex;flex-direction:column;gap:3px}
+.msgx .b{padding:10px 13px;border-radius:14px;font-size:14px}
+.msgx small{font-size:11.5px;color:var(--fg-3)}
+.msgx.them{align-self:flex-start}.msgx.them .b{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px}
+.msgx.me{align-self:flex-end;text-align:right}.msgx.me .b{background:var(--brand);color:var(--on-brand);border-bottom-right-radius:4px;text-align:left}
+.sys{align-self:center;font-size:12px;color:var(--fg-3);padding:4px 10px;border-radius:99px;background:var(--surface-2)}
+.inbox{display:grid;grid-template-columns:320px minmax(0,1fr);border:1px solid var(--line);border-radius:18px;background:var(--surface);overflow:hidden;min-height:540px}
+.ib-l{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.ib-l .ib-t{padding:12px;border-bottom:1px solid var(--line)}
+.ib-i{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:10px;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;width:100%;color:var(--fg)}
+.ib-i[aria-current="true"]{background:var(--surface-2)}
+.ib-i .av2{width:36px;height:36px;border-radius:10px;background:var(--stage);display:grid;place-items:center;color:var(--fg-2)}.ib-i .av2 .ico{width:18px;height:18px}
+.ib-i b{font-weight:600;font-size:14px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib-i span.p{font-size:12.5px;color:var(--fg-3);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib-i time{font-size:11.5px;color:var(--fg-3);white-space:nowrap}
+.ib-i .dotn{display:block;width:8px;height:8px;border-radius:50%;background:var(--brand);margin:6px 0 0 auto}
+.ib-r{display:flex;flex-direction:column;min-width:0}
+.ib-h{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.ib-h b{font:600 16px var(--f-display)}.ib-h small{color:var(--fg-3);font-size:12.5px;display:block}
+.ib-b{flex:1;padding:18px;background:var(--bg);overflow-y:auto}
+.ib-c{padding:12px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.ib-c textarea{width:100%;min-height:64px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);padding:10px 12px;color:var(--fg);font:inherit;resize:vertical}
+.ib-c .r{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qchips{display:flex;gap:6px;flex-wrap:wrap}
+/* settings rows */
+.set{border:1px solid var(--line);border-radius:16px;background:var(--surface)}
+.set>div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px;border-top:1px solid var(--line)}
+.set>div:first-child{border-top:0}
+.set b{font-weight:600;font-size:14.5px;display:block}.set small{color:var(--fg-3);font-size:12.5px;display:block}
+.tog{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--fg-2)}
+.matrix{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+.matrix .mr{display:grid;grid-template-columns:minmax(0,1fr) repeat(4,78px);align-items:center;border-top:1px solid var(--line);padding:12px 16px;gap:8px}
+.matrix .mr:first-child{border-top:0;background:var(--surface-2);font-size:12.5px;color:var(--fg-3);padding-block:9px}
+.matrix .mr>span{display:flex;justify-content:center}
+.matrix .mr b{font-weight:600;font-size:14px;display:block}.matrix .mr small{color:var(--fg-3);font-size:12.5px}
+.matrix .lockd{font-size:11.5px;color:var(--fg-3)}
+/* track */
+.trk{max-width:980px;margin:0 auto;padding-block:36px 96px}
+.trk h1{font:700 clamp(30px,3.6vw,42px)/1.1 var(--f-display);letter-spacing:-.02em;margin:0}
+.trk .lede{margin:8px 0 0;color:var(--fg-2);max-width:62ch}
+.trk-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:16px;margin-top:24px;align-items:start}
+.panel{border:1px solid var(--line);border-radius:20px;background:var(--surface);padding:22px;display:flex;flex-direction:column;gap:14px}
+.panel h2{font:600 18px var(--f-display);margin:0}
+.fld{display:flex;flex-direction:column;gap:6px}
+.fld label{font-size:13px;font-weight:600}
+.fld input{height:46px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);padding:0 14px;font-size:15px;color:var(--fg);width:100%}
+.fld input:focus{outline:none;border-color:var(--brand);box-shadow:0 0 0 4px color-mix(in srgb,var(--brand) 18%,transparent)}
+.fld .hint{font-size:12.5px;color:var(--fg-3)}
+.fld .err{font-size:12.5px;color:var(--err)}
+.mode2{display:flex;gap:4px;padding:4px;border-radius:12px;background:var(--surface-2)}
+.mode2 button{flex:1;border:0;background:none;border-radius:9px;padding:8px 10px;font-weight:500;font-size:13.5px;color:var(--fg-2)}
+.mode2 button[aria-selected="true"]{background:var(--surface);color:var(--fg);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.side-dark{background:var(--fg);color:var(--bg);border-radius:20px;padding:22px;display:flex;flex-direction:column;gap:12px}
+.side-dark h2{font:600 18px var(--f-display);margin:0}
+.side-dark p{margin:0;opacity:.8;font-size:14px}
+.side-dark ul{margin:0;padding-left:18px;font-size:13.5px;opacity:.85;display:flex;flex-direction:column;gap:4px}
+.side-dark .btn{align-self:flex-start;background:var(--bg);color:var(--fg)}
+.res-h{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.eta2{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.eta2 div{border-radius:14px;background:var(--surface-2);padding:12px 14px}
+.eta2 small{display:block;color:var(--fg-3);font-size:12px}.eta2 b{font:600 16px var(--f-display)}
+.trk-steps{list-style:none;margin:0;padding:0}
+.trk-steps li{display:grid;grid-template-columns:32px minmax(0,1fr) auto;gap:12px;position:relative;padding-bottom:18px}
+.trk-steps li:not(:last-child)::after{content:"";position:absolute;left:15px;top:32px;bottom:2px;width:2px;background:var(--line)}
+.trk-steps li.d:not(:last-child)::after{background:var(--brand)}
+.trk-steps .n{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line-2);background:var(--surface);z-index:1;color:var(--fg-3)}
+.trk-steps .n .ico{width:16px;height:16px}
+.trk-steps li.d .n{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.trk-steps li.c .n{border-color:var(--brand);color:var(--brand);box-shadow:0 0 0 4px var(--brand-tint)}
+.trk-steps b{font-weight:600}.trk-steps p{margin:2px 0 0;font-size:13.5px;color:var(--fg-2)}
+.trk-steps time{font:500 12px var(--f-mono);color:var(--fg-3);white-space:nowrap;padding-top:6px}
+.subst{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.subst span{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--surface-2);color:var(--fg-2);display:inline-flex;gap:4px;align-items:center}
+.subst span.d{background:var(--ok-tint);color:var(--ok)}
+.subst .ico{width:12px;height:12px;stroke-width:2.4}
+.privacy-note{display:flex;gap:10px;align-items:flex-start;font-size:12.5px;color:var(--fg-3)}
+.privacy-note .ico{width:16px;height:16px;flex:none;margin-top:1px}
+/* consent */
+.cs-wrap{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);min-height:calc(100vh - 100px);border-radius:0}
+.cs-art{background:var(--brand);color:var(--on-brand);padding:48px clamp(24px,5vw,64px);display:flex;flex-direction:column;gap:18px;justify-content:center}
+.cs-art h1{font:700 clamp(30px,3.4vw,44px)/1.12 var(--f-display);margin:0;letter-spacing:-.02em}
+.cs-art p{margin:0;opacity:.85;max-width:44ch}
+.cs-art .steps3{display:flex;gap:8px;align-items:center;font-size:13px;opacity:.9}
+.cs-art .steps3 span{display:inline-flex;align-items:center;gap:6px}
+.cs-art .steps3 i{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font:600 11.5px var(--f-body);font-style:normal;background:color-mix(in srgb,var(--on-brand) 18%,transparent)}
+.cs-art .steps3 .on i{background:var(--on-brand);color:var(--brand)}
+.cs-art .steps3 b{font-weight:500}
+.cs-form{padding:40px clamp(16px,5vw,64px);display:flex;flex-direction:column;gap:18px;justify-content:center;max-width:620px;width:100%;margin:0 auto}
+.cs-form h2{font:700 26px/1.2 var(--f-display);margin:0;letter-spacing:-.01em}
+.cs-form>p{margin:-8px 0 0;color:var(--fg-2);font-size:14.5px}
+.ccard{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:12px}
+.ccard.req{border-color:var(--line-2)}
+.ccard .top{display:flex;gap:12px;align-items:flex-start}
+.ccard .top .tx{flex:1;min-width:0}
+.ccard .top b{font-weight:600;font-size:15px;display:block}
+.ccard .top small{font-size:12.5px;color:var(--fg-3)}
+.ccard .tag{font:600 11.5px var(--f-body);padding:2px 8px;border-radius:99px;white-space:nowrap}
+.ccard .tag.r{background:var(--surface-2);color:var(--fg-2)}.ccard .tag.o{background:var(--brand-tint);color:var(--brand)}
+.ccard ul.pts{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--fg-2)}
+.ccard ul.pts li{display:grid;grid-template-columns:18px 1fr;gap:8px}
+.ccard ul.pts .ico{width:16px;height:16px;color:var(--brand);margin-top:3px}
+.ccard .docs3{display:flex;gap:8px;flex-wrap:wrap}
+.docbtn{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line-2);background:var(--surface);border-radius:10px;padding:7px 12px;font-size:13px;font-weight:500;color:var(--fg)}
+.docbtn .ico{width:16px;height:16px;color:var(--fg-3)}
+.docbtn em{font-style:normal;color:var(--fg-3);font:500 11.5px var(--f-mono)}
+.check{display:grid;grid-template-columns:24px 1fr;gap:10px;align-items:start;cursor:pointer;font-size:14px;padding:10px 12px;border-radius:12px;background:var(--surface-2)}
+.check input{appearance:none;width:22px;height:22px;border-radius:7px;border:2px solid var(--line-2);background:var(--surface);margin:0;display:grid;place-items:center;cursor:pointer}
+.check input:checked{background:var(--brand);border-color:var(--brand)}
+.check input:checked::after{content:"";width:6px;height:11px;border:solid var(--on-brand);border-width:0 2.5px 2.5px 0;rotate:45deg;translate:0 -1px}
+.chan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.chan label{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:1px solid var(--line-2);border-radius:12px;font-size:13.5px;cursor:pointer;background:var(--surface)}
+.chan label:has(input:checked){border-color:var(--brand);background:var(--brand-tint)}
+.chan .h{display:flex;justify-content:space-between;align-items:center;gap:6px;font-weight:600}
+.chan small{color:var(--fg-3);font-size:12px}
+.cs-foot{display:flex;flex-direction:column;gap:8px}
+.cs-foot .btn{height:48px;font-size:15.5px}
+.cs-foot .btn[disabled]{opacity:1;background:var(--surface-2);color:var(--fg-3);cursor:not-allowed}
+.cs-foot small{color:var(--fg-3);font-size:12.5px;text-align:center}
+/* legal reader */
+dialog.legal{width:min(860px,calc(100% - 24px));height:min(88vh,860px);display:none;flex-direction:column}
+dialog.legal[open]{display:flex}
+.lg-body{display:grid;grid-template-columns:220px minmax(0,1fr);flex:1;min-height:0}
+.lg-toc{border-right:1px solid var(--line);padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;background:var(--surface-2)}
+.lg-toc .lbl{font:500 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);padding:4px 8px 8px}
+.lg-toc a{font-size:13.5px;color:var(--fg-2);text-decoration:none;padding:7px 8px;border-radius:8px}
+.lg-toc a:hover,.lg-toc a[aria-current="true"]{background:var(--surface);color:var(--fg)}
+.lg-main{overflow-y:auto;padding:22px 28px 40px;scroll-behavior:smooth}
+.lg-main .ver{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+.lg-main .ver span{font:500 12px var(--f-mono);padding:3px 8px;border-radius:6px;background:var(--surface-2);color:var(--fg-2)}
+.lg-main .sum{border-radius:14px;background:var(--brand-tint);padding:14px 16px;margin-bottom:18px}
+.lg-main .sum b{font:600 14px var(--f-display);color:var(--brand)}
+.lg-main .sum ul{margin:6px 0 0;padding-left:18px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.lg-main h3{font:600 17px var(--f-display);margin:22px 0 6px;scroll-margin-top:12px}
+.lg-main p{margin:0 0 10px;font-size:14.5px;line-height:1.75;color:var(--fg-2);max-width:68ch}
+.lg-main .ph{display:inline-block}
+.prog{height:3px;background:var(--surface-2)}.prog i{display:block;height:100%;width:0;background:var(--brand)}
+/* docs */
+.docrow{grid-template-columns:44px minmax(0,1fr) auto}
+.docrow .th{width:44px;height:44px;border-radius:11px}
+.docrow .th .ico{width:20px;height:20px}
+.et{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ok)}
+.et .ico{width:13px;height:13px;stroke-width:2.4}
+.et.p{color:var(--warn)}
+.months{display:flex;flex-direction:column;gap:18px}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.mh b{font:600 15px var(--f-display)}.mh small{color:var(--fg-3)}
+/* uploads */
+.drop{border:1.5px dashed var(--line-2);border-radius:14px;padding:18px;text-align:center;color:var(--fg-2);font-size:13.5px;background:var(--surface)}
+.drop .ico{width:24px;height:24px;color:var(--fg-3);margin:0 auto 6px;display:block}
+/* rewards */
+.tier{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:6px}
+.tier div{font-size:12px;color:var(--fg-3);display:flex;flex-direction:column;gap:5px}
+.tier i{height:6px;border-radius:3px;background:var(--surface-2)}
+.tier .d i{background:var(--brand)}.tier .d{color:var(--fg-2)}.tier .c{color:var(--fg);font-weight:600}
+.tier .c i{background:linear-gradient(90deg,var(--brand) 35%,var(--surface-2) 35%)}
+.code{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.code output{font:600 22px var(--f-mono);letter-spacing:.08em;padding:8px 14px;border-radius:12px;background:var(--surface-2)}
+.linkbox{display:flex;gap:8px;align-items:center;min-width:0}
+.linkbox input{flex:1;min-width:0;height:40px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 12px;font:500 13px var(--f-mono);color:var(--fg)}
+.ag-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+/* address cards */
+.addr{border:1px solid var(--line);border-radius:16px;background:var(--surface);padding:16px;display:flex;flex-direction:column;gap:8px;font-size:14px}
+.addr .h{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.addr .h b{font:600 15px var(--f-display)}
+.addr .ln{color:var(--fg-2)}
+.addr .ln code{font:500 13.5px var(--f-mono);color:var(--fg)}
+.addr .acts{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+.addr .acts .btn{height:34px;font-size:13px;padding:0 12px}
+.addr.add{border-style:dashed;align-items:center;justify-content:center;color:var(--fg-2);min-height:150px;cursor:pointer;background:none}
+.badge2{font:600 11.5px var(--f-body);padding:2px 8px;border-radius:99px;background:var(--brand-tint);color:var(--brand)}
+.badge2.g{background:var(--surface-2);color:var(--fg-2)}
+.member{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 16px;border-top:1px solid var(--line)}
+.member:first-child{border-top:0}
+.member .av{width:40px;height:40px;border-radius:50%;background:var(--brand-tint);color:var(--brand);display:grid;place-items:center;font:600 14px var(--f-display)}
+.member b{font-weight:600}.member small{display:block;color:var(--fg-3);font-size:12.5px}
+.member select{height:34px;border-radius:9px;border:1px solid var(--line-2);background:var(--surface);padding:0 8px;font-size:13px;color:var(--fg)}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}
+.flow span{padding:6px 10px;border-radius:10px;background:var(--surface-2)}
+.flow .ico{width:16px;height:16px;color:var(--fg-3)}
+.flagtag{font:500 11px var(--f-mono);padding:1px 7px;border-radius:6px;background:var(--info-tint);color:var(--info);white-space:nowrap}
+/* responsive */
+@media (max-width:1100px){.grid3,.ag-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:900px){.inbox{grid-template-columns:minmax(0,1fr)}.ib-l{border-right:0}.inbox.open .ib-l{display:none}.inbox:not(.open) .ib-r{display:none}
+  .trk-grid,.cs-wrap{grid-template-columns:minmax(0,1fr)}.cs-art{padding:28px 16px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .lg-body{grid-template-columns:minmax(0,1fr)}.lg-toc{display:none}}
+@media (max-width:640px){
+  .row{grid-template-columns:44px minmax(0,1fr);padding:14px;gap:12px}.row .th{width:44px;height:44px}.row .th svg{width:38px;height:38px}
+  .row .side{grid-column:1/-1;flex-direction:row;justify-content:space-between;align-items:center;text-align:left;flex-wrap:wrap}
+  .row .acts{justify-content:flex-start}.row .note{grid-column:1/-1}
+  .grid2,.grid3,.eta2{grid-template-columns:minmax(0,1fr)}.ag-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kv3{grid-template-columns:minmax(0,1fr);gap:2px}.kv3 dd{margin-bottom:8px}
+  .matrix .mr{grid-template-columns:minmax(0,1fr) repeat(4,44px);padding:12px;font-size:12px}
+  .chan{grid-template-columns:minmax(0,1fr)}
+  .callout{flex-wrap:wrap}.callout .btn{margin-left:0;width:100%}
+  .trk{padding-block:20px 80px}.panel{padding:16px}
+  .lg-main{padding:16px}
+  .sheet .sh-b{padding:16px}
+  .cs-form{padding-block:24px}
+}
+body{margin:0}
+.filters .srch input{padding-left:36px}
+.cs-art{justify-content:flex-start;padding-top:clamp(28px,8vh,96px)}
+.trk h1 .pill{font-size:13px;flex:none}
+@media (max-width:640px){.cs-form{padding-inline:0}}
+/* grouped rows read like a ledger, not a stack of floating cards */
+.list.rows{gap:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}
+.list.rows>.row{border:0;border-radius:0;border-top:1px solid var(--line);background:none}
+.list.rows>.row:first-child{border-top:0}
+.list.rows>.row .th{background:var(--surface-2)}
+.cs-art h1{font-size:clamp(28px,3vw,38px)}
+.cs-art .help{margin-top:auto;font-size:13px;opacity:.8;border-top:1px solid color-mix(in srgb,var(--on-brand) 22%,transparent);padding-top:14px}
+@media (max-width:900px){.cs-art .help{display:none}}
+
+.ccard ol.pts.num{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;font-size:13.5px;color:var(--fg-2);border-top:1px solid var(--line)}
+.ccard ol.pts.num li{display:grid;grid-template-columns:28px 1fr;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}
+.ccard ol.pts.num i{font:500 11.5px var(--f-mono);font-style:normal;color:var(--brand);background:var(--brand-tint,var(--surface-2));border-radius:6px;height:20px;display:grid;place-items:center;margin-top:1px}
+.recon{border:1px solid var(--line);border-radius:14px;background:var(--surface);margin-top:14px;overflow:hidden}.recon .rh{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);font-size:13.5px}.recon table{width:100%;border-collapse:collapse;font-size:13px}.recon th,.recon td{padding:9px 16px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}.recon th:first-child,.recon td:first-child{text-align:left;white-space:normal}.recon th{font-weight:500;color:var(--fg-3);font-size:12px}.recon td{font-family:var(--f-mono);font-variant-numeric:tabular-nums}.recon td:first-child{font-family:var(--f-body)}.recon tfoot td{font-weight:600;border-bottom:0;background:var(--surface-2)}.recon .scroll{overflow-x:auto}
+.apv{display:grid;grid-template-columns:minmax(0,360px) minmax(0,1fr);border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--surface)}.apv .q{border-right:1px solid var(--line)}.apv .qi{display:block;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:none;padding:14px 16px;color:var(--fg);font:inherit;cursor:pointer}.apv .qi[aria-current="true"]{box-shadow:inset 2px 0 0 var(--brand);background:var(--surface-2)}.apv .qi .r1{display:flex;justify-content:space-between;gap:8px;font-size:13.5px}.apv .qi small{display:block;color:var(--fg-3);font-size:12.5px;margin-top:2px}.apv .qi .r2{display:flex;justify-content:space-between;gap:8px;margin-top:8px;font:500 12.5px var(--f-mono)}.apv .d{padding:18px;display:flex;flex-direction:column;gap:14px;min-width:0}.bud .bar{position:relative;height:6px;border-radius:3px;background:var(--surface-2);overflow:hidden;margin:8px 0 6px}.bud .bar i{position:absolute;top:0;bottom:0;left:0;background:var(--brand)}.bud .bar em{position:absolute;top:0;bottom:0;background:var(--brand);opacity:.35}.bud .lg{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;font-size:12.5px;color:var(--fg-3)}
+@media(max-width:860px){.apv{grid-template-columns:1fr}.apv .q{border-right:0}}
+</style></head><body>
+<div id="sprite" aria-hidden="true"><svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-cart" viewBox="0 0 24 24"><path d="M3 4h2l2.2 11.2a2 2 0 0 0 2 1.6h8.1a2 2 0 0 0 2-1.5L21 8H6.2"/><circle cx="10" cy="20" r="1.2"/><circle cx="17" cy="20" r="1.2"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-layers" viewBox="0 0 24 24"><path d="m12 3 9 5-9 5-9-5z"/><path d="m3 13 9 5 9-5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7.5-4.6-7.5-10A4.5 4.5 0 0 1 12 7.3 4.5 4.5 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/></symbol>
+  <symbol id="i-ruler" viewBox="0 0 24 24"><path d="M3 15 15 3l6 6L9 21z"/><path d="m7 11 2 2M10 8l2 2M13 5l2 2"/></symbol>
+  <symbol id="i-stack" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="5" rx="1"/><rect x="4" y="10" width="16" height="5" rx="1"/><rect x="4" y="16" width="16" height="4" rx="1"/></symbol>
+  <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+  <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+<symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></symbol>
+  <symbol id="i-leaf" viewBox="0 0 24 24"><path d="M5 19c0-8 5-13 15-14-1 10-6 15-14 15"/><path d="M5 19 13 11"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-factory" viewBox="0 0 24 24"><path d="M3 20V10l6 3V9l6 3V5h6v15z"/><path d="M7 17h2M12 17h2M17 17h1"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3z"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 7M18 14c2 .7 3.5 2.8 3.5 6"/></symbol>
+  <symbol id="i-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></symbol>
+  <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/></symbol>
+  <symbol id="c-all" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="c-carton" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="c-corr" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9M8 5.3l8 4.5"/></symbol>
+  <symbol id="c-rigid" viewBox="0 0 24 24"><path d="M3 7h18v4H3z"/><path d="M5 11v9h14v-9"/></symbol>
+  <symbol id="c-bag" viewBox="0 0 24 24"><path d="M5.5 8h13l1 13h-15z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></symbol>
+  <symbol id="c-label" viewBox="0 0 24 24"><path d="M3 12V4h8l10 10-7 7z"/><circle cx="7.5" cy="7.5" r="1.3"/></symbol>
+  <symbol id="c-sleeve" viewBox="0 0 24 24"><path d="M3 9h14v10H3z"/><path d="m3 9 4-4h14l-4 4M17 19l4-4V5"/></symbol>
+  <symbol id="c-insert" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M9 5v14M15 5v14M3 12h18"/></symbol>
+  <symbol id="c-help" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.4M12 14.5v.01"/></symbol>
+</svg>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M3 6h11v10H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="18" r="1.8"/><circle cx="17" cy="18" r="1.8"/></symbol>
+  <symbol id="i-wrench" viewBox="0 0 24 24"><path d="M14.5 5.5a4 4 0 0 0 4.9 4.9L13 16.8 7.2 22 2 16.8 7.2 11l6.4-6.4z"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-minus" viewBox="0 0 24 24"><path d="M6 12h12"/></symbol>
+  <symbol id="i-grid" viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></symbol>
+  <symbol id="i-table" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M3.5 9.5h17M3.5 14.5h17M9 9.5v10"/></symbol>
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 5h16v11H10l-4 3.5V16H4z"/><path d="M8.5 10.5h.01M12 10.5h.01M15.5 10.5h.01"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-palette" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 0 18c1.5 0 2-1 2-2s-1-1.5-1-2.5 1-1.5 2-1.5h2a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7.5" r="1"/></symbol>
+  <symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z" stroke-dasharray="2.5 2"/><path d="m4 7.5 8 4.5 8-4.5M12 12v9"/></symbol>
+  <symbol id="i-plate" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M8 9h8M8 12h8M8 15h5"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3 5 6v6c0 4.5 3 7.5 7 9 4-1.5 7-4.5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+  <symbol id="i-repeat" viewBox="0 0 24 24"><path d="M4 11V9a3 3 0 0 1 3-3h12l-3-3M20 13v2a3 3 0 0 1-3 3H5l3 3"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></symbol>
+</svg>
+
+</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M3 11 12 4l9 7M5 10v10h14V10"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M16 13h2M3 9h15V6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M5 20h14"/></symbol>
+  <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 13h18M12 9v12M12 9c-2-4-6-4-6-1s6 1 6 1 6 2 6-1-4-3-6 1"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><path d="M10 5H5v14h5M15 8l4 4-4 4M19 12H9"/></symbol>
+  <symbol id="i-cam" viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+  <symbol id="i-flag" viewBox="0 0 24 24"><path d="M5 21V4M5 4h12l-2 4 2 4H5"/></symbol>
+  <symbol id="i-qr" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h.01M17 20h4v-3"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></symbol>
+  <symbol id="i-ok" viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-dl" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-pinmap" viewBox="0 0 24 24"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></symbol>
+</svg>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-star" viewBox="0 0 24 24"><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5l8-2v18M12 8h8v13M8 8h.01M8 12h.01M8 16h.01M16 12h.01M16 16h.01M2 21h20"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 10h17M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-share" viewBox="0 0 24 24"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17h.01"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
+  <symbol id="i-percent" viewBox="0 0 24 24"><path d="M19 5 5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/></symbol>
+  <symbol id="i-zip" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M11 3v2h2v2h-2v2h2v2h-2v3"/></symbol>
+  <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M5 21h14M4 8h16M7 8l-3 7h6zM17 8l-3 7h6z"/></symbol>
+  <symbol id="i-tape" viewBox="0 0 24 24"><circle cx="10" cy="12" r="7"/><circle cx="10" cy="12" r="2.5"/><path d="M10 19h11"/></symbol>
+  <symbol id="i-bag2" viewBox="0 0 24 24"><path d="M5.5 8h13l1 13h-15z"/><path d="M9 10V6.5a3 3 0 0 1 6 0V10"/></symbol>
+  <symbol id="i-handshake" viewBox="0 0 24 24"><path d="m3 11 4-4 5 2 5-2 4 4-7 7a2 2 0 0 1-3 0z"/><path d="m8 13 3 3M11 11l3 3"/></symbol>
+  <symbol id="i-api" viewBox="0 0 24 24"><path d="m8 8-5 4 5 4M16 8l5 4-5 4M14 5l-4 14"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+</svg>
+
+<div class="proto"><div class="wrap"><b>ต้นแบบ Redesign</b><span class="d" id="protoSub">ติดตามคำสั่งซื้อ และพอร์ทัลลูกค้า · ข้อมูลจริงจาก UAT ไม่มีป้าย, ข้อมูลสมมติติดป้าย "ตัวอย่าง"</span>
+  <div class="themes" role="group" aria-label="ธีม"><button type="button" data-theme-set="auto" aria-pressed="true">อัตโนมัติ</button><button type="button" data-theme-set="light" aria-pressed="false">สว่าง</button><button type="button" data-theme-set="dark" aria-pressed="false">มืด</button></div>
+  <button type="button" id="notesBtn">ดูสิ่งที่เปลี่ยน</button></div></div>
+
+<header class="hdr">
+  <div class="wrap">
+    <a class="logo" href="#overview" aria-label="getpack หน้าแรก">getpack<i></i></a>
+    <nav class="nav" aria-label="เมนูหลัก"><a href="#consent">สตูดิโอออกแบบ</a><a href="#consent">แบบกล่อง</a><a href="#consent">สินค้าและราคา</a><a href="#consent">สำหรับธุรกิจ</a><a href="#track">ติดตามคำสั่งซื้อ</a></nav>
+    <div class="hright">
+      <button class="ibtn" type="button" aria-label="ค้นหา"><svg class="ico"><use href="#i-search"/></svg></button>
+      <button class="ibtn" type="button" aria-label="ตะกร้า"><svg class="ico"><use href="#i-cart"/></svg></button>
+      <span id="hdrUser"></span>
+      <a class="btn btn-primary cta" href="#consent">เริ่มออกแบบฟรี</a>
+      <button class="ibtn menu-btn" type="button" aria-label="เปิดเมนู"><svg class="ico"><use href="#i-menu"/></svg></button>
+    </div>
+  </div>
+</header>
+
+<div id="app"></div>
+
+<div class="chat" id="chatWrap"><div class="chat-pop" id="chatPop" hidden><h3>คุยกับทีม getpack</h3><p>ตอบทาง LINE ทุกวัน 09:00–18:00 น. หรือส่งข้อความในบัญชีได้ตลอดเวลา</p><a class="btn btn-primary" href="#msgs" style="width:100%">เปิดข้อความ</a></div><button type="button" id="chatBtn" aria-expanded="false" aria-controls="chatPop"><svg class="ico"><use href="#i-chat"/></svg><span>คุยกับทีม</span></button></div>
+<div class="toast" id="toast" hidden role="status"></div>
+<div class="sheet" id="sheet" hidden><div class="pane" role="dialog" aria-modal="true" aria-labelledby="shT"><div class="sh-h"><button class="ibtn" type="button" data-shclose aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button><h2 id="shT"></h2><span id="shTag"></span></div><div class="sh-b" id="shB"></div><div class="sh-f" id="shF"></div></div></div>
+<dialog class="gd" id="gd" aria-labelledby="gdT"><div class="dlg-h"><h2 id="gdT"></h2><button class="ibtn" type="button" data-gclose aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div><div class="body" id="gdB"></div><div class="dlg-f" id="gdF"></div></dialog>
+<dialog class="legal" id="legal" aria-labelledby="lgT"><div class="dlg-h"><div><h2 id="lgT"></h2></div><button class="ibtn" type="button" id="lgClose" aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div><div class="prog"><i id="lgProg"></i></div><div class="lg-body"><nav class="lg-toc" id="lgToc" aria-label="สารบัญ"></nav><div class="lg-main" id="lgMain" tabindex="0"></div></div><div class="dlg-f" id="lgF"></div></dialog>
+<dialog id="notes" aria-labelledby="notesTitle"><div class="dlg-h"><h2 id="notesTitle">สิ่งที่เปลี่ยน</h2><button class="ibtn" type="button" id="notesClose" aria-label="ปิด"><svg class="ico"><use href="#i-x"/></svg></button></div><div class="dlg-b" id="notesBody"></div></dialog>
+<script>
+(()=>{
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const money=n=>'฿'+Number(n).toLocaleString('th-TH',{minimumFractionDigits:2,maximumFractionDigits:2});
+const num=n=>Number(n).toLocaleString('th-TH');
+const ic=(id,cls='ico')=>`<svg class="${cls}" aria-hidden="true"><use href="#${id}"/></svg>`;
+const S='<span class="samplechip">ตัวอย่าง</span>';
+let tt;function toast(m){const t=$('#toast');t.textContent=m;t.hidden=false;clearTimeout(tt);tt=setTimeout(()=>t.hidden=true,2800)}
+window.__gp={toast};
+
+/* ---------- theme ---------- */
+function setTheme(v){const r=document.documentElement;if(v==='auto')r.removeAttribute('data-theme');else r.setAttribute('data-theme',v);$$('[data-theme-set]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.themeSet===v)));try{localStorage.setItem('gp-theme',v)}catch(e){}}
+$$('[data-theme-set]').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.themeSet)));
+try{const v=localStorage.getItem('gp-theme');if(v)setTheme(v)}catch(e){}
+
+/* ---------- account (real UAT C07 unless marked) ---------- */
+const ME={name:'ปรีชา ทดสอบ',ini:'ปท',co:'บริษัท ทดสอบ เฮลท์แคร์ จำกัด',pts:358,ptsVal:895,tier:'ซิลเวอร์'};
+/* nav = account Phase 1 (owner); this round fills the 7 menus it left as tabs */
+const NAV=[['overview','ภาพรวม','i-home'],['orders','คำสั่งซื้อ','i-box'],['quotes','ใบเสนอราคา','i-receipt'],['designs','งานออกแบบ','i-pencil'],['reorder','สั่งซ้ำ','i-repeat'],['docs','เอกสาร','i-doc'],['msgs','ข้อความ','i-chat'],['rewards','คะแนนและสิทธิพิเศษ','i-gift'],['account','ข้อมูลบัญชี','i-user']];
+const BADGE={quotes:['1','w'],msgs:['1',''],docs:['2','w']};
+const V={route:'quotes',tab:{},trk:{mode:'code',state:'form',verified:false},q:'',inbox:'r5',inboxOpen:false,cons:{tos:false,mk:false,ch:{email:false,line:false,sms:false}},agent:false};
+
+function navHTML(cur){return `<div class="me"><span class="av">${ME.ini}</span><div><b>${ME.name}</b><small>${ME.pts} คะแนน · ${money(ME.ptsVal).replace('.00','')}</small></div></div>`+
+ NAV.map(([k,n,i],x)=>`${x===1?'<span class="sub">ซื้อ</span>':x===5?'<span class="sub">เอกสารและบัญชี</span>':''}<a href="#${k}" ${k===cur?'aria-current="page"':''}>${ic(i)}${n}${BADGE[k]?`<span class="cnt ${BADGE[k][1]}" aria-label="${BADGE[k][0]} รายการต้องดู">${BADGE[k][0]}</span>`:''}</a>`).join('')+
+ (window.__gp.CO_NAV?'<span class="sub">บริษัท · ทดสอบ รีเทล</span>'+window.__gp.CO_NAV.map(([k,n,i])=>`<a href="#${k}" ${k===cur?'aria-current="page"':''}>${ic(i)}${n}</a>`).join(''):'')+`<a href="#consent" class="out">${ic('i-out')}ออกจากระบบ</a>`}
+
+function seg(key,items,def){const cur=V.tab[key]||def;return `<div class="seg" role="tablist" aria-label="แท็บ">${items.map(([k,n,c,w])=>`<button type="button" role="tab" aria-selected="${k===cur}" data-tab="${key}:${k}">${n}${c!=null?`<span class="n ${w?'w':''}">${c}</span>`:''}</button>`).join('')}</div>`}
+function curTab(key,def){return V.tab[key]||def}
+function ph(t,p,acts=''){return `<div class="ph"><div><h1>${t}</h1>${p?`<p>${p}</p>`:''}</div>${acts?`<div style="display:flex;gap:8px;flex-wrap:wrap">${acts}</div>`:''}</div>`}
+function boxSVG(c='#C9A673'){return `<svg viewBox="0 0 64 64" aria-hidden="true"><path d="M10 26 32 16l22 10-22 10z" fill="#D9BC8C"/><path d="M10 26v20l22 10V36z" fill="${c}"/><path d="M54 26v20L32 56V36z" fill="#B48F5E"/></svg>`}
+const pill=(c,t)=>`<span class="pill ${c}"><i></i>${t}</span>`;
+
+/* ---------- sheet / dialog helpers ---------- */
+let lastFocus=null;
+function openSheet(title,body,foot='',tag=''){lastFocus=document.activeElement;$('#shT').innerHTML=title;$('#shTag').innerHTML=tag;$('#shB').innerHTML=body;$('#shF').innerHTML=foot;$('#shF').hidden=!foot;$('#sheet').hidden=false;document.body.style.overflow='hidden';setTimeout(()=>$('#sheet [data-shclose]').focus(),10)}
+function closeSheet(){$('#sheet').hidden=true;document.body.style.overflow='';lastFocus?.focus?.()}
+$('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet'||e.target.closest('[data-shclose]'))closeSheet()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#sheet').hidden)closeSheet()});
+function gdlg(t,b,f){$('#gdT').textContent=t;$('#gdB').innerHTML=b;$('#gdF').innerHTML=f||'<button class="btn btn-ghost" type="button" data-gclose>ปิด</button>';$('#gd').showModal()}
+$('#gd').addEventListener('click',e=>{if(e.target.closest('[data-gclose]')||e.target.id==='gd')$('#gd').close()});
+
+/* ======================= /track ======================= */
+/* real UAT O6 (C06) — public view names no order no., product, person, address or price (D-224) */
+const TRK={status:'พร้อมจัดส่ง',eta:'28 ต.ค. 2569',ship:'26 ต.ค. 2569',boxes:3,dest:'ภูเก็ต 83000',
+ steps:[['ชำระเงินแล้ว','12 ต.ค. 2569','d'],['ไฟล์งานผ่านการตรวจ','12 ต.ค. 2569','d'],['ผลิต','12 ต.ค. 2569','d',['รับงาน','พิมพ์','ขึ้นรูป','ตรวจคุณภาพ','แพ็กเสร็จ']],['จัดส่ง','กำหนด 26 ต.ค. 2569','c'],['ได้รับสินค้า','คาดว่า 28 ต.ค. 2569','']]};
+function trackView(){const t=V.trk;
+ if(t.state==='result')return trackResult();
+ const codeF=`<div class="fld"><label for="tCode">รหัสติดตามหรือลิงก์</label><input id="tCode" inputmode="text" autocomplete="off" placeholder="เช่น trk_q3J9… หรือวางลิงก์ที่ได้รับ"><span class="hint">อยู่ใต้ QR บนป้ายกล่อง หรือในอีเมลและ LINE ยืนยันการจัดส่ง</span></div>`;
+ const orderF=`<div class="fld"><label for="tNo">เลขคำสั่งซื้อ</label><input id="tNo" autocomplete="off" placeholder="เช่น OR-2610-00006" style="font-family:var(--f-mono)"></div>
+  <div class="fld"><label for="tContact">เบอร์มือถือหรืออีเมลที่ใช้สั่งซื้อ</label><input id="tContact" autocomplete="tel" placeholder="08x xxx xxxx หรือ name@company.com"><span class="hint">ใช้ยืนยันว่าเป็นคำสั่งซื้อของคุณ เราไม่แสดงข้อมูลนี้บนหน้าติดตาม</span></div>`;
+ const err=t.state==='notfound'?`<div class="callout e" role="alert">${ic('i-alert')}<div><b>ไม่พบข้อมูลที่ตรงกัน</b><p>ตรวจเลขคำสั่งซื้อ เบอร์ หรืออีเมลอีกครั้ง ลิงก์ที่หมดอายุหรือถูกยกเลิกก็จะแสดงข้อความนี้</p></div></div>`:t.state==='limited'?`<div class="callout w" role="alert">${ic('i-clock')}<div><b>ลองหลายครั้งเกินไป</b><p>รอ 10 นาทีแล้วลองใหม่ หรือเข้าสู่ระบบเพื่อดูทุกคำสั่งซื้อ</p></div></div>`:'';
+ return `<div class="wrap"><section class="trk">
+  <h1>ติดตามคำสั่งซื้อ</h1><p class="lede">ดูสถานะงานและวันที่คาดว่าจะได้รับ ไม่ต้องเข้าสู่ระบบ</p>
+  <div class="trk-grid">
+   <form class="panel" id="trkForm" novalidate>
+    <div class="mode2" role="tablist" aria-label="วิธีติดตาม"><button type="button" role="tab" aria-selected="${t.mode==='code'}" data-tmode="code">${'รหัสจากกล่องหรือลิงก์'}</button><button type="button" role="tab" aria-selected="${t.mode==='order'}" data-tmode="order">เลขคำสั่งซื้อ</button></div>
+    ${t.mode==='code'?codeF:orderF}${err}
+    <button class="btn btn-primary" type="submit" style="height:46px">${ic('i-search')}ติดตาม</button>
+    <div class="privacy-note">${ic('i-lock')}<span>หน้าติดตามแสดงเฉพาะสถานะ ไทม์ไลน์ และวันที่คาดว่าจะได้รับ ไม่มีชื่อ ที่อยู่ หรือราคา</span></div>
+    <p style="margin:0;font-size:12.5px;color:var(--fg-3)">ลองผลลัพธ์ในต้นแบบ: <button type="button" class="btn-link" data-tdemo="ok">พบข้อมูล</button> · <button type="button" class="btn-link" data-tdemo="notfound">ไม่พบ</button> · <button type="button" class="btn-link" data-tdemo="limited">ลองเกินกำหนด</button></p>
+   </form>
+   <aside class="side-dark"><h2>มีบัญชี getpack อยู่แล้ว?</h2><p>เข้าสู่ระบบเพื่อดูทุกคำสั่งซื้อ ชำระงวด ดาวน์โหลดเอกสาร และคุยกับทีม</p><a class="btn" href="#orders">เข้าสู่ระบบ</a>
+    <ul><li>รับแจ้งสถานะทาง LINE ทุกขั้นตอน</li><li>รูปงานจริงระหว่างผลิต (เฉพาะชิ้นงาน)</li><li>ยืนยันรับของและแจ้งปัญหาได้ในหน้าเดียว</li></ul></aside>
+  </div></section></div>`}
+function trackResult(){const t=V.trk,ver=t.verified;
+ const steps=TRK.steps.map(([n,d,s,sub])=>`<li class="${s}"><span class="n">${s==='d'?ic('i-check'):s==='c'?ic('i-truck'):ic('i-clock')}</span><div><b>${n}</b>${sub?`<div class="subst">${sub.map(x=>`<span class="d">${ic('i-check')}${x}</span>`).join('')}</div>`:''}${n==='ผลิต'&&ver?`<div class="ev" style="margin-top:8px"><button class="ph2" type="button" data-toast="รูปชิ้นงานระหว่างผลิต (เฉพาะชิ้นงาน ลบ EXIF แล้ว)">${boxSVG()}</button><button class="ph2" type="button" data-toast="รูปชิ้นงานระหว่างผลิต">${boxSVG('#B79563')}</button> ${S}</div>`:''}${s==='c'?`<p>${TRK.boxes} กล่อง · รถขนส่งของ getpack</p>`:''}</div><time>${d}</time></li>`).join('');
+ return `<div class="wrap"><section class="trk">
+  <button class="back" type="button" data-tback>${ic('i-arrow')}ติดตามคำสั่งซื้ออื่น</button>
+  <div class="res-h"><div><p style="margin:0;color:var(--fg-3);font-size:13px">${ver?'คำสั่งซื้อ <code style="font-family:var(--f-mono)">OR-2610-00006</code> · ลังกระดาษขนย้าย 5 ชั้น':'สถานะคำสั่งซื้อ'}</p><h1 style="margin-top:6px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">${TRK.status} ${pill('ship','รอรถออก')}</h1></div>
+   <div style="display:flex;gap:8px;flex-wrap:wrap">${ver?`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: เชื่อม LINE เพื่อรับแจ้งทุกขั้น (ต้องยืนยันตัวตนแล้ว)">${ic('i-bell')}รับแจ้งทาง LINE</button>`:`<button class="btn btn-ghost" type="button" data-tverify>${ic('i-lock')}ยืนยันเพื่อดูเพิ่ม</button>`}<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: เพิ่มวันที่คาดว่าจะได้รับลงปฏิทิน (.ics)">${ic('i-cal')}เพิ่มลงปฏิทิน</button></div></div>
+  <div class="eta2" style="margin-top:18px"><div><small>คาดว่าจะได้รับ</small><b>${TRK.eta}</b></div><div><small>กำหนดออกจากฝ่ายผลิต</small><b>${TRK.ship}</b></div><div><small>ปลายทาง</small><b>${ver?TRK.dest:'ยืนยันเพื่อดู'}</b></div></div>
+  <div class="callout w" style="margin-top:12px">${ic('i-clock')}<div><b>เลยกำหนดออกจากฝ่ายผลิต 2 วัน</b><p>ทีมงานกำลังจัดรถ วันที่คาดว่าจะได้รับยังเป็น ${TRK.eta} ถ้าเปลี่ยนเราจะแจ้งทาง LINE และอีเมล</p></div></div>
+  <div class="trk-grid" style="grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)">
+   <div class="panel"><h2>ขั้นตอนการผลิตและจัดส่ง</h2><ol class="trk-steps">${steps}</ol></div>
+   <div class="col">
+    ${ver?`<div class="panel"><h2>สิ่งที่ทำได้</h2><a class="btn btn-primary" href="#orders">เปิดในบัญชี</a><button class="btn btn-ghost" type="button" data-go="msgs">ถามทีมเรื่องคำสั่งซื้อนี้</button><p style="margin:0;font-size:12.5px;color:var(--fg-3)">ยืนยันรับของ แจ้งปัญหา และเอกสารทั้งหมดอยู่ในบัญชี</p></div>`:
+    `<div class="panel"><h2>ยืนยันว่าเป็นคำสั่งซื้อของคุณ</h2><p style="margin:0;font-size:14px;color:var(--fg-2)">ใส่เบอร์หรืออีเมลที่ใช้สั่งซื้อ เพื่อดูเลขคำสั่งซื้อ ชื่อสินค้า รูปงานระหว่างผลิต และรับแจ้งทาง LINE</p><div class="fld"><label for="vC">เบอร์มือถือหรืออีเมล</label><input id="vC" placeholder="08x xxx xxxx"></div><button class="btn btn-primary" type="button" data-tverify>ยืนยัน</button></div>`}
+    <div class="privacy-note">${ic('i-shield')}<span>ทุกคนที่มีลิงก์หรือ QR บนกล่องเห็นเฉพาะสถานะและวันที่ หน้านี้ไม่ถูกค้นหาจาก Google</span></div>
+   </div></div></section></div>`}
+
+/* ======================= consent (sign-in step) ======================= */
+function consentView(){const c=V.cons,ok=c.tos;
+ return `<div class="cs-wrap">
+  <div class="cs-art"><div class="steps3" aria-label="ขั้นตอนเข้าสู่ระบบ"><span>${'<i>✓</i>'}<b>เบอร์มือถือ</b></span>${ic('i-arrow')}<span>${'<i>✓</i>'}<b>รหัส OTP</b></span>${ic('i-arrow')}<span class="on"><i>3</i><b>ข้อตกลง</b></span></div>
+   <h1>อีกขั้นเดียว<br>ก็เริ่มใช้งานได้</h1><p>ทำครั้งเดียวต่อบัญชี เราจะถามใหม่เฉพาะเมื่อข้อกำหนดเปลี่ยน และสรุปให้ว่าเปลี่ยนอะไร</p>
+   <p style="font-size:13px;opacity:.75">บัญชี 080 000 0107</p><p class="help">มีคำถามเรื่องข้อตกลง คุยกับทีมทาง LINE ได้ทุกวัน 09:00–18:00</p></div>
+  <div style="padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))"><form class="cs-form" id="csForm" novalidate>
+   <h2>ข้อตกลงการใช้บริการ</h2><p>อ่านสรุปด้านล่าง เปิดฉบับเต็มได้ทุกฉบับ</p>
+   <div class="ccard req"><div class="top"><div class="tx"><b>ข้อกำหนดการใช้บริการ</b><small>ฉบับ 1.0 · มีผล 1 พ.ย. 2569 ${S}</small></div><span class="tag r">จำเป็น</span></div>
+    <ol class="pts num"><li><i>01</i>ราคาที่ยืนยันแล้วคงที่ 15 วัน ชำระแล้วจึงเริ่มผลิต</li><li><i>02</i>จำนวนคลาดเคลื่อนได้ ± 5% ส่วนที่ขาดคืนเป็นเครดิต · ขนาด ± 3 มม. · สี ΔE2000 ≤ 3</li><li><i>03</i>เลยกำหนดชำระ คำสั่งซื้อไม่ถูกยกเลิก ตรวจราคาใหม่ก่อนชำระ</li></ol>
+    <div class="docs3"><button type="button" class="docbtn" data-legal="tos">${ic('i-doc')}อ่านฉบับเต็ม <em>8 หัวข้อ</em></button></div>
+    <label class="check"><input type="checkbox" id="cTos" ${c.tos?'checked':''}><span>ฉันยอมรับข้อกำหนดการใช้บริการ</span></label></div>
+   <div class="ccard"><div class="top"><div class="tx"><b>ประกาศความเป็นส่วนตัว</b><small>ฉบับ 1.0 · แจ้งให้ทราบ ไม่ต้องกดยอมรับ ${S}</small></div><span class="tag r">แจ้งให้ทราบ</span></div>
+    <ul class="pts"><li>${ic('i-check')}เก็บเฉพาะข้อมูลที่ใช้ผลิต จัดส่ง ออกเอกสาร และดูแลบัญชี</li><li>${ic('i-check')}ไฟล์งานส่งต่อให้ฝ่ายผลิตโดยไม่มีชื่อหรือข้อมูลติดต่อของคุณ</li><li>${ic('i-check')}ขอสำเนาหรือขอลบข้อมูลได้ที่ บัญชี › ความเป็นส่วนตัว</li></ul>
+    <div class="docs3"><button type="button" class="docbtn" data-legal="privacy">${ic('i-shield')}อ่านฉบับเต็ม <em>7 หัวข้อ</em></button></div></div>
+   <div class="ccard"><div class="top"><div class="tx"><b>ข่าวสารและโปรโมชัน</b><small>เลือกช่องทางได้ ยกเลิกได้ทุกเมื่อ</small></div><span class="tag o">ไม่บังคับ</span></div>
+    <div class="chan">${[['email','อีเมล','สรุปรายเดือน'],['line','LINE','ต้องเชื่อม LINE ก่อน'],['sms','SMS','เฉพาะโปรโมชันสำคัญ']].map(([k,n,s])=>`<label><span class="h">${n}<input type="checkbox" class="switch" data-ch="${k}" ${c.ch[k]?'checked':''} aria-label="รับข่าวสารทาง${n}"></span><small>${s}</small></label>`).join('')}</div>
+    <small style="color:var(--fg-3);font-size:12.5px">ส่งเฉพาะ 09:00–20:00 · ข้อความเรื่องคำสั่งซื้อและการชำระเงินส่งเสมอ ไม่ขึ้นกับตัวเลือกนี้</small></div>
+   <div class="cs-foot"><button class="btn btn-primary" type="submit" ${ok?'':'disabled aria-disabled="true"'}>${ok?'เริ่มใช้งาน':'ยอมรับข้อกำหนดก่อนเริ่มใช้งาน'}</button><small>เปลี่ยนการตั้งค่าได้ทุกเมื่อที่ ข้อมูลบัญชี › ความเป็นส่วนตัว</small></div>
+  </form></div></div>`}
+
+/* legal reader (shared by consent + privacy tab) */
+const LEGAL={
+ tos:{t:'ข้อกำหนดการใช้บริการ',ver:['ฉบับ 1.0','มีผล 1 พ.ย. 2569','อ่าน ~6 นาที'],sum:['ราคาที่ยืนยันคงที่ 15 วัน และเริ่มผลิตหลังชำระ','เลยกำหนดชำระ ไม่ยกเลิกอัตโนมัติ ตรวจราคาใหม่ก่อนชำระ','เกณฑ์ยอมรับ: จำนวน ± 5% (คืนเป็นเครดิต), ขนาด ± 3 มม., สี ΔE2000 ≤ 3','ใบกำกับภาษีออกในนาม บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด'],
+  h:['บริการของ getpack','ใบเสนอราคาและการยืนยันราคา','การชำระเงินและงวดชำระ','ไฟล์งานและการอนุมัติแบบ','การผลิตและเกณฑ์ยอมรับ','การจัดส่งและการรับสินค้า','การแจ้งปัญหาและเครดิต','การเปลี่ยนแปลงข้อกำหนด'],
+  body:[['getpack เป็นบริการออกแบบและสั่งผลิตบรรจุภัณฑ์ของ บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด ซึ่งเป็นผู้ขายและผู้ออกเอกสารภาษีทุกฉบับ'],['ราคาที่แสดงในใบเสนอราคาคงที่ 15 วันนับจากวันที่ออก หลังจากนั้นระบบคำนวณราคาและวันส่งใหม่ก่อนสั่งซื้อ','จำนวน ขนาด และวัสดุที่ระบุในใบเสนอราคาคือสิ่งที่เราผลิตให้ ถ้าคุณเปลี่ยนสเปก ราคาอาจเปลี่ยน'],['เราเริ่มผลิตเมื่อได้รับชำระตามเงื่อนไขของคำสั่งซื้อนั้น ทั้งแบบชำระเต็มและแบบแบ่งงวด','ถ้าเลยกำหนดชำระ คำสั่งซื้อไม่ถูกยกเลิก คุณตรวจราคาวันนี้แล้วชำระต่อได้'],['คุณรับรองว่ามีสิทธิ์ใช้โลโก้ ภาพ และข้อความในไฟล์งาน','เราผลิตตามแบบที่คุณอนุมัติ หลังอนุมัติแล้วการแก้ไขอาจมีค่าใช้จ่ายเพิ่ม'],['ระยะผลิตมาตรฐาน 5 วันทำการหลังอนุมัติแบบ เว้นแต่ใบเสนอราคาระบุไว้ต่างจากนี้','เกณฑ์ยอมรับ: จำนวน ± 5% ส่วนที่ขาดคืนเป็นเครดิต ขนาด ± 3 มม. สีคลาดเคลื่อนไม่เกิน ΔE2000 3'],['เราแจ้งวันที่คาดว่าจะได้รับก่อนจัดส่ง และแจ้งอีกครั้งถ้าวันเปลี่ยน','โปรดตรวจนับเมื่อได้รับของ แล้วกดยืนยันรับหรือแจ้งปัญหาในบัญชี'],['แจ้งปัญหาได้ภายในระยะที่ระบุในคำสั่งซื้อ พร้อมรูปชิ้นงาน','ถ้าปัญหาเกิดจากการผลิต เราผลิตใหม่หรือคืนเป็นเครดิตตามที่ตกลงกัน'],['เมื่อข้อกำหนดเปลี่ยน เราสรุปสิ่งที่เปลี่ยนให้อ่านก่อนยอมรับ ฉบับเดิมยังเปิดอ่านได้ในบัญชี']]},
+ privacy:{t:'ประกาศความเป็นส่วนตัว',ver:['ฉบับ 1.0','มีผล 1 พ.ย. 2569','อ่าน ~5 นาที'],sum:['เก็บชื่อ เบอร์ อีเมล ที่อยู่ ข้อมูลใบกำกับภาษี และไฟล์งาน เพื่อผลิต จัดส่ง และออกเอกสาร','ฝ่ายผลิตได้รับไฟล์ที่ล้างข้อมูลผู้สร้างแล้ว ตั้งชื่อเป็นเลขงาน ไม่เห็นชื่อหรือข้อมูลติดต่อของคุณ','ไฟล์ของงานที่สั่งผลิตเก็บ 2 ปี ไฟล์ที่ไม่ได้สั่งเก็บ 90 วัน ขอลบได้ทุกเมื่อ','ขอสำเนา แก้ไข หรือลบข้อมูลได้ที่ บัญชี › ความเป็นส่วนตัว'],
+  h:['ข้อมูลที่เราเก็บ','เราใช้ข้อมูลเพื่ออะไร','ฐานทางกฎหมาย','การส่งต่อข้อมูล','ระยะเวลาเก็บรักษา','สิทธิของคุณ','ติดต่อเจ้าหน้าที่คุ้มครองข้อมูล'],
+  body:[['ชื่อ เบอร์มือถือ อีเมล ที่อยู่จัดส่ง ข้อมูลผู้ซื้อในใบกำกับภาษี ไฟล์งาน และประวัติคำสั่งซื้อ'],['ผลิตและจัดส่งสินค้า ออกเอกสารภาษี ติดต่อเรื่องคำสั่งซื้อ และดูแลบัญชีของคุณ','ส่งข่าวสารเฉพาะช่องทางที่คุณเปิดไว้'],['การปฏิบัติตามสัญญา หน้าที่ตามกฎหมายภาษี และความยินยอมสำหรับข่าวสาร'],['ฝ่ายผลิตได้รับเฉพาะไฟล์งานที่ล้างข้อมูลผู้สร้างแล้วและตั้งชื่อเป็นเลขงาน ไม่ได้รับชื่อหรือข้อมูลติดต่อของคุณ','ผู้ให้บริการขนส่งได้รับเฉพาะชื่อผู้รับ เบอร์ และที่อยู่จัดส่ง'],['ไฟล์ของงานที่สั่งผลิตเก็บ 2 ปีเพื่อสั่งซ้ำ ไฟล์ที่ไม่ได้สั่งเก็บ 90 วัน เอกสารภาษีเก็บตามที่กฎหมายกำหนด'],['ขอสำเนา แก้ไข หรือลบข้อมูล และถอนความยินยอมได้ที่ ข้อมูลบัญชี › ความเป็นส่วนตัว'],['ติดต่อเจ้าหน้าที่คุ้มครองข้อมูลส่วนบุคคลผ่านเมนูข้อความ หรือทาง LINE ทุกวัน 09:00–18:00']]}};
+function openLegal(k,fromConsent){const L=LEGAL[k];$('#lgT').textContent=L.t;
+ $('#lgToc').innerHTML='<span class="lbl">สารบัญ</span>'+L.h.map((h,i)=>`<a href="#lg-${k}-${i}" data-lgto="lg-${k}-${i}">${i+1}. ${h}</a>`).join('');
+ $('#lgMain').innerHTML=`<div class="ver">${L.ver.map(v=>`<span>${v}</span>`).join('')}${S}</div><div class="sum"><b>สรุปสั้น</b><ul>${L.sum.map(s=>`<li>${s}</li>`).join('')}</ul></div>`+
+  L.h.map((h,i)=>`<h3 id="lg-${k}-${i}">${i+1}. ${h}</h3>${(L.body[i]||[]).map((p,j)=>`<p><b style="color:var(--fg);font-weight:600">${i+1}.${j+1}</b> ${p}</p>`).join('')}`).join('')+`<p style="margin-top:24px;font-size:13px;color:var(--fg-3)">ข้อความในต้นแบบเป็นร่างเพื่อดูหน้าตา ฉบับจริงมาจากฝ่ายกฎหมาย ${S}</p>`;
+ $('#lgF').innerHTML=`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ดาวน์โหลด PDF ฉบับที่มีผล">${ic('i-dl')}PDF</button>`+(fromConsent&&k==='tos'?`<button class="btn btn-primary" type="button" id="lgAccept">ยอมรับและกลับไป</button>`:`<button class="btn btn-primary" type="button" id="lgDone">ปิด</button>`);
+ $('#lgProg').style.width='0';$('#legal').showModal();$('#lgMain').scrollTop=0}
+$('#lgMain').addEventListener('scroll',e=>{const m=e.target;const p=m.scrollTop/(m.scrollHeight-m.clientHeight||1);$('#lgProg').style.width=Math.min(100,p*100)+'%'});
+$('#legal').addEventListener('click',e=>{if(e.target.id==='lgClose'||e.target.id==='lgDone'||e.target.id==='legal')$('#legal').close();if(e.target.id==='lgAccept'){V.cons.tos=true;$("#legal").close();window.__gp.render()}
+ const a=e.target.closest('[data-lgto]');if(a){e.preventDefault();$('#'+a.dataset.lgto).scrollIntoView();$$('#lgToc a').forEach(x=>x.setAttribute('aria-current',String(x===a)))}});
+
+Object.assign(window.__gp,{$,$$,esc,money,num,ic,S,V,ME,NAV,navHTML,seg,curTab,ph,boxSVG,pill,openSheet,closeSheet,gdlg,trackView,consentView,openLegal});
+})();
+(()=>{const G=window.__gp;const {$,esc,money,num,ic,S,V,seg,curTab,ph,boxSVG,pill,openSheet,gdlg}=G;
+
+/* ======================= ใบเสนอราคา ======================= */
+/* real C07 saved quotes; spec label via shared helper: ยาว × กว้าง × สูง (มม., ด้านใน) */
+const SPEC='กล่องฝาชน (RSC) · 350 × 220 × 140 มม. (ด้านใน) · KA125 ลอน B 3 ชั้น · พิมพ์ 4 สี ด้านนอก';
+const QUOTES=[
+ {no:'QT-2610-00041',s:true,name:'กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)',qty:10000,amt:398048.50,lock:'27 ต.ค. 2569',left:-1,st:'exp'},
+ {no:'QT-2610-00040',s:true,name:'กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)',qty:5000,amt:199248.50,lock:'27 ต.ค. 2569',left:0,st:'ordered',order:'UATOR-2610-00007'},
+ {no:'QT-2610-00039',s:true,name:'กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)',qty:1000,amt:46381.50,lock:'27 ต.ค. 2569',left:-1,st:'exp'},
+ {no:'QT-2610-00057',s:true,sample:true,name:'กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)',qty:3000,amt:121594.20,lock:'8 พ.ย. 2569',left:11,st:'saved'}];
+const RFQS=[
+ {no:'UATRFQ-2610-00005',name:'เทปพิมพ์ลาย',icon:'i-tape',qty:'500, 1,000',sent:'12 ต.ค. 2569',st:'info',q:'ต้องการเทปสีใสหรือสีน้ำตาลครับ และใช้กับเครื่องปิดกล่องหรือไม่',qAt:'12 ต.ค. 2569 21:56',spec:[['วัสดุ','เทป OPP กว้าง 48 มม. ยาว 100 หลา'],['งานพิมพ์','โลโก้ 1 สี'],['ม้วน','เส้นผ่านศูนย์กลาง 100 มม.'],['จำนวน','500, 1,000 ม้วน'],['ต้องการรับภายใน','26 พ.ย. 2569'],['รหัสไปรษณีย์','10520']]},
+ {no:'RFQ-2610-00031',sample:true,name:'ถุงกระดาษหูเชือก',icon:'i-bag2',qty:'500, 1,000',sent:'20 ต.ค. 2569',st:'quoted',exp:'4 พ.ย. 2569',left:7,tiers:[[500,25.00,12500,350,'16 วันทำการ'],[1000,21.00,21000,350,'16 วันทำการ']]},
+ {no:'RFQ-2610-00012',sample:true,name:'ถุงกระดาษ',icon:'i-bag2',qty:'500, 1,000',sent:'12 ต.ค. 2569',st:'expired',exp:'27 ต.ค. 2569'},
+ {no:'RFQ-2610-00009',sample:true,name:'กล่องแข็งฝาแม่เหล็ก',icon:'i-box',qty:'300',sent:'10 ต.ค. 2569',st:'declined',why:'ขนาด 40 × 40 × 600 มม. เกินที่ผลิตได้ ทีมแนะนำกล่องทรงกระบอกแทน'}];
+function lockMeter(q){if(q.st==='ordered')return `<span class="lock">${ic('i-check')}สั่งซื้อแล้ว</span>`;if(q.left<0)return `<span class="lock late"><span class="meter"><i style="width:100%"></i></span>หมดอายุ ${q.lock}</span>`;return `<span class="lock"><span class="meter"><i style="width:${Math.round(q.left/15*100)}%"></i></span>ราคาคงที่อีก ${q.left} วัน</span>`}
+function quoteRow(q){const st={saved:pill('done','ราคาคงที่'),exp:pill('mute','หมดอายุ'),ordered:pill('info','สั่งซื้อแล้ว')}[q.st];
+ const acts=q.st==='saved'?`<button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ใส่ตะกร้าด้วยราคาที่ล็อกไว้">สั่งซื้อ</button><button class="btn btn-ghost" type="button" data-qmore="${q.no}">ตัวเลือก</button>`:q.st==='exp'?`<button class="btn btn-primary" type="button" data-requote="${q.no}">ตรวจราคาวันนี้</button><button class="btn btn-ghost" type="button" data-qmore="${q.no}">ตัวเลือก</button>`:`<a class="btn btn-ghost" href="#orders">ดูคำสั่งซื้อ</a><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: สั่งซ้ำด้วยราคาวันนี้">สั่งซ้ำ</button>`;
+ return `<article class="row"><div class="th">${boxSVG()}</div><div><h3>${q.name} · ${num(q.qty)} ชิ้น ${q.sample?S:''}</h3><div class="sub2"><code>${q.no}</code>${q.s?S:''}<span>${SPEC}</span></div><div class="sub2" style="margin-top:8px">${st}${lockMeter(q)}</div></div>
+  <div class="side"><div class="amt">${money(q.amt)}<small>รวม VAT และค่าส่ง</small></div><div class="acts">${acts}</div></div></article>`}
+function rfqRow(r){const M={info:['wait','รอข้อมูลจากคุณ'],quoted:['done','ได้ราคาแล้ว'],expired:['mute','ราคาหมดอายุ'],declined:['mute','ทีมรับงานนี้ไม่ได้'],new:['info','ทีมกำลังประเมิน']}[r.st];
+ const note=r.st==='info'?`<div class="note w">${ic('i-chat')}<div><b>ทีมถาม:</b> ${esc(r.q)}<br><button class="btn-link" type="button" data-rfq="${r.no}">ตอบทีม</button></div></div>`:
+  r.st==='quoted'?`<div class="note i">${ic('i-receipt')}<div>ราคาเริ่ม ${money(r.tiers[1][1])}/ชิ้น ที่ ${num(r.tiers[1][0])} ชิ้น · ใช้ได้ถึง ${r.exp} (อีก ${r.left} วัน)</div></div>`:
+  r.st==='declined'?`<div class="note">${ic('i-info')}<div>${esc(r.why)}</div></div>`:r.st==='expired'?`<div class="note">${ic('i-clock')}<div>ราคาหมดอายุ ${r.exp} ขอราคาใหม่ได้ด้วยรายละเอียดเดิม</div></div>`:'';
+ const act=r.st==='info'?`<button class="btn btn-primary" type="button" data-rfq="${r.no}">ตอบทีม</button>`:r.st==='quoted'?`<button class="btn btn-primary" type="button" data-rfq="${r.no}">ดูและสั่งซื้อ</button>`:r.st==='expired'?`<button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ส่งคำขอใหม่ด้วยรายละเอียดเดิม">ขอราคาใหม่</button>`:`<button class="btn btn-ghost" type="button" data-rfq="${r.no}">ดูรายละเอียด</button>`;
+ return `<article class="row"><div class="th">${ic(r.icon)}</div><div><h3>${r.name} ${r.sample?S:''}</h3><div class="sub2"><code>${r.no}</code><span>จำนวนที่ขอ ${r.qty}</span><span>ส่งเมื่อ ${r.sent}</span></div><div class="sub2" style="margin-top:8px">${pill(M[0],M[1])}</div></div><div class="side"><div class="acts">${act}</div></div>${note}</article>`}
+G.quotesView=function(){const t=curTab('quotes','q');
+ const q=`<div class="filters"><button class="chipf" aria-pressed="true" type="button">ทั้งหมด 4</button><button class="chipf" aria-pressed="false" type="button">ราคาคงที่ 1</button><button class="chipf" aria-pressed="false" type="button">หมดอายุ 2</button><button class="chipf" aria-pressed="false" type="button">สั่งซื้อแล้ว 1</button></div>
+  <p style="margin:-4px 0 12px;font-size:13px;color:var(--fg-3)">ราคาคงที่ 15 วันนับจากวันที่ออก ใบที่หมดอายุกด "ตรวจราคาวันนี้" เพื่อคำนวณใหม่</p>
+  <div class="list">${QUOTES.sort((a,b)=>({saved:0,exp:1,ordered:2}[a.st]-{saved:0,exp:1,ordered:2}[b.st])).map(quoteRow).join('')}</div>`;
+ const r=`<div class="list">${RFQS.map(rfqRow).join('')}</div>`;
+ return ph('ใบเสนอราคา','ราคาที่บันทึกไว้ และคำขอราคาที่ทีมงานประเมินให้',`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: เปรียบเทียบใบเสนอราคาได้สูงสุด 3 ใบ">${ic('i-table')}เปรียบเทียบ</button><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: เปิดฟอร์มขอราคา (สินค้าที่ไม่มีราคาทันที)">${ic('i-plus')}ขอราคาสินค้าอื่น</button>`)+
+  seg('quotes',[['q','ใบเสนอราคา',4],['r','คำขอใบเสนอราคา',4,1]],'q')+(t==='q'?q:r)};
+G.rfqSheet=function(no){const r=RFQS.find(x=>x.no===no);if(!r)return;
+ let b='',f='';
+ if(r.st==='info'){b=`<div class="callout w">${ic('i-chat')}<div><b>ทีมรอคำตอบจากคุณ</b><p>ตอบแล้วทีมประเมินราคาต่อภายใน 1 วันทำการ ${S}</p></div></div>
+  <div class="thread"><div class="msgx them"><small>ทีม getpack · ${r.qAt}</small><div class="b">${esc(r.q)}</div></div></div>
+  <div class="qchips"><button class="chipf" type="button" aria-pressed="false">เทปใส</button><button class="chipf" type="button" aria-pressed="false">เทปน้ำตาล</button><button class="chipf" type="button" aria-pressed="false">ใช้กับเครื่องปิดกล่อง</button><button class="chipf" type="button" aria-pressed="false">ติดด้วยมือ</button></div>
+  <div class="fld"><label for="rfqAns">คำตอบ</label><textarea id="rfqAns" style="min-height:80px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);padding:10px 12px;color:var(--fg);font:inherit"></textarea></div>`;f=`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: แนบรูปหรือไฟล์">${ic('i-upload')}แนบไฟล์</button><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ส่งคำตอบให้ทีมแล้ว">ส่งคำตอบ</button>`}
+ if(r.st==='quoted'){b=`<div class="callout ok">${ic('i-receipt')}<div><b>ใบเสนอราคาฉบับที่ 1 · ใช้ได้ถึง ${r.exp}</b><p>เลือกจำนวนแล้วสั่งซื้อได้ทันที ราคาคงที่จนถึงวันที่ระบุ</p></div></div>
+  <div class="list">${r.tiers.map(([q,u,sub,ship,lt],i)=>{const vat=(sub+ship)*.07;return `<label class="row" style="grid-template-columns:24px minmax(0,1fr) auto;cursor:pointer"><input type="radio" name="tier" ${i===1?'checked':''} style="accent-color:var(--brand);margin-top:4px"><div><h3>${num(q)} ชิ้น · ${money(u)}/ชิ้น</h3><div class="sub2"><span>ผลิต ${lt}</span></div></div><div class="side"><div class="amt">${money(sub+ship+vat)}<small>สินค้า ${money(sub)} · ค่าส่ง ${money(ship)} · VAT ${money(vat)}</small></div></div></label>`}).join('')}</div>
+  <p style="margin:0;font-size:12.5px;color:var(--fg-3)">ค่าส่งแยกบรรทัดเสมอ (เดิมรวมอยู่ในยอดโดยไม่บอก) ${S}</p>`;f=`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ดาวน์โหลดใบเสนอราคา PDF">${ic('i-dl')}PDF</button><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ส่งลิงก์ให้ผู้อนุมัติดูโดยไม่ต้องเข้าสู่ระบบ">${ic('i-share')}ส่งให้ผู้อนุมัติ</button><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ใส่ตะกร้าด้วยราคาในใบเสนอราคา">สั่งซื้อจำนวนนี้</button>`}
+ if(r.st==='declined'||r.st==='expired'){b=`<div class="callout">${ic('i-info')}<div><p>${esc(r.why||'ราคาหมดอายุ')}</p></div></div>`;f=`<button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ขอราคาใหม่ด้วยรายละเอียดเดิม">ขอราคาใหม่</button>`}
+ b+=r.spec?`<div class="box"><h2>รายละเอียดคำขอ</h2><dl class="kv3">${r.spec.map(([k,v])=>`<dt>${k}</dt><dd>${esc(v)}</dd>`).join('')}</dl></div>`:'';
+ openSheet(`${r.name}`,b,f,`<code style="font:500 12px var(--f-mono);color:var(--fg-3)">${r.no}</code>`)};
+G.quoteMore=function(no){gdlg('ใช้ใบเสนอราคานี้ทำอะไรต่อ',`<button class="opt2" type="button" style="text-align:left;background:none" data-toast="ต้นแบบ: ขอตัวอย่างก่อนสั่งผลิต"><span>${G.ic('i-box')}</span><span><b>ขอตัวอย่างก่อนสั่งผลิต</b><small>ได้ชิ้นงานจริงก่อนสั่งจำนวนมาก</small></span></button>
+ <button class="opt2" type="button" style="text-align:left;background:none" data-toast="ต้นแบบ: ขอทำสัญญาเรียกของ"><span>${G.ic('i-cal')}</span><span><b>ล็อกราคาแล้วเรียกของทีละงวด</b><small>สัญญาเรียกของ ไม่ต้องเก็บสต็อกเอง</small></span></button>
+ <button class="opt2" type="button" style="text-align:left;background:none" data-toast="ต้นแบบ: ดาวน์โหลดใบเสนอราคา PDF"><span>${G.ic('i-dl')}</span><span><b>ดาวน์โหลด PDF</b><small>ในนาม บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด</small></span></button>
+ <button class="opt2" type="button" style="text-align:left;background:none" data-toast="ต้นแบบ: ลบออกจากรายการ"><span>${G.ic('i-x')}</span><span><b>ลบออกจากรายการ</b><small>ใบที่ซ้ำกันระบบรวมให้อัตโนมัติ</small></span></button>`)};
+G.requote=function(no){const q=QUOTES.find(x=>x.no===no);gdlg('ตรวจราคาวันนี้',`<p style="margin:0">ใบเสนอราคา <code>${no}</code> หมดอายุ ${q.lock} ระบบคำนวณใหม่ด้วยสเปกและจำนวนเดิม</p>
+ <div class="diff"><span>ราคาเดิม</span><b>${money(q.amt)}</b></div><div class="diff"><span>ราคาวันนี้ ${S}</span><b>${money(q.amt*1.012)}</b></div><div class="diff"><span>ส่วนต่าง</span><b style="color:var(--err)">+${money(q.amt*.012)}</b></div><div class="diff"><span>วันที่คาดว่าจะได้รับ ${S}</span><b>14 พ.ย. 2569</b></div>`,`<button class="btn btn-ghost" type="button" data-gclose>ยกเลิก</button><button class="btn btn-primary" type="button" data-gclose data-toast="ต้นแบบ: บันทึกใบเสนอราคาใหม่ ราคาคงที่ 15 วัน">บันทึกราคาใหม่</button>`)};
+
+/* ======================= งานออกแบบ ======================= */
+const DESIGNS=[['กล่องไปรษณีย์ โลโก้ 2569','350 × 220 × 140 มม.','แก้ไข 2 ชม. ก่อน','v3 · 3 เวอร์ชัน','สั่งผลิตแล้ว 1 ครั้ง'],['ถุงกระดาษ ร้านสาขาใหม่','250 × 100 × 300 มม.','แก้ไข 3 วันก่อน','v1','ยังไม่สั่ง'],['ฉลากขวด 200 มล.','90 × 60 มม.','แก้ไข 1 สัปดาห์ก่อน','v2','ยังไม่สั่ง']];
+const SAMPLES=[['ตัวอย่างพิมพ์จริง · กล่องไปรษณีย์ โลโก้ 2569','SP-2610-00004','ส่งแล้ว ถึง 30 ต.ค.','ship','ตรวจตัวอย่างเมื่อได้รับ'],['ตัวอย่างวัสดุ ลอน B / ลอน E','SP-2610-00002','อนุมัติแล้ว 18 ต.ค.','done','']];
+const STRUCT=[['ถาดรองขวด 6 ช่อง','SR-2610-00003','ทีมส่งแบบร่างรอบที่ 2 แล้ว','wait','ตรวจแบบร่าง'],['กล่องโชว์หน้าต่างพลาสติก','SR-2610-00001','แบบเสร็จ เพิ่มในคลังแบบของคุณแล้ว','done','']];
+G.designsView=function(){const t=curTab('designs','d');let c='';
+ if(t==='d')c=`<div class="filters"><div class="srch" style="max-width:320px">${ic('i-search')}<input type="search" placeholder="ค้นหาชื่อแบบ" aria-label="ค้นหาชื่อแบบ"></div><select aria-label="เรียง"><option>แก้ไขล่าสุด</option><option>สั่งผลิตล่าสุด</option><option>ชื่อ ก–ฮ</option></select></div>
+  <div class="callout i" style="margin-bottom:12px">${ic('i-info')}<div><b>พบ 2 แบบที่ทำไว้ก่อนเข้าสู่ระบบ</b><p>ย้ายเข้าบัญชีอัตโนมัติแล้ว ไม่ต้องกดนำเข้า</p></div></div>
+  <div class="grid3">${DESIGNS.map(([n,sz,ed,v,o])=>`<article class="card"><div class="stage">${boxSVG()}</div><div class="cbody"><span class="cat-l">${sz} ${S}</span><h3><a href="#designs" data-toast="ต้นแบบ: เปิดในสตูดิโอ">${n}</a></h3><div class="meta"><span>${ed}</span><span>${v}</span></div><div class="meta"><span>${o}</span></div><div class="cfoot"><button class="btn btn-soft" type="button" data-toast="ต้นแบบ: ดูประวัติเวอร์ชัน (บันทึกเมื่อกดบันทึก ส่งสั่งผลิต หรือทุก 30 นาทีที่มีการแก้)">เวอร์ชัน</button><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ดูราคาและสั่งผลิต">สั่งผลิต</button></div></div></article>`).join('')}
+   <button class="addr add" type="button" data-toast="ต้นแบบ: เริ่มแบบใหม่ในสตูดิโอ">${ic('i-plus')}ออกแบบใหม่</button></div>`;
+ if(t==='s')c=`<div class="list">${SAMPLES.map(([n,no,st,cl,a])=>`<article class="row"><div class="th">${ic('i-box')}</div><div><h3>${n} ${S}</h3><div class="sub2"><code>${no}</code></div><div class="sub2" style="margin-top:8px">${pill(cl,st)}</div></div><div class="side"><div class="acts">${a?`<button class="btn btn-primary" type="button" data-toast="ต้นแบบ: อนุมัติตัวอย่าง หรือขอแก้พร้อมรูป">${a}</button>`:`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: สั่งผลิตจากตัวอย่างที่อนุมัติ">สั่งผลิต</button>`}</div></div></article>`).join('')}</div>
+  <p style="font-size:13px;color:var(--fg-3);margin-top:12px">ขอตัวอย่างได้จากใบเสนอราคาที่บันทึกไว้ หรือจากหน้าสินค้า</p>`;
+ if(t==='r')c=`<div class="callout i" style="margin-bottom:12px">${ic('i-pencil')}<div><b>หาแบบในคลังไม่เจอ ทีมออกแบบโครงสร้างให้</b><p>บอกขนาดสินค้า น้ำหนัก และวิธีใช้ ทีมส่งแบบร่างให้ตรวจภายใน 3 วันทำการ ${S}</p></div><a class="btn btn-primary" href="#sr-new">ขอแบบใหม่</a></div>
+  <div class="list">${STRUCT.map(([n,no,st,cl,a])=>`<article class="row"><div class="th">${ic('i-ruler')}</div><div><h3>${n} ${S}</h3><div class="sub2"><code>${no}</code></div><div class="sub2" style="margin-top:8px">${pill(cl,st)}</div></div><div class="side"><div class="acts">${a?`<button class="btn btn-primary" type="button" data-toast="ต้นแบบ: เปิดแบบร่าง 3D พร้อมปักหมุดขอแก้">${a}</button>`:`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: เปิดในสตูดิโอ">เปิดในสตูดิโอ</button>`}</div></div></article>`).join('')}</div>`;
+ return ph('งานออกแบบ','แบบกล่อง ตัวอย่างสินค้า และแบบโครงสร้างที่ขอให้ทีมทำ')+seg('designs',[['d','งานออกแบบ',3],['s','ตัวอย่างสินค้า',2,1],['r','คำขอออกแบบโครงสร้าง',2,1]],'d')+c};
+
+/* ======================= สั่งซ้ำ ======================= */
+G.reorderView=function(){const t=curTab('reorder','f');let c='';
+ if(t==='f')c=`<div class="row"><div class="th">${boxSVG()}</div><div><h3>กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)</h3><div class="sub2"><span>350 × 220 × 140 มม.</span><span>ครั้งล่าสุด <code>UATOR-2610-00007</code> · 5,000 ชิ้น · ได้รับ 12 ต.ค. 2569</span></div>
+   <div style="margin-top:12px;display:flex;flex-direction:column;gap:6px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>ใช้ไปแล้วประมาณ ${S}</span><b>62%</b></div><div class="bar2"><i style="width:62%"></i></div><span style="font-size:12.5px;color:var(--fg-3)">ถ้าใช้วันละ ~190 กล่อง ของจะหมดราว 7 พ.ย. ควรสั่งภายใน 31 ต.ค. (ผลิต 5 วันทำการ + ขนส่ง)</span></div></div>
+   <div class="side"><div class="amt">${money(199248.5)}<small>ราคาครั้งล่าสุด รวม VAT</small></div><div class="acts"><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: สั่งซ้ำ แบบและไฟล์เดิม ราคาวันนี้">สั่งซ้ำ</button><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ปรับอัตราใช้ หรือบอกจำนวนคงเหลือจริง">ปรับการคาดการณ์</button></div></div></div>
+  <div class="set" style="margin-top:14px"><div><span><b>เตือนก่อนของหมด</b><small>แจ้งทาง LINE และอีเมล 10 วันก่อนวันที่ควรสั่ง</small></span><input type="checkbox" class="switch" checked aria-label="เตือนก่อนของหมด"></div><div><span><b>คำนวณจาก</b><small>ระยะห่างระหว่างคำสั่งซื้อ ถ้ายังสั่งไม่ถึง 2 ครั้ง ใช้อัตราที่คุณใส่เอง</small></span><button class="btn btn-ghost btn-sm" type="button" data-toast="ต้นแบบ: ใส่อัตราใช้ต่อเดือน">ใส่อัตราใช้</button></div></div>`;
+ if(t==='c')c=`<article class="row"><div class="th">${boxSVG()}</div><div><h3>กล่องกระดาษลูกฟูก · สัญญาเรียกของ</h3><div class="sub2"><span>ราคาล็อก ${money(39.76)}/ชิ้น</span><span>ระยะสัญญา 6 เดือน นับจากทีมงานยืนยัน</span></div><div class="sub2" style="margin-top:8px">${pill('wait','รอทีมยืนยันสัญญา')}</div>
+   <div class="grid3" style="margin-top:12px"><div class="stat"><small>จำนวนในสัญญา</small><b>10,000 ชิ้น</b></div><div class="stat"><small>เรียกแล้ว</small><b>0 ชิ้น</b></div><div class="stat"><small>คงเหลือให้เรียก</small><b>10,000 ชิ้น</b></div></div>
+   <p style="margin:10px 0 0;font-size:12.5px;color:var(--fg-3)">เรียกขั้นต่ำต่องวด 500 ชิ้น ${S} · ใช้ได้ถึง: นับเมื่อทีมยืนยัน (6 เดือน)</p></div>
+   <div class="side"><div class="acts"><button class="btn btn-ghost" type="button" disabled title="เรียกของได้หลังทีมยืนยันสัญญา">เรียกงวดถัดไป</button><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ขอยกเลิกคำขอสัญญา (ยังไม่มีผลผูกพัน)">ยกเลิกคำขอ</button></div></div>
+   <div class="note i">${ic('i-info')}<div>ทีมยืนยันสัญญาภายใน 1 วันทำการ แล้วจึงเรียกของงวดแรกได้ ${S}</div></div></article>`;
+ return ph('สั่งซ้ำ','สั่งของเดิมก่อนหมด หรือเรียกของทีละงวดจากราคาที่ล็อกไว้')+seg('reorder',[['f','สั่งซ้ำตามรอบ',1],['c','สัญญาเรียกของ',1]],'f')+c};
+})();
+(()=>{const G=window.__gp;const {$,esc,money,num,ic,S,V,seg,curTab,ph,pill,openSheet,gdlg,ME}=G;
+
+/* ======================= เอกสาร ======================= */
+/* real: UATTR-2610-00007/08/09 for UATOR-2610-00007 (C07). 00009 = duplicate "ฉบับสุดท้าย" → shown voided after Phase 0 */
+const DOCS=[
+ {m:'ตุลาคม 2569',items:[
+  {t:'ใบกำกับภาษี/ใบเสร็จรับเงิน',no:'UATTR-2610-00008',ref:'UATOR-2610-00007 · ส่วนที่เหลือก่อนจัดส่ง',d:'12 ต.ค. 2569',amt:89680.53,et:'ok',wht:'wait'},
+  {t:'ใบกำกับภาษี/ใบเสร็จรับเงิน',no:'UATTR-2610-00007',ref:'UATOR-2610-00007 · มัดจำ 50%',d:'12 ต.ค. 2569',amt:89680.53,et:'ok',wht:'got'},
+  {t:'ใบกำกับภาษี/ใบเสร็จรับเงิน',no:'UATTR-2610-00009',ref:'UATOR-2610-00007 · ออกซ้ำ',d:'12 ต.ค. 2569',amt:179361.06,et:'void'},
+  {t:'ใบส่งของ',no:'DN-2610-00007',s:1,ref:'UATOR-2610-00007 · 5,000 ชิ้น',d:'12 ต.ค. 2569',amt:null,et:null},
+  {t:'ใบวางบิล',no:'BS-2610-00002',s:1,ref:'รวม 2 รายการ · ยืนยันแล้ว',d:'12 ต.ค. 2569',amt:179361.06,et:null}]}];
+function docRow(x){const icn={'ใบส่งของ':'i-truck','ใบวางบิล':'i-receipt'}[x.t]||'i-doc';
+ const et=x.et==='ok'?`<span class="et">${ic('i-check')}ส่ง e-Tax แล้ว</span>`:x.et==='void'?pill('mute','ยกเลิก'):'';
+ const wht=x.wht==='wait'?`<span class="et p">${ic('i-clock')}รอหนังสือรับรอง 50 ทวิ ${S}</span>`:x.wht==='got'?`<span class="et">${ic('i-check')}ได้รับ 50 ทวิ แล้ว ${S}</span>`:'';
+ const note=x.et==='void'?`<div class="note w">${ic('i-alert')}<div>ใบนี้ออกซ้ำกับใบของแต่ละงวด ทีมบัญชียกเลิกแล้ว ใช้ UATTR-2610-00007 และ 00008 แทน ${S}</div></div>`:'';
+ return `<article class="row docrow"><div class="th">${ic(icn)}</div><div><h3 style="${x.et==='void'?'text-decoration:line-through;color:var(--fg-3)':''}">${x.t}</h3><div class="sub2"><code>${x.no}</code>${x.s?S:''}<span>${x.ref}</span><span>${x.d}</span></div><div class="sub2" style="margin-top:6px">${et}${wht}</div></div>
+  <div class="side">${x.amt!=null?`<div class="amt">${money(x.amt)}</div>`:''}<div class="acts">${x.et!=='void'?`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ดาวน์โหลด PDF ${x.no}">${ic('i-dl')}PDF</button>`:''}${x.wht==='wait'?`<button class="btn btn-primary" type="button" data-wht="${x.no}">ส่ง 50 ทวิ</button>`:''}</div></div>${note}</article>`}
+G.docsView=function(){const t=curTab('docs','all');
+ const head=ph('เอกสาร','ใบกำกับภาษี ใบเสร็จ ใบลดหนี้ ใบส่งของ และใบวางบิล ที่ getpack ออกให้ ในนาม บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด',`<button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ดาวน์โหลดเอกสารทั้งเดือนเป็น ZIP">${ic('i-zip')}ดาวน์โหลดทั้งเดือน</button><button class="btn btn-ghost" type="button" data-docmail>${ic('i-mail')}ส่งให้ฝ่ายบัญชีอัตโนมัติ</button>`);
+ const whtBox=`<div class="callout w" style="margin-bottom:14px">${ic('i-percent')}<div><b>รอหนังสือรับรองการหักภาษี ณ ที่จ่าย 1 ฉบับ</b><p>บัญชีนี้หักภาษี ณ ที่จ่าย ส่ง 50 ทวิ ของ UATTR-2610-00008 เพื่อปิดยอด ${S}</p></div><button class="btn btn-primary" type="button" data-wht="UATTR-2610-00008">ส่ง 50 ทวิ</button></div>`;
+ const tabs=seg('docs',[['all','ทั้งหมด',5],['tax','ใบกำกับภาษี/ใบเสร็จ',3],['cn','ใบลดหนี้/เพิ่มหนี้',0],['dn','ใบส่งของ',1],['bs','ใบวางบิล',1],['wht','50 ทวิ',1,1]],'all');
+ const filt=`<div class="filters"><div class="srch" style="max-width:280px">${ic('i-search')}<input type="search" placeholder="เลขเอกสารหรือเลขคำสั่งซื้อ" aria-label="ค้นหาเอกสาร"></div><select aria-label="เดือน"><option>ต.ค. 2569</option><option>ก.ย. 2569</option><option>ทุกเดือน</option></select><select aria-label="ผู้ซื้อ"><option>บริษัท ทดสอบ เฮลท์แคร์ จำกัด</option></select></div>`;
+ const map={tax:x=>x.t.startsWith('ใบกำกับ'),cn:x=>x.t.startsWith('ใบลดหนี้'),dn:x=>x.t==='ใบส่งของ',bs:x=>x.t==='ใบวางบิล',wht:x=>!!x.wht};
+ const body=DOCS.map(g=>{const it=g.items.filter(map[t]||(()=>1));return it.length?`<div><div class="mh"><b>${g.m}</b><small>${it.length} ฉบับ</small></div><div class="list rows">${it.map(docRow).join('')}</div></div>`:`<div class="empty">ไม่มีเอกสารประเภทนี้ในเดือนที่เลือก</div>`}).join('');
+const f2=n=>n.toLocaleString("th-TH",{minimumFractionDigits:2,maximumFractionDigits:2});
+ const recon=(t==='all'||t==='tax')?`<section class="recon" aria-label="ตรวจยอดกับคำสั่งซื้อ"><div class="rh"><span><b>UATOR-2610-00007</b> · ตรวจยอดกับคำสั่งซื้อ ${S}</span><span class="pill done"><i></i>ยอดรวมตรงกับคำสั่งซื้อ</span></div><div class="scroll"><table><thead><tr><th>ใบกำกับภาษี</th><th>ก่อน VAT</th><th>VAT 7%</th><th>รวม</th><th>หัก ณ ที่จ่าย</th></tr></thead><tbody><tr><td>00007 · มัดจำ 50%</td><td>${f2(83813.58)}</td><td>${f2(5866.95)}</td><td>${f2(89680.53)}</td><td>${f2(2514.41)}</td></tr><tr><td>00008 · ส่วนที่เหลือ</td><td>${f2(83813.58)}</td><td>${f2(5866.95)}</td><td>${f2(89680.53)}</td><td>${f2(2514.41)}</td></tr></tbody><tfoot><tr><td>รวม (ไม่นับใบที่ยกเลิก)</td><td>${f2(167627.16)}</td><td>${f2(11733.90)}</td><td>${f2(179361.06)}</td><td>${f2(5028.82)}</td></tr></tfoot></table></div></section>`:'';
+ return head+whtBox+tabs+filt+`<div class="months">${body}</div>`+recon};
+G.whtSheet=function(no){openSheet('ส่งหนังสือรับรองการหักภาษี ณ ที่จ่าย',`<dl class="kv3"><dt>เอกสาร</dt><dd><code>${no}</code></dd><dt>ยอดก่อน VAT</dt><dd>${money(83813.58)}</dd><dt>อัตราหัก ${S}</dt><dd>3% (ค่าจ้างทำของ) · อัตราจริงมาจากการตั้งค่าบัญชี</dd><dt>ยอดที่ควรหัก</dt><dd><b>${money(2514.41)}</b></dd></dl>
+ <div class="drop">${ic('i-upload')}ลากไฟล์ 50 ทวิ มาวาง หรือ <button class="btn-link" type="button">เลือกไฟล์</button><br><small style="color:var(--fg-3)">PDF หรือรูป ไม่เกิน 10 MB · ผู้ถูกหัก: บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด</small></div>
+ <div class="callout i">${ic('i-info')}<div><p>ทีมบัญชีตรวจภายใน 1 วันทำการ ถ้ายอดตรงระบบปิดยอดค้างให้อัตโนมัติ ถ้าไม่ตรงจะแจ้งในข้อความ</p></div></div>`,`<button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ส่งไฟล์ให้ทีมบัญชีแล้ว" data-shclose>ส่ง</button>`)};
+
+/* ======================= ข้อความ ======================= */
+const THREADS=[
+ {id:'r5',t:'คำขอราคา · เทปพิมพ์ลาย',ref:'UATRFQ-2610-00005',icon:'i-tape',last:'ต้องการเทปสีใสหรือสีน้ำตาลครับ…',time:'12 ต.ค.',unread:1,st:['wait','รอคุณตอบ'],
+  msgs:[['sys','12 ต.ค. 2569 21:56 · ส่งคำขอราคา'],['them','ทีม getpack','ต้องการเทปสีใสหรือสีน้ำตาลครับ และใช้กับเครื่องปิดกล่องหรือไม่','12 ต.ค. 21:56']]},
+ {id:'o7',s:1,t:'คำสั่งซื้อ · กล่องไปรษณีย์ 5,000 ชิ้น',ref:'UATOR-2610-00007',icon:'i-box',last:'ขอใบวางบิลรวม 2 งวดครับ',time:'12 ต.ค.',st:['done','ตอบแล้ว'],
+  msgs:[['me','คุณ','ขอใบวางบิลรวม 2 งวดครับ','12 ต.ค. 22:04'],['them','ทีม getpack','ออกใบวางบิลให้แล้วครับ ดูได้ที่เมนูเอกสาร','13 ต.ค. 09:12']]},
+ {id:'gen',s:1,t:'สอบถามทั่วไป',ref:'',icon:'i-chat',last:'มีกล่องกันกระแทกสำหรับขวดแก้วไหม',time:'5 ต.ค.',st:['done','ตอบแล้ว'],msgs:[['me','คุณ','มีกล่องกันกระแทกสำหรับขวดแก้วไหม','5 ต.ค. 10:20'],['them','ทีม getpack','มีครับ ดูแบบถาดรองในคลังแบบ หรือขอแบบโครงสร้างได้','5 ต.ค. 10:41']]}];
+G.msgsView=function(){const cur=THREADS.find(x=>x.id===V.inbox)||THREADS[0];
+ const list=THREADS.map(x=>`<button class="ib-i" type="button" data-thread="${x.id}" aria-current="${x.id===cur.id}"><span class="av2">${ic(x.icon)}</span><span style="min-width:0"><b>${x.t} ${x.s?S:''}</b><span class="p">${esc(x.last)}</span></span><span><time>${x.time}</time>${x.unread?'<span class="dotn" aria-label="ยังไม่อ่าน"></span>':''}</span></button>`).join('');
+ const msgs=cur.msgs.map(m=>m[0]==='sys'?`<div class="sys">${m[1]}</div>`:`<div class="msgx ${m[0]}"><small>${m[1]} · ${m[3]}</small><div class="b">${esc(m[2])}</div></div>`).join('');
+ const late=cur.id==='r5'?`<div class="callout w" style="margin-top:6px">${ic('i-clock')}<div><b>ทีมรอคำตอบจากคุณตั้งแต่ 12 ต.ค.</b><p>คำขอราคานี้หยุดรอจนกว่าคุณจะตอบ</p></div></div>`:'';
+ return ph('ข้อความ','คุยกับทีม getpack แยกตามคำสั่งซื้อและคำขอราคา ทีมตอบภายในวันทำการ · LINE ทุกวัน 09:00–18:00')+
+ `<div class="inbox ${V.inboxOpen?'open':''}"><div class="ib-l"><div class="ib-t"><button class="btn btn-primary" type="button" style="width:100%" data-toast="ต้นแบบ: เลือกเรื่อง (คำสั่งซื้อ คำขอราคา หรือทั่วไป) แล้วเริ่มคุย">${ic('i-plus')}เริ่มเรื่องใหม่</button></div>${list}</div>
+  <div class="ib-r"><div class="ib-h"><button class="ibtn" type="button" data-ibback aria-label="กลับไปรายการ" style="${V.inboxOpen?'':'display:none'}">${ic('i-arrow')}</button><div style="flex:1;min-width:0"><b>${cur.t}</b><small>${cur.ref?`<code>${cur.ref}</code> · `:''}${pill(cur.st[0],cur.st[1])}</small></div>${cur.ref?`<a class="btn btn-ghost btn-sm" href="#${cur.id==='r5'?'quotes':'orders'}">เปิด${cur.id==='r5'?'คำขอราคา':'คำสั่งซื้อ'}</a>`:''}</div>
+   <div class="ib-b"><div class="thread">${msgs}${late}</div></div>
+   <div class="ib-c"><div class="qchips">${(cur.id==='r5'?['เทปใส','เทปน้ำตาล','ใช้กับเครื่องปิดกล่อง']:['ตอนนี้งานถึงขั้นไหนแล้ว','ขอเอกสารเพิ่ม']).map(x=>`<button class="chipf" type="button" aria-pressed="false" data-chip>${x}</button>`).join('')}</div><textarea id="msgIn" aria-label="พิมพ์ข้อความ" placeholder="พิมพ์ข้อความ"></textarea>
+    <div class="r"><button class="btn btn-ghost btn-sm" type="button" data-toast="ต้นแบบ: แนบรูปหรือไฟล์ (ไม่เกิน 30 MB)">${ic('i-upload')}แนบไฟล์</button><span style="font-size:12.5px;color:var(--fg-3);flex:1">แจ้งคำตอบทาง: อีเมล · <a href="#account" style="color:var(--brand)">เชื่อม LINE</a></span><button class="btn btn-primary btn-sm" type="button" data-send>ส่ง</button></div></div></div></div>`};
+
+/* ======================= คะแนนและสิทธิพิเศษ ======================= */
+G.rewardsView=function(){const t=curTab('rewards','p');let c='';
+ if(t==='p')c=`<div class="grid3"><div class="stat"><small>คะแนนที่ใช้ได้</small><b>${ME.pts}</b><span class="sm">มูลค่า ${money(ME.ptsVal)} ใช้แทนเงินตอนชำระ</span></div><div class="stat"><small>รอเข้าบัญชี</small><b>0</b><span class="sm">เข้าเมื่อได้รับของและพ้นช่วงแจ้งปัญหา</span></div><div class="stat"><small>หมดอายุเร็วที่สุด</small><b>12 ต.ค. 2570</b><span class="sm">20 คะแนน (สมัครสมาชิก)</span></div></div>
+  <div class="box" style="margin-top:14px"><h2>ระดับสมาชิก: ${ME.tier} <span class="badge2">คะแนน x1.25 ${S}</span></h2>
+   <div class="tier"><div class="d"><i></i>สมาชิก</div><div class="c"><i></i>ซิลเวอร์</div><div><i></i>โกลด์</div><div><i></i>แพลทินัม ${S}</div></div>
+   <p style="margin:0;font-size:13.5px">ยอดซื้อ 12 เดือน <b>${money(167277.47)}</b> อีก ${money(32722.53)} เป็นระดับโกลด์</p>
+   <p style="margin:0;font-size:12.5px;color:var(--fg-3)">นับยอดก่อน VAT ไม่รวมค่าส่ง เมื่อคำสั่งซื้อเสร็จสิ้นหลังได้รับของ · ย้อนหลัง 12 เดือน · อัปเดตวันละครั้ง</p></div>
+  <div class="sec2"><h2>ประวัติคะแนน</h2><div class="list rows"><article class="row" style="grid-template-columns:44px minmax(0,1fr) auto"><div class="th">${ic('i-box')}</div><div><h3>คำสั่งซื้อ UATOR-2610-00007</h3><div class="sub2"><span>เสร็จสิ้น · ${S}</span></div></div><div class="side"><div class="amt" style="color:var(--ok)">+335</div></div></article>
+   <article class="row" style="grid-template-columns:44px minmax(0,1fr) auto"><div class="th">${ic('i-star')}</div><div><h3>สมัครสมาชิก</h3><div class="sub2"><span>12 ต.ค. 2569 · หมดอายุ 12 ต.ค. 2570</span></div></div><div class="side"><div class="amt" style="color:var(--ok)">+20</div></div></article></div></div>`;
+ if(t==='w')c=`<div class="grid2"><div class="stat"><small>เครดิตคงเหลือ</small><b>${money(0)}</b><span class="sm">ใช้เป็นวิธีชำระในคำสั่งซื้อถัดไป</span></div><div class="stat"><small>โค้ดส่วนลด</small><b>0</b><span class="sm">ใส่โค้ดในตะกร้า ส่วนลดคิดตอนชำระ</span></div></div>
+  <div class="empty" style="margin-top:14px">ยังไม่มีรายการเครดิต · เครดิตเกิดจากสินค้าขาดตามเกณฑ์ ± 5% หรือการคืนเงินที่เลือกรับเป็นเครดิต</div>`;
+ if(t==='f')c=`<div class="grid2"><div class="box"><h2>โค้ดของคุณ ${S}</h2><div class="code"><output>PRC7K2Q9</output><button class="btn btn-ghost btn-sm" type="button" data-copy="PRC7K2Q9">${ic('i-copy')}คัดลอก</button></div><div class="linkbox"><input readonly value="https://getpack.co/r/PRC7K2Q9" aria-label="ลิงก์ชวนเพื่อน"><button class="btn btn-primary btn-sm" type="button" data-copy="https://getpack.co/r/PRC7K2Q9">คัดลอกลิงก์</button></div><p style="margin:0;font-size:12.5px;color:var(--fg-3)">ลิงก์ใช้โดเมนจริงจากการตั้งค่า (เดิมเป็น getpack.invalid)</p></div>
+   <div class="box"><h2>เงื่อนไข</h2><ul style="margin:0;padding-left:18px;font-size:14px;color:var(--fg-2);display:flex;flex-direction:column;gap:4px"><li>เพื่อนได้ส่วนลด 5% คำสั่งซื้อแรก สูงสุด ฿500</li><li>คุณได้ 200 คะแนน (${money(500)}) เมื่อคำสั่งซื้อของเพื่อนพ้นช่วงแจ้งปัญหา</li><li>ได้รางวัลสูงสุด 10 ครั้งต่อเดือน</li></ul></div></div>
+  <div class="sec2"><h2>เพื่อนที่ชวน</h2><div class="list rows">${[['อ•••','ใช้โค้ด 12 ต.ค.','wait','รอคำสั่งซื้อแรก','—']].map(([n,d,c2,s,r])=>`<article class="row" style="grid-template-columns:44px minmax(0,1fr) auto"><div class="th">${ic('i-user')}</div><div><h3>${n} ${S}</h3><div class="sub2"><span>${d}</span></div></div><div class="side">${pill(c2,s)}<span style="font-size:13px;color:var(--fg-3)">รางวัล ${r}</span></div></article>`).join('')}</div></div>`;
+ if(t==='a')c=V.agent?G.agentDash2():`<div class="grid2"><div class="box"><h2>ตัวแทนขาย getpack</h2><p style="margin:0;color:var(--fg-2);font-size:14px">แนะนำลูกค้าธุรกิจให้ใช้ getpack แล้วรับค่าตอบแทนจากคำสั่งซื้อของลูกค้าที่คุณพามา</p>
+   <dl class="kv3"><dt>คำสั่งซื้อแรก</dt><dd>5% ของยอดสินค้าก่อน VAT ไม่รวมค่าส่ง</dd><dt>คำสั่งซื้อถัดไป</dt><dd>3% ตลอด 12 เดือนนับจากวันที่ลูกค้าผูกกับคุณ</dd><dt>สูงสุดต่อคำสั่งซื้อ ${S}</dt><dd>${money(15000)}</dd><dt>ได้รับเมื่อ</dt><dd>คำสั่งซื้อเสร็จสิ้น พ้นช่วงแจ้งปัญหา และชำระครบ · จ่ายทุกวันที่ 5 หักภาษี ณ ที่จ่าย 3%</dd></dl>
+   <button class="btn btn-primary" type="button" data-agent>สมัครเป็นตัวแทนขาย</button></div>
+   <div class="box"><h2>รู้จักโรงพิมพ์ที่อยากร่วมงาน?</h2><p style="margin:0;color:var(--fg-2);font-size:14px">ส่งข้อมูลติดต่อให้ทีมพาร์ตเนอร์ได้เลย ทีมดูแลต่อเอง ไม่มีผลกับค่าตอบแทนตัวแทนขาย</p><a class="btn btn-ghost" href="#rewards" data-toast="ต้นแบบ: เปิดฟอร์มแนะนำพาร์ตเนอร์ (/partner-with-us)">แนะนำพาร์ตเนอร์</a></div></div>`;
+ return ph('คะแนนและสิทธิพิเศษ','คะแนน เครดิตร้านค้า ชวนเพื่อน และโปรแกรมตัวแทนขาย')+seg('rewards',[['p','คะแนน',ME.pts],['w','เครดิตร้านค้า'],['f','ชวนเพื่อน'],['a','ตัวแทนขาย']],'p')+c};
+function agentDash(){return `<div class="callout ok" style="margin-bottom:12px">${ic('i-check')}<div><b>สมัครแล้ว รอทีมตรวจข้อมูล</b><p>ระหว่างนี้แชร์ลิงก์ได้เลย ลูกค้าที่สมัครผ่านลิงก์ผูกกับคุณทันที ${S}</p></div></div>
+ <div class="ag-kpi"><div class="stat"><small>ลูกค้าที่ผูกกับคุณ</small><b>3</b>${S}</div><div class="stat"><small>รอจ่าย</small><b>${money(4210)}</b>${S}</div><div class="stat"><small>จ่ายแล้ว</small><b>${money(0)}</b></div><div class="stat"><small>คลิกลิงก์ 30 วัน</small><b>48</b>${S}</div></div>
+ <div class="sec2"><h2>ลูกค้าของคุณ <small style="font:400 12.5px var(--f-body);color:var(--fg-3)">แสดงชื่อย่อเพื่อความเป็นส่วนตัว</small></h2><div class="list rows">${[['บ. ส•••• จำกัด','สั่งแล้ว 2 ครั้ง','done','ผูกถึง ต.ค. 2570'],['ร้าน ก••••','สมัครแล้ว ยังไม่สั่ง','wait','ผูกถึง ต.ค. 2570']].map(([n,a,c,b])=>`<article class="row" style="grid-template-columns:44px minmax(0,1fr) auto"><div class="th">${ic('i-building')}</div><div><h3>${n} ${S}</h3><div class="sub2"><span>${a}</span><span>${b}</span></div></div><div class="side">${pill(c,a)}</div></article>`).join('')}</div></div>
+ <div class="sec2"><h2>ใบแจ้งค่าตอบแทน</h2><div class="empty">ใบแรกออกวันที่ 5 ของเดือนถัดไป พร้อมหนังสือรับรองหักภาษี ณ ที่จ่าย</div></div>`}
+
+/* ======================= ข้อมูลบัญชี ======================= */
+G.accountView=function(){const t=curTab('account','a');let c='';
+ if(t==='a')c=`<div class="sec2" style="margin-top:0"><h2>ที่อยู่จัดส่ง <button class="btn btn-ghost btn-sm" type="button" data-addr>${ic('i-plus')}เพิ่มที่อยู่</button></h2>
+   <div class="grid2"><div class="addr"><div class="h"><b>โกดังสินค้า</b><span class="badge2">ค่าเริ่มต้น</span></div><div class="ln">ผู้ผลิตอาหารเสริม</div><div class="ln">ปรีชา ทดสอบ · 080 000 0107</div><div class="ln">16/1 ถนนทดสอบ แขวงลาดกระบัง เขตลาดกระบัง กรุงเทพมหานคร 10520</div><div class="ln" style="font-size:12.5px;color:var(--fg-3)">รับของ จ–ศ 08:30–17:00 · มีลิฟต์ขนของ ${S}</div><div class="acts"><button class="btn btn-ghost" type="button" data-addr>แก้ไข</button></div></div>
+   <button class="addr add" type="button" data-addr>${ic('i-plus')}เพิ่มที่อยู่อื่น เช่น สาขาหรือคลังสินค้า</button></div></div>
+  <div class="sec2"><h2>ข้อมูลใบกำกับภาษี <button class="btn btn-ghost btn-sm" type="button" data-taxp>${ic('i-plus')}เพิ่มผู้ซื้อ</button></h2>
+   <div class="grid2"><div class="addr"><div class="h"><b>บริษัท ทดสอบ เฮลท์แคร์ จำกัด</b><span class="badge2">ค่าเริ่มต้น</span><span class="badge2 g">หักภาษี ณ ที่จ่าย</span></div>
+    <div class="ln">เลขประจำตัวผู้เสียภาษี <code>0-0000-00000-07-8</code> · สำนักงานใหญ่</div><div class="ln">88 อาคารทดสอบ ชั้น 5 ถนนทดสอบ แขวงลาดกระบัง เขตลาดกระบัง กรุงเทพมหานคร 10520</div>
+    <div class="ln" style="font-size:12.5px;color:var(--fg-3)">ส่งเอกสารถึง: accounting@… ${S}</div><div class="acts"><button class="btn btn-ghost" type="button" data-taxp>แก้ไข</button></div></div>
+    <div class="callout i">${ic('i-info')}<div><b>แก้ข้อมูลผู้ซื้อหลังออกเอกสารแล้ว</b><p>ใบที่ออกไปแล้วไม่เปลี่ยน ขอออกใหม่ได้จากเมนูเอกสาร ทีมบัญชีออกใบแทนภายใน 1 วันทำการ</p></div></div></div></div>`;
+ if(t==='n')c=`<div class="matrix" role="table" aria-label="ช่องทางการแจ้งเตือน"><div class="mr" role="row"><span role="columnheader" style="justify-content:flex-start">เรื่อง</span><span role="columnheader">อีเมล</span><span role="columnheader">LINE</span><span role="columnheader">SMS</span><span role="columnheader">เบราว์เซอร์</span></div>
+   ${[['คำสั่งซื้อและการชำระเงิน','สถานะ งวดชำระ การจัดส่ง',[1,0,1,0],[1,0,0,0]],['ข้อความจากทีม','คำตอบในข้อความและคำขอราคา',[1,0,0,1],[0,0,0,0]],['เอกสาร','ใบกำกับภาษี ใบวางบิล 50 ทวิ',[1,0,0,0],[0,0,0,0]],['ข่าวสารและโปรโมชัน','ส่ง 09:00–20:00 เท่านั้น',[0,0,0,0],[0,0,0,0]]].map(([n,s,on,lock])=>`<div class="mr" role="row"><span role="cell" style="justify-content:flex-start;display:block"><b>${n}</b><small>${s}</small></span>${on.map((v,i)=>`<span role="cell">${lock[i]?`<span class="lockd" title="ปิดไม่ได้ เพื่อให้ได้รับเอกสารสำคัญ">${ic('i-lock')}</span>`:i===1?`<span class="lockd">ยังไม่เชื่อม</span>`:`<input type="checkbox" class="switch" role="switch" aria-checked="${!!v}" ${v?'checked':''} aria-label="${n} ทาง${['อีเมล','LINE','SMS','เบราว์เซอร์'][i]}">`}</span>`).join('')}</div>`).join('')}</div>
+  <p style="font-size:12.5px;color:var(--fg-3);margin:8px 0 0">${ic('i-lock','ico')} = เปิดเสมอ: อีเมลเรื่องคำสั่งซื้อและเอกสาร · SMS ใช้เฉพาะ OTP งวดใกล้ครบ และวันจัดส่ง</p>
+  <div class="sec2"><h2>บัญชีที่เชื่อมต่อ</h2><div class="set"><div><span><b>เบอร์มือถือ 080 000 0107</b><small>ใช้เข้าสู่ระบบ · เชื่อมเมื่อ 12 ต.ค. 2569</small></span><span class="badge2">หลัก</span></div><div><span><b>LINE</b><small>รับแจ้งสถานะและตอบทีมใน LINE</small></span><button class="btn btn-primary btn-sm" type="button" data-toast="ต้นแบบ: เชื่อม LINE (LINE Login + OA)">เชื่อม LINE</button></div><div><span><b>Google</b><small>ยังไม่เชื่อม</small></span><button class="btn btn-ghost btn-sm" type="button" data-toast="ต้นแบบ: เชื่อม Google">เชื่อม</button></div><div><span><b>Apple</b><small>ยังไม่เชื่อม</small></span><button class="btn btn-ghost btn-sm" type="button" data-toast="ต้นแบบ: เชื่อม Apple">เชื่อม</button></div></div></div>`;
+ if(t==='p')c=`<div class="sec2" style="margin-top:0"><h2>ข้อตกลงที่ใช้อยู่</h2><div class="set"><div><span><b>ข้อกำหนดการใช้บริการ</b><small>ฉบับ 1.0 · ยอมรับเมื่อ 12 ต.ค. 2569 ${S}</small></span><button class="btn btn-ghost btn-sm" type="button" data-legal="tos">อ่าน</button></div><div><span><b>ประกาศความเป็นส่วนตัว</b><small>ฉบับ 1.0 · แจ้งเมื่อ 12 ต.ค. 2569 ${S}</small></span><button class="btn btn-ghost btn-sm" type="button" data-legal="privacy">อ่าน</button></div></div></div>
+  <div class="sec2"><h2>ความยินยอมที่เปลี่ยนได้</h2><div class="set">${[['คุกกี้วิเคราะห์การใช้งาน','ช่วยปรับปรุงเว็บไซต์ ไม่ใช้ยิงโฆษณา',0],['ข่าวสารทางอีเมล','สรุปรายเดือน',0],['ข่าวสารทาง LINE','ต้องเชื่อม LINE ก่อน',0],['ข่าวสารทาง SMS','เฉพาะโปรโมชันสำคัญ',0],['แนะนำสินค้าให้ตรงกับคุณ','ใช้ประวัติคำสั่งซื้อในบัญชีนี้เท่านั้น',0]].map(([n,s,v])=>`<div><span><b>${n}</b><small>${s}</small></span><input type="checkbox" class="switch" role="switch" aria-checked="${!!v}" ${v?'checked':''} aria-label="${n}"></div>`).join('')}</div><p style="font-size:12.5px;color:var(--fg-3);margin:8px 0 0">บันทึกทันทีที่เปลี่ยน และเก็บประวัติการให้และถอนความยินยอม</p></div>
+  <div class="sec2"><h2>สิทธิของคุณ</h2><div class="grid2"><div class="box"><h2>ขอสำเนาข้อมูล</h2><p style="margin:0;font-size:13.5px;color:var(--fg-2)">ได้ไฟล์ ZIP (JSON + PDF เอกสาร) ทางอีเมลภายใน 30 วัน</p><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ยื่นคำขอสำเนาข้อมูล">ขอสำเนา</button></div><div class="box"><h2>ขอลบบัญชีและข้อมูล</h2><p style="margin:0;font-size:13.5px;color:var(--fg-2)">เอกสารภาษีต้องเก็บตามกฎหมาย 5 ปี ส่วนอื่นลบภายใน 30 วัน</p><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ยืนยันในหน้าถัดไปพร้อมสรุปสิ่งที่จะถูกลบ" style="color:var(--err)">ขอลบข้อมูล</button></div></div></div>`;
+ if(t==='t')c=`<div class="callout i" style="margin-bottom:12px">${ic('i-building')}<div><b>บริษัท ทดสอบ รีเทล จำกัด · UAT-CO-001</b><p>โครงสร้างจริงจาก UAT บัญชี C09 แสดงในบัญชีนี้เพื่อดูหน้าตา ${S} · เดิมอยู่ที่ /business/* (ชนกับหน้าการตลาด /business) ย้ายมาไว้ที่นี่</p></div></div>
+  <div class="grid3"><div class="stat"><small>รออนุมัติ</small><b>0</b><span class="sm">อนุมัติเมื่อยอดเกิน ${money(10000)} รวม VAT</span></div><div class="stat"><small>เครดิต</small><b>ชำระก่อน</b><span class="sm"><button class="btn-link" type="button" data-toast="ต้นแบบ: ขอวงเงินเครดิต">ขอวงเงินเครดิต</button></span></div><div class="stat"><small>เลข PO</small><b>ไม่บังคับ</b><span class="sm">แสดงช่องตอนชำระเงิน</span></div></div>
+  <div class="sec2"><h2>สมาชิก <button class="btn btn-primary btn-sm" type="button" data-invite>${ic('i-plus')}เชิญสมาชิก</button></h2><div class="set" style="padding:0">
+   ${[['กท','กมล ทดสอบ','080 000 0109 · คุณ','admin'],['ศท','ศิริ ทดสอบ','080 000 0110','buyer'],['วท','วรรณา ทดสอบ','080 000 0111','approver']].map(([a,n,s,r])=>`<div class="member"><span class="av">${a}</span><span><b>${n}</b><small>${s}</small></span><select aria-label="บทบาทของ ${n}" ${r==='admin'?'disabled':''}>${[['admin','ผู้ดูแลบริษัท'],['buyer','ผู้สั่งซื้อ'],['approver','ผู้อนุมัติ'],['acct','ฝ่ายบัญชี']].map(([k,l])=>`<option value="${k}" ${k===r?'selected':''}>${l}</option>`).join('')}</select></div>`).join('')}</div></div>
+  <div class="sec2"><h2>กฎการอนุมัติ</h2><div class="box"><div class="flow"><span>ผู้สั่งซื้อสั่ง</span>${ic('i-arrow')}<span>ยอดเกิน ${money(10000)}?</span>${ic('i-arrow')}<span>ผู้อนุมัติได้รับแจ้ง (อีเมล/LINE)</span>${ic('i-arrow')}<span>อนุมัติแล้วจึงชำระ</span></div>
+   <div class="set"><div><span><b>ยอดที่ต้องอนุมัติ (รวม VAT)</b><small>ค่าเดียวกับที่แสดงในภาพรวม (เดิมช่องนี้ว่างแต่ภาพรวมบอก ฿10,000)</small></span><input type="text" inputmode="numeric" value="10,000" aria-label="ยอดที่ต้องอนุมัติ" style="width:120px;height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 10px;text-align:right;color:var(--fg)"></div><div><span><b>เลขใบสั่งซื้อ (PO)</b><small>ไม่ใช้ · ใส่หรือไม่ก็ได้ · ต้องใส่ทุกครั้ง</small></span><select aria-label="เลข PO" style="height:38px;border-radius:10px;border:1px solid var(--line-2);background:var(--surface);padding:0 8px;color:var(--fg)"><option>ใส่หรือไม่ก็ได้</option><option>ต้องใส่ทุกครั้ง</option><option>ไม่ใช้</option></select></div><div><span><b>อนุมัติผ่าน LINE</b><small>ผู้อนุมัติกดอนุมัติในข้อความได้เลย ${S}</small></span><input type="checkbox" class="switch" role="switch" aria-checked="true" checked aria-label="อนุมัติผ่าน LINE"></div></div></div></div>
+  <div class="sec2"><h2>อื่น ๆ ของบริษัท</h2><div class="grid3">${[['i-pinmap','สาขา','ที่อยู่และผู้ซื้อแยกตามสาขา'],['i-palette','ไฟล์แบรนด์','โลโก้ ฟอนต์ สีแบรนด์ ใช้ในสตูดิโอ'],['i-api','เชื่อมต่อระบบ (API)','สั่งซื้อและดึงเอกสารจากระบบของคุณ']].map(([i,n,s])=>`<button class="box" type="button" style="text-align:left;cursor:pointer" data-go="${({'สาขา':'co-branches','ไฟล์แบรนด์':'company','เชื่อมต่อระบบ (API)':'co-api'})[n]}"><h2 style="justify-content:flex-start">${ic(i)}${n}</h2><span style="font-size:13px;color:var(--fg-2)">${s}</span></button>`).join('')}</div></div>`;
+ return ph('ข้อมูลบัญชี','ที่อยู่ ข้อมูลใบกำกับภาษี การแจ้งเตือน ความเป็นส่วนตัว และทีมของบริษัท')+seg('account',[['a','ที่อยู่และใบกำกับภาษี'],['n','การแจ้งเตือน'],['p','ความเป็นส่วนตัว'],['t','ทีมและผู้อนุมัติ']],'a')+c};
+G.taxSheet=function(){openSheet('ข้อมูลผู้ซื้อในใบกำกับภาษี',`<div class="mode2" role="tablist"><button type="button" role="tab" aria-selected="true">นิติบุคคล</button><button type="button" role="tab" aria-selected="false">บุคคลธรรมดา</button></div>
+ <div class="fld"><label for="tx1">เลขประจำตัวผู้เสียภาษี 13 หลัก</label><input id="tx1" inputmode="numeric" value="0000000000078" style="font-family:var(--f-mono)"><span class="hint">ใส่ครบ 13 หลักแล้วระบบดึงชื่อและที่อยู่จากกรมพัฒนาธุรกิจการค้าให้ ${S}</span></div>
+ <div class="fld"><label for="tx2">ชื่อนิติบุคคล</label><input id="tx2" value="บริษัท ทดสอบ เฮลท์แคร์ จำกัด"></div>
+ <div class="grid2"><div class="fld"><label for="tx3">สำนักงาน</label><input id="tx3" value="สำนักงานใหญ่"></div><div class="fld"><label for="tx4">รหัสสาขา (ถ้ามี)</label><input id="tx4" placeholder="00000" style="font-family:var(--f-mono)"></div></div>
+ <div class="fld"><label for="tx5">ที่อยู่ตามภ.พ.20</label><input id="tx5" value="88 อาคารทดสอบ ชั้น 5 ถนนทดสอบ แขวงลาดกระบัง เขตลาดกระบัง กรุงเทพมหานคร 10520"></div>
+ <label class="check"><input type="checkbox" checked><span>บริษัทนี้หักภาษี ณ ที่จ่ายเมื่อชำระ <small style="display:block;color:var(--fg-3)">ระบบแสดงยอดที่ต้องโอนหลังหัก และขอ 50 ทวิ หลังชำระ</small></span></label>
+ <div class="fld"><label for="tx6">อีเมลฝ่ายบัญชี (รับเอกสารอัตโนมัติ)</label><input id="tx6" type="email" placeholder="accounting@company.com"></div>`,`<button class="btn btn-primary" type="button" data-shclose data-toast="ต้นแบบ: บันทึกข้อมูลผู้ซื้อแล้ว">บันทึก</button>`)};
+G.addrSheet=function(){openSheet('ที่อยู่จัดส่ง',`<div class="fld"><label for="ad1">ชื่อเรียก</label><input id="ad1" value="โกดังสินค้า"></div><div class="fld"><label for="ad2">ชื่อสถานที่หรือบริษัท (ไม่บังคับ)</label><input id="ad2" value="ผู้ผลิตอาหารเสริม"><span class="hint">แยกจากบรรทัดที่อยู่ (เดิมปนอยู่ในที่อยู่)</span></div>
+ <div class="grid2"><div class="fld"><label for="ad3">ผู้รับ</label><input id="ad3" value="ปรีชา ทดสอบ"></div><div class="fld"><label for="ad4">เบอร์ผู้รับ</label><input id="ad4" value="080 000 0107"></div></div>
+ <div class="fld"><label for="ad5">ที่อยู่</label><input id="ad5" value="16/1 ถนนทดสอบ"></div><div class="fld"><label for="ad6">รหัสไปรษณีย์</label><input id="ad6" value="10520" inputmode="numeric"><span class="hint">พิมพ์รหัสไปรษณีย์แล้วเลือกแขวง/เขตจากรายการ</span></div>
+ <div class="fld"><label for="ad7">หมายเหตุสำหรับคนส่งของ</label><input id="ad7" placeholder="เช่น เวลารับของ ลิฟต์ขนของ จุดลงของ"></div>`,`<button class="btn btn-primary" type="button" data-shclose data-toast="ต้นแบบ: บันทึกที่อยู่แล้ว">บันทึก</button>`)};
+})();
+(()=>{const G=window.__gp;const {$,esc,money,num,ic,S,V,seg,curTab,ph,boxSVG,pill,openSheet,gdlg}=G;
+/* ======== extra routes: order sub-pages (C01 real), company workspace (C09 real), agent sub-tabs, structural form ======== */
+const back=(href,t)=>`<a class="back" href="#${href}">${ic('i-arrow')}${t}</a>`;
+const head=(eyebrow,t,pillHtml,acts='')=>`<div class="dh"><div><p style="margin:0;font-size:13px;color:var(--fg-3)">${eyebrow}</p><h1 style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">${t} ${pillHtml||''}</h1></div>${acts?`<div class="acts">${acts}</div>`:''}</div>`;
+
+/* --- orders hub (links to sub-pages; main list/detail designed in account-orders) --- */
+const ORD=[['o-artwork','ส่งไฟล์งาน','UATOR-2610-00016 · รอไฟล์จากคุณ','i-upload'],['o-proof','ตรวจแบบตัวอย่าง','UATOR-2610-00017 · ยังไม่มีแบบตัวอย่าง','i-eye'],['o-receipt','รับสินค้า','UATOR-2610-00008 · ได้รับ 2,940 / 3,000','i-truck'],['o-claim','เคลม','UATCL-2610-0001 · เลยกำหนดตัดสิน','i-alert'],['o-reorder','สั่งซ้ำ','UATOR-2610-00008 · ราคาวันนี้','i-repeat']];
+G.ordersView=function(){return ph('คำสั่งซื้อ','รายการและรายละเอียดคำสั่งซื้อออกแบบไว้แล้วในชุด account-orders · รอบนี้ออกแบบหน้าย่อยของคำสั่งซื้อ')+
+ `<div class="list rows">${ORD.map(([h,n,s,i])=>`<a class="row click" href="#${h}" style="text-decoration:none;color:inherit;grid-template-columns:44px minmax(0,1fr) auto"><div class="th">${ic(i)}</div><div><h3>${n}</h3><div class="sub2"><span>${s}</span></div></div><div class="side">${ic('i-arrow')}</div></a>`).join('')}</div>`};
+
+/* --- artwork (O16, unpaid & overdue, customer owns the next step) --- */
+G.artworkView=function(){return back('orders','คำสั่งซื้อ UATOR-2610-00016')+head('ไฟล์งานพิมพ์ · กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B) · 140 × 97.5 × 60 มม.','ส่งไฟล์งาน',pill('wait','รอไฟล์จากคุณ'))+
+ `<div class="callout w" style="margin-bottom:14px">${ic('i-clock')}<div><b>คำสั่งซื้อนี้ยังไม่ชำระ (เลยกำหนด 22 ต.ค. 2569)</b><p>ส่งไฟล์ได้เลย ไฟล์ได้รับแล้ว ทีมงานจะตรวจหลังชำระเงิน · ราคาต้องตรวจใหม่ก่อนชำระ</p></div><a class="btn btn-primary" href="#orders">ตรวจราคาใหม่และชำระ</a></div>
+ <div class="dgrid"><div class="col">
+  <div class="box"><h2>1 · ดาวน์โหลดแบบไดคัท</h2><p style="margin:0;font-size:14px;color:var(--fg-2)">วางงานบนแบบนี้ เส้นตัด เส้นพับ และระยะตัดตกอยู่คนละเลเยอร์</p>
+   <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ดาวน์โหลดแบบไดคัท .ai (ฟรี)">${ic('i-dl')}Illustrator (.ai)</button><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ดาวน์โหลดแบบไดคัท PDF">${ic('i-dl')}PDF</button><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: เปิดแบบนี้ในสตูดิโอ">ออกแบบในสตูดิโอแทน</button></div></div>
+  <div class="box"><h2>2 · อัปโหลดไฟล์</h2>
+   <div class="drop">${ic('i-upload')}ลากไฟล์มาวาง หรือ <button class="btn-link" type="button">เลือกไฟล์</button><br><small style="color:var(--fg-3)">PDF AI หรือ PSD · ครั้งละไม่เกิน 20 ไฟล์ · ไฟล์ละไม่เกิน 2 GB</small></div>
+   <div class="fld"><label for="pn">หมายเหตุถึงทีมพรีเพรส</label><input id="pn" placeholder="เช่น ด้านไหนเป็นด้านหน้า หรือสีที่ต้องการให้ตรง"></div>
+   <button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ส่งไฟล์แล้ว ระบบตรวจอัตโนมัติก่อน ทีมตรวจหลังชำระเงิน">ส่งไฟล์</button></div></div>
+  <div class="col"><div class="box"><h2>ระบบตรวจอะไรให้</h2><ul class="pts" style="list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:13.5px;color:var(--fg-2)">${['ขนาดตรงกับแบบไดคัท','ระยะตัดตกด้านละ 3 มม.','ข้อความห่างเส้นตัดอย่างน้อย 3 มม.','ความละเอียดอย่างน้อย 300 ppi','โหมดสี CMYK','ฟอนต์ฝังหรือแปลงเป็นเส้นแล้ว'].map(x=>`<li style="display:flex;gap:8px">${ic('i-check')}${x}</li>`).join('')}</ul></div>
+   <div class="box"><h2>ติดปัญหาเรื่องไฟล์</h2><p style="margin:0;font-size:13.5px;color:var(--fg-2)">ทีมพรีเพรสช่วยดูให้ทาง LINE ทุกวัน 09:00–18:00 หรือส่งข้อความในคำสั่งซื้อนี้</p><a class="btn btn-ghost" href="#msgs">ถามทีม</a></div></div></div>`};
+
+/* --- proof (O17) --- */
+G.proofView=function(){return back('orders','คำสั่งซื้อ UATOR-2610-00017')+head('ตรวจแบบตัวอย่าง','รอแบบตัวอย่างจากทีม',pill('info','รอบที่ 1'))+
+ `<div class="grid2"><div class="box"><h2>แบบที่สั่งผลิต <span class="badge2 g">เวอร์ชัน 3</span></h2><div class="stage" style="border-radius:14px">${boxSVG()}</div><p style="margin:0;font-size:13px;color:var(--fg-3)">ภาพจากสตูดิโอของเวอร์ชันที่ล็อกกับคำสั่งซื้อนี้ แก้ในสตูดิโอจะสร้างเวอร์ชันใหม่และต้องตรวจราคาอีกครั้ง</p><a class="btn btn-ghost" href="#designs">เปิดในสตูดิโอ</a></div>
+  <div class="box"><h2>แบบตัวอย่าง (proof)</h2><div class="empty" style="padding:28px">ยังไม่มีแบบตัวอย่าง<br><small>ทีมพรีเพรสส่งให้ตรวจภายใน 1 วันทำการหลังไฟล์ผ่านและชำระเงินแล้ว ${S} เราแจ้งทาง LINE และอีเมล</small></div>
+   <div class="flow"><span>เทียบกับแบบที่สั่ง</span>${ic('i-arrow')}<span>ปักหมุดจุดที่ต้องแก้</span>${ic('i-arrow')}<span>อนุมัติ หรือขอแก้</span></div></div></div>
+ <p style="font-size:12.5px;color:var(--fg-3);margin-top:10px">เวอร์ชันนับเมื่อบันทึก ส่งสั่งผลิต หรือทุก 30 นาทีที่มีการแก้ (เดิมขึ้นเวอร์ชัน 17 จาก autosave)</p>`};
+
+/* --- receipt (O8) --- */
+G.receiptView=function(){return back('orders','คำสั่งซื้อ UATOR-2610-00008')+head('การจัดส่ง UATSH-2610-00003 · รถขนส่งของ getpack · 30 กล่อง','ได้รับสินค้าแล้ว',pill('done','ส่งถึง 12 ต.ค. 2569 21:55'))+
+ `<div class="grid3"><div class="stat"><small>สั่ง</small><b>3,000 ชิ้น</b></div><div class="stat"><small>ได้รับ</small><b>2,940 ชิ้น</b><span class="sm">ขาด 60 ชิ้น (2%) อยู่ในเกณฑ์ ± 5%</span></div><div class="stat"><small>คืนเป็นเครดิต</small><b>${money(792.29)}</b><span class="sm">ใบลดหนี้ UATCN-2610-00001</span></div></div>
+ <div class="dgrid" style="margin-top:14px"><div class="box"><h2>ความเคลื่อนไหว</h2><ol class="trk-steps">${[['ออกจากฝ่ายผลิต','12 ต.ค. 21:54','d'],['กำลังนำส่ง','12 ต.ค. 21:54','d'],['ส่งถึง · ผู้รับลงชื่อรับ 2,940 ชิ้น','12 ต.ค. 21:55','d']].map(([n,t,s])=>`<li class="${s}"><span class="n">${ic('i-check')}</span><div><b>${n}</b></div><time>${t}</time></li>`).join('')}</ol></div>
+  <div class="col"><div class="box"><h2>หลักฐานการส่งมอบ</h2><div class="ev"><button class="ph2" type="button" data-toast="รูปหลักฐานการส่งมอบ (ภาพจริงจาก UAT 1 รูป)">${boxSVG()}</button></div><p style="margin:0;font-size:13px;color:var(--fg-3)">ส่งถึง มาลี ทดสอบ · 10500</p></div>
+   <div class="box"><h2>มีปัญหากับสินค้า?</h2><p style="margin:0;font-size:13.5px;color:var(--fg-2)">แจ้งได้ถึง 19 ต.ค. 2569 21:55 · มีเคลมเปิดอยู่ 1 รายการ</p><a class="btn btn-ghost" href="#o-claim">ดูเคลม UATCL-2610-0001</a></div></div></div>`};
+
+/* --- claim (UATCL-2610-0001) with P-25: decide ≤ 5 working days, alert at 3 --- */
+G.claimView=function(){return back('orders','คำสั่งซื้อ UATOR-2610-00008')+head('เคลม UATCL-2610-0001 · แจ้งเมื่อ 12 ต.ค. 2569 21:55','ทีมกำลังตรวจสอบ',pill('pay','เลยกำหนดตัดสิน 9 วัน'))+
+ `<div class="callout e" style="margin-bottom:14px">${ic('i-alert')}<div><b>ควรตัดสินภายใน 19 ต.ค. 2569 (5 วันทำการ)</b><p>เรื่องนี้ส่งถึงหัวหน้าทีมบริการลูกค้าแล้ว จะติดต่อกลับภายในวันนี้ ${S}</p></div><a class="btn btn-ghost" href="#msgs">ถามทีม</a></div>
+ <div class="dgrid"><div class="col"><div class="box"><h2>สิ่งที่แจ้ง</h2><dl class="kv3"><dt>ปัญหา</dt><dd>งานพิมพ์ผิดพลาด</dd><dt>จำนวนที่มีปัญหา</dt><dd>60 กล่อง</dd><dt>สิ่งที่ต้องการ</dt><dd>ผลิตใหม่</dd><dt>รายละเอียด</dt><dd>โลโก้พิมพ์เลื่อนประมาณ 60 กล่อง</dd></dl><div class="ev"><button class="ph2" type="button" data-toast="รูปหลักฐาน 1">${boxSVG()}</button><button class="ph2" type="button" data-toast="รูปหลักฐาน 2">${boxSVG('#B79563')}</button></div><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: เพิ่มรูปหรือรายละเอียด">${ic('i-upload')}เพิ่มรูปหรือรายละเอียด</button></div></div>
+  <div class="col"><div class="box"><h2>ขั้นตอน</h2><ol class="trk-steps">${[['แจ้งเคลม','12 ต.ค. 2569','d'],['ทีมกำลังตรวจสอบ','เริ่ม 12 ต.ค. 2569','c'],['ตัดสินผล','ภายใน 19 ต.ค. 2569',''],['ผลิตใหม่หรือคืนเครดิต','',''] ].map(([n,t,s])=>`<li class="${s}"><span class="n">${s==='d'?ic('i-check'):s==='c'?ic('i-clock'):ic('i-minus')}</span><div><b>${n}</b></div><time>${t}</time></li>`).join('')}</ol><p style="margin:0;font-size:12.5px;color:var(--fg-3)">ตามเงื่อนไขการรับประกันฉบับที่ 1 · เดิมหน้านี้แสดง "รอทีม" "ตอบกลับแล้ว" และ "เลยกำหนด" พร้อมกัน</p></div></div></div>`};
+
+/* --- reorder (O8) with P-24 15-day lock, P-26 lead time reason, lines that add up --- */
+G.reorderPageView=function(){const goods=40990.65,ship=350,vat=2893.85,tot=44234.50;
+ return back('orders','คำสั่งซื้อ UATOR-2610-00008')+head('สั่งซ้ำ · สเปกและแบบเดิม ราคาวันนี้','กล่องไปรษณีย์ ฝาชน 3 ชั้น (ลอน B)','')+
+ `<div class="dgrid"><div class="col"><div class="box"><h2>สเปกเดิม</h2><dl class="kv3"><dt>แบบกล่อง</dt><dd>กล่องฝาชน (RSC)</dd><dt>ขนาด (ยาว × กว้าง × สูง)</dt><dd>170 × 110 × 60 มม. (ด้านใน)</dd><dt>วัสดุ</dt><dd>ลูกฟูก KA125 ลอน B (3 ชั้น)</dd><dt>พิมพ์ด้านนอก</dt><dd>พิมพ์ 4 สี (CMYK)</dd></dl></div>
+  <div class="box"><h2>ไฟล์งาน</h2><label class="opt2" style="display:grid;grid-template-columns:18px 1fr;gap:10px;padding:12px;border:1px solid var(--fg);border-radius:12px"><input type="radio" name="af" checked style="accent-color:var(--brand)"><span><b>ใช้ไฟล์เดิม</b><small style="display:block;color:var(--fg-3)">ผลิตตามแบบตัวอย่างที่อนุมัติไว้ ไม่ต้องตรวจแบบใหม่ · ไม่คิดค่าบล็อก/เพลทซ้ำ (ประหยัด ${money(156)})</small></span></label><label style="display:grid;grid-template-columns:18px 1fr;gap:10px;padding:12px;border:1px solid var(--line-2);border-radius:12px"><input type="radio" name="af" style="accent-color:var(--brand)"><span><b>ส่งไฟล์งานใหม่</b><small style="display:block;color:var(--fg-3)">ทีมตรวจไฟล์และส่งแบบตัวอย่างให้อนุมัติก่อนผลิต</small></span></label></div>
+  <div class="box"><h2>จำนวน</h2><div class="qtyx"><button type="button" aria-label="ลด">−</button><span>3,000</span><button type="button" aria-label="เพิ่ม">+</button></div><small style="color:var(--fg-3)">ครั้งก่อน 3,000 · ขั้นต่ำ 100 · สั่ง 5,000 ชิ้น ถูกลงชิ้นละ ${money(1.10)} ${S}</small></div></div>
+  <div class="col"><div class="box"><h2>ราคาวันนี้</h2><dl class="kv2"><dt>สินค้า 3,000 ชิ้น (ก่อน VAT)</dt><dd>${money(goods)}</dd><dt>ค่าบล็อกและเพลท</dt><dd>ไม่คิด</dd><dt>ค่าจัดส่ง (ก่อน VAT)</dt><dd>${money(ship)}</dd><dt>VAT 7%</dt><dd>${money(vat)}</dd><dt class="tot">ยอดรวม</dt><dd class="tot">${money(tot)}</dd></dl>
+   <p style="margin:0;font-size:12.5px;color:var(--fg-3)">${money(tot/3000)} ต่อชิ้น รวม VAT และค่าส่ง · บวกบรรทัดบนได้เท่ายอดรวม (เดิมแสดงสินค้ารวม VAT แล้วบวก VAT ซ้ำ)</p>
+   <div class="diff"><span>ราคาคงที่ถึง</span><b>12 พ.ย. 2569 (15 วัน)</b></div>
+   <div class="diff"><span>ผลิต</span><b>10 วันทำการ</b></div><p style="margin:-6px 0 0;font-size:12.5px;color:var(--fg-3)">นานกว่ามาตรฐาน 5 วันทำการ เพราะสเปกนี้ใช้ลอน B พิมพ์ 4 สี ${S}</p>
+   <div class="diff"><span>คาดว่าจะได้รับ</span><b>10 พ.ย. 2569</b></div>
+   <button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ไปชำระเงินด้วยราคานี้">สั่งซ้ำและชำระเงิน</button><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: บันทึกเป็นใบเสนอราคา ราคาคงที่ 15 วัน">บันทึกเป็นใบเสนอราคา</button></div></div></div>`};
+
+/* --- structural request form --- */
+G.srNewView=function(){return back('designs','งานออกแบบ')+ph('ขอให้ออกแบบโครงสร้างกล่อง','ทีมส่งแบบร่างแรกภายใน 3 วันทำการ รวมแก้ 2 รอบ ถ้ามีค่าบริการ ทีมเสนอราคาให้ยืนยันก่อนเริ่มงาน')+
+ `<form class="box" style="max-width:760px" onsubmit="event.preventDefault()"><div class="fld"><label>ประเภทบรรจุภัณฑ์</label><div class="qchips">${['กล่องกระดาษแข็ง','กล่องลูกฟูก','กล่องแข็ง (Rigid)','ถาดและตัวกั้น','ถุงกระดาษ','อื่น ๆ'].map((x,i)=>`<button class="chipf" type="button" aria-pressed="${i===0}">${x}</button>`).join('')}</div></div>
+  <div class="fld"><label for="sr1">สินค้าที่จะใส่ และใช้งานอย่างไร</label><textarea id="sr1" rows="4" style="border-radius:12px;border:1px solid var(--line-2);background:var(--surface);padding:10px 12px;color:var(--fg);font:inherit" placeholder="เช่น ขวดแก้ว 200 มล. 6 ขวด น้ำหนักรวม 2.4 กก. ส่งพัสดุทั่วประเทศ ต้องเปิดโชว์หน้าร้านได้"></textarea><span class="hint">บอกน้ำหนัก วิธีขนส่ง และการวางขาย ทีมจะออกแบบได้ตรงขึ้น</span></div>
+  <div class="fld"><label>ขนาดสินค้า (มม.)</label><div class="mode2" style="max-width:320px"><button type="button" aria-selected="true">ขนาดสินค้า</button><button type="button" aria-selected="false">ขนาดกล่องที่ต้องการ</button></div>
+   <div class="grid3">${['ยาว','กว้าง','สูง'].map(x=>`<input aria-label="${x} (มม.)" placeholder="${x}" inputmode="decimal" style="height:44px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface);padding:0 12px;color:var(--fg)">`).join('')}</div></div>
+  <div class="grid2"><div class="fld"><label for="sr3">น้ำหนักต่อชิ้น (กรัม)</label><input id="sr3" inputmode="decimal"></div><div class="fld"><label for="sr4">จำนวนที่คาดว่าจะสั่ง</label><input id="sr4" inputmode="numeric" placeholder="เช่น 1,000"></div></div>
+  <div class="drop">${ic('i-upload')}รูปสินค้า แบบร่าง หรือกล่องที่ชอบ (ไม่เกิน 5 ไฟล์) · <button class="btn-link" type="button">เลือกไฟล์</button><br><small style="color:var(--fg-3)">รูป PDF DXF หรือ AI ไฟล์ละไม่เกิน 20 MB</small></div>
+  <button class="btn btn-primary" type="submit" data-toast="ต้นแบบ: ส่งคำขอแล้ว ทีมส่งแบบร่างภายใน 3 วันทำการ">ส่งคำขอ</button></form>`};
+
+/* --- company workspace (C09 real · UAT-CO-001) under /account/company/* --- */
+const CO_NAV=[['company','ภาพรวมบริษัท','i-building'],['co-approvals','รออนุมัติ','i-check'],['co-reorder','สั่งซ้ำหลายรายการ','i-repeat'],['co-credit','เครดิตและใบแจ้งยอด','i-wallet'],['co-branches','สาขา','i-pinmap'],['co-api','เชื่อมต่อระบบ','i-api']];
+G.CO_NAV=CO_NAV;
+const coBanner=`<div class="callout i" style="margin-bottom:14px">${ic('i-building')}<div><b>บริษัท ทดสอบ รีเทล จำกัด · UAT-CO-001 · คุณเป็นผู้ดูแลบริษัท</b><p>ข้อมูลจริงจากบัญชี C09 · ย้ายจาก /business/* มาไว้ใต้บัญชี (หน้าการตลาด /business คงเดิม)</p></div></div>`;
+G.companyView=function(){return ph('ภาพรวมบริษัท','ยอดซื้อ การอนุมัติ และเครดิตของทั้งบริษัท',`<a class="btn btn-ghost" href="#account" data-cotab>สมาชิกและการตั้งค่า</a>`)+coBanner+
+ `<div class="grid3"><div class="stat"><small>รออนุมัติ</small><b>0</b><span class="sm">ต้องอนุมัติเมื่อยอดเกิน ${money(10000)} รวม VAT</span></div><div class="stat"><small>เครดิต</small><b>ชำระก่อน</b><span class="sm"><a href="#co-credit" style="color:var(--brand)">ขอวงเงินเครดิต</a></span></div><div class="stat"><small>ยอดค้างชำระ</small><b>${money(0)}</b><span class="sm">ไม่มียอดครบกำหนด</span></div></div>
+ <div class="sec2"><h2>ยอดซื้อของบริษัท</h2><div class="empty">ยังไม่มีคำสั่งซื้อในนามบริษัท · เมื่อมี จะแสดงยอดรายเดือน แยกตามผู้สั่ง สาขา และประเภทสินค้า</div></div>`};
+G.coApprovalsView=function(){const sel=V.apsel||'a1';
+ const Q=[{id:'a1',who:'ผู้สั่งซื้อ ทดสอบ',role:'ผู้สั่งซื้อ · สาขาบางนา',p:'กล่องไปรษณีย์ D · 1,500 ชิ้น',no:'UATOR-2611-00021',age:'รอ 3 ชม.',amt:27820},
+  {id:'a2',who:'ผู้สั่งซื้อ ทดสอบ 2',role:'ผู้สั่งซื้อ · สำนักงานใหญ่',p:'กล่องหูช้าง B · 3,000 ชิ้น',no:'UATOR-2611-00022',age:'รอ 6 ชม.',amt:42800}];
+ const x=Q.find(q=>q.id===sel)||Q[0],net=x.amt/1.07,used=62000,cap=100000,after=used+x.amt;
+ return ph('รออนุมัติ','คำสั่งซื้อของทั้งบริษัทที่ยอดเกิน '+money(10000)+' รวม VAT · <a href="#account" data-cotab>ตั้งค่า</a>')+coBanner+seg('coap',[['p','รออนุมัติ',2],['d','ตัดสินแล้ว',0],['a','ทั้งหมด',2]],'p')+
+ `<div class="apv"><div class="q" role="list">${Q.map(q=>`<button class="qi" role="listitem" type="button" data-apsel="${q.id}" aria-current="${q.id===x.id}"><span class="r1"><b>${q.who} ${S}</b><span class="pill wait"><i></i>รออนุมัติ</span></span><small>${q.role}</small><small style="color:var(--fg-2)">${q.p}</small><span class="r2"><span>${q.no} · ${q.age}</span><span>${money(q.amt)}</span></span></button>`).join('')}</div>
+ <div class="d"><div><h2 style="margin:0;font-size:18px">${x.p}</h2><p style="margin:2px 0 0;font-size:13px;color:var(--fg-3)"><code>${x.no}</code> · ส่งโดย ${x.who} (${x.role})</p></div>
+  <dl class="kv3"><dt>ก่อน VAT</dt><dd>${money(net)}</dd><dt>VAT 7%</dt><dd>${money(x.amt-net)}</dd><dt>รวม</dt><dd><b>${money(x.amt)}</b></dd><dt>ราคา</dt><dd>ล็อกถึง 11 พ.ย. 2569 (15 วันจากใบเสนอราคา)</dd></dl>
+  <div class="bud"><b style="font-size:13.5px">งบสาขาบางนา เดือน พ.ย.</b> <span style="font-size:12.5px;color:var(--fg-3)">ผู้ดูแลตั้งได้ ไม่บังคับ ${S}</span><div class="bar" aria-label="ใช้ไป ${Math.round(used/cap*100)}% หลังอนุมัติ ${Math.round(after/cap*100)}%"><i style="width:${used/cap*100}%"></i><em style="left:${used/cap*100}%;width:${Math.min(after-used,cap-used)/cap*100}%"></em></div><div class="lg"><span>ใช้ไป ${money(used)} จาก ${money(cap)}</span><span>หลังอนุมัติรายการนี้ ${Math.round(after/cap*100)}%${after>cap?' · เกินงบ':''}</span></div></div>
+  <div class="fld"><label for="apo">เลข PO ของบริษัท (ไม่บังคับ)</label><input id="apo" placeholder="เช่น PO-2026-0092"></div>
+  <div class="fld"><label for="apc">ความเห็นถึงผู้สั่ง</label><textarea id="apc" rows="2" placeholder="จำเป็นเมื่อส่งกลับให้แก้"></textarea></div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: อนุมัติแล้ว แจ้งผู้สั่งทางอีเมลและ LINE">อนุมัติ</button><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: ส่งกลับให้แก้พร้อมความเห็น">ส่งกลับให้แก้</button></div>
+  <p style="font-size:12.5px;color:var(--fg-3);margin:0">อนุมัติในข้อความ LINE ได้เมื่อผู้อนุมัติเชื่อม LINE แล้ว · ผู้สั่งซื้อเห็นเฉพาะของตัวเอง</p></div></div>`};
+G.coReorderView=function(){return ph('สั่งซ้ำหลายรายการ','เลือกจากคำสั่งซื้อที่เคยผลิต หรือวางรายการ ระบบคำนวณราคาวันนี้แล้วใส่ตะกร้า')+coBanner+
+ `<div class="grid2"><div class="box"><h2>เลือกจากประวัติ</h2><div class="empty" style="padding:20px">ยังไม่มีคำสั่งซื้อในนามบริษัท</div></div>
+  <div class="box"><h2>วางรายการหรืออัปโหลด CSV</h2><textarea rows="5" style="border-radius:12px;border:1px solid var(--line-2);background:var(--surface);padding:10px 12px;color:var(--fg);font:500 13px var(--f-mono)" placeholder="UATOR-2610-00008,2000&#10;UATOR-2610-00007"></textarea><small style="color:var(--fg-3)">บรรทัดละ: เลขคำสั่งซื้อ,จำนวน (ไม่ใส่จำนวน = เท่าครั้งก่อน) · เดิมตัวอย่างใช้รูปแบบเลข PK-2569-… ของระบบเก่า</small><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ตรวจรายการและคำนวณราคาวันนี้">ตรวจรายการ</button></div></div>`};
+G.coCreditView=function(){return ph('เครดิตและใบแจ้งยอด','วงเงิน เครดิตเทอม ยอดค้าง และใบแจ้งยอดรายเดือน')+coBanner+
+ `<div class="grid2"><div class="box"><h2>ขอวงเงินเครดิต</h2><dl class="kv3"><dt>สถานะ</dt><dd>ชำระก่อน (ยังไม่มีวงเงิน)</dd><dt>เครดิตเทอม</dt><dd>30 วัน</dd><dt>เงื่อนไข</dt><dd>สั่งและชำระครบ 3 ครั้งขึ้นไป หรือแนบงบการเงินปีล่าสุด · ตอนนี้ชำระแล้ว 0 จาก 3 ครั้ง</dd></dl>
+  <div class="fld"><label for="cl1">วงเงินที่ต้องการ (บาท)</label><input id="cl1" inputmode="numeric" placeholder="เช่น 100,000"></div><div class="drop">${ic('i-upload')}งบการเงิน PDF ไม่เกิน 30 MB · <button class="btn-link" type="button">เลือกไฟล์</button></div><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: ส่งคำขอวงเงินแล้ว ทีมการเงินตอบภายใน 3 วันทำการ">ส่งคำขอ</button>
+  <p style="margin:0;font-size:12.5px;color:var(--fg-3)">ตัดข้อความขั้นตอนอนุมัติภายใน ("เกินกว่านั้นผู้บริหารพิจารณา") ออกจากหน้าลูกค้า</p></div>
+  <div class="box"><h2>ใบแจ้งยอดรายเดือน</h2><div class="empty" style="padding:20px">ใบแจ้งยอดออกทุกสิ้นเดือนที่มีการสั่งซื้อแบบเครดิต พร้อมยอดแยกตามอายุหนี้</div></div></div>`};
+G.coBranchesView=function(){return ph('สาขา','ใบกำกับภาษีออกตามสาขาที่เลือกตอนสั่งซื้อ',`<button class="btn btn-primary" type="button" data-toast="ต้นแบบ: เพิ่มสาขา (รหัสสาขา 5 หลัก ชื่อ ที่อยู่ตาม ภ.พ.20)">${ic('i-plus')}เพิ่มสาขา</button>`)+coBanner+
+ `<div class="list rows"><article class="row" style="grid-template-columns:44px minmax(0,1fr) auto"><div class="th">${ic('i-building')}</div><div><h3>สำนักงานใหญ่ <span class="badge2">ค่าเริ่มต้น</span></h3><div class="sub2"><span>รหัสสาขา <code>00000</code></span><span>199 อาคารทดสอบ ถนนพระรามที่ 4 กรุงเทพมหานคร 10330</span></div></div><div class="side"><div class="acts"><button class="btn btn-ghost" type="button" data-toast="ต้นแบบ: แก้ไขสาขา">แก้ไข</button></div></div></article></div>`};
+G.coApiView=function(){return ph('เชื่อมต่อระบบ','ให้ระบบของบริษัทสั่งซื้อและดึงเอกสารจาก getpack ได้เอง')+coBanner+
+ `<div class="grid2"><div class="box"><h2>สร้างคีย์ใหม่</h2><div class="fld"><label for="k1">ชื่อคีย์</label><input id="k1" placeholder="เช่น ระบบ ERP ของคลัง"></div>
+  <div class="set">${[['ดูคำสั่งซื้อ','b2b_orders.read',1],['สั่งซื้อ','b2b_orders.write',0],['ดึงเอกสาร','b2b_documents.read',0],['จัดการ webhook','b2b_webhooks.manage',0]].map(([n,c,v])=>`<div><span><b>${n}</b><small><code>${c}</code></small></span><input type="checkbox" class="switch" role="switch" aria-checked="${!!v}" ${v?'checked':''} aria-label="${n}"></div>`).join('')}</div>
+  <button class="btn btn-primary" type="button" data-toast="ต้นแบบ: สร้างคีย์แล้ว แสดงคีย์ครั้งเดียว">สร้างคีย์</button></div>
+  <div class="box"><h2>Webhook <span class="flagtag">F28</span></h2><p style="margin:0;font-size:13.5px;color:var(--fg-2)">รับแจ้งเมื่อสถานะคำสั่งซื้อเปลี่ยนหรือออกเอกสาร ตั้งค่าได้ที่นี่โดยไม่ต้องเรียก API</p><div class="fld"><label for="wh">URL ปลายทาง</label><input id="wh" placeholder="https://erp.company.com/hooks/getpack"></div><div class="qchips">${['order.status_changed','document.issued','shipment.delivered'].map(x=>`<button class="chipf" type="button" aria-pressed="false">${x}</button>`).join('')}</div><div class="empty" style="padding:16px">ประวัติการส่งจะแสดงที่นี่</div></div></div>`};
+
+/* --- agent: enrolled view with sub-tabs (non-agents always see the join page, P-27) --- */
+G.agentDash2=function(){const t=curTab('agt','o');let c='';
+ if(t==='o')c=`<div class="ag-kpi"><div class="stat"><small>ลูกค้าที่ผูกกับคุณ</small><b>3</b>${S}</div><div class="stat"><small>รอจ่าย</small><b>${money(4210)}</b>${S}</div><div class="stat"><small>จ่ายแล้ว</small><b>${money(0)}</b></div><div class="stat"><small>คลิกลิงก์ 30 วัน</small><b>48</b>${S}</div></div>
+  <div class="box" style="margin-top:14px"><h2>ลิงก์ของคุณ</h2><div class="linkbox"><input readonly value="https://getpack.co/a/PRC7K2Q9" aria-label="ลิงก์ตัวแทน"><button class="btn btn-primary btn-sm" type="button" data-copy="https://getpack.co/a/PRC7K2Q9">คัดลอก</button></div></div>`;
+ if(t==='c')c=`<div class="list rows">${[['บ. ส•••• จำกัด','สั่งแล้ว 2 ครั้ง','done','ผูกถึง ต.ค. 2570'],['ร้าน ก••••','สมัครแล้ว ยังไม่สั่ง','wait','ผูกถึง ต.ค. 2570'],['คุณ ม•••','สมัครแล้ว ยังไม่สั่ง','wait','ผูกถึง ต.ค. 2570']].map(([n,a,c2,b])=>`<article class="row" style="grid-template-columns:44px minmax(0,1fr) auto"><div class="th">${ic('i-user')}</div><div><h3>${n} ${S}</h3><div class="sub2"><span>${b}</span></div></div><div class="side">${pill(c2,a)}</div></article>`).join('')}</div><p style="font-size:12.5px;color:var(--fg-3)">แสดงชื่อย่อ ไม่แสดงยอดซื้อรายคำสั่งของลูกค้า</p>`;
+ if(t==='l')c=`<div class="callout i" style="margin-bottom:12px">${ic('i-handshake')}<div><b>ส่งลูกค้าที่สนใจให้ทีมขายดูแล</b><p>ใส่ชื่อธุรกิจและช่องทางติดต่อ เมื่อลูกค้าสมัคร ระบบผูกกับคุณอัตโนมัติ</p></div><button class="btn btn-primary" type="button" data-toast="ต้นแบบ: เพิ่มลูกค้าที่สนใจ">เพิ่ม</button></div><div class="empty">ยังไม่มีรายชื่อ · รายการนี้รับเฉพาะลูกค้า ไม่รับโรงพิมพ์หรือพาร์ตเนอร์ผลิต</div>`;
+ if(t==='m')c=`<div class="list rows">${[['UATOR-…-0031 · คำสั่งซื้อแรก','5% ของ ฿40,000','wait',2000],['UATOR-…-0044 · คำสั่งซื้อถัดไป','3% ของ ฿73,666','wait',2210]].map(([n,b,c2,a])=>`<article class="row" style="grid-template-columns:44px minmax(0,1fr) auto"><div class="th">${ic('i-percent')}</div><div><h3>${n} ${S}</h3><div class="sub2"><span>${b}</span></div></div><div class="side"><div class="amt">${money(a)}</div>${pill(c2,'รอพ้นช่วงแจ้งปัญหา')}</div></article>`).join('')}</div>`;
+ if(t==='s')c=`<div class="empty">ใบแจ้งค่าตอบแทนฉบับแรกออกวันที่ 5 พ.ย. 2569 พร้อมหนังสือรับรองหักภาษี ณ ที่จ่าย</div>`;
+ return `<div class="callout ok" style="margin-bottom:12px">${ic('i-check')}<div><b>คุณเป็นตัวแทนขาย getpack</b><p>เพดานค่าตอบแทน ${money(10000)} ต่อคำสั่งซื้อ · จ่ายทุกวันที่ 5</p></div></div>`+seg('agt',[['o','ภาพรวม'],['c','ลูกค้า',3],['l','ลูกค้าที่สนใจ',0],['m','ค่าตอบแทน',2],['s','ใบแจ้งยอด',0]],'o')+c};
+
+G.EXTRA={orders:G.ordersView,'o-artwork':G.artworkView,'o-proof':G.proofView,'o-receipt':G.receiptView,'o-claim':G.claimView,'o-reorder':G.reorderPageView,'sr-new':G.srNewView,company:G.companyView,'co-approvals':G.coApprovalsView,'co-reorder':G.coReorderView,'co-credit':G.coCreditView,'co-branches':G.coBranchesView,'co-api':G.coApiView};
+G.PARENT={'o-artwork':'orders','o-proof':'orders','o-receipt':'orders','o-claim':'orders','o-reorder':'orders','sr-new':'designs'};
+G.TITLES={'o-artwork':'ส่งไฟล์งาน','o-proof':'ตรวจแบบตัวอย่าง','o-receipt':'รับสินค้า','o-claim':'เคลม','o-reorder':'สั่งซ้ำ','sr-new':'ขอออกแบบโครงสร้าง',company:'ภาพรวมบริษัท','co-approvals':'รออนุมัติ','co-reorder':'สั่งซ้ำหลายรายการ','co-credit':'เครดิตและใบแจ้งยอด','co-branches':'สาขา','co-api':'เชื่อมต่อระบบ'};
+})();
+(()=>{const G=window.__gp;const {$,$$,esc,ic,S,V,navHTML,toast}=G;
+
+/* ======================= notes: findings · redesign · dev spec, per page ======================= */
+const N={
+ track:{t:'/track ติดตามคำสั่งซื้อ',f:[
+  'รับได้แค่รหัส trk จากป้ายกล่อง ไม่มีทางยืนยันด้วยเลขคำสั่งซื้อ + เบอร์หรืออีเมล และในบัญชีไม่มีลิงก์มาหน้านี้ (ต้องกด "ลิงก์ติดตามสถานะสำหรับแชร์" ซึ่งสร้างลิงก์ใหม่ทุกครั้ง)',
+  'รหัสผิด → หน้า 404 ทั่วไป "ไม่พบหน้านี้" ไม่บอกว่าให้ทำอะไรต่อ',
+  'API สาธารณะ (store.tracking.get) ดีอยู่แล้ว: ไม่มีชื่อ ที่อยู่ ราคา, noindex, throttle 30/นาที แต่ยังส่ง carrier trackingUrl/trackingNo ของขนส่งภายนอก ซึ่งหน้าขนส่งอาจแสดงสาขาต้นทาง (ผิด GLOBAL-RULES §1) และชื่อขั้นย่อยการผลิตต้องผ่านคำกลาง',
+  'O6 (C06): ขั้นย่อยเสร็จถึง "พร้อมจัดส่ง" แต่สถานะหลักยัง "กำลังผลิต" · เลยกำหนดส่ง 26 ต.ค. ไม่มีป้ายเตือน · หน้าลูกค้ายังมีคำว่า "โรงงานรับงานแล้ว"'],
+  d:['สองวิธีในฟอร์มเดียว: รหัสจากกล่อง/ลิงก์ หรือ เลขคำสั่งซื้อ + เบอร์/อีเมล (ตอบผลเหมือนกันทุกกรณีที่ไม่ตรง กันการเดา)',
+  'ผลขั้นต่ำ (ใครก็เห็น): สถานะ วันที่คาดว่าจะได้รับ กำหนดออกจากฝ่ายผลิต ไทม์ไลน์ 5 ขั้น จำนวนกล่อง · ไม่มีเลขคำสั่งซื้อ ชื่อสินค้า ที่อยู่ ราคา',
+  'ยืนยันด้วยเบอร์/อีเมล → เห็นเลขคำสั่งซื้อ ชื่อสินค้า ปลายทางระดับจังหวัด+รหัสไปรษณีย์ รูปชิ้นงาน และรับแจ้งทาง LINE',
+  'แจ้งเลยกำหนดตามจริง + เพิ่มลงปฏิทิน · หน้าผิดพลาดเฉพาะของหน้า track (ไม่พบ / ลองเกินกำหนด)'],
+  s:['API: POST /v1/store/tracking/lookup {orderNo, contact} → 200 {token} หรือ 404 เดียวกันทุกกรณี; throttle ต่อ IP 5/10 นาที + ต่อ orderNo 10/ชม.; contact เทียบแบบ normalize (เบอร์ E.164, อีเมล lower) ด้วย constant-time compare',
+  'API: GET /v1/store/track/:token?view=verified ต้องมี cookie สั้นจาก POST /v1/store/track/:token/verify {contact} (15 นาที) → เพิ่ม orderNo, productName, destination {province, postcode}, photos[] (ผ่าน EXIF strip)',
+  'API: ตัด carrier trackingUrl ออกจาก PublicTrackingDto; events ของขนส่งส่งเฉพาะสถานะ เวลา และ location ฝั่งปลายทาง; step labels มาจาก map คำกลาง (ห้ามมี "โรงงาน")',
+  'API: GET /v1/store/orders/:id ส่ง trackingUrl ถาวร 1 ลิงก์ต่อคำสั่งซื้อ (สร้างตอนชำระ, ยกเลิก/สร้างใหม่ได้) แทนปุ่มที่สร้างลิงก์ใหม่ทุกครั้ง',
+  'Web: /track (form, mode tab, aria-live error) · /track/[token] (result, verify panel) · notFound ของ track ใช้หน้าผลไม่พบของ track เอง · robots noindex ทั้งสองหน้า']},
+ consent:{t:'ขั้นตอนข้อตกลงตอนเข้าสู่ระบบ + หน้าอ่านฉบับเต็ม',f:[
+  'ใช้ปุ่ม ▶ ของ <details> เปิดข้อความ ดูเหมือนงานยังไม่เสร็จ · ลิงก์ซ้อนใน label ของ checkbox (กดแล้วติ๊กโดยไม่ตั้งใจ) · checkbox เล็ก',
+  'ข้อความฉบับเต็มเป็น placeholder "[UAT] ข้อความทดสอบ…" ไม่มีเลขฉบับ วันที่มีผล หรือสรุป',
+  'ให้ "ยอมรับ" นโยบายความเป็นส่วนตัว (PDPA: เป็นประกาศให้ทราบ ไม่ใช่สิ่งที่ต้องยอมรับ) · ข่าวสารทุกช่องทางรวมในติ๊กเดียว ต้องกด "เลือกช่องทางเอง" ถึงจะแยก',
+  'ปุ่มปิดใช้งานสีจาง ไม่บอกว่าต้องทำอะไรก่อน'],
+  d:['หน้าแยก 2 คอลัมน์ต่อจาก OTP (แถบขั้นที่ 3/3) การ์ดละเรื่อง: ข้อกำหนด (จำเป็น) · ประกาศความเป็นส่วนตัว (แจ้งให้ทราบ) · ข่าวสาร (ไม่บังคับ แยกช่องทาง ปิดไว้ก่อน)',
+  'แต่ละการ์ดมีสรุป 3 ข้อที่ตรงกับกฎที่ตัดสินแล้ว (ราคาล็อก 15 วัน, ± 5% / ± 3 มม. / ΔE2000 ≤ 3, ไม่ยกเลิกอัตโนมัติ, ฝ่ายผลิตไม่เห็นข้อมูลลูกค้า)',
+  'หน้าอ่านฉบับเต็ม: เลขฉบับ วันที่มีผล เวลาอ่าน สรุปสั้น สารบัญ แถบความคืบหน้า PDF และปุ่ม "ยอมรับและกลับไป"',
+  'ปุ่มหลักบอกเหตุผลเมื่อยังกดไม่ได้ ("ยอมรับข้อกำหนดก่อนเริ่มใช้งาน") · ถามใหม่เฉพาะเมื่อฉบับเปลี่ยน พร้อมสรุปสิ่งที่เปลี่ยน'],
+  s:['API: GET /v1/store/legal/documents?keys=tos,privacy → [{key, version, effectiveAt, title, summary[], sections[{id,title,html}], pdfUrl, requiresAcceptance}] (privacy.requiresAcceptance=false)',
+  'API: POST /v1/store/me/consents {accept:[{key,version}], marketing:{email,line,sms}} เก็บ audit (timestamp, ip hash, user agent, version) · GET /v1/store/me/consents/pending → เวอร์ชันที่ต้องยอมรับใหม่ + changeSummary',
+  'Web: components/legal/LegalReader (dialog, toc, scroll progress, focus trap) ใช้ร่วมกับ /account › ความเป็นส่วนตัว · ConsentStep แทน step เดิมใน sign-in flow · ช่องทาง LINE ปิดไว้ถ้ายังไม่เชื่อม',
+  'ข้อความกฎหมายจริงต้องมาจากฝ่ายกฎหมาย (ตารางข้อมูลทีมธุรกิจ) ระหว่างนี้แสดง placeholder ที่เป็นกลาง ห้ามขึ้นต้นด้วย "[UAT]" ใน production build']},
+ quotes:{t:'ใบเสนอราคา · คำขอใบเสนอราคา',f:[
+  'C01: ใบเสนอราคาเหมือนกัน 9 ใบ (300 ชิ้น ฿5,469) ไม่มีเลขใบเสนอราคา ไม่มีตัวกรอง ลำดับมิติสลับ (ยาว×กว้าง×สูง vs กว้าง×ยาว×ลึก)',
+  'C07: ใบที่หมดอายุ (27 ต.ค.) มีแค่ "เปิดอีกครั้ง" · ใบที่สั่งซื้อแล้วไม่ลิงก์ไปคำสั่งซื้อ',
+  'C03 R2: ราคาหมดอายุเป็นทางตัน ไม่มี "ขอราคาใหม่" · ยอดรวมมีค่าส่ง ฿374.50 แฝง (500 × ฿25 + VAT = ฿13,375 แต่แสดง ฿13,749.50)',
+  'C07 R5: หัวข้อ "material" ภาษาอังกฤษ · ขนาดเทป 100 × 100 × 48 มม. ไม่มีความหมาย · คำถามของทีมค้างตั้งแต่ 12 ต.ค. ไม่มีป้ายในรายการว่ารอลูกค้าตอบ'],
+  d:['เมนูเดียว 2 แท็บ (ตาม account Phase 1) · การ์ดแทนตาราง · เลขใบเสนอราคา · แถบ "ราคาคงที่อีก n วัน" · ใบซ้ำรวมเป็นใบเดียว',
+  'หมดอายุ → "ตรวจราคาวันนี้" (ราคาเดิม/ใหม่/ส่วนต่าง/วันรับ) แล้วบันทึกเป็นใบใหม่ล็อก 15 วัน · ตัวเลือก: ขอตัวอย่าง, สัญญาเรียกของ, PDF, ลบ',
+  'คำขอราคา: สถานะตามเจ้าของงาน (รอข้อมูลจากคุณ / ทีมกำลังประเมิน / ได้ราคาแล้ว / หมดอายุ / ทีมรับไม่ได้) · คำถามของทีมโชว์ในการ์ด ตอบได้ใน sheet พร้อมคำตอบด่วน',
+  'ได้ราคาแล้ว: เลือกจำนวนในตาราง สินค้า + ค่าส่ง + VAT แยกบรรทัด · PDF · ส่งลิงก์ให้ผู้อนุมัติ · สั่งซื้อ'],
+  s:['API: Quote.number (QT-YYMM-#####) + backfill · GET /v1/store/quotes?status=active|expired|ordered&dedupe=true (รวมใบที่ spec+qty+price เดียวกันภายใน 24 ชม.) · fields lockedUntil, daysLeft, orderId',
+  'API: POST /v1/store/quotes/:id/actions/requote → {old, new, diff, deliveryDate} (pricing service เดียว, ไม่เขียน DB) · POST …/confirm-requote → quote ใหม่',
+  'API: RFQ customerStatus (awaiting_customer|in_review|quoted|expired|declined) + pendingQuestion {text, askedAt} + quote.lines[{qty, unitPrice, goods, shipping, vat, leadTimeBusinessDays}] · RFQ spec labels เป็น key i18n ("material" → "วัสดุ") และ spec ตามประเภทสินค้า (เทป: กว้าง × ยาว ไม่ใช่ ก×ย×ส)',
+  'API: POST /v1/store/rfqs/:id/actions/request-new-quote (จากหมดอายุ/ปฏิเสธ คัดลอก spec)',
+  'Web: /account/quotes?tab=quotes|requests · redirect /account/rfqs → ?tab=requests, /account/rfqs/[id] → sheet ?rfq=id · ป้ายมิติใช้ spec-label helper (PDP Phase 0)']},
+ designs:{t:'งานออกแบบ · ตัวอย่างสินค้า · คำขอออกแบบโครงสร้าง',f:[
+  'รูปปกแบบเสีย: src ชี้ abbon-oic-documents.s3…/getpack/customer_content/2026/ (ไม่มี key) และเผยชื่อ bucket ของบริษัทอื่น',
+  'แบบเดียวขึ้น "เวอร์ชัน 17" (นับ autosave เป็นเวอร์ชัน) · แบนเนอร์ "มี 2 แบบในเบราว์เซอร์นี้" ต้องกดนำเข้าเอง',
+  'ตัวอย่างสินค้าและคำขอโครงสร้างเป็นหน้าว่างที่ส่งกลับไปหน้าอื่น'],
+  d:['การ์ดแบบพร้อมรูปปกจริง (presigned/CDN ของ getpack) · เวอร์ชันนับเมื่อบันทึก/สั่งผลิต/ทุก 30 นาทีที่แก้ · draft ในเบราว์เซอร์ย้ายเข้าบัญชีอัตโนมัติหลังเข้าสู่ระบบ',
+  'ตัวอย่างสินค้า: สถานะ จัดส่ง ตรวจ/อนุมัติ หรือขอแก้พร้อมรูป → สั่งผลิตจากตัวอย่างที่อนุมัติ',
+  'คำขอโครงสร้าง: SLA แบบร่าง รอบแก้ เปิดแบบร่าง 3D ปักหมุด เมื่อเสร็จเพิ่มเข้าคลังแบบของลูกค้า'],
+  s:['API: thumbnailUrl เป็น URL ที่ลงนามจากโดเมน/CDN ของ getpack (ไม่เผยชื่อ bucket) + ตรวจว่ามี object จริง · ย้ายไฟล์ลูกค้าไป bucket ของ getpack (ไม่ใช้ abbon-oic-documents)',
+  'API: DesignVersion สร้างเมื่อ save/checkout/ทุก 30 นาทีที่ dirty · POST /v1/store/designs/actions/claim-local {localIds[]} หลัง sign-in',
+  'Web: /account/designs?tab=designs|samples|structural · redirect /account/samples, /account/structural-requests']},
+ reorder:{t:'สั่งซ้ำตามรอบ · สัญญาเรียกของ',f:[
+  'C07 สัญญาเรียกของ: หน่วย "piece" ภาษาอังกฤษ · "คงเหลือ 0" ทั้งที่ยังไม่เรียก (ควรเป็น 10,000) · "ใช้ได้ถึง ไม่กำหนด" ทั้งที่ขอ 6 เดือน · "ใส่งวดใหม่ลงตะกร้าแล้ว 0" ชื่อแปลก · เรียกขั้นต่ำ 1 ชิ้น',
+  'สั่งซ้ำตามรอบว่าง ทั้งที่มีประวัติ O7 5,000 ชิ้น'],
+  d:['สั่งซ้ำตามรอบ: คาดการณ์วันของหมดจากอัตราใช้ (หรือให้ลูกค้าใส่เอง) + วันที่ควรสั่ง (ผลิต 5 วันทำการ + ขนส่ง) + เตือนทาง LINE/อีเมล',
+  'สัญญาเรียกของ: 3 ตัวเลข (ในสัญญา / เรียกแล้ว / คงเหลือ) · ราคาล็อก · ระยะสัญญา "นับจากทีมยืนยัน" · ปุ่มเรียกงวดปิดจนกว่าจะยืนยันพร้อมเหตุผล'],
+  s:['API: CallOffAgreement.remainingQty = contractQty − calledQty (ไม่ใช่ cart qty) · unit label จาก i18n (ชิ้น) · validUntil = confirmedAt + term, ก่อนยืนยันส่ง termMonths · minCallOffQty จาก product MOQ',
+  'API: GET /v1/store/replenishment → [{productRef, lastOrder, dailyUseEstimate, source: history|customer, runOutDate, orderBy}] · PATCH dailyUse',
+  'Web: /account/reorder?tab=cycle|calloffs · redirect /account/replenishment, /account/call-offs']},
+ docs:{t:'เอกสาร',f:[
+  'ใบกำกับภาษีซ้ำทั้งระบบ: O8 (C01) TR-10 + TR-11 + TR-12 = ฿79,977.64 จากยอด ฿39,988.82 · O7 (C07) TR-07 + TR-08 + TR-09 "ใบกำกับภาษีฉบับสุดท้าย" = ฿358,722.12 จากยอด ฿179,361.06',
+  'คอลัมน์ "สถานะ" ว่างทุกแถวทั้งที่หัวหน้าบอกดูสถานะ e-Tax ได้ · ไม่มีใบส่งของ ใบวางบิล (C07 ยืนยันใบวางบิลแล้วแต่หาไม่เจอ) · ช่องวันที่เป็น dd/mm/yyyy ค.ศ.',
+  'C07 เป็นนิติบุคคลหัก ณ ที่จ่าย แต่ไม่มีที่ส่ง 50 ทวิ และไม่บอกยอดที่หัก'],
+  d:['จัดกลุ่มตามเดือน · ป้าย e-Tax · แท็บตามประเภท รวมใบส่งของ ใบวางบิล 50 ทวิ · ZIP ทั้งเดือน · ส่งเข้าอีเมลฝ่ายบัญชีอัตโนมัติ',
+  'ใบที่ออกซ้ำแสดงเป็น "ยกเลิก" พร้อมเหตุผล (หลังทีมบัญชีจัดการตามขั้นตอนยกเลิกใบกำกับ)',
+  'นิติบุคคลหัก ณ ที่จ่าย: แถบเตือนรอ 50 ทวิ · sheet แสดงยอดก่อน VAT อัตรา (จากการตั้งค่า) ยอดที่ควรหัก และอัปโหลดไฟล์'],
+  s:['API (Phase 0 P0): นโยบายตัดสินแล้ว "ใบกำกับต่องวดที่รับเงิน" → ปิดการออก "ใบกำกับภาษีฉบับสุดท้าย" เต็มยอดเมื่อคำสั่งซื้อมีงวด · test: ผลรวมใบกำกับต่อคำสั่งซื้อ = ยอดคำสั่งซื้อ − ใบลดหนี้ · ใบที่ออกซ้ำแล้วใน UAT: script รายงาน ห้ามแก้เอกสารเอง ให้ทีมบัญชียกเลิกตามขั้นตอน',
+  'API: Document.type += delivery_note, billing_statement, wht_certificate · eTaxStatus (pending|sent|failed) · GET /v1/store/documents?month=&type=&q= · GET …/zip?month= (async job + link)',
+  'API: BuyerProfile.withholdsTax + whtRate (config ตามประเภทรายได้) · Payment.whtAmount · POST /v1/store/documents/:id/wht-certificate (upload, finance review) · reconcile ยอด',
+  'Web: /account/documents?tab=&month= · date picker แสดง พ.ศ. · ป้ายเอกสารจาก helper เดียว']},
+ msgs:{t:'ข้อความ',f:[
+  'ไม่มีการเลือกเรื่อง (คำสั่งซื้อ/คำขอราคา) · บอก "ตอบทาง LINE ถ้าคุณเลือก" แต่ยังไม่เชื่อม LINE และไม่บอกเวลาทำการ',
+  'C06: ข้อความ 12 ต.ค. ยังไม่ถูกตอบ 16 วัน ไม่มีสถานะ · หน้าบทสนทนาโหลดว่างก่อน 2–3 วินาทีโดยไม่มี skeleton · คำถามเรื่องวันส่งอยู่ใน "สอบถามทั่วไป" ไม่ผูกคำสั่งซื้อ',
+  'คำถามของทีมใน RFQ (C07 R5) ไม่ขึ้นในเมนูข้อความ'],
+  d:['กล่องข้อความรวมทุกเรื่อง (คำสั่งซื้อ คำขอราคา ทั่วไป) แต่ละเรื่องมีสถานะ: รอคุณตอบ / ทีมกำลังตอบ / ตอบแล้ว · ลิงก์ไปเรื่องต้นทาง',
+  'คำตอบด่วนตามบริบท · ช่องทางรับคำตอบ · บนมือถือเป็น 2 หน้า (รายการ → บทสนทนา)'],
+  s:['API: Conversation.subject {type: order|rfq|general, id} · customerStatus (awaiting_customer|awaiting_team|answered) + slaDueAt · RFQ questions เป็น message ใน conversation เดียวกัน',
+  'Web: /account/messages?thread=id · skeleton · aria-live ข้อความใหม่ · redirect /account/messages/[id]']},
+ rewards:{t:'คะแนน · เครดิตร้านค้า · ชวนเพื่อน · ตัวแทนขาย',f:[
+  'ลิงก์ชวนเพื่อน https://www.getpack.invalid/r/… (STOREFRONT_BASE_URL ไม่ได้ตั้ง → ค่า default .invalid)',
+  'หน้าตัวแทนขาย: "ไม่เกิน 30% ของกำไรคำสั่งซื้อนั้น" เผยโครงสร้างกำไร · "แนะนำพาร์ทเนอร์ผลิต ได้ ฿3,000 เมื่อ…ผลิตงานสำเร็จ 3 งาน" ทำให้คนนอกรู้สถานะโรงงาน',
+  'ตาราง "เพื่อนที่ชวน" ล้นที่ 390 px'],
+  d:['คะแนน: 3 ตัวเลข + ระดับสมาชิกแบบขั้น + กติกานับยอด + ประวัติ',
+  'ตัวแทนขาย (ตัดสินแล้ว): เพดานเป็นจำนวนบาทต่อคำสั่งซื้อ · ตัดค่าตอบแทนแนะนำโรงงานออก เหลือฟอร์ม "แนะนำพาร์ตเนอร์" ที่ไม่บอกผลกลับ · dashboard ลูกค้าชื่อย่อ ใบแจ้งค่าตอบแทน + หัก ณ ที่จ่าย'],
+  s:['API: STOREFRONT_BASE_URL บังคับใน env schema (production ห้าม .invalid; dev = http://localhost:3001) · deep-links.service ใช้ค่าเดียว',
+  'API: AgentProgram.terms ไม่มี profitCapPct ใน store DTO (เก็บภายใน) · maxCommissionPerOrder (THB) · ลบ partnerReferralReward ออกจาก store/agent DTO; partner lead ไป admin queue เท่านั้น ไม่ส่งสถานะกลับให้ตัวแทน',
+  'Web: /account/rewards?tab=points|credit|referral|agent · redirect /account/points, /wallet, /referral, /agent/*']},
+ account:{t:'ข้อมูลบัญชี',f:[
+  'ที่อยู่: ชื่อบริษัทปนอยู่ในบรรทัดที่อยู่ ("10/1 ถนนทดสอบ แบรนด์สกินแคร์ออนไลน์ สีลม")',
+  'C01 ไม่มีข้อมูลใบกำกับภาษีแต่มีใบกำกับ 3 ใบ · ช่องแก้ข้อมูลผู้ซื้อหลังออกเอกสารไม่บอกผล',
+  'การแจ้งเตือน/ความเป็นส่วนตัว: toggle ไม่บอกสถานะกับ screen reader · LINE ปิดไว้โดยไม่บอกเหตุผล · แบนเนอร์คุกกี้โผล่ซ้ำหลายหน้าในเซสชันเดียว',
+  'ทีม: /account/team 404 แต่ระบบทีมมีอยู่ที่ /business/* (C09) ซึ่งชน URL หน้าการตลาด /business · ภาพรวมบอก "อนุมัติเมื่อเกิน ฿10,000" แต่ช่องในตั้งค่าว่าง'],
+  d:['ที่อยู่: ชื่อสถานที่แยกฟิลด์ หมายเหตุคนส่งของ · ผู้ซื้อ: นิติบุคคล/บุคคล ดึงข้อมูลจากเลขภาษี สาขา หัก ณ ที่จ่าย อีเมลบัญชี',
+  'การแจ้งเตือน: ตารางเรื่อง × ช่องทาง ระบุรายการที่ปิดไม่ได้ · ความเป็นส่วนตัว: ฉบับที่ยอมรับ ความยินยอมแต่ละข้อ สิทธิ์ขอสำเนา/ลบพร้อมผลที่ชัด',
+  'ทีมและผู้อนุมัติ: ย้าย /business/* → /account/company/* (redirect) · สมาชิก/บทบาท กฎการอนุมัติ PO อนุมัติผ่าน LINE ลิงก์สาขา ไฟล์แบรนด์ API'],
+  s:['API: Address.placeName, deliveryNote · BuyerProfile {type, taxId(full, D-A3), branchCode, withholdsTax, accountingEmail} · GET /v1/store/tax-lookup/:taxId (DBD, cache)',
+  'API: NotificationPreference matrix {topic × channel, locked} · Consent history · cookie consent cookie 180 วัน ข้ามหน้า',
+  'API: Company settings approvalThreshold ค่าเดียว (แก้ bug ช่องว่าง) · approval via LINE postback (signed, single-use)',
+  'Web: /account/settings?tab=addresses|notifications|privacy|team · /account/company/* ← /business/{approvals,reorder,credit,members,branches,assets,settings,api} (เฉพาะผู้ล็อกอิน; /business สาธารณะคงเดิม) · switch ใช้ role="switch" + aria-checked']}};
+N['o-artwork']={t:'ส่งไฟล์งาน (หน้าย่อยคำสั่งซื้อ)',f:['O16 ยังไม่ชำระและเลยกำหนด แต่หน้าไม่บอกว่าทีมจะตรวจหลังชำระเงิน (DECISIONS-STAGE-A §7)','ไม่มีปุ่มดาวน์โหลดแบบไดคัท ทั้งที่ตัดสินแล้วว่าให้ไฟล์ .ai ฟรี','"ทักแชทหรือโทรหาเรา" แต่ไม่มีเบอร์'],d:['แถบเตือนยังไม่ชำระ พร้อมปุ่มตรวจราคาใหม่และชำระ','3 ขั้น: ดาวน์โหลดแบบไดคัท (.ai/PDF/ออกแบบในสตูดิโอ) → อัปโหลด → รายการที่ระบบตรวจ','ช่องทางช่วยเหลือที่ใช้ได้จริง (LINE 09:00–18:00, ถามทีมในคำสั่งซื้อ)'],s:['API: GET /v1/store/orders/:id/artwork → dielineFiles[{format,url}], paymentState, reviewAfterPayment:boolean','Web: /account/orders/[id]/artwork ตาม #o-artwork']};
+N['o-proof']={t:'ตรวจแบบตัวอย่าง',f:['ป้าย "หัวข้อ" ลอยอยู่เหนือปุ่มเปิดสตูดิโอ','"เวอร์ชัน 17" จาก autosave','ไม่บอกเวลาที่จะได้แบบตัวอย่าง'],d:['สองคอลัมน์: แบบที่สั่ง vs แบบตัวอย่าง','บอกเวลา (1 วันทำการหลังไฟล์ผ่านและชำระ) และขั้นตอน ปักหมุด → อนุมัติ/ขอแก้'],s:['ใช้ proof rounds ของ account Phase 3b · Version policy ตาม portal Phase 4']};
+N['o-receipt']={t:'รับสินค้า',f:['ข้อมูลครบแต่เป็นข้อความต่อกัน อ่านยาก'],d:['3 ตัวเลข สั่ง/ได้รับ/เครดิต พร้อมเกณฑ์ ± 5%','ไทม์ไลน์การส่ง รูปหลักฐาน และทางไปเคลม'],s:['Web: /account/orders/[id]/receipt ตาม #o-receipt']};
+N['o-claim']={t:'เคลม',f:['UATCL-2610-0001 แสดง "รอทีม getpack", "ทีมงานตอบกลับแล้ว", "ตัดสินภายใน 13 วันที่ผ่านมา เลยกำหนด" พร้อมกัน','เลยกำหนด 16 วันไม่มีการยกระดับ'],d:['สถานะเดียวตามเจ้าของงาน + วันที่ต้องตัดสิน (P-25: 5 วันทำการ)','เลยกำหนด → แจ้งหัวหน้า CS และบอกลูกค้าตรง ๆ','ขั้นตอนเคลม 4 ขั้น เพิ่มรูปได้'],s:['API: Claim.customerStatus, decisionDueAt, escalatedAt · alert ที่ 3 วันทำการ','Web: /account/orders/[id]/claims/[claimId] ตาม #o-claim']};
+N['o-reorder']={t:'สั่งซ้ำจากคำสั่งซื้อ',f:['"สินค้า ฿43,860" รวม VAT แล้ว แต่แสดง VAT ฿2,893.85 แยกเหมือนบวกเพิ่ม บวกเองได้ ฿47,128.35 แต่ยอดรวม ฿44,234.50','ราคาใช้ได้ถึง 28 ต.ค. 12:00 (ไม่กี่ชั่วโมง)','ผลิต 10 วันทำการไม่บอกเหตุผล · ลำดับมิติ กว้าง × ยาว × ลึก'],d:['บรรทัดก่อน VAT + ค่าส่ง + VAT = ยอดรวม','ราคาคงที่ 15 วัน (P-24) และบันทึกเป็นใบเสนอราคาได้','บอกเหตุผลเมื่อระยะผลิตเกิน 5 วันทำการ (P-26) · บอกราคาขั้นถัดไป (F14)'],s:['API: reorder preview → goodsExVat, shipping, vat, total, lockedUntil(+15d), leadTimeReason','Web: /account/orders/[id]/reorder ตาม #o-reorder']};
+N['sr-new']={t:'ฟอร์มขอออกแบบโครงสร้าง',f:['"ทีมจะติดต่อกลับเมื่อมีผู้รับงาน" ฟังเหมือนส่งต่อคนนอก ไม่บอกเวลา'],d:['บอก SLA แบบร่างแรก 3 วันทำการ รวมแก้ 2 รอบ (P-10)','ชิปประเภท ตัวอย่างคำตอบ ขนาดสินค้า/กล่อง น้ำหนัก จำนวน'],s:['Web: /account/structural-requests/new ตาม #sr-new']};
+N.company={t:'บัญชีบริษัท (/account/company/*)',f:['อยู่ที่ /business/* ชนกับหน้าการตลาด /business','หน้ารออนุมัติบอก "คำสั่งซื้อของคุณ" แม้เป็นผู้ดูแล และใช้คำ "เกินวงเงินผู้สั่งซื้อ" ต่างจากภาพรวม','ตัวอย่างสั่งซ้ำหลายรายการใช้เลข PK-2569-… ของระบบเก่า','หน้าเครดิตเผยขั้นตอนอนุมัติภายใน ("เกินกว่านั้นผู้บริหารพิจารณา")','Webhook ตั้งได้ทาง API เท่านั้น'],d:['เมนูกลุ่ม "บริษัท" ในบัญชีเดียวกัน · สมาชิกและการตั้งค่าอยู่ในแท็บทีมและผู้อนุมัติ','ผู้ดูแล/ผู้อนุมัติเห็นของทั้งบริษัท · คำเดียวกันทุกหน้า','หน้า webhook ใน UI (F28)'],s:['Web: 308 /business/{approvals,reorder,credit,members,branches,assets,settings,api} → /account/company/* · API /v1/store/company/*']};
+['co-approvals','co-reorder','co-credit','co-branches','co-api'].forEach(k=>N[k]=N.company);
+N.overview=N.orders={t:'ภาพรวม · คำสั่งซื้อ',f:['ออกแบบไว้แล้วในชุด account-orders (PROMPT-account-orders.md) รอบนี้ไม่ออกแบบซ้ำ','C07: ภาพรวมแนะนำ "เริ่มกล่องแรกของคุณ" ทั้งที่มีคำสั่งซื้อเสร็จสิ้นแล้ว · คำสั่งซื้อเสร็จสิ้นแสดง "แจ้งปัญหาสินค้า" คู่กับ "หมดเวลาแจ้งเคลม" → ใส่ใน Phase 0 ของชุดนี้'],d:[],s:[]};
+function noteHTML(k,open){const n=N[k];if(!n)return '';return `<details ${open?'open':''} style="border-top:1px solid var(--line);padding:6px 0"><summary style="cursor:pointer;font:600 15px var(--f-display);padding:8px 0;color:var(--brand)">${n.t}</summary>
+ <h3>สิ่งที่เจอ (หลักฐานจาก UAT)</h3><ul>${n.f.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>${n.d.length?`<h3>สิ่งที่ออกแบบใหม่ และเหตุผล</h3><ul>${n.d.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:''}${n.s.length?`<h3>Dev spec</h3><ul>${n.s.map(x=>`<li style="font-size:13px">${esc(x)}</li>`).join('')}</ul>`:''}</details>`}
+$('#notesBtn').addEventListener('click',()=>{const k=V.route;$('#notesTitle').textContent='สิ่งที่เปลี่ยน · '+(N[k]?.t||'');
+ $('#notesBody').innerHTML=noteHTML(k,true)+`<h3 style="margin-top:22px">หน้าอื่นในรอบนี้</h3>`+[...new Set(Object.keys(N).filter(x=>x!==k&&!x.startsWith('co-')))].map(x=>noteHTML(x,false)).join('')+
+ `<p class="note">ป้าย "ตัวอย่าง" = ข้อมูลสมมติ ห้ามนำไปใช้จริง · ข้อมูลที่ไม่มีป้ายมาจาก UAT (บัญชีหลัก C07 ปรีชา ทดสอบ, /track ใช้ O6 ของ C06, ทีมใช้ UAT-CO-001 ของ C09) · ไม่มีชื่อ จำนวน หรือที่ตั้งของโรงงานในทุกหน้า</p>`;$('#notes').showModal()});
+$('#notesClose').addEventListener('click',()=>$('#notes').close());
+$('#notes').addEventListener('click',e=>{if(e.target.id==='notes')$('#notes').close()});
+
+/* ======================= router ======================= */
+const ROUTES={...(G.EXTRA||{}),track:G.trackView,consent:G.consentView,quotes:G.quotesView,designs:G.designsView,reorder:G.reorderView,docs:G.docsView,msgs:G.msgsView,rewards:G.rewardsView,account:G.accountView};
+function stub(k){return `<div class="ph"><div><h1>${k==='orders'?'คำสั่งซื้อ':'ภาพรวม'}</h1><p>ออกแบบไว้แล้วในชุด account-orders</p></div></div><div class="callout i">${ic('i-info')}<div><b>หน้านี้ไม่อยู่ในรอบนี้</b><p>ดู account-orders-prototype.html · รอบนี้ออกแบบ 7 เมนูที่เหลือ หน้าติดตามคำสั่งซื้อ และขั้นตอนข้อตกลง</p></div></div>
+ <div class="grid3" style="margin-top:14px">${[['quotes','ใบเสนอราคา','i-receipt'],['docs','เอกสาร','i-doc'],['msgs','ข้อความ','i-chat'],['track','ติดตามคำสั่งซื้อ (สาธารณะ)','i-truck'],['consent','ขั้นตอนข้อตกลง','i-shield'],['account','ทีมและผู้อนุมัติ','i-users']].map(([h,n,i])=>`<a class="box" href="#${h}" style="text-decoration:none;color:var(--fg)"><h2 style="justify-content:flex-start">${ic(i)}${n}</h2></a>`).join('')}</div>`}
+function render(){const h=(location.hash||'#quotes').slice(1);const k=(ROUTES[h]||h==='overview')?h:'quotes';V.route=k;const navK=(G.PARENT&&G.PARENT[k])||k;
+ const pub=k==='track'||k==='consent';
+ $('#hdrUser').innerHTML=pub?`<a class="login" href="#orders">เข้าสู่ระบบ</a>`:`<button class="avatar" type="button" aria-label="บัญชี ${G.ME.name}">${G.ME.ini}</button>`;
+ $('#chatWrap').hidden=k==='consent'||k==='msgs';
+ $('#app').innerHTML=pub?ROUTES[k]():`<div class="wrap shell"><nav class="anav" aria-label="เมนูบัญชี">${navHTML(navK)}</nav><main id="view" aria-live="polite">${ROUTES[k]?ROUTES[k]():stub(k)}</main></div>`;
+ document.title='getpack · '+({track:'ติดตามคำสั่งซื้อ',consent:'ข้อตกลง',quotes:'ใบเสนอราคา',designs:'งานออกแบบ',reorder:'สั่งซ้ำ',docs:'เอกสาร',msgs:'ข้อความ',rewards:'คะแนนและสิทธิพิเศษ',account:'ข้อมูลบัญชี',orders:'คำสั่งซื้อ',overview:'ภาพรวม',...(G.TITLES||{})}[k]);
+ bindForms()}
+G.render=render;
+function bindForms(){const f=$('#trkForm');if(f)f.addEventListener('submit',e=>{e.preventDefault();V.trk.state='result';V.trk.verified=V.trk.mode==='order';render();scrollTo(0,0)});
+ const c=$('#csForm');if(c){c.addEventListener('change',e=>{if(e.target.id==='cTos'){V.cons.tos=e.target.checked;render()}if(e.target.dataset.ch)V.cons.ch[e.target.dataset.ch]=e.target.checked});c.addEventListener('submit',e=>{e.preventDefault();if(V.cons.tos){toast('ต้นแบบ: บันทึกข้อตกลงแล้ว พาไปหน้าที่ตั้งใจไว้');location.hash='#quotes'}})}}
+window.addEventListener('hashchange',()=>{render();scrollTo(0,0)});
+
+/* ======================= events ======================= */
+document.addEventListener('click',e=>{const t=e.target.closest('button,a,[data-toast]');if(!t)return;const d=t.dataset;
+ if(d.tab){const [k,v]=d.tab.split(':');V.tab[k]=v;render();return}
+ if(d.tmode){V.trk.mode=d.tmode;V.trk.state='form';render();return}
+ if(d.tdemo){V.trk.state=d.tdemo==='ok'?'result':d.tdemo;V.trk.verified=false;render();return}
+ if(d.tback!==undefined){V.trk.state='form';render();return}
+ if(d.tverify!==undefined){V.trk.verified=true;render();toast('ต้นแบบ: ยืนยันแล้ว แสดงข้อมูลเพิ่มสำหรับเจ้าของคำสั่งซื้อ');return}
+ if(d.legal){G.openLegal(d.legal,V.route==='consent');return}
+ if(d.rfq){G.rfqSheet(d.rfq);return}
+ if(d.qmore){G.quoteMore(d.qmore);return}
+ if(d.requote){G.requote(d.requote);return}
+ if(d.wht){G.whtSheet(d.wht);return}
+ if(d.taxp!==undefined){G.taxSheet();return}
+ if(d.addr!==undefined){G.addrSheet();return}
+ if(d.thread){V.inbox=d.thread;V.inboxOpen=true;render();return}
+ if(d.ibback!==undefined){V.inboxOpen=false;render();return}
+ if(d.chip!==undefined){const ta=$('#msgIn');if(ta){ta.value=t.textContent;ta.focus()}return}
+ if(d.send!==undefined){const ta=$('#msgIn');toast(ta&&ta.value.trim()?'ต้นแบบ: ส่งข้อความแล้ว':'พิมพ์ข้อความก่อนส่ง');return}
+ if(d.agent!==undefined){V.agent=true;render();return}
+ if(d.go){location.hash='#'+d.go;return}
+ if(d.copy){navigator.clipboard?.writeText(d.copy).then(()=>toast('คัดลอกแล้ว'),()=>toast('คัดลอกไม่ได้ เลือกข้อความแล้วคัดลอกเอง'));return}
+ if(d.apsel!==undefined){V.apsel=d.apsel;G.render();return}
+ if(d.docmail!==undefined){G.gdlg('ส่งเอกสารให้ฝ่ายบัญชีอัตโนมัติ',`<label>อีเมลฝ่ายบัญชี<input type="text" placeholder="accounting@company.com"></label><label class="opt2"><input type="radio" name="dm" checked><span><b>ทุกครั้งที่ออกเอกสาร</b><small>ใบกำกับภาษี ใบเสร็จ ใบลดหนี้ ใบวางบิล</small></span></label><label class="opt2"><input type="radio" name="dm"><span><b>สรุปรายเดือน</b><small>ZIP ทุกวันที่ 1</small></span></label>`,`<button class="btn btn-ghost" type="button" data-gclose>ยกเลิก</button><button class="btn btn-primary" type="button" data-gclose data-toast="ต้นแบบ: บันทึกแล้ว">บันทึก</button>`);return}
+ if(d.invite!==undefined){G.gdlg('เชิญสมาชิก',`<label>เบอร์มือถือ<input type="text" placeholder="08x xxx xxxx"></label>${[['ผู้สั่งซื้อ','สั่งซื้อในนามบริษัท ยอดเกินวงเงินต้องรออนุมัติ'],['ผู้อนุมัติ','อนุมัติคำสั่งซื้อที่เกินยอด'],['ฝ่ายบัญชี','ดูเอกสาร ใบแจ้งยอด และส่ง 50 ทวิ'],['ผู้ดูแลบริษัท','จัดการสมาชิก สาขา และการตั้งค่า']].map(([n,s],i)=>`<label class="opt2"><input type="radio" name="rl" ${i===0?'checked':''}><span><b>${n}</b><small>${s}</small></span></label>`).join('')}`,`<button class="btn btn-ghost" type="button" data-gclose>ยกเลิก</button><button class="btn btn-primary" type="button" data-gclose data-toast="ต้นแบบ: ส่งคำเชิญทาง SMS แล้ว">ส่งคำเชิญ</button>`);return}
+ if(d.toast){if(t.tagName==='A')e.preventDefault();toast(d.toast);if(d.shclose!==undefined)G.closeSheet();return}
+});
+$('#chatBtn').addEventListener('click',()=>{const p=$('#chatPop');p.hidden=!p.hidden;$('#chatBtn').setAttribute('aria-expanded',String(!p.hidden))});
+render();
+})();
+</script></body></html>
