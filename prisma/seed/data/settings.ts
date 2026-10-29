@@ -1297,11 +1297,12 @@ export const SETTINGS: readonly SettingSeed[] = [
         phone: { type: ['string', 'null'], maxLength: 40 },
         email: { type: ['string', 'null'], maxLength: 254 },
         hours: { type: ['string', 'null'], maxLength: 200 },
+        office: { type: ['string', 'null'], maxLength: 300 },
       },
     },
     description:
-      'D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours); getpack’s own accounts (D-005) are not seeded — null until the CS Lead sets them; the opening hours are the decided daily 09:00–18:00 (D-447)',
-    decisions: ['D-221', 'D-005', 'D-447'],
+      'D-221 getpack support contacts on the storefront (LINE OA id, phone, e-mail, opening hours, the office line customers may visit by appointment — D-458); getpack’s own accounts (D-005) are not seeded — null until the CS Lead sets them; the opening hours are the decided daily 09:00–18:00 (D-447)',
+    decisions: ['D-221', 'D-005', 'D-447', 'D-458'],
     ownerRole: 'cs_lead',
   },
   {
@@ -1313,6 +1314,159 @@ export const SETTINGS: readonly SettingSeed[] = [
       'D-221 first-response target of a contact-form or guided-help conversation, in business days (business hours D-175, calendar D-161)',
     decisions: ['D-221', 'D-175'],
     ownerRole: 'cs_lead',
+  },
+  {
+    key: 'support.topic_queues',
+    valueType: 'json',
+    // D-458 proposed routing (C10, owner autorun): sales leads and quotations to Sales, files to Prepress, payments to
+    // Finance, factory applications to the Partner team; everything else stays with CS. The CS Lead confirms/changes it.
+    value: {
+      default: 'cs',
+      topics: {
+        quote: 'sales',
+        business: 'sales',
+        partnership: 'partner',
+        artwork: 'prepress',
+        payment: 'finance',
+      },
+    },
+    fillIfUnset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['default', 'topics'],
+      properties: {
+        default: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,39}$' },
+        topics: {
+          type: 'object',
+          maxProperties: 50,
+          propertyNames: { pattern: '^[a-z][a-z0-9_]{0,39}$' },
+          additionalProperties: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,39}$' },
+        },
+      },
+    },
+    description:
+      'D-458 the team queue each contact-form topic is routed to (the CS inbox filters by queue); `default` for topics not listed. Proposed routing — the CS Lead confirms or changes it from a date',
+    decisions: ['D-458', 'D-221'],
+    confirmation: 'proposed',
+    ownerRole: 'cs_lead',
+  },
+  {
+    key: 'support.reply_business_days_by_topic',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      maxProperties: 50,
+      propertyNames: { pattern: '^[a-z][a-z0-9_]{0,39}$' },
+      additionalProperties: { type: 'integer', minimum: 1, maximum: 30 },
+    },
+    description:
+      'D-458 first-response target per contact-form topic, in business days; a topic not listed (or the setting unset) uses `support.first_response_business_days`. No decision gives per-topic targets — unset until the CS Lead sets them',
+    decisions: ['D-458', 'D-221'],
+    confirmation: 'pending_business',
+    ownerRole: 'cs_lead',
+  },
+  {
+    key: 'support.callback_slots',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'array',
+      maxItems: 6,
+      items: {
+        type: 'object',
+        additionalProperties: false,
+        required: ['key', 'from', 'to'],
+        properties: {
+          key: { type: 'string', pattern: '^[a-z0-9_]{1,20}$' },
+          from: { type: 'string', pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' },
+          to: { type: 'string', pattern: '^([01][0-9]|2[0-3]):[0-5][0-9]$' },
+        },
+      },
+    },
+    description:
+      'D-458 the call-back windows CS offers on the contact form (Asia/Bangkok, on the next 5 business days); no decision gives them — unset: the contact form offers no call-back until the CS Lead sets them',
+    decisions: ['D-458', 'D-221'],
+    confirmation: 'pending_business',
+    ownerRole: 'cs_lead',
+  },
+  {
+    key: 'storefront.roadmap',
+    valueType: 'json',
+    // D-458: the statuses the owner's business pack gives (C10): the 6 company-account features live; 5 "เร็ว ๆ นี้", plus
+    // the company catalogue and budgets the page demonstrates (pack Phase 4, not built yet);
+    // getpack Factory: jobs from getpack and the 6 roles live, the other modules "กำลังพัฒนา" until Admin releases them.
+    value: {
+      business: [
+        { key: 'team', status: 'live' },
+        { key: 'reorder', status: 'live' },
+        { key: 'approval', status: 'live' },
+        { key: 'credit', status: 'live' },
+        { key: 'invoices', status: 'live' },
+        { key: 'branches', status: 'live' },
+        { key: 'brand_lock', status: 'soon' },
+        { key: 'stock_alert', status: 'soon' },
+        { key: 'production_evidence', status: 'soon' },
+        { key: 'etax_export', status: 'soon' },
+        { key: 'api', status: 'soon' },
+        { key: 'company_catalogue', status: 'soon' },
+        { key: 'budgets', status: 'soon' },
+      ],
+      erpModules: [
+        { key: 'getpack_jobs', status: 'live' },
+        { key: 'roles', status: 'live' },
+        { key: 'stock', status: 'in_development' },
+        { key: 'purchasing', status: 'in_development' },
+        { key: 'planning', status: 'in_development' },
+        { key: 'shop_floor', status: 'in_development' },
+        { key: 'sales', status: 'in_development' },
+        { key: 'accounting', status: 'in_development' },
+        { key: 'documents', status: 'in_development' },
+        { key: 'maintenance', status: 'in_development' },
+        { key: 'suppliers', status: 'in_development' },
+      ],
+    },
+    fillIfUnset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['business', 'erpModules'],
+      properties: {
+        business: {
+          type: 'array',
+          maxItems: 30,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['key', 'status'],
+            properties: {
+              key: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,39}$' },
+              status: { enum: ['live', 'soon'] },
+            },
+          },
+        },
+        erpModules: {
+          type: 'array',
+          maxItems: 30,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['key', 'status'],
+            properties: {
+              key: { type: 'string', pattern: '^[a-z][a-z0-9_]{0,39}$' },
+              status: { enum: ['live', 'in_development'] },
+            },
+          },
+        },
+      },
+    },
+    description:
+      'D-458 what /business ("เร็ว ๆ นี้") and /partner-with-us ("กำลังพัฒนา") say is live, in display order: the company-account features and the getpack Factory modules. Admin flips a key to live when the feature is released; the storefront shows only the keys it has copy for',
+    decisions: ['D-458'],
+    ownerRole: 'admin',
   },
   {
     key: 'artwork.first_proof_business_days',

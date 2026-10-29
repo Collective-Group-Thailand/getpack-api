@@ -376,6 +376,82 @@ describe('store fulfilment & support gaps (e2e, U-B0.1)', () => {
     });
   });
 
+  it('routes contact tickets by topic, stores the intent details and lets the sender follow them (D-458)', async () => {
+    const pub = () => request(ctx.server);
+    const cs = await staffToken(ctx, 'cs');
+    const lead = await pub()
+      .post('/v1/store/support/actions/contact')
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        topic: 'business',
+        message: 'สนใจเปิดบัญชีบริษัทค่ะ',
+        contact: { name: 'ลูกค้า ทดสอบ', email: 'buyer@example.test' },
+        details: {
+          company: 'บริษัท ทดสอบ จำกัด',
+          monthlyVolume: '1000_5000',
+          interests: ['credit'],
+          product: '',
+        },
+        replyChannel: 'email',
+      })
+      .expect(201);
+    const stored = await ctx.prisma.supportTicket.findUniqueOrThrow({
+      where: { ticketNo: lead.body.ticketNo as string },
+      include: { conversation: true },
+    });
+    expect(stored).toMatchObject({
+      queue: 'sales',
+      callbackRequested: false,
+      context: {
+        details: { company: 'บริษัท ทดสอบ จำกัด', monthlyVolume: '1000_5000', interests: ['credit'] },
+        replyChannel: 'email',
+      },
+    });
+    const sales = await as(ctx, cs).get('/v1/admin/conversations?queue=sales').expect(200);
+    const salesIds = (sales.body as { data: { id: string }[] }).data.map((c) => c.id);
+    expect(salesIds).toContain(stored.conversation.publicId);
+
+    // No call-back windows are set: a call back is refused.
+    const options = await pub().get('/v1/store/support/contact-options').expect(200);
+    expect(options.body).toMatchObject({ replyBusinessDays: expect.any(Number), callback: null });
+    const refused = await pub()
+      .post('/v1/store/support/actions/contact')
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        topic: 'payment',
+        message: 'โทรกลับด้วยค่ะ',
+        contact: { name: 'ลูกค้า ทดสอบ', phone: '0812345678' },
+        replyChannel: 'callback',
+        callback: { date: '2099-01-01', slot: 'morning' },
+      })
+      .expect(422);
+    expect(refused.body.code).toBe('support.callback_unavailable');
+
+    // The sender reads the stage with the e-mail they left; anyone else gets "not found".
+    const lookup = (contact: Record<string, string>) =>
+      pub().post('/v1/store/support/actions/lookup').send({ ticketNo: lead.body.ticketNo, contact });
+    const status = await lookup({ name: '-', email: 'BUYER@example.test' }).expect(200);
+    expect(status.body).toMatchObject({ ticketNo: lead.body.ticketNo, topic: 'business', stage: 'received' });
+    expect((await lookup({ name: '-', email: 'other@example.test' }).expect(404)).body.code).toBe(
+      'support.ticket_not_found',
+    );
+    const added = await pub()
+      .post('/v1/store/support/actions/add-info')
+      .set('Idempotency-Key', randomUUID())
+      .send({
+        ticketNo: lead.body.ticketNo,
+        contact: { name: '-', email: 'buyer@example.test' },
+        message: 'มี 4 สาขาค่ะ',
+      })
+      .expect(200);
+    expect(added.body.stage).toBe('received');
+    const inbox = (
+      await as(ctx, cs).get(`/v1/admin/conversations/${stored.conversation.publicId}`).expect(200)
+    ).body;
+    expect(inbox.lastMessage).toBe('มี 4 สาขาค่ะ');
+    expect(inbox.ticket).toMatchObject({ queue: 'sales' });
+  });
+
   it('rate-limits the public support forms', async () => {
     process.env['SUPPORT_THROTTLE_LIMIT'] = '1';
     const statuses: number[] = [];

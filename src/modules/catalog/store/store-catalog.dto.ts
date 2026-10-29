@@ -890,4 +890,12 @@ export class StoreSupportChannelsDto {
 
   @ApiProperty({ type: String, nullable: true, example: 'จันทร์–ศุกร์ 09:00–18:00' })
   hours!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'D-458 the office customers may visit by appointment (one line); null until the CS Lead sets it',
+  })
+  office!: string | null;
 }

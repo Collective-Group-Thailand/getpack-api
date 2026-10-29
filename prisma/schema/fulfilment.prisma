@@ -1930,7 +1930,10 @@ model SupportTicket {
   /// The order code the requester typed (not resolved: a guest cannot prove the order is theirs).
   orderRef          String?             @map("order_ref")
   callbackRequested Boolean             @default(false) @map("callback_requested")
-  /// Hand-off: the page and the guided-help answers / recommendation (bounded JSON).
+  /// D-458 the team queue the ticket is routed to (from `support.topic_queues` at submission; `cs` by default).
+  queue             String              @default("cs")
+  /// Hand-off: the page and the guided-help answers / recommendation (bounded JSON); contact form (D-458): the
+  /// intent's details, the reply channel and the chosen call-back slot.
   context           Json?
   respondBy         DateTime            @map("respond_by") @db.Timestamptz(6)
   firstRespondedAt  DateTime?           @map("first_responded_at") @db.Timestamptz(6)
@@ -1941,6 +1944,7 @@ model SupportTicket {
 
   @@index([conversationId], map: "ix_support_tickets__conversation_id")
   @@index([customerUserId], map: "ix_support_tickets__customer_user_id")
+  @@index([queue, createdAt(sort: Desc)], map: "ix_support_tickets__queue__created_at")
   @@index([respondBy], map: "ix_support_tickets__unanswered__respond_by", where: raw("(first_responded_at IS NULL)"))
   @@map("support_tickets")
 }

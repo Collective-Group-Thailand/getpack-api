@@ -387,6 +387,8 @@ export const ERROR_CODES = {
   'payments.reminder_recent': HttpStatus.CONFLICT,
   'orders.reorder_repriced': HttpStatus.CONFLICT,
   'support.contact_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'support.ticket_not_found': HttpStatus.NOT_FOUND,
+  'support.callback_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
   'orders.reorder_preview_expired': HttpStatus.CONFLICT,
   'orders.spec_sheet_unavailable': HttpStatus.CONFLICT,
   'line.signature_invalid': HttpStatus.UNAUTHORIZED,

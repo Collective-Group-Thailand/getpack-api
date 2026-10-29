@@ -222,9 +222,9 @@ export class AdminConversationsController {
     summary: 'The CS inbox',
     description:
       'Latest activity first. Filters: status, assignee, subject (support / order / design / RFQ / RFQ basket, ' +
-      'D-300), channel, the subject’s company, first-response state (waiting in time, overdue, answered — D-221) and ' +
-      '`q` (customer or LINE name, contains). Each thread carries its SLA timers, reply channel and participants.',
-    implements: ['D-151', 'D-143', 'D-300', 'D-221'],
+      'D-300), channel, the subject’s company, first-response state (waiting in time, overdue, answered — D-221), ' +
+      'the queue of its contact ticket (D-458) and `q` (customer or LINE name, contains). Each thread carries its SLA timers, reply channel and participants.',
+    implements: ['D-151', 'D-143', 'D-300', 'D-221', 'D-458'],
   })
   @ApiPaginated(ConversationDto, { example: CONVERSATION_EXAMPLE })
   @ApiStandardErrors('validation.failed')
@@ -245,6 +245,7 @@ export class AdminConversationsController {
       ...(q.sla === 'answered' && { firstRespondedAt: { not: null } }),
       ...(q.sla === 'waiting' && { firstRespondedAt: null, firstResponseDueAt: { gte: now } }),
       ...(q.sla === 'overdue' && { firstRespondedAt: null, firstResponseDueAt: { lt: now } }),
+      ...(q.queue && { tickets: { some: { queue: q.queue } } }),
       ...(q.q && {
         OR: [
           { customer: { displayName: { contains: q.q, mode: 'insensitive' } } },

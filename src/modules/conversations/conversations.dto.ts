@@ -111,6 +111,15 @@ export class ConversationListQuery extends PageQuery {
   @IsOptional()
   @IsIn(SLA_STATES)
   sla?: (typeof SLA_STATES)[number];
+
+  @ApiPropertyOptional({
+    example: 'sales',
+    pattern: '^[a-z][a-z0-9_]{0,39}$',
+    description: 'D-458 threads with a contact ticket routed to this queue (`support.topic_queues`)',
+  })
+  @IsOptional()
+  @Matches(/^[a-z][a-z0-9_]{0,39}$/)
+  queue?: string;
 }
 
 export class MessagesQuery extends CursorQuery {}
