@@ -172,3 +172,29 @@ Example — `POST /v1/store/support/actions/contact` → `201`
 
 §7.3 (carrier sender), §7.5 (EXIF/GPS, PDF metadata) and §7.7 (`trust.*` rows: leave them; remove in business Phase 4)
 remain open.
+
+---
+
+## C10 — business / contact / partner Phases 1–3 (Stage C, branch `design/business-redesign`, D-458)
+
+Additive for the storefront (no field removed). One migration: `20261231000001_c10_support_ticket_queue`
+(`support_tickets.queue` + index + check; the `storefront.support_channels` value schema gains `office`) — run
+`pnpm db:migrate`. References stay `CS-YYMM-NNNNN` for every topic (D-440): the web shows no `CT-` / `BZ-` / `FP-`.
+
+| Operation | Change |
+|---|---|
+| `store.support.contact` (`POST /v1/store/support/actions/contact`) | optional `details` (`SupportContactDetailsDto`: company, monthlyVolume, interests[], capabilities[], province, currentSystem, product, quantity, insideSize, postcode), `replyChannel` (`line` / `email` / `callback`), `callback` {date, slot}; new error `support.callback_unavailable` (422). Ticket routed to `support.topic_queues`; `respondBy` follows `support.reply_business_days_by_topic` |
+| **new** `store.support.contactOptions` (`GET /v1/store/support/contact-options`) | `replyBusinessDays`, `replyBusinessDaysByTopic`, `teamStatus` {openNow, nextOpenAt} \| null, `callback` {days[5], slots[]} \| null. Anonymous, 60 s |
+| **new** `store.support.lookupTicket` (`POST /v1/store/support/actions/lookup`) | {ticketNo, contact?} → `SupportTicketStatusDto` {ticketNo, topic, stage `received`/`in_progress`/`answered`, createdAt, respondBy, answeredAt, lineUrl}; `support.ticket_not_found` (404) for anything not provably the sender's |
+| **new** `store.support.addInfo` (`POST /v1/store/support/actions/add-info`, `Idempotency-Key`) | {ticketNo, contact?, message} → same DTO; inbound message on the ticket's conversation; event + activity `support.ticket_info_added` |
+| `store.publicConfig.get` | + `roadmap` {business[], erpModules[]} of {key, status `live`/`soon`/`in_development`}; + `paymentMethods` (offered now, no instalments); `issuer` + `taxId`, `branchCode`, `addressTh` |
+| `store.support.getChannels` | + `office` |
+| `admin.conversations.list` | + `?queue=`; `ConversationTicketDto.queue` |
+
+Settings (all effective-dated, audited): `support.topic_queues` (CS Lead, seeded **proposed**), `support.reply_business_days_by_topic`
+(CS Lead, unset), `support.callback_slots` (CS Lead, unset → no call back), `storefront.roadmap` (Admin, seeded from the pack).
+
+```json
+GET /v1/store/support/contact-options → 200
+{ "replyBusinessDays": 1, "replyBusinessDaysByTopic": {}, "teamStatus": { "openNow": false, "nextOpenAt": "2026-10-21T09:00:00+07:00" }, "callback": null }
+```
