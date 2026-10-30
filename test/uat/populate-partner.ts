@@ -492,95 +492,92 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
 
   // --- knowledge base and scorecard -----------------------------------------------------------------------
 
-  await step(
-    'partner knowledge base: one draft article per category (D-295)',
-    async () => {
-      const marketing = as(ctx, tokens['marketing']!);
-      const categories = await ok<{ data: { id: string; slug: string }[] }>(
-        marketing.get('/v1/admin/cms/article-categories?audience=partner&perPage=100'),
-      );
-      const doc = (...paragraphs: string[]) => ({
-        th: {
-          type: 'doc',
-          content: paragraphs.map((text) => ({ type: 'paragraph', content: [{ type: 'text', text }] })),
-        },
+  await step('partner knowledge base: one draft article per category (D-295)', async () => {
+    const marketing = as(ctx, tokens['marketing']!);
+    const categories = await ok<{ data: { id: string; slug: string }[] }>(
+      marketing.get('/v1/admin/cms/article-categories?audience=partner&perPage=100'),
+    );
+    const doc = (...paragraphs: string[]) => ({
+      th: {
+        type: 'doc',
+        content: paragraphs.map((text) => ({ type: 'paragraph', content: [{ type: 'text', text }] })),
+      },
+    });
+    const ARTICLES = [
+      {
+        category: 'kb-print-spec',
+        slug: 'uat-kb-accept-jobs',
+        titleTh: 'รับงานภายใน 1 วันทำการ',
+        excerptTh: 'งานที่ getpack ส่งให้ต้องกดรับหรือปฏิเสธภายใน 1 วันทำการ',
+        body: doc(
+          'งานใหม่ต้องกดรับหรือปฏิเสธพร้อมเหตุผลภายใน 1 วันทำการ หากเกินกำหนด ระบบจะแจ้งเตือนและเสนอย้ายงาน',
+          'อ่านใบสเปกงาน (spec sheet) ของคำสั่งซื้อก่อนรับงานทุกครั้ง',
+        ),
+      },
+      {
+        category: 'kb-file-handling',
+        slug: 'uat-kb-approved-proof',
+        titleTh: 'ผลิตตามไฟล์ที่ลูกค้าอนุมัติเท่านั้น',
+        excerptTh: 'ใช้ไฟล์ Proof ที่อนุมัติแล้วจากหน้างาน ไม่รับไฟล์ทางช่องทางอื่น',
+        body: doc(
+          'สีต้องอยู่ใน ΔE2000 ≤ 3 เทียบกับ Proof ที่อนุมัติ (≤ 5 สำหรับงานเฟล็กโซ) ขนาด ± 3 มม. สำหรับกล่องลูกฟูก',
+          'หากไฟล์มีปัญหา ให้แจ้งปัญหาในงาน (ประเภท “คำถามเรื่องอาร์ตเวิร์ก”) แทนการแก้ไฟล์เอง',
+        ),
+      },
+      {
+        category: 'kb-qc-photo-standard',
+        slug: 'uat-kb-qc-photos',
+        titleTh: 'มาตรฐานภาพถ่าย QC',
+        excerptTh: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ getpack ตรวจได้',
+        body: doc(
+          'โรงงานตรวจคุณภาพเองพร้อมภาพถ่ายเป็นหลักฐาน getpack สุ่มตรวจตามความเสี่ยงของงาน',
+          'ถ่ายให้เห็นงานพิมพ์ทั้งด้าน ขอบตัด และฉลากกล่อง ในที่แสงพอ',
+        ),
+      },
+      {
+        category: 'kb-packing-labels',
+        slug: 'uat-kb-pod',
+        titleTh: 'การแพ็ก ฉลาก และหลักฐานการส่งมอบ',
+        excerptTh: 'พิมพ์ฉลากจากระบบ และเก็บลายเซ็นกับรูปถ่ายเมื่อส่งมอบ',
+        body: doc(
+          'กด “พร้อมส่ง” เพื่อพิมพ์ฉลากกล่อง เมื่อส่งมอบต้องบันทึกชื่อผู้รับ ลายเซ็น และรูปถ่าย (POD)',
+          'ส่งได้ไม่เกินจำนวนที่ผลิต ยอดส่งต่างจากสั่งเกิน ± 5 % ต้องแจ้ง getpack ก่อน',
+        ),
+      },
+      {
+        category: 'kb-payouts',
+        slug: 'uat-kb-payouts',
+        titleTh: 'รอบรับเงินและใบวางบิล',
+        excerptTh: 'รับเงินมัดจำเมื่อรับงาน ส่วนที่เหลือหลังพ้นระยะเคลม',
+        body: doc(
+          'โรงงานได้รับ 30 % เมื่อรับงาน ส่วนที่เหลือหลังส่งมอบและพ้นระยะเคลม 7 วัน หักเงินประกัน 5 %',
+          'ระบบสร้างใบวางบิลจาก PO และ POD ให้โรงงานตรวจและยืนยัน แล้วแนบใบกำกับภาษีของโรงงาน',
+        ),
+      },
+    ];
+    for (const a of ARTICLES) {
+      const category = categories.data.find((c) => c.slug === a.category);
+      if (!category) throw new Error(`partner category ${a.category} missing`);
+      const created = await marketing.post('/v1/admin/cms/articles', {
+        slug: a.slug,
+        titleTh: a.titleTh,
+        excerptTh: a.excerptTh,
+        body: a.body,
+        audience: 'partner',
+        status: 'published',
       });
-      const ARTICLES = [
-        {
-          category: 'kb-print-spec',
-          slug: 'uat-kb-accept-jobs',
-          titleTh: 'รับงานภายใน 1 วันทำการ',
-          excerptTh: 'งานที่ getpack ส่งให้ต้องกดรับหรือปฏิเสธภายใน 1 วันทำการ',
-          body: doc(
-            'งานใหม่ต้องกดรับหรือปฏิเสธพร้อมเหตุผลภายใน 1 วันทำการ หากเกินกำหนด ระบบจะแจ้งเตือนและเสนอย้ายงาน',
-            'อ่านใบสเปกงาน (spec sheet) ของคำสั่งซื้อก่อนรับงานทุกครั้ง',
-          ),
-        },
-        {
-          category: 'kb-file-handling',
-          slug: 'uat-kb-approved-proof',
-          titleTh: 'ผลิตตามไฟล์ที่ลูกค้าอนุมัติเท่านั้น',
-          excerptTh: 'ใช้ไฟล์ Proof ที่อนุมัติแล้วจากหน้างาน ไม่รับไฟล์ทางช่องทางอื่น',
-          body: doc(
-            'สีต้องอยู่ใน ΔE2000 ≤ 3 เทียบกับ Proof ที่อนุมัติ (≤ 5 สำหรับงานเฟล็กโซ) ขนาด ± 3 มม. สำหรับกล่องลูกฟูก',
-            'หากไฟล์มีปัญหา ให้แจ้งปัญหาในงาน (ประเภท “คำถามเรื่องอาร์ตเวิร์ก”) แทนการแก้ไฟล์เอง',
-          ),
-        },
-        {
-          category: 'kb-qc-photo-standard',
-          slug: 'uat-kb-qc-photos',
-          titleTh: 'มาตรฐานภาพถ่าย QC',
-          excerptTh: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ getpack ตรวจได้',
-          body: doc(
-            'โรงงานตรวจคุณภาพเองพร้อมภาพถ่ายเป็นหลักฐาน getpack สุ่มตรวจตามความเสี่ยงของงาน',
-            'ถ่ายให้เห็นงานพิมพ์ทั้งด้าน ขอบตัด และฉลากกล่อง ในที่แสงพอ',
-          ),
-        },
-        {
-          category: 'kb-packing-labels',
-          slug: 'uat-kb-pod',
-          titleTh: 'การแพ็ก ฉลาก และหลักฐานการส่งมอบ',
-          excerptTh: 'พิมพ์ฉลากจากระบบ และเก็บลายเซ็นกับรูปถ่ายเมื่อส่งมอบ',
-          body: doc(
-            'กด “พร้อมส่ง” เพื่อพิมพ์ฉลากกล่อง เมื่อส่งมอบต้องบันทึกชื่อผู้รับ ลายเซ็น และรูปถ่าย (POD)',
-            'ส่งได้ไม่เกินจำนวนที่ผลิต ยอดส่งต่างจากสั่งเกิน ± 5 % ต้องแจ้ง getpack ก่อน',
-          ),
-        },
-        {
-          category: 'kb-payouts',
-          slug: 'uat-kb-payouts',
-          titleTh: 'รอบรับเงินและใบวางบิล',
-          excerptTh: 'รับเงินมัดจำเมื่อรับงาน ส่วนที่เหลือหลังพ้นระยะเคลม',
-          body: doc(
-            'โรงงานได้รับ 30 % เมื่อรับงาน ส่วนที่เหลือหลังส่งมอบและพ้นระยะเคลม 7 วัน หักเงินประกัน 5 %',
-            'ระบบสร้างใบวางบิลจาก PO และ POD ให้โรงงานตรวจและยืนยัน แล้วแนบใบกำกับภาษีของโรงงาน',
-          ),
-        },
-      ];
-      for (const a of ARTICLES) {
-        const category = categories.data.find((c) => c.slug === a.category);
-        if (!category) throw new Error(`partner category ${a.category} missing`);
-        const created = await marketing.post('/v1/admin/cms/articles', {
-          slug: a.slug,
-          titleTh: a.titleTh,
-          excerptTh: a.excerptTh,
-          body: a.body,
-          audience: 'partner',
-          status: 'published',
-        });
-        if (created.status !== 201)
-          throw new Error(`article ${a.slug}: ${created.status} ${JSON.stringify(created.body)}`);
-        await ok(
-          as(ctx, tokens['marketing']!)
-            .put(`/v1/admin/cms/articles/${created.body.id as string}/categories`, {
-              categoryIds: [category.id],
-            })
-            .set('If-Match', created.headers['etag'] as string),
-        );
-      }
-      return `${ARTICLES.length} published articles (texts are drafts restating decisions; Partner team writes the final ones)`;
-    },
-  );
+      if (created.status !== 201)
+        throw new Error(`article ${a.slug}: ${created.status} ${JSON.stringify(created.body)}`);
+      await ok(
+        as(ctx, tokens['marketing']!)
+          .put(`/v1/admin/cms/articles/${created.body.id as string}/categories`, {
+            categoryIds: [category.id],
+          })
+          .set('If-Match', created.headers['etag'] as string),
+      );
+    }
+    return `${ARTICLES.length} published articles (texts are drafts restating decisions; Partner team writes the final ones)`;
+  });
 
   await step('scorecard: month to date recomputed for the launch factory (D-075)', async () => {
     await ok(pm().post(`${admin}/scorecards/actions/recompute`, { month: `${today().slice(0, 7)}-01` }));

@@ -17,7 +17,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { FilesService } from '@platform/files/files.service';
 
-import { customerWords, activityMessage } from './activity-messages';
+import { activityMessage, customerWords } from './activity-messages';
 import {
   type OrderProgressDto,
   type ProgressStepDto,

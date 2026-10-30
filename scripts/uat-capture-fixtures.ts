@@ -89,7 +89,9 @@ async function statements(db: PrismaClient): Promise<void> {
       log(`agent already has a live statement for ${plan.period} (${live.statementNo}) — skipped`);
       continue;
     }
-    log(`create ${plan.status} statement ${statementNo}, ${plan.entries.length} lines, total ${total.toFixed(2)}`);
+    log(
+      `create ${plan.status} statement ${statementNo}, ${plan.entries.length} lines, total ${total.toFixed(2)}`,
+    );
     if (dryRun) continue;
     const created = await db.$transaction(async (tx) => {
       const s = await tx.salesAgentStatement.create({
@@ -170,7 +172,7 @@ async function expiredQuote(db: ErpClient): Promise<void> {
         });
     } else log(`${EXPIRED_QUOTE_NO} exists (${existing.publicId}) — skipped`);
   } else {
-    log(`create ${EXPIRED_QUOTE_NO} (copy of ${src!.quoteNo}) with expired link`);
+    log(`create ${EXPIRED_QUOTE_NO} (copy of ${src.quoteNo}) with expired link`);
     if (!dryRun)
       await db.erpQuotation.create({
         data: {
