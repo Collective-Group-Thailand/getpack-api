@@ -145,6 +145,31 @@ const PERSONAS: Persona[] = [
     business: 'ผู้ถูกแนะนำ (referral)',
     geo: 9,
   },
+  // D-462: credit test accounts — an accountant of บริษัท ทดสอบ รีเทล, and a second company on a temporary limit.
+  {
+    key: 'C14',
+    phone: '0800000114',
+    firstName: 'สมพร',
+    lastName: 'ทดสอบ',
+    business: 'ฝ่ายบัญชีบริษัท',
+    geo: 2,
+  },
+  {
+    key: 'C15',
+    phone: '0800000115',
+    firstName: 'ธีระ',
+    lastName: 'ทดสอบ',
+    business: 'ผู้ดูแลบัญชีบริษัท (แฟรนไชส์)',
+    geo: 2,
+  },
+  {
+    key: 'C16',
+    phone: '0800000116',
+    firstName: 'มยุรี',
+    lastName: 'ทดสอบ',
+    business: 'ผู้สั่งซื้อสาขา',
+    geo: 2,
+  },
 ];
 
 /** A fake 13-digit tax id `0000000000NN` + its check digit. */
@@ -1077,6 +1102,113 @@ describe('UAT populate (rehearsal data through the API)', () => {
         );
         const o = await placeOrder(C('C10'), 'uat-postal-box-b', 'C+8', 2000, { companyId: company.id });
         return `${o.group.groupCode} ${o.group.status}`;
+      },
+    );
+
+    // D-462: credit test accounts. UAT-CO-001 gets a permanent THB 50,000 / 30 days and an accountant (C14);
+    // UAT-CO-002 has a permanent THB 30,000 / 30 days plus a temporary THB 150,000 / 90 days (custom term) for 60
+    // days, approved by C-Level, with an admin (C15) and a branch buyer (C16).
+    await step(
+      'credit: UAT-CO-001 ฿50,000 / 30 days + accountant C14; UAT-CO-002 temporary ฿150,000 / 90 days (C15, C16)',
+      async () => {
+        const approveLatest = async (companyPublicId: string) => {
+          const version = await ctx.prisma.companyCreditLimitVersion.findFirstOrThrow({
+            where: { creditLimit: { company: { publicId: companyPublicId } }, status: 'proposed' },
+            include: { approvalRequest: true },
+          });
+          if (version.approvalRequest?.status === 'pending')
+            await ok(
+              as(ctx, tokens['c_level']!).post(
+                `/v1/admin/approvals/${version.approvalRequest.publicId}/actions/approve`,
+                { comment: 'อนุมัติวงเงินทดสอบ (UAT)' },
+              ),
+            );
+          await ctx.pump();
+        };
+        const member = async (adminToken: string, companyId: string, key: string, roles: string[]) => {
+          const m = C(key);
+          await ok(
+            as(ctx, adminToken).post(`/v1/store/companies/${companyId}/members`, {
+              phone: `+66${m.persona.phone.slice(1)}`,
+              roles,
+            }),
+            201,
+          );
+          const invitations = await ok<{ id: string; companyId: string }[]>(
+            as(ctx, m.token).get('/v1/store/company-invitations'),
+          );
+          const invitation = invitations.find((i) => i.companyId === companyId)!;
+          await ok(as(ctx, m.token).post(`/v1/store/company-invitations/${invitation.id}/actions/accept`));
+        };
+
+        const first = await ctx.prisma.company.findFirstOrThrow({ where: { companyCode: 'UAT-CO-001' } });
+        await ctx.prisma.company.update({
+          where: { id: first.id },
+          data: { paidOrdersCount: { set: Math.max(first.paidOrdersCount, 3) }, creditStatus: 'eligible' },
+        });
+        await member(C('C09').token, first.publicId, 'C14', ['company_accountant']);
+        await ok(
+          as(ctx, tokens['finance']!).post(`/v1/admin/companies/${first.publicId}/credit-limits`, {
+            limitAmount: '50000.00',
+            termDays: 30,
+            basis: 'paid_orders',
+            reason: 'วงเงินทดสอบ UAT',
+          }),
+          201,
+        );
+        await approveLatest(first.publicId);
+
+        const g = UAT_GEOGRAPHY[2]!;
+        const province = await ctx.prisma.geoProvince.findUniqueOrThrow({ where: { code: g.province.code } });
+        const second = await ok<{ id: string }>(
+          as(ctx, C('C15').token).post('/v1/store/companies', {
+            legalName: 'บริษัท ทดสอบ แฟรนไชส์ จำกัด',
+            taxId: taxId(15),
+            isVatRegistered: true,
+            withholdsTax: false,
+            headOffice: {
+              name: 'สำนักงานใหญ่',
+              line1: '88 อาคารทดสอบ ถนนสุขุมวิท',
+              postcode: g.subdistrict.postcode,
+              provinceId: province.publicId,
+            },
+            signatory: { name: 'ธีระ ทดสอบ', position: 'กรรมการผู้จัดการ' },
+          }),
+          201,
+        );
+        await ctx.prisma.company.update({
+          where: { publicId: second.id },
+          data: {
+            status: 'active',
+            kycApprovedAt: new Date(),
+            companyCode: 'UAT-CO-002',
+            paidOrdersCount: 3,
+            creditStatus: 'eligible',
+          },
+        });
+        await member(C('C15').token, second.id, 'C16', ['company_buyer']);
+        await ok(
+          as(ctx, tokens['finance']!).post(`/v1/admin/companies/${second.id}/credit-limits`, {
+            limitAmount: '30000.00',
+            termDays: 30,
+            basis: 'paid_orders',
+            reason: 'วงเงินถาวรทดสอบ UAT',
+          }),
+          201,
+        );
+        await approveLatest(second.id);
+        await ok(
+          as(ctx, tokens['finance']!).post(`/v1/admin/companies/${second.id}/credit-limits`, {
+            limitAmount: '150000.00',
+            termDays: 90,
+            validUntil: new Date(Date.now() + 60 * 86_400_000).toISOString(),
+            basis: 'paid_orders',
+            reason: 'วงเงินชั่วคราวช่วงเทศกาล (ทดสอบ UAT)',
+          }),
+          201,
+        );
+        await approveLatest(second.id);
+        return 'UAT-CO-001 ฿50,000/30; UAT-CO-002 ฿150,000/90 until +60 days, then ฿30,000/30';
       },
     );
 

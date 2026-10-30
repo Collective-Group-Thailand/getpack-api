@@ -45,6 +45,8 @@ describe('seed data (B1.2 step 3)', () => {
       // ADR-0004 values chosen on 2026-09-23, pending the security review (B1.3).
       'auth.access_token_ttl_seconds': 'proposed',
       'auth.refresh_token_lifetimes': 'proposed',
+      // D-462: the custom-term bounds and the longest temporary limit, Finance Manager confirms.
+      'b2b.credit_custom_terms': 'proposed',
       'auth.otp_policy': 'proposed',
       'auth.password_lockout': 'proposed',
       'auth.device_pin_policy': 'proposed',

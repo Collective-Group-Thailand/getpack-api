@@ -488,6 +488,26 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-121'],
   },
   {
+    key: 'b2b.credit_custom_terms',
+    valueType: 'json',
+    value: { minDays: 7, maxDays: 120, temporaryMaxDays: 180 },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['minDays', 'maxDays', 'temporaryMaxDays'],
+      properties: {
+        minDays: { type: 'integer', minimum: 1, maximum: 365 },
+        maxDays: { type: 'integer', minimum: 1, maximum: 365 },
+        temporaryMaxDays: { type: 'integer', minimum: 1, maximum: 730 },
+      },
+    },
+    description:
+      'D-462 staff may give a term outside b2b.credit_terms within minDays–maxDays, and a temporary limit lasting at most temporaryMaxDays',
+    decisions: ['D-462'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+  {
     key: 'b2b.credit_eligibility_paid_orders',
     valueType: 'integer',
     value: 3,

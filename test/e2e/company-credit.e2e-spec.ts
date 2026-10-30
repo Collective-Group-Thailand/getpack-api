@@ -120,7 +120,7 @@ describe('company credit (e2e, B3.5)', () => {
     await as(ctx, csLead)
       .post(`/v1/admin/companies/${companyId}/credit-limits`, {
         limitAmount: '50000.00',
-        termDays: 20,
+        termDays: 200,
         basis: 'paid_orders',
         reason: 'ทดสอบ',
       })
@@ -290,5 +290,113 @@ describe('company credit (e2e, B3.5)', () => {
       .expect(200)
       .expect((r) => expect(Array.isArray(r.body)).toBe(true));
     await as(ctx, finance).get(`/v1/admin/companies/${companyId}/statements/2020-01/pdf`).expect(404);
+  });
+
+  it('D-462: a temporary limit with a custom term, the summary every buyer sees, and the fall-back when it ends', async () => {
+    const admin = await customerToken(ctx, 2);
+    const companyId = await activeCompany(ctx, admin.token, 2);
+    await ctx.prisma.company.update({
+      where: { publicId: companyId },
+      data: { paidOrdersCount: 3, creditStatus: 'eligible' },
+    });
+    const csLead = await staffToken(ctx, 'cs-lead');
+    const approve = async () => {
+      const version = await ctx.prisma.companyCreditLimitVersion.findFirstOrThrow({
+        where: { creditLimit: { company: { publicId: companyId } }, status: 'proposed' },
+        include: { approvalRequest: true },
+      });
+      const outcome = await ctx.prisma.domainEvent.findFirstOrThrow({
+        where: { type: 'approval.approved', aggregateId: version.approvalRequest!.publicId },
+      });
+      await ctx.prisma.withTx((tx) => credit.onApprovalOutcome(envelopeFromRow(outcome), tx));
+      return version;
+    };
+
+    // A permanent THB 20,000 / 30 days first.
+    await as(ctx, csLead)
+      .post(`/v1/admin/companies/${companyId}/credit-limits`, {
+        limitAmount: '20000.00',
+        termDays: 30,
+        basis: 'paid_orders',
+        reason: 'วงเงินถาวร',
+      })
+      .expect(201);
+    await approve();
+
+    // The customer may not pick a custom term; staff may, within b2b.credit_custom_terms.
+    await as(ctx, admin.token)
+      .post(`/v1/store/companies/${companyId}/credit-applications`, {
+        limitAmount: '30000.00',
+        termDays: 90,
+        basis: 'paid_orders',
+        note: 'ขอเทอมยาว',
+      })
+      .set('Idempotency-Key', randomUUID())
+      .expect(422);
+    await as(ctx, csLead)
+      .post(`/v1/admin/companies/${companyId}/credit-limits`, {
+        limitAmount: '80000.00',
+        termDays: 90,
+        validUntil: new Date(Date.now() + 400 * DAY).toISOString(),
+        basis: 'paid_orders',
+        reason: 'เกินกำหนด',
+      })
+      .expect(422);
+    const until = new Date(Date.now() + 30 * DAY);
+    const temporary = await as(ctx, csLead)
+      .post(`/v1/admin/companies/${companyId}/credit-limits`, {
+        limitAmount: '80000.00',
+        termDays: 90,
+        validUntil: until.toISOString(),
+        basis: 'paid_orders',
+        reason: 'ยอดสั่งช่วงเทศกาล',
+      })
+      .expect(201);
+    expect(temporary.body.versions[0]).toMatchObject({ customTerm: true, validUntil: expect.any(String) });
+    const tempVersion = await approve();
+    expect(tempVersion.approvalRequest!.payloadSnapshot).toMatchObject({ customTerm: true });
+
+    const during = await as(ctx, admin.token).get(`/v1/store/companies/${companyId}/credit`).expect(200);
+    expect(during.body).toMatchObject({
+      limitAmount: '80000.00',
+      termDays: 90,
+      validUntil: expect.any(String),
+      fallbackLimitAmount: '20000.00',
+      fallbackTermDays: 30,
+    });
+
+    // A buyer sees what is available, the term and the end date — not the limit or statements.
+    const buyer = await customerToken(ctx, 3);
+    await as(ctx, admin.token)
+      .post(`/v1/store/companies/${companyId}/members`, {
+        phone: buyer.phone,
+        roles: ['company_buyer'],
+      })
+      .expect(201);
+    const invitations = await as(ctx, buyer.token).get('/v1/store/company-invitations').expect(200);
+    const invitation = (invitations.body as { id: string; companyId: string }[]).find(
+      (x) => x.companyId === companyId,
+    )!;
+    await as(ctx, buyer.token)
+      .post(`/v1/store/company-invitations/${invitation.id}/actions/accept`)
+      .expect(200);
+    const summary = await as(ctx, buyer.token)
+      .get(`/v1/store/companies/${companyId}/credit/summary`)
+      .expect(200);
+    expect(summary.body).toEqual({
+      creditStatus: 'credit',
+      availableAmount: '80000.00',
+      termDays: 90,
+      validUntil: expect.any(String),
+      currency: 'THB',
+    });
+    expect(Object.keys(summary.body)).not.toContain('limitAmount');
+    await as(ctx, buyer.token).get(`/v1/store/companies/${companyId}/credit`).expect(403);
+
+    // When the temporary limit ends, the permanent one applies again.
+    const company = await ctx.prisma.company.findUniqueOrThrow({ where: { publicId: companyId } });
+    const after = await credit.currentLimit(ctx.prisma, company.id, new Date(until.getTime() + DAY));
+    expect(after).toMatchObject({ termDays: 30, validUntil: null });
+    expect(after!.limitAmount.toFixed(2)).toBe('20000.00');
   });
 });

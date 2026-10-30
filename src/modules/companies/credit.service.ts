@@ -29,6 +29,8 @@ const D = (v: { toString(): string } | string | number) => new MoneyDecimal(v.to
 export interface CreditView {
   creditStatus: string;
   limit: CompanyCreditLimitVersion | null;
+  /** D-462: the permanent version that applies once a temporary `limit` ends. */
+  fallback: CompanyCreditLimitVersion | null;
   exposure: MoneyValue;
   available: MoneyValue;
   pending: CompanyCreditLimitVersion | null;
@@ -83,7 +85,13 @@ export class CreditService {
 
   async currentLimit(db: Tx, companyId: bigint, at = new Date()): Promise<CompanyCreditLimitVersion | null> {
     return db.companyCreditLimitVersion.findFirst({
-      where: { creditLimit: { companyId }, status: 'approved', effectiveFrom: { lte: at } },
+      where: {
+        creditLimit: { companyId },
+        status: 'approved',
+        effectiveFrom: { lte: at },
+        // D-462: a temporary limit applies until it ends; after that the latest permanent one does again.
+        OR: [{ validUntil: null }, { validUntil: { gt: at } }],
+      },
       orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
     });
   }
@@ -111,14 +119,28 @@ export class CreditService {
       this.settings.at('b2b.credit_eligibility_paid_orders'),
       this.settings.at('b2b.credit_terms'),
     ]);
+    const fallback = limit?.validUntil
+      ? await db.companyCreditLimitVersion.findFirst({
+          where: {
+            creditLimit: { companyId },
+            status: 'approved',
+            validUntil: null,
+            effectiveFrom: { lte: new Date() },
+          },
+          orderBy: [{ effectiveFrom: 'desc' }, { versionNo: 'desc' }],
+        })
+      : null;
     const available = MoneyDecimal.max(D(limit?.limitAmount ?? 0).sub(exposure), D(0));
     const { allowedDays, defaultDays } = terms.value as { allowedDays: number[]; defaultDays: number };
     const statementVerified = company.kycDocuments.some((d) => d.status === 'verified');
     const eligible = company.creditStatus !== 'prepaid' || statementVerified;
     const basis = limit?.eligibilityBasis as 'paid_orders' | 'financial_statement' | undefined;
+    // D-462: a company whose temporary limit ended with no permanent one behind it has no credit in force.
+    const creditStatus = company.creditStatus === 'credit' && !limit ? 'eligible' : company.creditStatus;
     return {
-      creditStatus: company.creditStatus,
+      creditStatus,
       limit,
+      fallback,
       exposure,
       available,
       pending,
@@ -263,18 +285,45 @@ export class CreditService {
       termDays?: number;
       basis: 'paid_orders' | 'financial_statement';
       reason: string;
+      /** D-462, staff only: the limit ends at this time. */
+      validUntil?: Date;
     },
-    opts: { statementOnFile?: boolean } = {},
+    opts: { statementOnFile?: boolean; allowCustomTerm?: boolean } = {},
   ) {
-    const terms = (await this.settings.at('b2b.credit_terms')).value as {
-      allowedDays: number[];
-      defaultDays: number;
-    };
+    const [termsSetting, customSetting] = await Promise.all([
+      this.settings.at('b2b.credit_terms'),
+      this.settings.at('b2b.credit_custom_terms'),
+    ]);
+    const terms = termsSetting.value as { allowedDays: number[]; defaultDays: number };
+    const custom = customSetting.value as { minDays: number; maxDays: number; temporaryMaxDays: number };
     const termDays = input.termDays ?? terms.defaultDays;
-    if (!terms.allowedDays.includes(termDays))
+    const customTerm = !terms.allowedDays.includes(termDays);
+    if (customTerm && (!opts.allowCustomTerm || termDays < custom.minDays || termDays > custom.maxDays))
       throw new DomainException('validation.failed', {
-        errors: [{ path: 'termDays', code: 'in', message: `one of ${terms.allowedDays.join(', ')}` }],
+        errors: [
+          {
+            path: 'termDays',
+            code: 'in',
+            message: opts.allowCustomTerm
+              ? `one of ${terms.allowedDays.join(', ')} or ${custom.minDays}–${custom.maxDays}`
+              : `one of ${terms.allowedDays.join(', ')}`,
+          },
+        ],
       });
+    if (input.validUntil) {
+      const now = Date.now();
+      const latest = now + custom.temporaryMaxDays * DAY_MS;
+      if (input.validUntil.getTime() <= now + DAY_MS || input.validUntil.getTime() > latest)
+        throw new DomainException('validation.failed', {
+          errors: [
+            {
+              path: 'validUntil',
+              code: 'range',
+              message: `at least 1 day and at most ${custom.temporaryMaxDays} days ahead`,
+            },
+          ],
+        });
+    }
     return this.prisma.withTx(async (tx) => {
       const company = await this.companies.get(companyPublicId, tx);
       if (company.status !== 'active')
@@ -311,6 +360,8 @@ export class CreditService {
           termDays,
           eligibilityBasis: input.basis,
           reason: input.reason,
+          validUntil: input.validUntil ?? null,
+          customTerm,
           createdById: actor.userId,
         },
       });
@@ -319,11 +370,14 @@ export class CreditService {
         subject: { type: 'company_credit_limit', id: version.id, publicId: version.publicId },
         requester: actor,
         amount: D(input.limitAmount).toFixed(2),
+        flags: [...(input.validUntil ? ['temporary_limit'] : []), ...(customTerm ? ['custom_term'] : [])],
         payload: {
           companyId: company.publicId,
           companyName: company.legalName,
           limitAmount: D(input.limitAmount).toFixed(2),
           termDays,
+          customTerm,
+          validUntil: input.validUntil?.toISOString() ?? null,
           basis: input.basis,
           paidOrders: company.paidOrdersCount,
           reason: input.reason,
@@ -340,6 +394,8 @@ export class CreditService {
         {
           limitAmount: D(input.limitAmount).toFixed(2),
           termDays,
+          customTerm,
+          validUntil: input.validUntil?.toISOString() ?? null,
           approvalId: request.publicId,
         },
         actor,
@@ -377,6 +433,21 @@ export class CreditService {
       );
       return;
     }
+    // D-462: a temporary limit approved after its end date never comes into force.
+    if (version.validUntil && version.validUntil <= now) {
+      await tx.companyCreditLimitVersion.update({
+        where: { id: version.id },
+        data: { status: 'withdrawn', decidedAt: now },
+      });
+      await this.companies.record(
+        tx,
+        company,
+        'company.credit_limit_rejected',
+        { versionId: version.publicId, reason: 'expired_before_approval' },
+        actor,
+      );
+      return;
+    }
     await tx.companyCreditLimitVersion.update({
       where: { id: version.id },
       data: { status: 'approved', decidedAt: now, effectiveFrom: now },
@@ -398,6 +469,7 @@ export class CreditService {
       {
         limitAmount: version.limitAmount.toFixed(2),
         termDays: version.termDays,
+        validUntil: version.validUntil?.toISOString() ?? null,
         creditStatus,
       },
       actor,

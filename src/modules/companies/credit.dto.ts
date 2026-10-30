@@ -3,7 +3,16 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { CONFIG_VERSION_STATUSES } from '@platform/settings/settings.dto';
 import { Type } from 'class-transformer';
-import { IsIn, IsInt, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator';
+import {
+  IsDateString,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 /** B2B credit (D-121, D-122) and monthly statements (D-125). */
 
@@ -66,6 +75,31 @@ export class CompanyCreditDto {
   })
   termDays!: number | null;
 
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+    description: 'D-462: the limit in force is temporary and ends at this time; null when permanent',
+  })
+  validUntil!: string | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 30,
+    description: 'D-462: the permanent term after a temporary limit ends; null without one',
+  })
+  fallbackTermDays!: number | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'D-462: the permanent limit after a temporary one ends; null without one',
+  })
+  fallbackLimitAmount!: string | null;
+
   @ApiProperty({ example: '25000.00', description: 'Open credit-term instalments' })
   exposureAmount!: string;
 
@@ -89,6 +123,9 @@ export const CREDIT_EXAMPLE: CompanyCreditDto = {
   creditStatus: 'credit',
   limitAmount: '100000.00',
   termDays: 30,
+  validUntil: null,
+  fallbackTermDays: null,
+  fallbackLimitAmount: null,
   exposureAmount: '25000.00',
   availableAmount: '75000.00',
   pendingRequest: null,
@@ -134,6 +171,18 @@ export class CreditLimitVersionDto {
 
   @ApiProperty({ type: 'integer', example: 30 })
   termDays!: number;
+
+  @ApiProperty({ example: false, description: 'D-462: a term outside `b2b.credit_terms.allowedDays`' })
+  customTerm!: boolean;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+    description: 'D-462: a temporary limit ends at this time; null when permanent',
+  })
+  validUntil!: string | null;
 
   @ApiProperty({
     enum: ['paid_orders', 'financial_statement'],
@@ -188,6 +237,8 @@ export const ADMIN_CREDIT_EXAMPLE: AdminCompanyCreditDto = {
       status: 'approved',
       limitAmount: '100000.00',
       termDays: 30,
+      customTerm: false,
+      validUntil: null,
       basis: 'paid_orders',
       reason: 'ชำระตรงเวลา 3 ครั้ง',
       effectiveFrom: '2026-10-05T10:00:00+07:00',
@@ -310,12 +361,26 @@ export class RequestCreditLimitDto {
   @ApiPropertyOptional({
     type: 'integer',
     example: 30,
-    description: 'One of `b2b.credit_terms.allowedDays`; default `defaultDays`',
+    description:
+      'One of `b2b.credit_terms.allowedDays` (default `defaultDays`), or a custom term within ' +
+      '`b2b.credit_custom_terms.minDays`–`maxDays` (D-462)',
   })
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   termDays?: number;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    example: '2026-12-31T23:59:59+07:00',
+    description:
+      'D-462: a temporary limit ending at this time (more than a day and at most ' +
+      '`b2b.credit_custom_terms.temporaryMaxDays` ahead); omit for a permanent limit',
+  })
+  @IsOptional()
+  @IsDateString({ strict: true })
+  validUntil?: string;
 
   @ApiProperty({
     enum: ['paid_orders', 'financial_statement'],
@@ -458,5 +523,51 @@ export const ISSUED_STATEMENT_EXAMPLE: IssuedStatementDto = {
   pdfReady: true,
   generatedAt: '2026-11-01T02:00:00+07:00',
   sentAt: '2026-11-01T02:05:00+07:00',
+  currency: 'THB',
+};
+
+/** D-462: what every company member who may order sees of the company's credit — no limit, exposure or statements. */
+export class CompanyCreditSummaryDto {
+  @ApiProperty({
+    enum: ['prepaid', 'eligible', 'credit', 'blocked_overdue'],
+    enumName: 'CreditStatus',
+    example: 'credit',
+  })
+  creditStatus!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '75000.00',
+    description: 'Available credit now; null while the company has no credit in force',
+  })
+  availableAmount!: string | null;
+
+  @ApiProperty({
+    type: 'integer',
+    nullable: true,
+    example: 30,
+    description: 'Payment term in days after delivery',
+  })
+  termDays!: number | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: null,
+    description: 'The limit in force is temporary and ends at this time',
+  })
+  validUntil!: string | null;
+
+  @ApiProperty({ example: 'THB' })
+  currency!: string;
+}
+
+export const CREDIT_SUMMARY_EXAMPLE: CompanyCreditSummaryDto = {
+  creditStatus: 'credit',
+  availableAmount: '75000.00',
+  termDays: 30,
+  validUntil: null,
   currency: 'THB',
 };

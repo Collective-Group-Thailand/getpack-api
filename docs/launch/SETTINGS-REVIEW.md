@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**130 settings** — 77 confirmed · 21 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**131 settings** — 77 confirmed · 22 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -41,6 +41,7 @@
 | `auth.otp_policy` | `{"codeLength":6,"expirySeconds":300,"maxAttempts":5,"resendCooldownSeconds":60,"maxPerPhonePerHour":5,"maxPerIpPerHour":20}` | proposed | superadmin | D-063 | D-063 / ADR-0004 customer phone OTP: expiry, attempts and rate limits |
 | `auth.password_lockout` | `{"maxFailedAttempts":5,"lockMinutes":15}` | proposed | superadmin | D-063 | D-063 / ADR-0004 staff and partner password lockout after failed logins |
 | `auth.refresh_token_lifetimes` | `{"staff":{"absoluteHours":12,"idleHours":2},"partner":{"absoluteHours":168,"idleHours":24},"customer":{"absoluteHours":720,"idleHours":168}}` | proposed | superadmin | D-063 | D-063 / ADR-0004 refresh-token absolute and idle lifetimes per audience (hours) |
+| `b2b.credit_custom_terms` | `{"minDays":7,"maxDays":120,"temporaryMaxDays":180}` | proposed | finance_manager | D-462 | D-462 staff may give a term outside b2b.credit_terms within minDays–maxDays, and a temporary limit lasting at most temporaryMaxDays |
 | `b2b.credit_eligibility_paid_orders` | `3` | confirmed | superadmin | D-121 | D-121 paid orders after which a prepaid company becomes eligible for credit |
 | `b2b.credit_terms` | `{"allowedDays":[15,30,45,60],"defaultDays":30}` | confirmed | superadmin | D-121 | D-121 credit terms a company may be given |
 | `b2b.kyc_certificate_max_age_months` | `6` | confirmed | superadmin | D-120 | D-120 a company certificate is accepted only when issued within this many months |

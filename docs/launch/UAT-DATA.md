@@ -61,7 +61,7 @@ real in form and numbering rules, never mistaken for production ones (UAT.md §0
 | Second maker-checker staff | `finance-manager-2@example.invalid`, `cs-2@example.invalid` | for the close (two Finance Managers, UAT-19) and four-eyes checks |
 | Rehearsal factory (F9001) | `factory-owner@uat.example.invalid`, `factory-planner@…`, `factory-operator@…`, `factory-qc@…`, `factory-shipping@…`, `factory-accountant@…` | partner zone |
 | New factories onboarding (UAT-01) | `applicant-owner@uat.example.invalid` (applied, empty application), `review-owner@uat.example.invalid` (application submitted, under review), `trial-owner@uat.example.invalid` (assisted, on trial) | partner zone, password `UAT_SEED_PASSWORD`; §6.1 |
-| Customers | phone OTP; in a fake-integration stack the code is in the API log / fake SMS sender | phones `0800000101` – `0800000113` (§5) |
+| Customers | phone OTP; in a fake-integration stack the code is in the API log / fake SMS sender | phones `0800000101` – `0800000116` (§5) |
 
 ## 4. Catalogue and prices
 
@@ -120,7 +120,7 @@ compared with the calculator validation documents in UAT-03.
 Shipping is fake too: customer THB 80 – 750 and factory payout THB 60 – 580 by zone (Bangkok metropolitan, central /
 east, north / northeast, south) and weight band (from 0, 5 kg, 20 kg).
 
-## 5. Customers (13)
+## 5. Customers (16)
 
 | Key | Name | Business | Area | Notes |
 |---|---|---|---|---|
@@ -137,6 +137,9 @@ east, north / northeast, south) and weight band (from 0, 5 kg, 20 kg).
 | C11 | วรรณา ทดสอบ | company approver | ปทุมวัน | approves / rejects in UAT-09 |
 | C12 | ชัยวัฒน์ ทดสอบ | delivery restaurant | บางละมุง ชลบุรี 20150 | O10 (slip in the Finance queue) |
 | C13 | อรุณี ทดสอบ | referred by C01 | บางพลี สมุทรปราการ 10540 | referral attributed |
+| C14 | สมพร ทดสอบ | company accountant of บริษัท ทดสอบ รีเทล จำกัด | ปทุมวัน | sees credit, statements (D-121, D-462) |
+| C15 | ธีระ ทดสอบ | Company Admin of บริษัท ทดสอบ แฟรนไชส์ จำกัด (UAT-CO-002) | ปทุมวัน | temporary limit + custom term (D-462) |
+| C16 | มยุรี ทดสอบ | company buyer of UAT-CO-002 | ปทุมวัน | sees only the credit summary (D-462) |
 
 All names carry `ทดสอบ`, phones are `08000001xx`, tax ids are all-zero with a valid check digit (PDPA: no real
 person's data in UAT).
@@ -175,6 +178,8 @@ person's data in UAT).
 | **SD3** C07 structural request (hanging supplement box) | assigned, quoted by a service RFQ (design fee THB 3,500) | D-273: the customer accepts the fee |
 | **SD4** C01 structural request (lipstick box) | declined with a reason | D-273: the customer reads the reason |
 | B2B บริษัท ทดสอบ รีเทล จำกัด, threshold THB 10,000; C10's order C+8 × 2,000 | pending company approval | UAT-09 |
+| Credit — UAT-CO-001: ฿50,000 / 30 days (permanent); accountant C14 | credit in force | credit page as Admin C09 / Accountant C14; summary as buyer C10 (D-462) |
+| Credit — UAT-CO-002 บริษัท ทดสอบ แฟรนไชส์: ฿30,000 / 30 days permanent, ฿150,000 / **90 days** (custom term) temporary for 60 days, approved by C-Level | credit in force, temporary | admin company → แท็บเครดิต shows both versions; C16 sees available + "ถึงวันที่"; after the end date ฿30,000 / 30 applies (D-462) |
 | Referral code of C01, attributed by C13 | attributed, reward after the claim window | UAT-07 step 4 |
 | Two support conversations (C02, C06) | open, first-response clock running | UAT-16, ops signal `conversation_first_response_overdue` |
 | Payout run for the factory's eligible payables (30 % advances) | proposed by Finance, approved by C-Level | UAT-18 (generate the bank file, confirm, 50 ทวิ) |
