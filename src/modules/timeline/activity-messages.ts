@@ -42,7 +42,7 @@ const document =
  * in the customer's timeline (`docs/design/GLOBAL-RULES.md` §1, D-435).
  */
 const RENAMED_STEP_WORDS: Record<string, string> = { โรงงานรับงานแล้ว: 'รับงานเข้าผลิตแล้ว' };
-const customerWords = (th: string): string => RENAMED_STEP_WORDS[th] ?? th;
+export const customerWords = (th: string): string => RENAMED_STEP_WORDS[th] ?? th;
 
 const MESSAGES: Record<string, Render> = {
   // Order and group
