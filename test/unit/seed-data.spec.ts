@@ -45,6 +45,8 @@ describe('seed data (B1.2 step 3)', () => {
       // ADR-0004 values chosen on 2026-09-23, pending the security review (B1.3).
       'auth.access_token_ttl_seconds': 'proposed',
       'auth.refresh_token_lifetimes': 'proposed',
+      // D-462: the custom-term bounds and the longest temporary limit, Finance Manager confirms.
+      'b2b.credit_custom_terms': 'proposed',
       'auth.otp_policy': 'proposed',
       'auth.password_lockout': 'proposed',
       'auth.device_pin_policy': 'proposed',
@@ -54,7 +56,6 @@ describe('seed data (B1.2 step 3)', () => {
       'shipping.carton_spec': 'pending_business',
       'shipping.pallet_spec': 'pending_business',
       'shipping.target_margin_pct': 'pending_business',
-      'shipping.transit_days': 'pending_business',
       // B2.5: no decision gives the RFQ SLA.
       'rfq.sla_business_hours': 'pending_business',
       // B3.1: D-060's legacy value is a secret not in the repository — its 7-day fallback, proposed.
@@ -71,9 +72,8 @@ describe('seed data (B1.2 step 3)', () => {
       // D-417 / D-420 sales agent programme figures for the business to confirm.
       'agents.rules': 'proposed',
       'quotes.lever_quantity_multipliers': 'proposed',
-      // B4.1: D-070 fixes four severities only; the rest and every threshold are proposed (ADR-0009).
+      // B4.1: no approval checklist yet (the preflight thresholds: decided, D-460).
       'artwork.approval_checklist': 'pending_business',
-      'artwork.preflight_rules': 'proposed',
       // U4.B3: the studio rule catalogue reuses the spec and ADR-0009 values; severities not stated are proposed (D-278).
       'studio.print_rules': 'proposed',
       // D-404 standard intake terms v1, Legal may publish a revision.
@@ -120,14 +120,77 @@ describe('seed data (B1.2 step 3)', () => {
     });
     const rules = byKey('artwork.preflight_rules');
     expect((rules.value as { severities: Record<string, string> }).severities['ink_count']).toBe('block');
+  });
+
+  it('C12 (D-460): seeds the Prepress thresholds with the corrugated profile and amends a database once', () => {
+    const byKey = (key: string) => SETTINGS.find((s) => s.key === key)!;
+    const rules = byKey('artwork.preflight_rules');
+    expect(rules).toMatchObject({ syncConfirmation: true });
+    expect(rules.confirmation).toBeUndefined();
+    expect(rules.value).toMatchObject({
+      bleedMm: '3',
+      safeZoneMm: '3',
+      minEffectivePpi: 300,
+      blockBelowPpi: 150,
+      minTextPt: '6',
+      minTextReversedPt: '8',
+      blackOnlyTextBelowPt: '12',
+      minLineWidthPt: '0.25',
+      maxInkCoveragePct: 300,
+      severities: {
+        fonts_not_embedded: 'block',
+        die_layer: 'block',
+        ink_count: 'block',
+        small_text_black: 'warn',
+      },
+      profiles: {
+        corrugated: {
+          safeZoneMm: '5',
+          minEffectivePpi: 200,
+          blockBelowPpi: 100,
+          minTextPt: '7',
+          minLineWidthPt: '0.5',
+          maxInkCoveragePct: 240,
+        },
+      },
+    });
     const amend = rules.amendInForce!.amend;
-    const old = { severities: { size_mismatch: 'block' }, bleedMm: '3' };
-    const amended = amend(old) as { severities: Record<string, string> };
-    expect(amended).toEqual({ severities: { size_mismatch: 'block', ink_count: 'block' }, bleedMm: '3' });
+    // A database still on the earlier seed (C11) takes every decided value.
+    const c11 = {
+      severities: { size_mismatch: 'block', fonts_not_embedded: 'info', ink_count: 'block' },
+      bleedMm: '3',
+      sizeToleranceMm: '1',
+      minEffectivePpi: 300,
+      safeZoneMm: '3',
+      minLineWidthPt: '0.25',
+      maxInkCoveragePct: 300,
+    };
+    const amended = amend(c11) as Record<string, unknown>;
+    expect(amended).toMatchObject({
+      blockBelowPpi: 150,
+      minTextPt: '6',
+      severities: { fonts_not_embedded: 'block', die_layer: 'block', size_mismatch: 'block' },
+    });
+    expect(amended['profiles']).toBeDefined();
     expect(amend(amended)).toBeUndefined();
-    // Prepress's own choice (even "info") is never overwritten.
-    expect(amend({ severities: { ink_count: 'info' } })).toBeUndefined();
+    // Prepress's own values are kept: a changed threshold, a severity, a text size.
+    const own = amend({
+      ...c11,
+      minEffectivePpi: 250,
+      minTextPt: '5',
+      severities: { fonts_not_embedded: 'warn' },
+    });
+    expect(own).toMatchObject({
+      minEffectivePpi: 250,
+      minTextPt: '5',
+      severities: { fonts_not_embedded: 'warn' },
+    });
     expect(amend(null)).toBeUndefined();
+    expect(byKey('shipping.transit_days').confirmation).toBeUndefined();
+    expect(byKey('shipping.transit_days')).toMatchObject({
+      syncConfirmation: true,
+      value: { default: { min: 3, max: 5 }, zones: {} },
+    });
   });
 
   it('does not seed values a decision leaves open', () => {

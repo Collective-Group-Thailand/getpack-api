@@ -9,6 +9,20 @@ export interface ScheduledJobOptions {
   every?: number;
   /** …a cron pattern evaluated in Asia/Bangkok. */
   cron?: string;
+  /** C13: retries of a failed occurrence with exponential backoff (default: none — the next occurrence). */
+  retry?: { attempts: number; backoffMs: number };
+}
+
+/** BullMQ options of one occurrence of a scheduled job (also for occurrences a module enqueues itself). */
+export function scheduledJobOpts(options: Pick<ScheduledJobOptions, 'retry'>) {
+  return {
+    removeOnComplete: 100,
+    removeOnFail: 500,
+    ...(options.retry && {
+      attempts: options.retry.attempts,
+      backoff: { type: 'exponential' as const, delay: options.retry.backoffMs },
+    }),
+  };
 }
 
 /**

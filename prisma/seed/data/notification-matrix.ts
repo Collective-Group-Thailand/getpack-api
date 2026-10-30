@@ -354,12 +354,15 @@ const ROWS: Row[] = [
     ...C(
       'order_group.payment_overdue',
       ['email', 'line'],
-      { th: 'เลยกำหนดชำระ {{payload.groupCode}}', en: 'Payment overdue: {{payload.groupCode}}' },
       {
-        th: 'คำสั่งซื้อ {{payload.orderCode}} เลยกำหนดชำระแล้ว ระบบไม่ได้ยกเลิกคำสั่งซื้อ ตรวจราคาและวันส่งใหม่ แล้วชำระได้ทันที',
-        en: "Order {{payload.orderCode}} is past its payment deadline. It has not been cancelled: re-check today's price and delivery date, then pay",
+        th: 'คำสั่งซื้อ {{payload.groupCode}} เลยกำหนดชำระ',
+        en: 'Order {{payload.groupCode}} is past its payment date',
       },
-      'Customer: payment deadline passed — one reminder per deadline (D-453, D-436; flag orders.payment_overdue_reminder)',
+      {
+        th: 'คำสั่งซื้อ {{payload.orderCode}} เลยกำหนดชำระแล้ว แต่ยังไม่ถูกยกเลิก กด "ตรวจราคาใหม่และชำระ" เพื่อดูราคาและวันส่งของวันนี้ แล้วชำระต่อได้ทันที',
+        en: 'Order {{payload.orderCode}} is past its payment date but has not been cancelled. Press "Re-check price and pay" to see today\'s price and delivery date, then pay',
+      },
+      'Customer: payment deadline passed — one reminder per deadline (D-453, D-436; flag orders.payment_overdue_reminder; wording approved D-460)',
     ),
     linkLabel: { th: 'ตรวจราคาใหม่และชำระ', en: 'Re-check price and pay' },
   },
@@ -369,15 +372,15 @@ const ROWS: Row[] = [
     ...C(
       'file_check.checked',
       ['email', 'line'],
-      { th: 'ผลตรวจไฟล์งานพิมพ์พร้อมแล้ว', en: 'Your artwork file check is ready' },
+      { th: 'ตรวจไฟล์งานเสร็จแล้ว', en: 'Your file check is done' },
       {
-        th: 'ระบบตรวจไฟล์งานพิมพ์ของคุณเสร็จแล้ว เปิดดูผลตรวจและสิ่งที่ต้องแก้ก่อนสั่งผลิตได้ที่ getpack',
-        en: 'The check of your artwork file has finished. See the result and anything to fix before ordering on getpack',
+        th: 'ไฟล์งานที่คุณอัปโหลดตรวจเสร็จแล้ว{{#if payload.mustFix}} มี {{payload.mustFix}} ข้อที่ต้องแก้ก่อนสั่งซื้อ{{else}} ไม่มีข้อที่ต้องแก้ เลือกสเปกและจำนวนแล้วสั่งซื้อต่อได้{{/if}}',
+        en: 'The file you uploaded has been checked.{{#if payload.mustFix}} Items to fix before you order: {{payload.mustFix}}.{{else}} Nothing needs fixing; choose the spec and quantity to go on and order.{{/if}}',
       },
-      'Customer: a file check finished (D-459, D-457; flag artwork.file_check_notify)',
+      'Customer: a file check finished (D-459, D-457; flag artwork.file_check_notify; wording approved D-460)',
     ),
     conditions: { 'payload.notify': true },
-    linkLabel: { th: 'ดูผลตรวจไฟล์', en: 'See the file check' },
+    linkLabel: { th: 'ดูผลตรวจไฟล์', en: 'See the result' },
   },
   C(
     'points.expiring',

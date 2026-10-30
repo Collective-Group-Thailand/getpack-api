@@ -18,8 +18,10 @@ import {
   AdminCompanyCreditDto,
   ApplyForCreditDto,
   CompanyCreditDto,
+  CompanyCreditSummaryDto,
   CompanyReceivablesDto,
   CREDIT_EXAMPLE,
+  CREDIT_SUMMARY_EXAMPLE,
   ISSUED_STATEMENT_EXAMPLE,
   IssuedStatementDto,
   RECEIVABLES_EXAMPLE,
@@ -39,6 +41,9 @@ function creditDto(v: CreditView): CompanyCreditDto {
     creditStatus: v.creditStatus,
     limitAmount: v.limit?.limitAmount.toFixed(2) ?? null,
     termDays: v.limit?.termDays ?? null,
+    validUntil: v.limit?.validUntil ? toBangkokIso(v.limit.validUntil) : null,
+    fallbackLimitAmount: v.limit?.validUntil && v.fallback ? v.fallback.limitAmount.toFixed(2) : null,
+    fallbackTermDays: v.limit?.validUntil && v.fallback ? v.fallback.termDays : null,
     exposureAmount: formatMoney(v.exposure),
     availableAmount: formatMoney(v.available),
     pendingRequest: v.pending
@@ -72,6 +77,8 @@ function adminCreditDto(v: CreditView, versions: LimitVersionRow[]): AdminCompan
       status: x.status,
       limitAmount: x.limitAmount.toFixed(2),
       termDays: x.termDays,
+      customTerm: x.customTerm,
+      validUntil: x.validUntil ? toBangkokIso(x.validUntil) : null,
       basis: x.eligibilityBasis,
       reason: x.reason,
       effectiveFrom: toBangkokIso(x.effectiveFrom),
@@ -183,6 +190,39 @@ export class StoreCompanyCreditController {
   ): Promise<CompanyCreditDto> {
     const company = await this.companies.forMember(customer(actor), id, 'company_documents.read');
     return creditDto(await this.credit.view(company.id));
+  }
+
+  @Get('credit/summary')
+  @companyParam
+  @ApiEndpoint({
+    id: 'store.companyCredit.summary',
+    summary: 'My company’s available credit',
+    description:
+      'Any member who may order for the company (`company_orders.place`): the credit status, what is available now, ' +
+      'the term and when a temporary limit ends — no limit, exposure or statements (those are Admin / Accountant, ' +
+      'D-121). D-462.',
+    implements: ['D-121', 'D-462'],
+  })
+  @ApiSuccess(200, {
+    description: 'Credit summary',
+    type: CompanyCreditSummaryDto,
+    example: CREDIT_SUMMARY_EXAMPLE,
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async summary(
+    @CurrentActor() actor: Actor,
+    @Param('companyId', ParseUUIDPipe) id: string,
+  ): Promise<CompanyCreditSummaryDto> {
+    const company = await this.companies.forMember(customer(actor), id, 'company_orders.place');
+    const v = await this.credit.view(company.id);
+    const inForce = v.limit !== null && v.creditStatus === 'credit';
+    return {
+      creditStatus: v.creditStatus,
+      availableAmount: inForce ? formatMoney(v.available) : null,
+      termDays: inForce ? v.limit!.termDays : null,
+      validUntil: inForce && v.limit!.validUntil ? toBangkokIso(v.limit!.validUntil) : null,
+      currency: 'THB',
+    };
   }
 
   @Post('credit-applications')
@@ -424,9 +464,11 @@ export class AdminCompanyCreditController {
     description:
       'For an eligible company (3 paid orders) or after a verified financial statement (D-121). Routed by ' +
       '`credit_limit`: Finance up to THB 100,000, C-Level above; the requester cannot approve. Terms from ' +
-      '`b2b.credit_terms` (15 / 30 / 45 / 60, default 30). The response carries the new version and its ' +
-      'approval. The verified financial statement is a KYC document, so the request takes no evidence files.',
-    implements: ['D-121'],
+      '`b2b.credit_terms` (15 / 30 / 45 / 60, default 30), or a custom term within `b2b.credit_custom_terms` ' +
+      '(D-462); `validUntil` makes it a temporary limit, after which the latest permanent version applies again ' +
+      '(D-462). The response carries the new version and its approval. The verified financial statement is a KYC ' +
+      'document, so the request takes no evidence files.',
+    implements: ['D-121', 'D-462'],
   })
   @ApiBody({
     type: RequestCreditLimitDto,
@@ -437,6 +479,16 @@ export class AdminCompanyCreditController {
           termDays: 30,
           basis: 'paid_orders',
           reason: 'ชำระตรงเวลา 3 ครั้ง',
+        },
+      },
+      temporary: {
+        summary: 'Temporary limit with a custom term (D-462)',
+        value: {
+          limitAmount: '300000.00',
+          termDays: 90,
+          validUntil: '2026-12-31T23:59:59+07:00',
+          basis: 'paid_orders',
+          reason: 'ยอดสั่งช่วงเทศกาลปลายปี',
         },
       },
     },
@@ -473,7 +525,12 @@ export class AdminCompanyCreditController {
     @Param('companyId', ParseUUIDPipe) id: string,
     @Body() body: RequestCreditLimitDto,
   ): Promise<AdminCompanyCreditDto> {
-    const view = await this.credit.requestLimit(staff(actor), id, body);
+    const view = await this.credit.requestLimit(
+      staff(actor),
+      id,
+      { ...body, validUntil: body.validUntil ? new Date(body.validUntil) : undefined },
+      { allowCustomTerm: true },
+    );
     return this.adminView((await this.companies.get(id)).id, view);
   }
 

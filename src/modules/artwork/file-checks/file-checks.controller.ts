@@ -117,6 +117,7 @@ export const FILE_CHECK_EXAMPLE = {
 const RULES_EXAMPLE = {
   bleedMm: '3',
   safeZoneMm: '3',
+  corrugatedSafeZoneMm: '5',
   sizeToleranceMm: '1',
   maxBytes: 209_715_200,
   extensions: ['.pdf', '.ai'],

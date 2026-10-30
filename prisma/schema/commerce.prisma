@@ -2227,6 +2227,10 @@ model CompanyCreditLimitVersion {
   /// Why the company is eligible (D-121): paid orders or a financial-statement review.
   eligibilityBasis  String              @map("eligibility_basis")
   reason            String
+  /// D-462: a temporary limit ends here; the company falls back to its latest permanent approved version.
+  validUntil        DateTime?           @map("valid_until") @db.Timestamptz(6)
+  /// D-462: the term is outside `b2b.credit_terms.allowedDays`, within `b2b.credit_custom_terms` (staff only).
+  customTerm        Boolean             @default(false) @map("custom_term")
   approvalRequestId BigInt?             @map("approval_request_id")
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   createdById       BigInt?             @map("created_by")

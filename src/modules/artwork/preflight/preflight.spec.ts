@@ -5,7 +5,7 @@ import { apply, IDENTITY, interpret, multiply, parseContent, type ResourceResolv
 import { type FileFacts, type PageFacts, PT_PER_MM } from './facts';
 import { pdfFacts } from './pdf-facts';
 import { rasterFacts } from './raster-facts';
-import { evaluate, type PreflightRules, statusOf } from './rules';
+import { evaluate, type PreflightRules, profileOf, rulesFor, statusOf } from './rules';
 
 const RULES: PreflightRules = {
   severities: {
@@ -260,5 +260,95 @@ describe('preflight rules (D-070)', () => {
       ink_coverage: ['not_evaluated', 'info'],
     });
     expect(statusOf(results)).toBe('passed_with_warnings');
+  });
+});
+
+describe('C12 Prepress profile (D-460)', () => {
+  const C12: PreflightRules = {
+    ...RULES,
+    severities: { ...RULES.severities, die_layer: 'block', small_text: 'warn' },
+    blockBelowPpi: 150,
+    minTextPt: '6',
+    profiles: {
+      corrugated: {
+        safeZoneMm: '5',
+        minEffectivePpi: 200,
+        blockBelowPpi: 100,
+        minTextPt: '7',
+        minLineWidthPt: '0.5',
+      },
+    },
+  };
+  const image = (widthPx: number) => ({
+    name: 'Im1',
+    widthPx,
+    heightPx: widthPx,
+    placedWidthPt: 72,
+    placedHeightPt: 72,
+    colour: 'cmyk' as const,
+  });
+
+  it('picks the corrugated profile from the calculator or the material class, and lays it over the base', () => {
+    expect(profileOf({ calculatorKey: 'corrugate' })).toBe('corrugated');
+    expect(profileOf({ materialClass: 'corrugated' })).toBe('corrugated');
+    expect(profileOf({ calculatorKey: 'folding' })).toBeNull();
+    const corrugated = rulesFor(C12, 'corrugated');
+    expect(corrugated.safeZoneMm).toBe('5');
+    expect(corrugated.minEffectivePpi).toBe(200);
+    expect(corrugated.bleedMm).toBe('3');
+    expect(rulesFor(C12, null)).toBe(C12);
+  });
+
+  it('warns below the warn threshold and must-fixes below blockBelowPpi', () => {
+    const at = (ppi: number, rules = C12) =>
+      evaluate(pdf(page({ images: [image(ppi)] })), null, rules).find((r) => r.check === 'low_resolution')!;
+    expect(at(320)).toMatchObject({ outcome: 'pass', severity: 'warn' });
+    expect(at(200)).toMatchObject({ outcome: 'fail', severity: 'warn' });
+    expect(at(140)).toMatchObject({
+      outcome: 'fail',
+      severity: 'block',
+      measurements: { blockBelowPpi: 150 },
+    });
+    // Corrugated flexo: 120 ppi only warns, 90 ppi must be fixed.
+    expect(at(120, rulesFor(C12, 'corrugated'))).toMatchObject({ outcome: 'fail', severity: 'warn' });
+    expect(at(90, rulesFor(C12, 'corrugated'))).toMatchObject({ outcome: 'fail', severity: 'block' });
+  });
+
+  it('requires die lines on an own-file upload, and creases when the dieline has them', () => {
+    const die = (names: string[]) =>
+      page({ dieBox: [0, 0, mm(100), mm(100)], dieNames: names, spotNames: names });
+    const check = (p: PageFacts, options: Parameters<typeof evaluate>[4]) =>
+      evaluate(pdf(p), null, C12, null, options).find((r) => r.check === 'die_layer')!;
+    expect(check(page(), {})).toMatchObject({ outcome: 'not_evaluated' });
+    expect(check(page(), { requireDieLayer: true })).toMatchObject({
+      outcome: 'fail',
+      severity: 'block',
+      measurements: { missing: ['cut'] },
+    });
+    expect(check(die(['CutContour']), { requireDieLayer: true, expectsCrease: true })).toMatchObject({
+      outcome: 'fail',
+      measurements: { missing: ['crease'] },
+    });
+    expect(check(die(['CutContour', 'Crease']), { requireDieLayer: true, expectsCrease: true }).outcome).toBe(
+      'pass',
+    );
+    expect(check(die(['Die']), { requireDieLayer: true, expectsCrease: null }).outcome).toBe('pass');
+  });
+
+  it('reads a layer named "die" as the die, whatever colour it is drawn in', () => {
+    const resources: ResourceResolver = {
+      ...NO_RESOURCES,
+      layerName: (name) => (name === 'L1' ? 'die' : name === 'L2' ? 'Artwork' : null),
+    };
+    const facts = interpret(
+      Buffer.from(
+        '/OC /L1 BDC 0 0 0 1 K 0.1 w 0 0 m 100 0 l 100 50 l S EMC /OC /L2 BDC 0 0 0 1 K 0.5 w 0 0 m 10 10 l S EMC',
+      ),
+      resources,
+    );
+    expect(facts.dieBox).toEqual([0, 0, 100, 50]);
+    expect([...facts.dieNames]).toEqual(['die']);
+    // The die layer's hairline is not printed artwork; the artwork's 0.5 pt line is.
+    expect(facts.minStrokeWidthPt).toBe(0.5);
   });
 });

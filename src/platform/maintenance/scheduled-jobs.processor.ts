@@ -5,7 +5,7 @@ import { DiscoveryService, MetadataScanner, Reflector } from '@nestjs/core';
 import { type Job, type Queue } from 'bullmq';
 
 import { QUEUES } from '../domain-events/worker/queues';
-import { SCHEDULED_JOB, type ScheduledJobOptions } from './scheduled-job.decorator';
+import { SCHEDULED_JOB, type ScheduledJobOptions, scheduledJobOpts } from './scheduled-job.decorator';
 
 /** Discovers `@ScheduledJob` methods, registers their schedulers and runs them. */
 @Processor(QUEUES.maintenance, { concurrency: 4 })
@@ -38,7 +38,7 @@ export class ScheduledJobsProcessor extends WorkerHost implements OnApplicationB
       await this.queue.upsertJobScheduler(
         options.name,
         options.every ? { every: options.every } : { pattern: options.cron!, tz: BANGKOK_TZ },
-        { name: options.name, opts: { removeOnComplete: 100, removeOnFail: 500 } },
+        { name: options.name, opts: scheduledJobOpts(options) },
       );
     }
   }

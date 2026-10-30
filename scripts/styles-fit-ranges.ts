@@ -6,20 +6,34 @@
  * (`StylesAdminService.backfillFitRanges`, the same as `POST /v1/admin/styles/actions/backfill-fit-ranges`): audited per
  * style, each bound's source recorded, never over a business-entered range, idempotent. Without `--confirm` it only
  * reports (with the list of styles it would change).
+ *
+ * C13 (D-461): the worker now runs this backfill by itself (job `styles.fit_ranges_sync`: worker start, hourly bundle
+ * check, after imports / curation). With the fake engine (`INTEGRATIONS_MODE=fake`) or an unavailable one the ranges
+ * come out partial (81/102 instead of 94/102): the script warns and refuses `--confirm` unless `--allow-fake`.
  */
 import { NestFactory } from '@nestjs/core';
 import { config } from 'dotenv';
 
 import { AppModule } from '../src/app.module';
 import { systemActor } from '../src/common/context/actor';
+import { DIELINE_ENGINE, type DielineEngine } from '../src/integrations/dieline/dieline-engine.port';
+import { checkFitRangeEngine, cliEngineGate } from '../src/modules/styles/fit-range-sync';
 import { StylesAdminService } from '../src/modules/styles/styles-admin.service';
 
 config({ quiet: true });
 
 async function main(): Promise<void> {
   const confirm = process.argv.includes('--confirm');
+  const allowFake = process.argv.includes('--allow-fake');
   const app = await NestFactory.createApplicationContext(AppModule, { logger: ['error'] });
   try {
+    const engine = app.get<DielineEngine>(DIELINE_ENGINE);
+    const gate = cliEngineGate(checkFitRangeEngine(await engine.identity()), { confirm, allowFake });
+    if (gate.warning) console.warn(gate.warning);
+    if (!gate.proceed) {
+      process.exitCode = 2;
+      return;
+    }
     const result = await app
       .get(StylesAdminService)
       .backfillFitRanges(systemActor('styles:fit-ranges'), { dryRun: !confirm });

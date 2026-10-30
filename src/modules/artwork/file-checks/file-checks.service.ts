@@ -19,7 +19,13 @@ import { ArtworkService } from '../artwork.service';
 import { type FileFacts } from '../preflight/facts';
 import { pdfFacts } from '../preflight/pdf-facts';
 import { MAX_PREFLIGHT_BYTES } from '../preflight/preflight.service';
-import { type PrintMethodContext } from '../preflight/rules';
+import {
+  type EvaluateOptions,
+  type PreflightProfile,
+  type PrintMethodContext,
+  profileOf,
+  rulesFor,
+} from '../preflight/rules';
 import { detect, type DetectionCandidate, type DetectionMatch, sheetOf, type SheetOfFile } from './detection';
 import { UPLOAD_CHECKS, type UploadReport, uploadReport } from './report';
 
@@ -91,7 +97,10 @@ export function isPdfBytes(bytes: Uint8Array): boolean {
 export class FileChecksService {
   private readonly logger = new Logger(FileChecksService.name);
   /** Blank sizes by pattern key and size (the engine is deterministic per version). */
-  private readonly blanks = new Map<string, { widthMm: number; heightMm: number; engineVersion: string }>();
+  private readonly blanks = new Map<
+    string,
+    { widthMm: number; heightMm: number; creaseMm?: number; engineVersion: string }
+  >();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -121,6 +130,7 @@ export class FileChecksService {
   async rules(): Promise<{
     bleedMm: string;
     safeZoneMm: string;
+    corrugatedSafeZoneMm: string | null;
     sizeToleranceMm: string;
     maxBytes: number;
     checks: { check: string; evaluated: boolean }[];
@@ -135,6 +145,7 @@ export class FileChecksService {
     return {
       bleedMm: rules.bleedMm,
       safeZoneMm: rules.safeZoneMm,
+      corrugatedSafeZoneMm: rules.profiles?.corrugated?.safeZoneMm ?? null,
       sizeToleranceMm: rules.sizeToleranceMm,
       maxBytes: MAX_PREFLIGHT_BYTES,
       checks: UPLOAD_CHECKS.map((check) => ({ check, evaluated: evaluated[check] ?? true })),
@@ -282,9 +293,9 @@ export class FileChecksService {
     if (live(check).some((v) => v.cartItemId !== null)) throw new DomainException('file_checks.in_cart');
 
     const spec = { catalogProductId, sizeCode, printMethod, printSpotColours };
-    const expected = await this.expectedOf(catalogProductId, sizeCode);
+    const job = await this.jobOf(catalogProductId, sizeCode);
     const resolved = await this.settings.at('artwork.preflight_rules');
-    const rules = resolved.value;
+    const rules = rulesFor(resolved.value, job.profile);
     await this.prisma.withTx(async (tx) => {
       const updated = await tx.fileCheck.updateMany({
         where: { id: check.id, rowVersion: check.rowVersion },
@@ -298,7 +309,13 @@ export class FileChecksService {
       });
       if (updated.count !== 1) throw new DomainException('concurrency.stale');
       for (const version of currentVersions(check).filter((v) => v.status === 'done' && v.facts)) {
-        const report = uploadReport(version.facts as unknown as FileFacts, expected, rules, printOf(spec));
+        const report = uploadReport(
+          version.facts as unknown as FileFacts,
+          job.expected,
+          rules,
+          printOf(spec),
+          job.options,
+        );
         await tx.fileCheckVersion.update({
           where: { id: version.id },
           data: { report: report as unknown as Prisma.InputJsonValue, refs: refsOf(resolved.versionId) },
@@ -518,14 +535,20 @@ export class FileChecksService {
       catalogProductId = match.catalogProductId;
       sizeCode = match.sizeCode;
     }
-    const expected = await this.expectedOf(catalogProductId, sizeCode);
+    const job = await this.jobOf(catalogProductId, sizeCode);
     const spec = {
       catalogProductId,
       sizeCode,
       printMethod: check.printMethod as PrintMethod | null,
       printSpotColours: check.printSpotColours,
     };
-    const report = uploadReport(facts, expected, rules, printOf(spec));
+    const report = uploadReport(
+      facts,
+      job.expected,
+      rulesFor(rules, job.profile),
+      printOf(spec),
+      job.options,
+    );
     await stage(4);
     const detection: StoredDetection = {
       sheet,
@@ -642,9 +665,35 @@ export class FileChecksService {
     catalogProductId: bigint | null,
     sizeCode: string | null,
   ): Promise<{ widthMm: number; heightMm: number } | null> {
-    if (catalogProductId === null || sizeCode === null) return null;
-    const [candidate] = await this.candidates({ catalogProductId, sizeCode });
-    return candidate ? { widthMm: candidate.blankWidthMm, heightMm: candidate.blankHeightMm } : null;
+    return (await this.jobOf(catalogProductId, sizeCode)).expected;
+  }
+
+  /**
+   * C12 (D-460) what the file is checked against: the blank of the product × size, the print profile of the product
+   * (corrugated board → `corrugated`) and what an own-file upload must carry (its die lines; creases when the
+   * product's dieline has them).
+   */
+  async jobOf(
+    catalogProductId: bigint | null,
+    sizeCode: string | null,
+  ): Promise<{
+    expected: { widthMm: number; heightMm: number } | null;
+    profile: PreflightProfile | null;
+    options: EvaluateOptions;
+  }> {
+    if (catalogProductId === null)
+      return { expected: null, profile: null, options: { requireDieLayer: true } };
+    const product = await this.prisma.catalogProduct.findUnique({
+      where: { id: catalogProductId },
+      select: { productType: { select: { calculatorKey: true } } },
+    });
+    const profile = profileOf({ calculatorKey: product?.productType.calculatorKey ?? null });
+    const [candidate] = sizeCode === null ? [] : await this.candidates({ catalogProductId, sizeCode });
+    return {
+      expected: candidate ? { widthMm: candidate.blankWidthMm, heightMm: candidate.blankHeightMm } : null,
+      profile,
+      options: { requireDieLayer: true, expectsCrease: candidate?.hasCreases ?? null },
+    };
   }
 
   private async detectOf(sheet: SheetOfFile | null, toleranceMm: number) {
@@ -703,6 +752,7 @@ export class FileChecksService {
           heightMm: h,
           blankWidthMm: Math.round(blank.widthMm * 10) / 10,
           blankHeightMm: Math.round(blank.heightMm * 10) / 10,
+          ...(blank.creaseMm !== undefined && { hasCreases: blank.creaseMm > 0 }),
         });
       }
     }

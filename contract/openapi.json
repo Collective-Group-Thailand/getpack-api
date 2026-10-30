@@ -8618,6 +8618,22 @@
             "example": "25000.00",
             "type": "string"
           },
+          "fallbackLimitAmount": {
+            "description": "D-462: the permanent limit after a temporary one ends; null without one",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fallbackTermDays": {
+            "description": "D-462: the permanent term after a temporary limit ends; null without one",
+            "example": 30,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "limitAmount": {
             "example": "100000.00",
             "type": [
@@ -8644,6 +8660,15 @@
               "null"
             ]
           },
+          "validUntil": {
+            "description": "D-462: the limit in force is temporary and ends at this time; null when permanent",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "versions": {
             "description": "Every limit version, newest first",
             "items": {
@@ -8656,6 +8681,9 @@
           "creditStatus",
           "limitAmount",
           "termDays",
+          "validUntil",
+          "fallbackTermDays",
+          "fallbackLimitAmount",
           "exposureAmount",
           "availableAmount",
           "pendingRequest",
@@ -26821,6 +26849,22 @@
             "example": "25000.00",
             "type": "string"
           },
+          "fallbackLimitAmount": {
+            "description": "D-462: the permanent limit after a temporary one ends; null without one",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "fallbackTermDays": {
+            "description": "D-462: the permanent term after a temporary limit ends; null without one",
+            "example": 30,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
           "limitAmount": {
             "example": "100000.00",
             "type": [
@@ -26846,12 +26890,24 @@
               "integer",
               "null"
             ]
+          },
+          "validUntil": {
+            "description": "D-462: the limit in force is temporary and ends at this time; null when permanent",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
           "creditStatus",
           "limitAmount",
           "termDays",
+          "validUntil",
+          "fallbackTermDays",
+          "fallbackLimitAmount",
           "exposureAmount",
           "availableAmount",
           "pendingRequest",
@@ -26869,6 +26925,55 @@
           "credit_blocked"
         ],
         "type": "string"
+      },
+      "CompanyCreditSummaryDto": {
+        "properties": {
+          "availableAmount": {
+            "description": "Available credit now; null while the company has no credit in force",
+            "example": "75000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "creditStatus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/CreditStatus"
+              }
+            ],
+            "example": "credit"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "termDays": {
+            "description": "Payment term in days after delivery",
+            "example": 30,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "validUntil": {
+            "description": "The limit in force is temporary and ends at this time",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "creditStatus",
+          "availableAmount",
+          "termDays",
+          "validUntil",
+          "currency"
+        ],
+        "type": "object"
       },
       "CompanyDefaultsDto": {
         "properties": {
@@ -35404,6 +35509,11 @@
             ],
             "example": "paid_orders"
           },
+          "customTerm": {
+            "description": "D-462: a term outside `b2b.credit_terms.allowedDays`",
+            "example": false,
+            "type": "boolean"
+          },
           "decidedAt": {
             "example": "2026-10-06T10:00:00+07:00",
             "format": "date-time",
@@ -35457,6 +35567,15 @@
             "example": 30,
             "type": "integer"
           },
+          "validUntil": {
+            "description": "D-462: a temporary limit ends at this time; null when permanent",
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "versionNo": {
             "example": 1,
             "type": "integer"
@@ -35468,6 +35587,8 @@
           "status",
           "limitAmount",
           "termDays",
+          "customTerm",
+          "validUntil",
           "basis",
           "reason",
           "effectiveFrom",
@@ -37361,6 +37482,58 @@
           "name",
           "taxId",
           "branchCode"
+        ],
+        "type": "object"
+      },
+      "DefaultTolerancesDto": {
+        "properties": {
+          "colourDeltaE": {
+            "description": "Colour ΔE2000 against the approved proof — `fulfilment.colour_tolerance_delta_e.standard` (D-186)",
+            "example": "3",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "colourDeltaEFlexo": {
+            "description": "Colour ΔE2000 on flexo-printed corrugated board — `fulfilment.colour_tolerance_delta_e.flexo`",
+            "example": "5",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quantityPct": {
+            "description": "Quantity ± % (shortage and overage) — `fulfilment.tolerance_default_pct` (D-163); null until set",
+            "example": "5.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeMmMax": {
+            "description": "Largest of the same; null when none",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sizeMmMin": {
+            "description": "Smallest size tolerance ± mm over the product kinds that publish one — `fulfilment.dimensional_tolerance_mm` (D-186); null when none",
+            "example": "1.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "quantityPct",
+          "sizeMmMin",
+          "sizeMmMax",
+          "colourDeltaE",
+          "colourDeltaEFlexo"
         ],
         "type": "object"
       },
@@ -65801,6 +65974,14 @@
             },
             "type": "array"
           },
+          "corrugatedSafeZoneMm": {
+            "description": "C12 (D-460): the safe distance on corrugated board (print profile `corrugated` of `artwork.preflight_rules`), mm; null when the profile sets none (the safe distance above applies)",
+            "example": "5",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "extensions": {
             "description": "Accepted file extensions",
             "example": [
@@ -65831,6 +66012,7 @@
         "required": [
           "bleedMm",
           "safeZoneMm",
+          "corrugatedSafeZoneMm",
           "sizeToleranceMm",
           "maxBytes",
           "extensions",
@@ -87242,6 +87424,14 @@
             "description": "Published styles in the template library (the count `store.styles.list` shows)",
             "example": 42,
             "type": "integer"
+          },
+          "tolerances": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DefaultTolerancesDto"
+              }
+            ],
+            "description": "D-460 the default tolerances (settings, D-163 / D-186) the \"how we work\" block states; each part null until set. A job’s own tolerance is frozen on its quotation (D-021) and may differ"
           }
         },
         "required": [
@@ -87255,7 +87445,8 @@
           "contact",
           "roadmap",
           "paymentMethods",
-          "issuer"
+          "issuer",
+          "tolerances"
         ],
         "type": "object"
       },
@@ -93044,9 +93235,15 @@
             "type": "string"
           },
           "termDays": {
-            "description": "One of `b2b.credit_terms.allowedDays`; default `defaultDays`",
+            "description": "One of `b2b.credit_terms.allowedDays` (default `defaultDays`), or a custom term within `b2b.credit_custom_terms.minDays`–`maxDays` (D-462)",
             "example": 30,
             "type": "integer"
+          },
+          "validUntil": {
+            "description": "D-462: a temporary limit ending at this time (more than a day and at most `b2b.credit_custom_terms.temporaryMaxDays` ahead); omit for a permanent limit",
+            "example": "2026-12-31T23:59:59+07:00",
+            "format": "date-time",
+            "type": "string"
           }
         },
         "required": [
@@ -211929,13 +212126,17 @@
                     "reason": "paid_orders"
                   },
                   "exposureAmount": "25000.00",
+                  "fallbackLimitAmount": null,
+                  "fallbackTermDays": null,
                   "limitAmount": "100000.00",
                   "pendingRequest": null,
                   "termDays": 30,
+                  "validUntil": null,
                   "versions": [
                     {
                       "approvalId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1030",
                       "basis": "paid_orders",
+                      "customTerm": false,
                       "decidedAt": "2026-10-06T10:00:00+07:00",
                       "effectiveFrom": "2026-10-05T10:00:00+07:00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1031",
@@ -211948,6 +212149,7 @@
                       },
                       "status": "approved",
                       "termDays": 30,
+                      "validUntil": null,
                       "versionNo": 1
                     }
                   ]
@@ -212116,7 +212318,7 @@
     },
     "/v1/admin/companies/{companyId}/credit-limits": {
       "post": {
-        "description": "For an eligible company (3 paid orders) or after a verified financial statement (D-121). Routed by `credit_limit`: Finance up to THB 100,000, C-Level above; the requester cannot approve. Terms from `b2b.credit_terms` (15 / 30 / 45 / 60, default 30). The response carries the new version and its approval. The verified financial statement is a KYC document, so the request takes no evidence files.\n\nImplements: D-121.",
+        "description": "For an eligible company (3 paid orders) or after a verified financial statement (D-121). Routed by `credit_limit`: Finance up to THB 100,000, C-Level above; the requester cannot approve. Terms from `b2b.credit_terms` (15 / 30 / 45 / 60, default 30), or a custom term within `b2b.credit_custom_terms` (D-462); `validUntil` makes it a temporary limit, after which the latest permanent version applies again (D-462). The response carries the new version and its approval. The verified financial statement is a KYC document, so the request takes no evidence files.\n\nImplements: D-121, D-462.",
         "operationId": "admin.companyCredit.requestLimit",
         "parameters": [
           {
@@ -212145,6 +212347,16 @@
                     "limitAmount": "100000.00",
                     "reason": "ชำระตรงเวลา 3 ครั้ง",
                     "termDays": 30
+                  }
+                },
+                "temporary": {
+                  "summary": "Temporary limit with a custom term (D-462)",
+                  "value": {
+                    "basis": "paid_orders",
+                    "limitAmount": "300000.00",
+                    "reason": "ยอดสั่งช่วงเทศกาลปลายปี",
+                    "termDays": 90,
+                    "validUntil": "2026-12-31T23:59:59+07:00"
                   }
                 }
               },
@@ -212178,6 +212390,8 @@
                     "reason": "paid_orders"
                   },
                   "exposureAmount": "25000.00",
+                  "fallbackLimitAmount": null,
+                  "fallbackTermDays": null,
                   "limitAmount": null,
                   "pendingRequest": {
                     "approvalId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1030",
@@ -212187,10 +212401,12 @@
                     "versionNo": 1
                   },
                   "termDays": null,
+                  "validUntil": null,
                   "versions": [
                     {
                       "approvalId": "0192f3a0-7c1e-7d2a-9b1f-0000000c1030",
                       "basis": "paid_orders",
+                      "customTerm": false,
                       "decidedAt": null,
                       "effectiveFrom": "2026-10-05T10:00:00+07:00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000c1031",
@@ -212203,6 +212419,7 @@
                       },
                       "status": "proposed",
                       "termDays": 30,
+                      "validUntil": null,
                       "versionNo": 1
                     }
                   ]
@@ -521559,9 +521776,12 @@
                     "reason": "paid_orders"
                   },
                   "exposureAmount": "25000.00",
+                  "fallbackLimitAmount": null,
+                  "fallbackTermDays": null,
                   "limitAmount": "100000.00",
                   "pendingRequest": null,
-                  "termDays": 30
+                  "termDays": 30,
+                  "validUntil": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CompanyCreditDto"
@@ -521786,13 +522006,16 @@
                     "reason": "paid_orders"
                   },
                   "exposureAmount": "25000.00",
+                  "fallbackLimitAmount": null,
+                  "fallbackTermDays": null,
                   "limitAmount": null,
                   "pendingRequest": {
                     "limitAmount": "100000.00",
                     "requestedAt": "2026-10-05T10:00:00+07:00",
                     "termDays": 30
                   },
-                  "termDays": null
+                  "termDays": null,
+                  "validUntil": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/CompanyCreditDto"
@@ -522012,6 +522235,194 @@
           }
         ],
         "summary": "Apply for company credit",
+        "tags": [
+          "store.companyCredit"
+        ]
+      }
+    },
+    "/v1/store/companies/{companyId}/credit/summary": {
+      "get": {
+        "description": "Any member who may order for the company (`company_orders.place`): the credit status, what is available now, the term and when a temporary limit ends — no limit, exposure or statements (those are Admin / Accountant, D-121). D-462.\n\nImplements: D-121, D-462.",
+        "operationId": "store.companyCredit.summary",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "companyId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "availableAmount": "75000.00",
+                  "creditStatus": "credit",
+                  "currency": "THB",
+                  "termDays": 30,
+                  "validUntil": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CompanyCreditSummaryDto"
+                }
+              }
+            },
+            "description": "Credit summary",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My company’s available credit",
         "tags": [
           "store.companyCredit"
         ]
@@ -537673,6 +538084,7 @@
                       "evaluated": false
                     }
                   ],
+                  "corrugatedSafeZoneMm": "5",
                   "extensions": [
                     ".pdf",
                     ".ai"
@@ -556060,7 +556472,14 @@
                     "tz": "Asia/Bangkok"
                   },
                   "supportReplyMinutes": null,
-                  "templateCount": 42
+                  "templateCount": 42,
+                  "tolerances": {
+                    "colourDeltaE": "3",
+                    "colourDeltaEFlexo": "5",
+                    "quantityPct": "5.00",
+                    "sizeMmMax": "3.00",
+                    "sizeMmMin": "1.00"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/PublicConfigDto"
