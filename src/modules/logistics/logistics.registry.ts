@@ -2,6 +2,7 @@ import { type Type } from '@nestjs/common';
 
 import {
   AdminShipmentsController,
+  DriverHandoverController,
   PartnerShipmentsController,
   PartnerShipPlanController,
   StoreShipmentsController,
@@ -12,4 +13,7 @@ export const LOGISTICS_PARTNER_CONTROLLERS: Type<unknown>[] = [
   PartnerShipmentsController,
   PartnerShipPlanController,
 ];
-export const LOGISTICS_STORE_CONTROLLERS: Type<unknown>[] = [StoreShipmentsController];
+export const LOGISTICS_STORE_CONTROLLERS: Type<unknown>[] = [
+  StoreShipmentsController,
+  DriverHandoverController,
+];

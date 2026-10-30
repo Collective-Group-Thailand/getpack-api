@@ -117,12 +117,15 @@ describe('production release and acceptance (e2e, B4.2)', () => {
       await ctx.prisma.domainEvent.count({ where: { type: 'production.queued', aggregateId: orderId } }),
     ).toBe(1);
 
-    // The factory sees it (spec, approved artwork, delivery contact) and accepts within the SLA.
+    // The factory sees it (spec, approved artwork, destination by code) and accepts within the SLA.
     const seen = await as(ctx, owner).get(`/v1/partner/production-jobs/${job!.id}`).expect(200);
     expect(seen.body).toMatchObject({
       status: 'released',
-      destinations: [{ recipientName: 'ผู้รับ ทดสอบ' }],
+      destinations: [{ code: 'D1', postcodePrefix: expect.stringMatching(/^\d{3}$/) }],
     });
+    // P4-01 / P4-D1: never the getpack customer's name, phone or address.
+    for (const field of ['recipientName', 'phone', 'line1', 'line2', 'postcode'])
+      expect(seen.body.destinations[0]).not.toHaveProperty(field);
     expect(seen.body.approvedFileId).not.toBeNull();
     expect(seen.body).not.toHaveProperty('buyCostNet');
     await as(ctx, owner)

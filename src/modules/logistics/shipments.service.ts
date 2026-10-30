@@ -3,6 +3,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
+import { codeAmong, postcodePrefix } from '@common/privacy/partner-destination';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Shipment, type ShipmentStatus } from '@generated/prisma/client';
@@ -29,7 +30,13 @@ import { type EntityReturnAddress } from '@platform/settings/setting-keys';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { getpackSenderContact } from './carrier-sender';
-import { renderLabelsHtml, renderPackingListHtml, type ShipmentDocument } from './shipment-documents';
+import {
+  leakedRecipientFields,
+  partnerDocumentFileName,
+  type PartnerShipmentDocument,
+  renderLabelsHtml,
+  renderPackingListHtml,
+} from './shipment-documents';
 
 export interface ShipmentInput {
   items: { jobId: string; destinationId: string; quantity: number }[];
@@ -216,12 +223,25 @@ export class ShipmentsService {
 
   // --- ready (packed) ---------------------------------------------------------------------------------------
 
-  /** Packed: cartons, labels with the tracking QR, the packing list and the frozen shipping payout. */
+  /**
+   * Packed: cartons, labels with the tracking QR, the packing list and the frozen shipping payout. D-463: the labels
+   * and the packing list are the factory's documents — destination code, province and postcode prefix only, never
+   * the recipient (the carrier gets the full address through the waybill / handover link).
+   */
   async markReady(actor: Actor, shipmentId: bigint): Promise<void> {
     const shipment = await this.prisma.shipment.findUniqueOrThrow({
       where: { id: shipmentId },
       include: {
-        items: { include: { order: true, productionJob: true } },
+        items: {
+          orderBy: { id: 'asc' },
+          include: {
+            order: {
+              include: { destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }], select: { id: true } } },
+            },
+            productionJob: true,
+          },
+        },
+        province: { select: { nameTh: true, nameEn: true } },
       },
     });
     if (shipment.status !== 'draft')
@@ -232,38 +252,47 @@ export class ShipmentsService {
       seq: i + 1,
       labelCode: `${randomBytes(6).toString('hex').toUpperCase()}-${String(i + 1).padStart(2, '0')}`,
     }));
-    const doc: ShipmentDocument = {
+    const first = shipment.items[0];
+    const doc: PartnerShipmentDocument = {
       shipmentNo: shipment.shipmentNo,
       trackingUrl: this.trackingUrl(token),
-      sender: await this.sender(shipment.entityId, at),
-      recipient: {
-        name: shipment.recipientName,
-        phone: shipment.phone,
-        line1: shipment.line1,
-        line2: shipment.line2,
-        postcode: shipment.postcode,
+      sender: await this.documentSender(shipment.entityId, at),
+      destination: {
+        code: first ? codeAmong(first.order.destinations, first.orderDestinationId) : 'D?',
+        provinceNameTh: shipment.province.nameTh,
+        provinceNameEn: shipment.province.nameEn,
+        postcodePrefix: postcodePrefix(shipment.postcode),
       },
+      jobNos: [...new Set(shipment.items.map((i) => i.productionJob.jobNo))],
       cartons,
       items: shipment.items.map((i) => ({
-        orderCode: i.order.orderCode,
-        description:
-          ((i.productionJob.specSnapshot as { productTypeNameTh?: string }).productTypeNameTh ?? '') +
-          ` (${i.productionJob.jobNo})`,
+        jobNo: i.productionJob.jobNo,
+        description: (i.productionJob.specSnapshot as { productTypeNameTh?: string }).productTypeNameTh ?? '',
         quantity: i.quantity,
       })),
       totalWeightKg: (shipment.weightG / 1000).toFixed(2),
       plannedShipOn: shipment.plannedShipOn?.toISOString().slice(0, 10) ?? null,
       note: shipment.note,
     };
+    const [labelsHtml, packingHtml] = [await renderLabelsHtml(doc), renderPackingListHtml(doc)];
+    // D-463 defence in depth: a partner document that would carry the recipient is never produced.
+    const recipient = {
+      name: shipment.recipientName,
+      phone: shipment.phone,
+      line1: shipment.line1,
+      line2: shipment.line2,
+    };
+    if (leakedRecipientFields(labelsHtml + packingHtml, recipient).length > 0)
+      throw new Error(`D-463: partner documents of shipment ${shipment.publicId} would carry recipient data`);
     // Rendered and stored first: a rolled-back transaction leaves only unreferenced objects.
     const [labels, packingList] = await Promise.all([
-      this.pdf.render(await renderLabelsHtml(doc)),
-      this.pdf.render(renderPackingListHtml(doc)),
+      this.pdf.render(labelsHtml),
+      this.pdf.render(packingHtml),
     ]);
-    const store = (body: Buffer, kind: string) =>
+    const store = (body: Buffer, kind: 'labels' | 'packing') =>
       this.files.storeSystem({
         body,
-        fileName: `${shipment.shipmentNo}-${kind}.pdf`,
+        fileName: partnerDocumentFileName(shipment.shipmentNo, kind),
         mimeType: 'application/pdf',
         retentionClass: 'standard',
         ownerUserId: null,
@@ -271,7 +300,7 @@ export class ShipmentsService {
       });
     const [labelFile, packingFile] = await Promise.all([
       store(labels, 'labels'),
-      store(packingList, 'packing-list'),
+      store(packingList, 'packing'),
     ]);
     const payout = await this.rates.factoryPayout(
       shipment.factoryId,
@@ -991,8 +1020,8 @@ export class ShipmentsService {
     return `${web.replace(/\/$/, '')}/track/${token}`;
   }
 
-  /** Sender on labels: the legal entity from settings under the getpack brand; never the factory (D-050). */
-  private async sender(entityId: bigint, at: Date): Promise<ShipmentDocument['sender']> {
+  /** Sender on labels and the waybill: the legal entity from settings under the getpack brand; never the factory (D-050). */
+  async documentSender(entityId: bigint, at: Date): Promise<PartnerShipmentDocument['sender']> {
     const read = async (key: string): Promise<string | null> => {
       try {
         return String(

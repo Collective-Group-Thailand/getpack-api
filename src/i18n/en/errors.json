@@ -1669,6 +1669,20 @@
       "detail": "This link has expired; open the page from your account instead."
     }
   },
+  "handover": {
+    "expired": {
+      "title": "Link expired",
+      "detail": "This handover link has ended (the delivery is over or the link expired). Ask getpack for a new link."
+    },
+    "not_ready": {
+      "title": "Not ready for pickup",
+      "detail": "This shipment cannot be picked up yet. Please contact getpack."
+    },
+    "scan_mismatch": {
+      "title": "Wrong carton",
+      "detail": "A scanned carton does not belong to this shipment."
+    }
+  },
   "rfq_baskets": {
     "changed": {
       "title": "Basket changed",

@@ -1,9 +1,10 @@
-import { CurrentActor } from '@common/auth/auth.decorators';
+import { CurrentActor, Public } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
 import { Idempotent } from '@common/idempotency/idempotent.decorator';
+import { statusLabels } from '@common/labels/status-labels';
 import { formatMoney } from '@common/money/money';
 import {
   ApiConcurrency,
@@ -13,6 +14,7 @@ import {
   ApiSuccess,
 } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { destinationCode, postcodePrefix } from '@common/privacy/partner-destination';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { permissionsOf } from '@modules/iam/actor-permissions';
@@ -23,19 +25,27 @@ import { OrdersService } from '@modules/orders/orders.service';
 import { FactoryAccess } from '@modules/partners/factories/factory-access';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res } from '@nestjs/common';
-import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { ApiBody, ApiParam, ApiProduces, ApiResponse } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { SettingsService } from '@platform/settings/settings.service';
 import { type Response } from 'express';
 
 import { DeliveryService } from './delivery.service';
+import { ShipmentHandoverService } from './handover.service';
 import {
   ADMIN_SHIPMENT_EXAMPLE,
   AdminShipmentDto,
   AdminShipmentListQuery,
   BookCarrierDto,
   CancelShipmentDto,
+  ConfirmHandoverPickupDto,
   CreateShipmentDto,
   DeliveryReconciliationDto,
+  DRIVER_HANDOVER_EXAMPLE,
+  DriverHandoverDto,
+  HandoverTokenDto,
+  ISSUED_HANDOVER_EXAMPLE,
+  IssuedHandoverLinkDto,
   PARTNER_SHIPMENT_EXAMPLE,
   PartnerShipmentDto,
   PartnerShipmentListQuery,
@@ -109,15 +119,19 @@ export class PartnerShipmentsController {
     private readonly delivery: DeliveryService,
     private readonly query: ShipmentsQueryService,
     private readonly permissions: PermissionResolver,
+    private readonly handover: ShipmentHandoverService,
   ) {}
 
   private async dtos(actor: Actor, rows: ShipmentRow[]) {
-    const [photos, blocked, perms] = await Promise.all([
+    const [photos, blocked, perms, waybill] = await Promise.all([
       this.query.podPhotos(rows),
       this.shipments.blockedByPayment(rows),
       permissionsOf(this.permissions, actor),
+      this.handover.waybillIssued(rows),
     ]);
-    return rows.map((r) => partnerShipmentDto(r, photos.get(r.id), blocked.has(r.id), perms));
+    return rows.map((r) =>
+      partnerShipmentDto(r, photos.get(r.id), blocked.has(r.id), perms, waybill.has(r.id)),
+    );
   }
 
   private async dto(actor: Actor, publicId: string) {
@@ -130,8 +144,9 @@ export class PartnerShipmentsController {
     id: 'partner.shipments.list',
     summary: 'List my factory’s shipments',
     description:
-      'Newest first; `view` groups the statuses (open, in transit, delivered, exceptions). Destination contacts only ' +
-      '(D-142), no prices; each trip says whether unpaid instalments block pickup and whether a carrier was asked for.',
+      'Newest first; `view` groups the statuses (open, in transit, delivered, exceptions). Destinations by code, ' +
+      'province and postcode prefix — no recipient name, phone or address (P4-D1) — and no prices; each trip says ' +
+      'whether unpaid instalments block pickup and whether a carrier was asked for.',
     implements: ['D-013', 'D-142'],
   })
   @ApiPaginated(PartnerShipmentDto, { example: PARTNER_SHIPMENT_EXAMPLE })
@@ -205,9 +220,12 @@ export class PartnerShipmentsController {
     id: 'partner.shipments.markReady',
     summary: 'Mark a shipment packed and print its labels',
     description:
-      'Generates one 100 × 150 mm label per carton (QR → public tracking, getpack brand only, D-050) and the ' +
-      'packing list; the shipping payout is fixed from the factory’s rate card (D-013).',
-    implements: ['D-013', 'D-050'],
+      'Generates one 100 × 150 mm label per carton and the packing list (`<shipmentNo>-labels.pdf`, ' +
+      '`<shipmentNo>-packing.pdf`, metadata stripped). D-463: they carry no recipient identity — shipment code, job ' +
+      'numbers, carton n/m, destination code (D1 …), province and postcode prefix, and a QR with an opaque tracking ' +
+      'token only; the recipient’s address goes to the carrier through getpack’s waybill. getpack brand only ' +
+      '(D-050); the shipping payout is fixed from the factory’s rate card (D-013).',
+    implements: ['D-013', 'D-050', 'D-463'],
   })
   @ApiSuccess(200, { description: 'Ready', type: PartnerShipmentDto, example: PARTNER_SHIPMENT_EXAMPLE })
   @ApiStandardErrors(
@@ -436,7 +454,8 @@ export class PartnerShipPlanController {
     description:
       'Completed jobs whose orders are not delivered yet: per destination the pieces already on live trips and what ' +
       'remains, and whether pickup would be refused today (instalments before shipping, getpack inspection — the ' +
-      'checks of dispatch, B3.2 / D-076). Destination contacts only (D-142).',
+      'checks of dispatch, B3.2 / D-076). Destinations by code, province and postcode prefix only — never the ' +
+      'recipient (P4-D1).',
     implements: ['D-013', 'D-076', 'D-142'],
   })
   @ApiSuccess(200, { description: 'Plan', type: [ShipPlanJobDto], example: [SHIP_PLAN_EXAMPLE] })
@@ -453,10 +472,11 @@ export class PartnerShipPlanController {
       quantityOrdered: job.quantityOrdered,
       quantityGood: job.quantityGood,
       blockedReason,
-      destinations: destinations.map(({ destination: d, shipped, remaining }) => ({
+      // P4-D1: code, province and postcode prefix only — never the recipient (destinations are in stable order).
+      destinations: destinations.map(({ destination: d, shipped, remaining }, i) => ({
         destinationId: d.publicId,
-        recipientName: d.recipientName,
-        postcode: d.postcode,
+        code: destinationCode(i),
+        postcodePrefix: postcodePrefix(d.postcode),
         provinceNameTh: d.province.nameTh,
         quantity: d.quantity,
         shippedQuantity: shipped,
@@ -484,6 +504,7 @@ export class AdminShipmentsController {
     private readonly query: ShipmentsQueryService,
     private readonly permissions: PermissionResolver,
     private readonly prisma: PrismaService,
+    private readonly handover: ShipmentHandoverService,
   ) {}
 
   private async canSeeCost(actor: Actor): Promise<boolean> {
@@ -494,13 +515,23 @@ export class AdminShipmentsController {
   }
 
   private async dtos(actor: Actor, rows: ShipmentRow[]) {
-    const [perms, photos, blocked] = await Promise.all([
+    const [perms, photos, blocked, waybill, links] = await Promise.all([
       permissionsOf(this.permissions, actor),
       this.query.podPhotos(rows),
       this.shipments.blockedByPayment(rows),
+      this.handover.waybillIssued(rows),
+      this.handover.summaries(
+        rows.map((r) => r.id),
+        new Map(rows.map((r) => [r.id, r.status])),
+      ),
     ]);
     const cost = perms.has('factory_buy_prices.read');
-    return rows.map((r) => adminShipmentDto(r, { cost }, photos.get(r.id), blocked.has(r.id), perms));
+    return rows.map((r) =>
+      adminShipmentDto(r, { cost }, photos.get(r.id), blocked.has(r.id), perms, {
+        waybillIssued: waybill.has(r.id),
+        link: links.get(r.id) ?? null,
+      }),
+    );
   }
 
   private async dto(actor: Actor, publicId: string, res?: Response) {
@@ -947,6 +978,64 @@ export class AdminShipmentsController {
     return this.dto(actor, shipmentId);
   }
 
+  @Post('shipments/:shipmentId/handover-link')
+  @HttpCode(201)
+  @Can('shipments.manage')
+  @shipmentParam
+  @ApiEndpoint({
+    id: 'admin.shipments.issueHandoverLink',
+    summary: 'Issue or regenerate the driver handover link',
+    description:
+      'D-463 (sealed carrier label): a random, single-shipment link `<web>/l/<token>` for the carrier / driver, the ' +
+      'only place outside getpack staff that shows the recipient’s name, phone and address. Valid until the trip is ' +
+      'delivered, cancelled or returned and at most 7 days; issuing again revokes the previous link. The URL and ' +
+      'token are returned once (only the hash is kept) — send them to the driver, never to the factory. Packed ' +
+      'shipments up to delivery only. Audited (`data_access`); the factory sees only `waybillIssued`.',
+    implements: ['D-463', 'D-050'],
+  })
+  @ApiSuccess(201, { description: 'Issued', type: IssuedHandoverLinkDto, example: ISSUED_HANDOVER_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'shipments.invalid_status')
+  async issueHandoverLink(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+  ) {
+    const row = await this.query.get(actor, shipmentId);
+    return this.handover.issue(staff(actor), row.id);
+  }
+
+  @Get('shipments/:shipmentId/waybill')
+  @Can('shipments.manage')
+  @shipmentParam
+  @ApiEndpoint({
+    id: 'admin.shipments.waybill',
+    summary: 'Download the carrier waybill',
+    description:
+      'D-463: the full address label (100 × 150 mm PDF: getpack as sender, the recipient’s name, phone and address, ' +
+      'job numbers, cartons) for the carrier — rendered on demand, never stored as a factory file, metadata stripped, ' +
+      'named `<shipmentNo>-waybill.pdf`. Each download is audited (`data_access`).',
+    implements: ['D-463', 'D-050'],
+  })
+  @ApiProduces('application/pdf')
+  @ApiResponse({
+    status: 200,
+    description: 'The waybill PDF',
+    content: { 'application/pdf': { schema: { type: 'string', format: 'binary' }, example: '(binary PDF)' } },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'provider.unavailable')
+  async waybill(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @Res() res: Response,
+  ): Promise<void> {
+    const row = await this.query.get(actor, shipmentId);
+    const pdf = await this.handover.waybillPdf(actor, row.id);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Length', pdf.body.length.toString());
+    res.setHeader('Content-Disposition', `attachment; filename="${pdf.fileName}"`);
+    res.setHeader('Cache-Control', 'no-store');
+    res.end(pdf.body);
+  }
+
   @Get('orders/:orderId/delivery-reconciliation')
   @Can('shipments.read')
   @orderParam
@@ -1064,4 +1153,103 @@ function listWhere(q: ShipmentListQuery): Prisma.ShipmentWhereInput {
 
 function when(value: string | undefined): Date | undefined {
   return value ? new Date(value) : undefined;
+}
+
+// =====================================================================================================
+// Driver handover (anonymous: the link's token is the only key, D-463)
+// =====================================================================================================
+
+/** Same per-client limit as public tracking: the token space is guarded against guessing. */
+const HANDOVER_THROTTLE = {
+  default: { limit: () => Number(process.env.TRACKING_THROTTLE_LIMIT ?? 30), ttl: 60_000 },
+};
+
+@ApiSurface('store', 'handover')
+@Controller('handover-links')
+export class DriverHandoverController {
+  constructor(private readonly handover: ShipmentHandoverService) {}
+
+  @Post('actions/resolve')
+  @HttpCode(200)
+  @Public()
+  @Throttle(HANDOVER_THROTTLE)
+  @ApiEndpoint({
+    id: 'store.handover.resolve',
+    summary: 'Open a driver handover link',
+    description:
+      'D-463 (sealed carrier label): the carrier / driver opens `<web>/l/<token>` (token starting with `d`) and sees ' +
+      'the recipient’s name, phone and address, the shipment code and its cartons — never the factory, prices or ' +
+      'other orders (D-050). The token is sent in the body, not the URL path, so it stays out of access logs. ' +
+      'Unknown or regenerated (revoked) links → 404; a trip that is delivered, cancelled or returned, or a link older ' +
+      'than 7 days → 410 `handover.expired`. Every open, refused ones included, is an audit row. Rate-limited.',
+    implements: ['D-463', 'D-050'],
+  })
+  @ApiBody({
+    type: HandoverTokenDto,
+    examples: { default: { value: { token: ISSUED_HANDOVER_EXAMPLE.token } } },
+  })
+  @ApiSuccess(200, {
+    description: 'The trip and its recipient',
+    type: DriverHandoverDto,
+    example: DRIVER_HANDOVER_EXAMPLE,
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'http.not_found',
+    'handover.expired',
+    'http.too_many_requests',
+  )
+  resolve(@Body() body: HandoverTokenDto) {
+    return this.handover.resolve(body.token);
+  }
+
+  @Post('actions/confirm-pickup')
+  @HttpCode(200)
+  @Public()
+  @Throttle(HANDOVER_THROTTLE)
+  @ApiEndpoint({
+    id: 'store.handover.confirmPickup',
+    summary: 'Confirm pickup through the handover link',
+    description:
+      'D-463: the driver confirms the goods were collected. Optional `scannedTokens` are the tracking tokens read ' +
+      'from carton QR codes; one that does not belong to this shipment → 422 `handover.scan_mismatch`. A packed ' +
+      'shipment on the factory fleet is picked up through the shipping gate (closed gate → 409 `handover.not_ready`, ' +
+      'without saying why); a booked carrier’s pickup still comes from its callbacks. Repeating it is harmless. ' +
+      'Audited. Same 404 / 410 rules as opening the link.',
+    implements: ['D-463', 'D-013'],
+  })
+  @ApiBody({
+    type: ConfirmHandoverPickupDto,
+    examples: {
+      default: {
+        value: { token: ISSUED_HANDOVER_EXAMPLE.token, scannedTokens: ['q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh'] },
+      },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Pickup confirmed',
+    type: DriverHandoverDto,
+    example: {
+      ...DRIVER_HANDOVER_EXAMPLE,
+      status: 'picked_up',
+      statusLabelTh: statusLabels('ShipmentStatus', 'picked_up').statusLabelTh,
+      pickupConfirmedAt: '2026-10-20T09:15:00+07:00',
+      canConfirmPickup: false,
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'validation.failed',
+    'http.not_found',
+    'handover.expired',
+    'handover.not_ready',
+    'handover.scan_mismatch',
+    'http.too_many_requests',
+  )
+  confirmPickup(@Body() body: ConfirmHandoverPickupDto) {
+    return this.handover.confirmPickup(body.token, body.scannedTokens ?? []);
+  }
 }
