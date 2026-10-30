@@ -151,6 +151,34 @@ describe('shipment views: no customer identity for the factory (P4-01 / P4-D1)',
     );
   });
 
+  it('D-462: tells the factory only whether a waybill was issued; staff see the link state, never a token', () => {
+    const partner = partnerShipmentDto(row(), [], false, undefined, true);
+    expect(partner.waybillIssued).toBe(true);
+    expect(partner).not.toHaveProperty('handover');
+    const json = JSON.stringify(partner);
+    for (const value of ['สมหญิง', '+66810001234', '0810001234', 'สุขุมวิท', 'คลองตัน', '10110', '/l/d'])
+      expect(json).not.toContain(value);
+    expect(partnerShipmentDto(row()).waybillIssued).toBe(false);
+
+    const link = {
+      state: 'active' as const,
+      issuedAt: '2026-10-19T16:05:00+07:00',
+      expiresAt: '2026-10-26T16:05:00+07:00',
+      openCount: 1,
+      lastOpenedAt: null,
+      pickupConfirmedAt: null,
+    };
+    const admin = adminShipmentDto(row(), { cost: false }, [], false, undefined, {
+      waybillIssued: true,
+      link,
+    });
+    expect(admin.waybillIssued).toBe(true);
+    expect(admin.handover).toEqual(link);
+    expect(adminShipmentDto(row(), { cost: false }).handover).toBeNull();
+    expect(PARTNER_SHIPMENT_EXAMPLE).toHaveProperty('waybillIssued');
+    expect(PARTNER_SHIPMENT_EXAMPLE).not.toHaveProperty('handover');
+  });
+
   it('keeps the recipient out of the partner examples', () => {
     for (const field of PARTNER_HIDDEN_DESTINATION_FIELDS) {
       expect(PARTNER_SHIPMENT_EXAMPLE.destination).not.toHaveProperty(field);

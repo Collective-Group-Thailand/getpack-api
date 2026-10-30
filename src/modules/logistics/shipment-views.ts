@@ -9,6 +9,7 @@ import {
   type DeliveryReconciliationDto,
   type PartnerShipmentDto,
   type ProofOfDeliveryDto,
+  type ShipmentHandoverSummaryDto,
   type StoreShipmentDto,
 } from './logistics.dto';
 import { ADMIN_SHIPMENT_ACTIONS, PARTNER_SHIPMENT_ACTIONS, type ShipmentFacts } from './shipment-actions';
@@ -117,6 +118,7 @@ export function partnerShipmentDto(
   podPhotos: string[] = [],
   blockedByPayment = false,
   perms: ReadonlySet<string> = NO_PERMISSIONS,
+  waybillIssued = false,
 ): PartnerShipmentDto {
   return {
     id: row.publicId,
@@ -161,6 +163,8 @@ export function partnerShipmentDto(
       row.carrierRequestedAt && row.carrierRequestReason
         ? { requestedAt: toBangkokIso(row.carrierRequestedAt), reason: row.carrierRequestReason }
         : null,
+    // D-462: a yes/no only — the waybill and the handover link carry the recipient and never reach the factory.
+    waybillIssued,
     nextActions: nextActions(shipmentFacts(row, blockedByPayment), PARTNER_SHIPMENT_ACTIONS, perms),
   };
 }
@@ -171,10 +175,14 @@ export function adminShipmentDto(
   podPhotos: string[] = [],
   blockedByPayment = false,
   perms: ReadonlySet<string> = NO_PERMISSIONS,
+  handover: { waybillIssued: boolean; link: ShipmentHandoverSummaryDto | null } = {
+    waybillIssued: false,
+    link: null,
+  },
 ): AdminShipmentDto {
   const review = row.proofOfDelivery?.reviews[0];
   return {
-    ...partnerShipmentDto(row, podPhotos, blockedByPayment),
+    ...partnerShipmentDto(row, podPhotos, blockedByPayment, NO_PERMISSIONS, handover.waybillIssued),
     destination: {
       ...partnerShipmentDestination(row),
       recipientName: row.recipientName,
@@ -202,6 +210,7 @@ export function adminShipmentDto(
         }
       : null,
     splitFrom: row.splitFrom ? { id: row.splitFrom.publicId, shipmentNo: row.splitFrom.shipmentNo } : null,
+    handover: handover.link,
     nextActions: nextActions(shipmentFacts(row, blockedByPayment), ADMIN_SHIPMENT_ACTIONS, perms),
   };
 }

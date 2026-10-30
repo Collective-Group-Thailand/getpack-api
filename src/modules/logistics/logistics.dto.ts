@@ -18,6 +18,7 @@ import {
   IsOptional,
   IsString,
   IsUUID,
+  Matches,
   Max,
   MaxLength,
   Min,
@@ -655,11 +656,198 @@ export class PartnerShipmentDto {
   carrierRequest!: CarrierRequestDto | null;
 
   @ApiProperty({
+    example: false,
+    description:
+      'D-462: getpack has issued the carrier waybill (a driver handover link or a fallback-carrier booking) — ' +
+      '"ส่งใบปะหน้าให้ผู้ขนส่งแล้ว". The recipient’s details go to the carrier only; the factory never receives them.',
+  })
+  waybillIssued!: boolean;
+
+  @ApiProperty({
     type: [NextActionDto],
     description: 'What the signed-in user may do on the trip now (U-B0.3)',
   })
   nextActions!: NextActionDto[];
 }
+
+export const HANDOVER_LINK_STATES = ['active', 'expired', 'revoked', 'closed'] as const;
+
+/** D-462: the latest driver handover link of a shipment (staff only), without its token. */
+export class ShipmentHandoverSummaryDto {
+  @ApiProperty({
+    enum: HANDOVER_LINK_STATES,
+    enumName: 'HandoverLinkState',
+    example: 'active',
+    description: '`closed` once the trip is delivered, cancelled or returned',
+  })
+  state!: (typeof HANDOVER_LINK_STATES)[number];
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-19T16:05:00+07:00' })
+  issuedAt!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-26T16:05:00+07:00' })
+  expiresAt!: string;
+
+  @ApiProperty({ type: 'integer', example: 2, description: 'Times the driver opened it (each one audited)' })
+  openCount!: number;
+
+  @ApiProperty({ format: 'date-time', nullable: true, example: '2026-10-20T09:12:00+07:00' })
+  lastOpenedAt!: string | null;
+
+  @ApiProperty({ format: 'date-time', nullable: true, example: null })
+  pickupConfirmedAt!: string | null;
+}
+
+/** D-462: a newly issued handover link — the URL and token are shown once (only their hash is kept). */
+export class IssuedHandoverLinkDto {
+  @ApiProperty({ example: 'https://www.getpack.example/l/dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw' })
+  url!: string;
+
+  @ApiProperty({ example: 'dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw' })
+  token!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-26T16:05:00+07:00' })
+  expiresAt!: string;
+}
+
+export class HandoverTokenDto {
+  @ApiProperty({
+    example: 'dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw',
+    description: 'The token of the driver handover link `<web>/l/<token>` (starts with `d`)',
+  })
+  @Matches(/^d[A-Za-z0-9_-]{32}$/)
+  token!: string;
+}
+
+export class ConfirmHandoverPickupDto extends HandoverTokenDto {
+  @ApiPropertyOptional({
+    type: [String],
+    maxItems: 50,
+    example: ['q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh'],
+    description:
+      'Tracking tokens read from carton QR codes (`<web>/track/<token>`), to check the cartons belong to this trip',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @IsString({ each: true })
+  @Matches(/^[A-Za-z0-9_-]{20,64}$/, { each: true })
+  scannedTokens?: string[];
+}
+
+export class HandoverProvinceDto {
+  @ApiProperty({ example: 'สงขลา' })
+  nameTh!: string;
+
+  @ApiProperty({ example: 'Songkhla' })
+  nameEn!: string;
+}
+
+export class HandoverRecipientDto {
+  @ApiProperty({ example: 'สมหญิง ใจดี' })
+  name!: string;
+
+  @ApiProperty({ example: '+66810001234' })
+  phone!: string;
+
+  @ApiProperty({ example: '99/9 ถนนกาญจนวนิช' })
+  line1!: string;
+
+  @ApiProperty({ nullable: true, example: 'ตำบลหาดใหญ่ อำเภอหาดใหญ่' })
+  line2!: string | null;
+
+  @ApiProperty({ example: '90110' })
+  postcode!: string;
+
+  @ApiProperty({ type: HandoverProvinceDto })
+  province!: HandoverProvinceDto;
+}
+
+export class HandoverSenderDto {
+  @ApiProperty({ example: 'getpack · บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด' })
+  name!: string;
+
+  @ApiProperty({ nullable: true, example: '+6620000000' })
+  phone!: string | null;
+}
+
+export class HandoverCartonDto {
+  @ApiProperty({ type: 'integer', example: 1 })
+  seq!: number;
+
+  @ApiProperty({ example: '9F3A0C1B2D4E-01' })
+  labelCode!: string;
+}
+
+/** D-462: what the carrier / driver sees through the handover link — the recipient and the trip, nothing else. */
+export class DriverHandoverDto {
+  @ApiProperty({ example: 'SH-2610-0001' })
+  shipmentNo!: string;
+
+  @ApiProperty({ enum: SHIPMENT_STATUSES, enumName: 'ShipmentStatus', example: 'ready' })
+  status!: ShipmentStatusValue;
+
+  @ApiStatusLabelTh('ShipmentStatus')
+  statusLabelTh!: string;
+
+  @ApiProperty({ type: 'integer', example: 3 })
+  cartonsCount!: number;
+
+  @ApiProperty({ type: [HandoverCartonDto] })
+  cartons!: HandoverCartonDto[];
+
+  @ApiProperty({ type: 'integer', example: 18000 })
+  weightG!: number;
+
+  @ApiProperty({ format: 'date', nullable: true, example: '2026-10-20' })
+  plannedShipOn!: string | null;
+
+  @ApiProperty({ type: HandoverRecipientDto })
+  recipient!: HandoverRecipientDto;
+
+  @ApiProperty({ type: HandoverSenderDto, description: 'getpack (never the factory, D-050)' })
+  sender!: HandoverSenderDto;
+
+  @ApiProperty({ format: 'date-time', example: '2026-10-26T16:05:00+07:00' })
+  expiresAt!: string;
+
+  @ApiProperty({ format: 'date-time', nullable: true, example: null })
+  pickupConfirmedAt!: string | null;
+
+  @ApiProperty({ example: true })
+  canConfirmPickup!: boolean;
+}
+
+export const DRIVER_HANDOVER_EXAMPLE = {
+  shipmentNo: 'SH-2610-0001',
+  status: 'ready',
+  statusLabelTh: statusLabels('ShipmentStatus', 'ready').statusLabelTh,
+  cartonsCount: 3,
+  cartons: [
+    { seq: 1, labelCode: '9F3A0C1B2D4E-01' },
+    { seq: 2, labelCode: '9F3A0C1B2D4E-02' },
+    { seq: 3, labelCode: '9F3A0C1B2D4E-03' },
+  ],
+  weightG: 18000,
+  plannedShipOn: '2026-10-20',
+  recipient: {
+    name: 'สมหญิง ใจดี',
+    phone: '+66810001234',
+    line1: '99/9 ถนนกาญจนวนิช',
+    line2: 'ตำบลหาดใหญ่ อำเภอหาดใหญ่',
+    postcode: '90110',
+    province: { nameTh: 'สงขลา', nameEn: 'Songkhla' },
+  },
+  sender: { name: 'getpack · บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด', phone: '+6620000000' },
+  expiresAt: '2026-10-26T16:05:00+07:00',
+  pickupConfirmedAt: null,
+  canConfirmPickup: true,
+};
+export const ISSUED_HANDOVER_EXAMPLE = {
+  url: 'https://www.getpack.example/l/dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw',
+  token: 'dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw',
+  expiresAt: '2026-10-26T16:05:00+07:00',
+};
 
 /** A failed or returned delivery and how staff resolved it (D-230). */
 export class ShipmentExceptionDto {
@@ -766,6 +954,14 @@ export class AdminShipmentDto extends PartnerShipmentDto {
 
   @ApiProperty({ type: ShipmentRefDto, nullable: true, description: 'The shipment this one was split from' })
   splitFrom!: ShipmentRefDto | null;
+
+  @ApiProperty({
+    type: ShipmentHandoverSummaryDto,
+    nullable: true,
+    description:
+      'D-462: the latest driver handover link (no token — regenerate to get a new URL); null until issued',
+  })
+  handover!: ShipmentHandoverSummaryDto | null;
 }
 
 // A `declare` field takes no decorator: document the staff destination on the class itself.
@@ -875,6 +1071,7 @@ const SHIPMENT_BASE = {
   ],
   blockedByPayment: false,
   carrierRequest: null,
+  waybillIssued: false,
   nextActions: [],
 };
 export const PARTNER_SHIPMENT_EXAMPLE = SHIPMENT_BASE;
@@ -892,6 +1089,7 @@ export const ADMIN_SHIPMENT_EXAMPLE = {
   exception: null,
   podReview: null,
   splitFrom: null,
+  handover: null,
 };
 export const POD_EXAMPLE = {
   kind: 'factory_photo_signature',

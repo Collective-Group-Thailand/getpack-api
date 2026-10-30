@@ -296,6 +296,8 @@ export const API_TAGS: Record<string, string> = {
   'admin.line': 'The LINE official account: rich menus for guests and members (D-151).',
   'webhooks.line': 'LINE official account events, signature-verified (D-151).',
   'store.tracking': 'Public tracking from a carton label or a shared link — no personal data, rate-limited.',
+  'store.handover':
+    'Driver handover link (D-462): the carrier sees the recipient of one shipment through a time-limited token — audited, rate-limited.',
   'admin.timeline': 'An order’s full timeline with internal notes and @mentions, promised vs actual.',
   'admin.users': 'Staff, partner and customer accounts, role grants and sessions (D-140, D-168).',
   'admin.roles': 'The role and permission catalogue (D-140, D-141).',

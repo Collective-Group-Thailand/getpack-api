@@ -621,6 +621,10 @@ const CHECKS = [
   'ck_shipments__shipment_no',
   'ck_tracking_links__token_hash',
   'ck_tracking_links__views',
+  // --- D-462 shipment handover links
+  'ck_shipment_handover_links__expiry',
+  'ck_shipment_handover_links__open_count',
+  'ck_shipment_handover_links__token_hash',
   // --- B4.5 claims
   'ck_claim_resolutions__amount',
   'ck_claim_resolutions__money',
@@ -1419,6 +1423,7 @@ const INDEXES = [
   'ux_job_milestones__job_id__client_ref',
   // --- B4.3 logistics
   'ux_shipment_events__shipment_id__carrier_event_id',
+  'ux_shipment_handover_links__one_live',
   // --- B4.6 LINE & conversations
   'ux_line_rich_menus__one_active',
   'ux_conversations__one_live_line',

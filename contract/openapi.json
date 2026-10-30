@@ -2828,6 +2828,39 @@
           "type": "https://errors.getpack/guarantee.version_pending"
         }
       },
+      "problem.handover.expired": {
+        "summary": "handover.expired",
+        "value": {
+          "code": "handover.expired",
+          "detail": "ลิงก์รับส่งสินค้านี้ใช้ไม่ได้แล้ว (ส่งของเสร็จแล้วหรือลิงก์หมดอายุ) โปรดขอลิงก์ใหม่จาก getpack",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 410,
+          "title": "ลิงก์หมดอายุ",
+          "type": "https://errors.getpack/handover.expired"
+        }
+      },
+      "problem.handover.not_ready": {
+        "summary": "handover.not_ready",
+        "value": {
+          "code": "handover.not_ready",
+          "detail": "การจัดส่งนี้ยังไม่พร้อมให้รับสินค้า โปรดติดต่อ getpack",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังรับสินค้าไม่ได้",
+          "type": "https://errors.getpack/handover.not_ready"
+        }
+      },
+      "problem.handover.scan_mismatch": {
+        "summary": "handover.scan_mismatch",
+        "value": {
+          "code": "handover.scan_mismatch",
+          "detail": "กล่องที่สแกนไม่ได้อยู่ในการจัดส่งนี้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "กล่องไม่ตรงกับการจัดส่ง",
+          "type": "https://errors.getpack/handover.scan_mismatch"
+        }
+      },
       "problem.http.bad_request": {
         "summary": "http.bad_request",
         "value": {
@@ -12914,6 +12947,17 @@
             "format": "uuid",
             "type": "string"
           },
+          "handover": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentHandoverSummaryDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-462: the latest driver handover link (no token — regenerate to get a new URL); null until issued"
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
             "format": "uuid",
@@ -13063,6 +13107,11 @@
               "null"
             ]
           },
+          "waybillIssued": {
+            "description": "D-462: getpack has issued the carrier waybill (a driver handover link or a fallback-carrier booking) — \"ส่งใบปะหน้าให้ผู้ขนส่งแล้ว\". The recipient’s details go to the carrier only; the factory never receives them.",
+            "example": false,
+            "type": "boolean"
+          },
           "weightG": {
             "example": 18000,
             "type": "integer"
@@ -13093,6 +13142,7 @@
           "cartons",
           "blockedByPayment",
           "carrierRequest",
+          "waybillIssued",
           "nextActions",
           "factoryId",
           "factoryCode",
@@ -13104,7 +13154,8 @@
           "cancelReason",
           "exception",
           "podReview",
-          "splitFrom"
+          "splitFrom",
+          "handover"
         ],
         "type": "object"
       },
@@ -28087,6 +28138,32 @@
         ],
         "type": "object"
       },
+      "ConfirmHandoverPickupDto": {
+        "properties": {
+          "scannedTokens": {
+            "description": "Tracking tokens read from carton QR codes (`<web>/track/<token>`), to check the cartons belong to this trip",
+            "example": [
+              "q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh"
+            ],
+            "items": {
+              "pattern": "^[A-Za-z0-9_-]{20,64}$",
+              "type": "string"
+            },
+            "maxItems": 50,
+            "type": "array"
+          },
+          "token": {
+            "description": "The token of the driver handover link `<web>/l/<token>` (starts with `d`)",
+            "example": "dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw",
+            "pattern": "^d[A-Za-z0-9_-]{32}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
       "ConfirmImportDto": {
         "properties": {
           "fileId": {
@@ -41400,6 +41477,92 @@
           "engine_unavailable"
         ],
         "type": "string"
+      },
+      "DriverHandoverDto": {
+        "properties": {
+          "canConfirmPickup": {
+            "example": true,
+            "type": "boolean"
+          },
+          "cartons": {
+            "items": {
+              "$ref": "#/components/schemas/HandoverCartonDto"
+            },
+            "type": "array"
+          },
+          "cartonsCount": {
+            "example": 3,
+            "type": "integer"
+          },
+          "expiresAt": {
+            "example": "2026-10-26T16:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "pickupConfirmedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plannedShipOn": {
+            "example": "2026-10-20",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "recipient": {
+            "$ref": "#/components/schemas/HandoverRecipientDto"
+          },
+          "sender": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HandoverSenderDto"
+              }
+            ],
+            "description": "getpack (never the factory, D-050)"
+          },
+          "shipmentNo": {
+            "example": "SH-2610-0001",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ShipmentStatus"
+              }
+            ],
+            "example": "ready"
+          },
+          "statusLabelTh": {
+            "description": "`status` (ShipmentStatus) in Thai for the customer — render this, not a label map of your own (D-313). The enum value in `status` never changes.",
+            "example": "เตรียมจัดส่ง",
+            "type": "string"
+          },
+          "weightG": {
+            "example": 18000,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "shipmentNo",
+          "status",
+          "statusLabelTh",
+          "cartonsCount",
+          "cartons",
+          "weightG",
+          "plannedShipOn",
+          "recipient",
+          "sender",
+          "expiresAt",
+          "pickupConfirmedAt",
+          "canConfirmPickup"
+        ],
+        "type": "object"
       },
       "DueTrigger": {
         "enum": [
@@ -69027,6 +69190,123 @@
         ],
         "type": "object"
       },
+      "HandoverCartonDto": {
+        "properties": {
+          "labelCode": {
+            "example": "9F3A0C1B2D4E-01",
+            "type": "string"
+          },
+          "seq": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "labelCode"
+        ],
+        "type": "object"
+      },
+      "HandoverLinkState": {
+        "description": "`closed` once the trip is delivered, cancelled or returned",
+        "enum": [
+          "active",
+          "expired",
+          "revoked",
+          "closed"
+        ],
+        "type": "string"
+      },
+      "HandoverProvinceDto": {
+        "properties": {
+          "nameEn": {
+            "example": "Songkhla",
+            "type": "string"
+          },
+          "nameTh": {
+            "example": "สงขลา",
+            "type": "string"
+          }
+        },
+        "required": [
+          "nameTh",
+          "nameEn"
+        ],
+        "type": "object"
+      },
+      "HandoverRecipientDto": {
+        "properties": {
+          "line1": {
+            "example": "99/9 ถนนกาญจนวนิช",
+            "type": "string"
+          },
+          "line2": {
+            "example": "ตำบลหาดใหญ่ อำเภอหาดใหญ่",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "example": "สมหญิง ใจดี",
+            "type": "string"
+          },
+          "phone": {
+            "example": "+66810001234",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "90110",
+            "type": "string"
+          },
+          "province": {
+            "$ref": "#/components/schemas/HandoverProvinceDto"
+          }
+        },
+        "required": [
+          "name",
+          "phone",
+          "line1",
+          "line2",
+          "postcode",
+          "province"
+        ],
+        "type": "object"
+      },
+      "HandoverSenderDto": {
+        "properties": {
+          "name": {
+            "example": "getpack · บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด",
+            "type": "string"
+          },
+          "phone": {
+            "example": "+6620000000",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name",
+          "phone"
+        ],
+        "type": "object"
+      },
+      "HandoverTokenDto": {
+        "properties": {
+          "token": {
+            "description": "The token of the driver handover link `<web>/l/<token>` (starts with `d`)",
+            "example": "dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw",
+            "pattern": "^d[A-Za-z0-9_-]{32}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
       "HealthIndicatorState": {
         "properties": {
           "status": {
@@ -71681,6 +71961,29 @@
           "lastUsedAt",
           "createdAt",
           "clientSecret"
+        ],
+        "type": "object"
+      },
+      "IssuedHandoverLinkDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-10-26T16:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "token": {
+            "example": "dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw",
+            "type": "string"
+          },
+          "url": {
+            "example": "https://www.getpack.example/l/dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "token",
+          "expiresAt"
         ],
         "type": "object"
       },
@@ -79175,6 +79478,11 @@
               "null"
             ]
           },
+          "waybillIssued": {
+            "description": "D-462: getpack has issued the carrier waybill (a driver handover link or a fallback-carrier booking) — \"ส่งใบปะหน้าให้ผู้ขนส่งแล้ว\". The recipient’s details go to the carrier only; the factory never receives them.",
+            "example": false,
+            "type": "boolean"
+          },
           "weightG": {
             "example": 18000,
             "type": "integer"
@@ -79205,6 +79513,7 @@
           "cartons",
           "blockedByPayment",
           "carrierRequest",
+          "waybillIssued",
           "nextActions"
         ],
         "type": "object"
@@ -100566,6 +100875,59 @@
           "returned"
         ],
         "type": "string"
+      },
+      "ShipmentHandoverSummaryDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-10-26T16:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "issuedAt": {
+            "example": "2026-10-19T16:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lastOpenedAt": {
+            "example": "2026-10-20T09:12:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "openCount": {
+            "description": "Times the driver opened it (each one audited)",
+            "example": 2,
+            "type": "integer"
+          },
+          "pickupConfirmedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "state": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HandoverLinkState"
+              }
+            ],
+            "description": "`closed` once the trip is delivered, cancelled or returned",
+            "example": "active"
+          }
+        },
+        "required": [
+          "state",
+          "issuedAt",
+          "expiresAt",
+          "openCount",
+          "lastOpenedAt",
+          "pickupConfirmedAt"
+        ],
+        "type": "object"
       },
       "ShipmentItemDto": {
         "properties": {
@@ -330963,6 +331325,7 @@
                       "exception": null,
                       "factoryCode": "F-0001",
                       "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                      "handover": null,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                       "items": [
                         {
@@ -330994,6 +331357,7 @@
                       "trackingNo": null,
                       "trackingUrl": null,
                       "volumeCm3": 120000,
+                      "waybillIssued": false,
                       "weightG": 18000
                     }
                   ],
@@ -331237,6 +331601,7 @@
                   "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "handover": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "items": [
                     {
@@ -331268,6 +331633,7 @@
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -331536,6 +331902,7 @@
                   "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "handover": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "items": [
                     {
@@ -331567,6 +331934,7 @@
                   "trackingNo": "TH0123",
                   "trackingUrl": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -331938,6 +332306,7 @@
                   "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "handover": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "items": [
                     {
@@ -331969,6 +332338,7 @@
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -332315,6 +332685,7 @@
                   "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "handover": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "items": [
                     {
@@ -332346,6 +332717,7 @@
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -332681,6 +333053,7 @@
                     "exception": null,
                     "factoryCode": "F-0001",
                     "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                    "handover": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2008",
                     "items": [
                       {
@@ -332715,6 +333088,7 @@
                     "trackingNo": null,
                     "trackingUrl": null,
                     "volumeCm3": 120000,
+                    "waybillIssued": false,
                     "weightG": 6000
                   },
                   "shipment": {
@@ -332756,6 +333130,7 @@
                     "exception": null,
                     "factoryCode": "F-0001",
                     "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                    "handover": null,
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                     "items": [
                       {
@@ -332787,6 +333162,7 @@
                     "trackingNo": null,
                     "trackingUrl": null,
                     "volumeCm3": 120000,
+                    "waybillIssued": false,
                     "weightG": 18000
                   }
                 },
@@ -333357,6 +333733,7 @@
                   "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "handover": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "items": [
                     {
@@ -333388,6 +333765,7 @@
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -333610,6 +333988,215 @@
         ]
       }
     },
+    "/v1/admin/shipments/{shipmentId}/handover-link": {
+      "post": {
+        "description": "D-462 (sealed carrier label): a random, single-shipment link `<web>/l/<token>` for the carrier / driver, the only place outside getpack staff that shows the recipient’s name, phone and address. Valid until the trip is delivered, cancelled or returned and at most 7 days; issuing again revokes the previous link. The URL and token are returned once (only the hash is kept) — send them to the driver, never to the factory. Packed shipments up to delivery only. Audited (`data_access`); the factory sees only `waybillIssued`.\n\nImplements: D-462, D-050.",
+        "operationId": "admin.shipments.issueHandoverLink",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shipmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-26T16:05:00+07:00",
+                  "token": "dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw",
+                  "url": "https://www.getpack.example/l/dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedHandoverLinkDto"
+                }
+              }
+            },
+            "description": "Issued",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "shipments.invalid_status": {
+                    "$ref": "#/components/examples/problem.shipments.invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `shipments.invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Issue or regenerate the driver handover link",
+        "tags": [
+          "admin.logistics"
+        ],
+        "x-required-permissions": [
+          "shipments.manage"
+        ]
+      }
+    },
     "/v1/admin/shipments/{shipmentId}/pod/actions/{decision}": {
       "post": {
         "description": "A staff check of the recorded POD (D-229): `reject` needs a note and raises `shipment.pod_rejected` for follow-up; neither changes the delivery, the tolerance reconciliation or the payout rule (D-022). Reviews are kept; the latest is the POD’s state.\n\nImplements: D-229, D-013, D-022.",
@@ -333715,6 +334302,7 @@
                   "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "handover": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "items": [
                     {
@@ -333764,6 +334352,7 @@
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -334103,6 +334692,7 @@
                   "exception": null,
                   "factoryCode": "F-0001",
                   "factoryId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1003",
+                  "handover": null,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2001",
                   "items": [
                     {
@@ -334144,6 +334734,7 @@
                   "trackingNo": null,
                   "trackingUrl": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -334373,6 +334964,212 @@
           }
         ],
         "summary": "Record a proof of delivery on the factory’s or carrier’s behalf",
+        "tags": [
+          "admin.logistics"
+        ],
+        "x-required-permissions": [
+          "shipments.manage"
+        ]
+      }
+    },
+    "/v1/admin/shipments/{shipmentId}/waybill": {
+      "get": {
+        "description": "D-462: the full address label (100 × 150 mm PDF: getpack as sender, the recipient’s name, phone and address, job numbers, cartons) for the carrier — rendered on demand, never stored as a factory file, metadata stripped, named `<shipmentNo>-waybill.pdf`. Each download is audited (`data_access`).\n\nImplements: D-462, D-050.",
+        "operationId": "admin.shipments.waybill",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "shipmentId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/pdf": {
+                "example": "(binary PDF)",
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The waybill PDF",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "provider.unavailable": {
+                    "$ref": "#/components/examples/problem.provider.unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `provider.unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Download the carrier waybill",
         "tags": [
           "admin.logistics"
         ],
@@ -493101,6 +493898,7 @@
                       "statusLabelTh": "พร้อมส่ง",
                       "trackingNo": null,
                       "volumeCm3": 120000,
+                      "waybillIssued": false,
                       "weightG": 18000
                     }
                   ],
@@ -493378,6 +494176,7 @@
                   "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -493701,6 +494500,7 @@
                   "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -493977,6 +494777,7 @@
                   "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -494294,6 +495095,7 @@
                   "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -494518,7 +495320,7 @@
     },
     "/v1/partner/shipments/{shipmentId}/actions/ready": {
       "post": {
-        "description": "Generates one 100 × 150 mm label per carton (QR → public tracking, getpack brand only, D-050) and the packing list; the shipping payout is fixed from the factory’s rate card (D-013).\n\nImplements: D-013, D-050.",
+        "description": "Generates one 100 × 150 mm label per carton and the packing list (`<shipmentNo>-labels.pdf`, `<shipmentNo>-packing.pdf`, metadata stripped). D-462: they carry no recipient identity — shipment code, job numbers, carton n/m, destination code (D1 …), province and postcode prefix, and a QR with an opaque tracking token only; the recipient’s address goes to the carrier through getpack’s waybill. getpack brand only (D-050); the shipping payout is fixed from the factory’s rate card (D-013).\n\nImplements: D-013, D-050, D-462.",
         "operationId": "partner.shipments.markReady",
         "parameters": [
           {
@@ -494611,6 +495413,7 @@
                   "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -494962,6 +495765,7 @@
                   "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -495298,6 +496102,7 @@
                   "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -495654,6 +496459,7 @@
                   "statusLabelTh": "พร้อมส่ง",
                   "trackingNo": null,
                   "volumeCm3": 120000,
+                  "waybillIssued": false,
                   "weightG": 18000
                 },
                 "schema": {
@@ -541322,6 +542128,568 @@
         ]
       }
     },
+    "/v1/store/handover-links/actions/confirm-pickup": {
+      "post": {
+        "description": "D-462: the driver confirms the goods were collected. Optional `scannedTokens` are the tracking tokens read from carton QR codes; one that does not belong to this shipment → 422 `handover.scan_mismatch`. A packed shipment on the factory fleet is picked up through the shipping gate (closed gate → 409 `handover.not_ready`, without saying why); a booked carrier’s pickup still comes from its callbacks. Repeating it is harmless. Audited. Same 404 / 410 rules as opening the link.\n\nImplements: D-462, D-013.",
+        "operationId": "store.handover.confirmPickup",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "scannedTokens": [
+                      "q3J9f0T1xYk8Zb2mR4sW6uE7vN0aLcDh"
+                    ],
+                    "token": "dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmHandoverPickupDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "canConfirmPickup": false,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3
+                    }
+                  ],
+                  "cartonsCount": 3,
+                  "expiresAt": "2026-10-26T16:05:00+07:00",
+                  "pickupConfirmedAt": "2026-10-20T09:15:00+07:00",
+                  "plannedShipOn": "2026-10-20",
+                  "recipient": {
+                    "line1": "99/9 ถนนกาญจนวนิช",
+                    "line2": "ตำบลหาดใหญ่ อำเภอหาดใหญ่",
+                    "name": "สมหญิง ใจดี",
+                    "phone": "+66810001234",
+                    "postcode": "90110",
+                    "province": {
+                      "nameEn": "Songkhla",
+                      "nameTh": "สงขลา"
+                    }
+                  },
+                  "sender": {
+                    "name": "getpack · บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด",
+                    "phone": "+6620000000"
+                  },
+                  "shipmentNo": "SH-2610-0001",
+                  "status": "picked_up",
+                  "statusLabelTh": "จัดส่งออกแล้ว",
+                  "weightG": 18000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DriverHandoverDto"
+                }
+              }
+            },
+            "description": "Pickup confirmed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "handover.not_ready": {
+                    "$ref": "#/components/examples/problem.handover.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `handover.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "410": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "handover.expired": {
+                    "$ref": "#/components/examples/problem.handover.expired"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `handover.expired`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "handover.scan_mismatch": {
+                    "$ref": "#/components/examples/problem.handover.scan_mismatch"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `handover.scan_mismatch`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Confirm pickup through the handover link",
+        "tags": [
+          "store.handover"
+        ]
+      }
+    },
+    "/v1/store/handover-links/actions/resolve": {
+      "post": {
+        "description": "D-462 (sealed carrier label): the carrier / driver opens `<web>/l/<token>` (token starting with `d`) and sees the recipient’s name, phone and address, the shipment code and its cartons — never the factory, prices or other orders (D-050). The token is sent in the body, not the URL path, so it stays out of access logs. Unknown or regenerated (revoked) links → 404; a trip that is delivered, cancelled or returned, or a link older than 7 days → 410 `handover.expired`. Every open, refused ones included, is an audit row. Rate-limited.\n\nImplements: D-462, D-050.",
+        "operationId": "store.handover.resolve",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "token": "dQ2hlY2tUaGlzSXNBRmFrZVRva2VuMDAw"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/HandoverTokenDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "canConfirmPickup": true,
+                  "cartons": [
+                    {
+                      "labelCode": "9F3A0C1B2D4E-01",
+                      "seq": 1
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-02",
+                      "seq": 2
+                    },
+                    {
+                      "labelCode": "9F3A0C1B2D4E-03",
+                      "seq": 3
+                    }
+                  ],
+                  "cartonsCount": 3,
+                  "expiresAt": "2026-10-26T16:05:00+07:00",
+                  "pickupConfirmedAt": null,
+                  "plannedShipOn": "2026-10-20",
+                  "recipient": {
+                    "line1": "99/9 ถนนกาญจนวนิช",
+                    "line2": "ตำบลหาดใหญ่ อำเภอหาดใหญ่",
+                    "name": "สมหญิง ใจดี",
+                    "phone": "+66810001234",
+                    "postcode": "90110",
+                    "province": {
+                      "nameEn": "Songkhla",
+                      "nameTh": "สงขลา"
+                    }
+                  },
+                  "sender": {
+                    "name": "getpack · บริษัท คอลเลคทีฟ กรุ๊ป (ประเทศไทย) จำกัด",
+                    "phone": "+6620000000"
+                  },
+                  "shipmentNo": "SH-2610-0001",
+                  "status": "ready",
+                  "statusLabelTh": "พร้อมส่ง",
+                  "weightG": 18000
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DriverHandoverDto"
+                }
+              }
+            },
+            "description": "The trip and its recipient",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "410": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "handover.expired": {
+                    "$ref": "#/components/examples/problem.handover.expired"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `handover.expired`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Open a driver handover link",
+        "tags": [
+          "store.handover"
+        ]
+      }
+    },
     "/v1/store/instalments": {
       "get": {
         "description": "Newest group first; cancelled instalments are left out unless asked for with `status`. Each says which orders it pays for, whether it can be paid now and the payment already started on it (D-020, D-061).\n\nImplements: D-020, D-061.",
@@ -586852,6 +588220,10 @@
     {
       "description": "getpack’s published guarantee (D-198, D-199, D-260): remedies per claim type and severity, response and decision times, the claim window — the version the claim engine applies.",
       "name": "store.guarantee"
+    },
+    {
+      "description": "Driver handover link (D-462): the carrier sees the recipient of one shipment through a time-limited token — audited, rate-limited.",
+      "name": "store.handover"
     },
     {
       "description": "The shipments of my orders and confirming receipt (D-050, D-081).",

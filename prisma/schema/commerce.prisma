@@ -381,7 +381,7 @@ model CartItem {
   reuseArtworkProof     Proof?                 @relation("CartItemReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_cart_items__reuse_artwork_proof_id")
   destinations          CartItemDestination[]
 
-  studioPrintJob StudioPrintJob? @relation("StudioPrintJobCartItem")
+  studioPrintJob   StudioPrintJob?   @relation("StudioPrintJobCartItem")
   /// C9 (D-457): the checked own file this line orders.
   fileCheckVersion FileCheckVersion? @relation("FileCheckVersionCartItem")
 
@@ -642,12 +642,12 @@ model Order {
 
   company Company? @relation("OrderCompany", fields: [companyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__company_id")
 
-  designDocument        DesignDocument?        @relation("OrderDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_id")
-  designDocumentVersion DesignDocumentVersion? @relation("OrderDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_version_id")
-  designsLocked         DesignDocument[]       @relation("DesignDocumentLockedByOrder")
-  prepressAssignee      User?                  @relation("OrderPrepressAssignee", fields: [prepressAssigneeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__prepress_assignee_id")
+  designDocument        DesignDocument?          @relation("OrderDesignDocument", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_id")
+  designDocumentVersion DesignDocumentVersion?   @relation("OrderDesignVersion", fields: [designDocumentVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__design_document_version_id")
+  designsLocked         DesignDocument[]         @relation("DesignDocumentLockedByOrder")
+  prepressAssignee      User?                    @relation("OrderPrepressAssignee", fields: [prepressAssigneeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__prepress_assignee_id")
   supportAssignments    OrderSupportAssignment[]
-  reuseArtworkProof     Proof?                 @relation("OrderReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reuse_artwork_proof_id")
+  reuseArtworkProof     Proof?                   @relation("OrderReuseProof", fields: [reuseArtworkProofId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_orders__reuse_artwork_proof_id")
 
   // --- Fulfilment B4.1 (generated back-relations)
   artworkSubmissions   ArtworkSubmission[]   @relation("ArtworkSubmissionOrder")
@@ -755,8 +755,8 @@ model OrderSupportAssignment {
   assignedBy User? @relation("OrderSupportAssignmentAssignedBy", fields: [assignedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_support_assignments__assigned_by") // client: keep
   endedBy    User? @relation("OrderSupportAssignmentEndedBy", fields: [endedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_order_support_assignments__ended_by")
 
-  @@index([orderId], map: "ix_order_support_assignments__order_id")
   @@unique([orderId], map: "ux_order_support_assignments__one_live", where: raw("(ended_at IS NULL)"))
+  @@index([orderId], map: "ix_order_support_assignments__order_id")
   @@index([userId], map: "ix_order_support_assignments__user_id")
   @@index([assignedById], map: "ix_order_support_assignments__assigned_by")
   @@index([endedById], map: "ix_order_support_assignments__ended_by")

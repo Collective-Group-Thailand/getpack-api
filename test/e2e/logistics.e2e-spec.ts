@@ -273,6 +273,11 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     });
     expect(row.cartons).toHaveLength(2);
     expect(row.trackingLinks).toHaveLength(1);
+    // D-462: the factory's documents carry no recipient identity — area only (code, province, postcode prefix).
+    for (const doc of [labels!, packing!]) {
+      for (const value of [row.recipientName, row.phone, row.line1]) expect(doc).not.toContain(value);
+      expect(doc).toContain(`${row.postcode.slice(0, 3)}xx`);
+    }
     expect(row.payoutAmount?.toFixed(2)).toBe('95.00');
     await as(ctx, owner).get(`/v1/partner/files/${ready.labelFileId}/download`).expect(200);
     await as(ctx, stranger).get(`/v1/partner/files/${ready.labelFileId}/download`).expect(404);
