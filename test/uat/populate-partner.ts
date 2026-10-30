@@ -493,7 +493,7 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
   // --- knowledge base and scorecard -----------------------------------------------------------------------
 
   await step(
-    'partner knowledge base: one draft article per category, each citing its decision (D-295)',
+    'partner knowledge base: one draft article per category (D-295)',
     async () => {
       const marketing = as(ctx, tokens['marketing']!);
       const categories = await ok<{ data: { id: string; slug: string }[] }>(
@@ -512,7 +512,7 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
           titleTh: 'รับงานภายใน 1 วันทำการ',
           excerptTh: 'งานที่ getpack ส่งให้ต้องกดรับหรือปฏิเสธภายใน 1 วันทำการ',
           body: doc(
-            'งานใหม่ต้องกดรับหรือปฏิเสธพร้อมเหตุผลภายใน 1 วันทำการ หากเกินกำหนด ระบบจะแจ้งเตือนและเสนอย้ายงาน (D-074)',
+            'งานใหม่ต้องกดรับหรือปฏิเสธพร้อมเหตุผลภายใน 1 วันทำการ หากเกินกำหนด ระบบจะแจ้งเตือนและเสนอย้ายงาน',
             'อ่านใบสเปกงาน (spec sheet) ของคำสั่งซื้อก่อนรับงานทุกครั้ง',
           ),
         },
@@ -522,7 +522,7 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
           titleTh: 'ผลิตตามไฟล์ที่ลูกค้าอนุมัติเท่านั้น',
           excerptTh: 'ใช้ไฟล์ Proof ที่อนุมัติแล้วจากหน้างาน ไม่รับไฟล์ทางช่องทางอื่น',
           body: doc(
-            'สีต้องอยู่ใน ΔE2000 ≤ 3 เทียบกับ Proof ที่อนุมัติ (≤ 5 สำหรับงานเฟล็กโซ) ขนาด ± 3 มม. สำหรับกล่องลูกฟูก (D-186)',
+            'สีต้องอยู่ใน ΔE2000 ≤ 3 เทียบกับ Proof ที่อนุมัติ (≤ 5 สำหรับงานเฟล็กโซ) ขนาด ± 3 มม. สำหรับกล่องลูกฟูก',
             'หากไฟล์มีปัญหา ให้แจ้งปัญหาในงาน (ประเภท “คำถามเรื่องอาร์ตเวิร์ก”) แทนการแก้ไฟล์เอง',
           ),
         },
@@ -532,7 +532,7 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
           titleTh: 'มาตรฐานภาพถ่าย QC',
           excerptTh: 'ถ่ายภาพงานก่อนส่งอย่างไรให้ getpack ตรวจได้',
           body: doc(
-            'โรงงานตรวจคุณภาพเองพร้อมภาพถ่ายเป็นหลักฐาน getpack สุ่มตรวจตามความเสี่ยงของงาน (D-076)',
+            'โรงงานตรวจคุณภาพเองพร้อมภาพถ่ายเป็นหลักฐาน getpack สุ่มตรวจตามความเสี่ยงของงาน',
             'ถ่ายให้เห็นงานพิมพ์ทั้งด้าน ขอบตัด และฉลากกล่อง ในที่แสงพอ',
           ),
         },
@@ -552,8 +552,8 @@ export async function populatePartnerZone<Cust extends UatCustomer>(d: PartnerZo
           titleTh: 'รอบรับเงินและใบวางบิล',
           excerptTh: 'รับเงินมัดจำเมื่อรับงาน ส่วนที่เหลือหลังพ้นระยะเคลม',
           body: doc(
-            'โรงงานได้รับ 30 % เมื่อรับงาน ส่วนที่เหลือหลังส่งมอบและพ้นระยะเคลม 7 วัน หักเงินประกัน 5 % (D-022)',
-            'ระบบสร้างใบวางบิลจาก PO และ POD ให้โรงงานตรวจและยืนยัน แล้วแนบใบกำกับภาษีของโรงงาน (D-090)',
+            'โรงงานได้รับ 30 % เมื่อรับงาน ส่วนที่เหลือหลังส่งมอบและพ้นระยะเคลม 7 วัน หักเงินประกัน 5 %',
+            'ระบบสร้างใบวางบิลจาก PO และ POD ให้โรงงานตรวจและยืนยัน แล้วแนบใบกำกับภาษีของโรงงาน',
           ),
         },
       ];
