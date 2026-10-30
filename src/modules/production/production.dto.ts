@@ -249,6 +249,10 @@ export class MilestoneDto {
   photoFileIds!: string[];
 }
 
+/**
+ * A delivery destination as the factory sees it (P4-01 / P4-D1): its code within the job, the province and the
+ * first three digits of the postcode — never the recipient's name, phone or address lines.
+ */
 export class JobDestinationDto {
   @ApiProperty({
     format: 'uuid',
@@ -257,20 +261,17 @@ export class JobDestinationDto {
   })
   id!: string;
 
-  @ApiProperty({ example: 'ผู้รับ ทดสอบ', description: 'Recipient (D-142: name, address and phone only)' })
-  recipientName!: string;
+  @ApiProperty({
+    example: 'D1',
+    description: 'Code within the job (`D1`, `D2` …) by the order’s destination order (P4-D1)',
+  })
+  code!: string;
 
-  @ApiProperty({ example: '+66810001234' })
-  phone!: string;
-
-  @ApiProperty({ example: '1 ถนนทดสอบ' })
-  line1!: string;
-
-  @ApiProperty({ type: String, nullable: true, example: null })
-  line2!: string | null;
-
-  @ApiProperty({ example: '10110' })
-  postcode!: string;
+  @ApiProperty({
+    example: '101',
+    description: 'First three digits of the postcode, for shipping cost (P4-D1: never the full postcode)',
+  })
+  postcodePrefix!: string;
 
   @ApiProperty({ example: 'กรุงเทพมหานคร' })
   provinceNameTh!: string;
@@ -287,6 +288,27 @@ export class JobDestinationDto {
     description: 'Pieces on live shipments of this job (not cancelled / returned)',
   })
   shippedQuantity!: number;
+}
+
+/** Staff only: the destination with the recipient's contact (D-142), on top of the factory view. */
+export class AdminJobDestinationDto extends JobDestinationDto {
+  @ApiProperty({
+    example: 'ผู้รับ ทดสอบ',
+    description: 'Recipient (D-142); never on the partner surface (P4-D1)',
+  })
+  recipientName!: string;
+
+  @ApiProperty({ example: '+66810001234' })
+  phone!: string;
+
+  @ApiProperty({ example: '1 ถนนทดสอบ' })
+  line1!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  line2!: string | null;
+
+  @ApiProperty({ example: '10110' })
+  postcode!: string;
 }
 
 export class JobToleranceDto {
@@ -624,7 +646,16 @@ export class AdminJobDto extends PartnerJobDto {
 
   @ApiProperty({ type: [JobAssignmentDto] })
   assignments!: JobAssignmentDto[];
+
+  // Staff see the recipient's contact (P4-D1); documented below, after the class.
+  declare destinations: AdminJobDestinationDto[];
 }
+
+// A `declare` field takes no decorator: document the staff destinations on the class itself.
+ApiProperty({
+  type: [AdminJobDestinationDto],
+  description: 'With the recipient’s contact (staff only; the factory sees codes, P4-D1)',
+})(AdminJobDto.prototype, 'destinations');
 
 export const MILESTONE_EXAMPLE: MilestoneDto = {
   id: JOB_IDS.milestone,
@@ -696,11 +727,8 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
   destinations: [
     {
       id: '0192f3a0-7c1e-7d2a-9b1f-0000000f2002',
-      recipientName: 'ผู้รับ ทดสอบ',
-      phone: '+66810001234',
-      line1: '1 ถนนทดสอบ',
-      line2: null,
-      postcode: '10110',
+      code: 'D1',
+      postcodePrefix: '101',
       provinceNameTh: 'กรุงเทพมหานคร',
       provinceNameEn: 'Bangkok',
       quantity: 1000,
@@ -713,6 +741,14 @@ export const PARTNER_JOB_EXAMPLE: PartnerJobDto = {
 
 export const ADMIN_JOB_EXAMPLE: AdminJobDto = {
   ...PARTNER_JOB_EXAMPLE,
+  destinations: PARTNER_JOB_EXAMPLE.destinations.map((d) => ({
+    ...d,
+    recipientName: 'ผู้รับ ทดสอบ',
+    phone: '+66810001234',
+    line1: '1 ถนนทดสอบ',
+    line2: null,
+    postcode: '10110',
+  })),
   orderId: JOB_IDS.order,
   orderCode: 'DEVOR-2609-00001',
   factoryId: JOB_IDS.factory,

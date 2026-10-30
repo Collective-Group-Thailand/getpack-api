@@ -13,6 +13,7 @@ import {
   ApiSuccess,
 } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
+import { destinationCode, postcodePrefix } from '@common/privacy/partner-destination';
 import { PrismaService } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
 import { permissionsOf } from '@modules/iam/actor-permissions';
@@ -130,8 +131,9 @@ export class PartnerShipmentsController {
     id: 'partner.shipments.list',
     summary: 'List my factory’s shipments',
     description:
-      'Newest first; `view` groups the statuses (open, in transit, delivered, exceptions). Destination contacts only ' +
-      '(D-142), no prices; each trip says whether unpaid instalments block pickup and whether a carrier was asked for.',
+      'Newest first; `view` groups the statuses (open, in transit, delivered, exceptions). Destinations by code, ' +
+      'province and postcode prefix — no recipient name, phone or address (P4-D1) — and no prices; each trip says ' +
+      'whether unpaid instalments block pickup and whether a carrier was asked for.',
     implements: ['D-013', 'D-142'],
   })
   @ApiPaginated(PartnerShipmentDto, { example: PARTNER_SHIPMENT_EXAMPLE })
@@ -436,7 +438,8 @@ export class PartnerShipPlanController {
     description:
       'Completed jobs whose orders are not delivered yet: per destination the pieces already on live trips and what ' +
       'remains, and whether pickup would be refused today (instalments before shipping, getpack inspection — the ' +
-      'checks of dispatch, B3.2 / D-076). Destination contacts only (D-142).',
+      'checks of dispatch, B3.2 / D-076). Destinations by code, province and postcode prefix only — never the ' +
+      'recipient (P4-D1).',
     implements: ['D-013', 'D-076', 'D-142'],
   })
   @ApiSuccess(200, { description: 'Plan', type: [ShipPlanJobDto], example: [SHIP_PLAN_EXAMPLE] })
@@ -453,10 +456,11 @@ export class PartnerShipPlanController {
       quantityOrdered: job.quantityOrdered,
       quantityGood: job.quantityGood,
       blockedReason,
-      destinations: destinations.map(({ destination: d, shipped, remaining }) => ({
+      // P4-D1: code, province and postcode prefix only — never the recipient (destinations are in stable order).
+      destinations: destinations.map(({ destination: d, shipped, remaining }, i) => ({
         destinationId: d.publicId,
-        recipientName: d.recipientName,
-        postcode: d.postcode,
+        code: destinationCode(i),
+        postcodePrefix: postcodePrefix(d.postcode),
         provinceNameTh: d.province.nameTh,
         quantity: d.quantity,
         shippedQuantity: shipped,

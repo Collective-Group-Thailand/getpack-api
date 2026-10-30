@@ -118,7 +118,8 @@ export class PartnerProductionController {
     id: 'partner.production.get',
     summary: 'Get one of my jobs',
     description:
-      'Spec, the approved artwork and dieline (download the approved version only), delivery contacts (D-142), milestones.',
+      'Spec, the approved artwork and dieline (download the approved version only), destinations by code, province ' +
+      'and postcode prefix — never the recipient (P4-D1) — and milestones.',
     implements: ['D-142', 'D-075'],
   })
   @ApiSuccess(200, { description: 'Job', type: PartnerJobDto, example: PARTNER_JOB_EXAMPLE })

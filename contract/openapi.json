@@ -9505,6 +9505,82 @@
         ],
         "type": "object"
       },
+      "AdminJobDestinationDto": {
+        "properties": {
+          "code": {
+            "description": "Code within the job (`D1`, `D2` …) by the order’s destination order (P4-D1)",
+            "example": "D1",
+            "type": "string"
+          },
+          "id": {
+            "description": "Referenced by shipment items (B4.3)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
+            "format": "uuid",
+            "type": "string"
+          },
+          "line1": {
+            "example": "1 ถนนทดสอบ",
+            "type": "string"
+          },
+          "line2": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66810001234",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "postcodePrefix": {
+            "description": "First three digits of the postcode, for shipping cost (P4-D1: never the full postcode)",
+            "example": "101",
+            "type": "string"
+          },
+          "provinceNameEn": {
+            "example": "Bangkok",
+            "type": "string"
+          },
+          "provinceNameTh": {
+            "example": "กรุงเทพมหานคร",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 1000,
+            "type": "integer"
+          },
+          "recipientName": {
+            "description": "Recipient (D-142); never on the partner surface (P4-D1)",
+            "example": "ผู้รับ ทดสอบ",
+            "type": "string"
+          },
+          "shippedQuantity": {
+            "description": "Pieces on live shipments of this job (not cancelled / returned)",
+            "example": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "postcodePrefix",
+          "provinceNameTh",
+          "provinceNameEn",
+          "quantity",
+          "shippedQuantity",
+          "recipientName",
+          "phone",
+          "line1",
+          "line2",
+          "postcode"
+        ],
+        "type": "object"
+      },
       "AdminJobDto": {
         "properties": {
           "acceptDueAt": {
@@ -9578,8 +9654,9 @@
             ]
           },
           "destinations": {
+            "description": "With the recipient’s contact (staff only; the factory sees codes, P4-D1)",
             "items": {
-              "$ref": "#/components/schemas/JobDestinationDto"
+              "$ref": "#/components/schemas/AdminJobDestinationDto"
             },
             "type": "array"
           },
@@ -12677,6 +12754,57 @@
         ],
         "type": "object"
       },
+      "AdminShipmentDestinationDto": {
+        "properties": {
+          "code": {
+            "description": "The job destination’s code (`D1`, `D2` …) of the trip’s first item (P4-D1)",
+            "example": "D1",
+            "type": "string"
+          },
+          "line1": {
+            "example": "99/9 ถนนสุขุมวิท",
+            "type": "string"
+          },
+          "line2": {
+            "example": "แขวงคลองตัน เขตคลองเตย",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66810001234",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "postcodePrefix": {
+            "description": "First three digits of the postcode (P4-D1)",
+            "example": "101",
+            "type": "string"
+          },
+          "province": {
+            "$ref": "#/components/schemas/GeoRefDto"
+          },
+          "recipientName": {
+            "example": "สมหญิง ใจดี",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "postcodePrefix",
+          "province",
+          "recipientName",
+          "phone",
+          "line1",
+          "line2",
+          "postcode"
+        ],
+        "type": "object"
+      },
       "AdminShipmentDto": {
         "properties": {
           "blockedByPayment": {
@@ -12753,7 +12881,12 @@
             ]
           },
           "destination": {
-            "$ref": "#/components/schemas/ShipmentDestinationDto"
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AdminShipmentDestinationDto"
+              }
+            ],
+            "description": "With the recipient’s contact (staff only)"
           },
           "events": {
             "items": {
@@ -71820,29 +71953,20 @@
       },
       "JobDestinationDto": {
         "properties": {
+          "code": {
+            "description": "Code within the job (`D1`, `D2` …) by the order’s destination order (P4-D1)",
+            "example": "D1",
+            "type": "string"
+          },
           "id": {
             "description": "Referenced by shipment items (B4.3)",
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
             "format": "uuid",
             "type": "string"
           },
-          "line1": {
-            "example": "1 ถนนทดสอบ",
-            "type": "string"
-          },
-          "line2": {
-            "example": null,
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "phone": {
-            "example": "+66810001234",
-            "type": "string"
-          },
-          "postcode": {
-            "example": "10110",
+          "postcodePrefix": {
+            "description": "First three digits of the postcode, for shipping cost (P4-D1: never the full postcode)",
+            "example": "101",
             "type": "string"
           },
           "provinceNameEn": {
@@ -71857,11 +71981,6 @@
             "example": 1000,
             "type": "integer"
           },
-          "recipientName": {
-            "description": "Recipient (D-142: name, address and phone only)",
-            "example": "ผู้รับ ทดสอบ",
-            "type": "string"
-          },
           "shippedQuantity": {
             "description": "Pieces on live shipments of this job (not cancelled / returned)",
             "example": 0,
@@ -71870,11 +71989,8 @@
         },
         "required": [
           "id",
-          "recipientName",
-          "phone",
-          "line1",
-          "line2",
-          "postcode",
+          "code",
+          "postcodePrefix",
           "provinceNameTh",
           "provinceNameEn",
           "quantity",
@@ -86474,8 +86590,12 @@
             "type": "array"
           },
           "receiverName": {
+            "description": "Who received it. On the partner surface null for a carrier POD (the carrier copies the recipient, P4-D1); a factory POD shows the name the factory recorded",
             "example": "สมหญิง ใจดี",
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "signatureFileId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2006",
@@ -100051,13 +100171,19 @@
       },
       "ShipPlanDestinationDto": {
         "properties": {
+          "code": {
+            "description": "The destination’s code within the job (`D1`, `D2` …, P4-D1)",
+            "example": "D1",
+            "type": "string"
+          },
           "destinationId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
             "format": "uuid",
             "type": "string"
           },
-          "postcode": {
-            "example": "10110",
+          "postcodePrefix": {
+            "description": "First three digits of the postcode (P4-D1)",
+            "example": "101",
             "type": "string"
           },
           "provinceNameTh": {
@@ -100068,10 +100194,6 @@
             "description": "Pieces for this address",
             "example": 600,
             "type": "integer"
-          },
-          "recipientName": {
-            "example": "สมหญิง ใจดี",
-            "type": "string"
           },
           "remainingQuantity": {
             "example": 600,
@@ -100085,8 +100207,8 @@
         },
         "required": [
           "destinationId",
-          "recipientName",
-          "postcode",
+          "code",
+          "postcodePrefix",
           "provinceNameTh",
           "quantity",
           "shippedQuantity",
@@ -100148,6 +100270,45 @@
           "quantityGood",
           "blockedReason",
           "destinations"
+        ],
+        "type": "object"
+      },
+      "ShipmentAddressDto": {
+        "properties": {
+          "line1": {
+            "example": "99/9 ถนนสุขุมวิท",
+            "type": "string"
+          },
+          "line2": {
+            "example": "แขวงคลองตัน เขตคลองเตย",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66810001234",
+            "type": "string"
+          },
+          "postcode": {
+            "example": "10110",
+            "type": "string"
+          },
+          "province": {
+            "$ref": "#/components/schemas/GeoRefDto"
+          },
+          "recipientName": {
+            "example": "สมหญิง ใจดี",
+            "type": "string"
+          }
+        },
+        "required": [
+          "recipientName",
+          "phone",
+          "line1",
+          "line2",
+          "postcode",
+          "province"
         ],
         "type": "object"
       },
@@ -100232,39 +100393,23 @@
       },
       "ShipmentDestinationDto": {
         "properties": {
-          "line1": {
-            "example": "99/9 ถนนสุขุมวิท",
+          "code": {
+            "description": "The job destination’s code (`D1`, `D2` …) of the trip’s first item (P4-D1)",
+            "example": "D1",
             "type": "string"
           },
-          "line2": {
-            "example": "แขวงคลองตัน เขตคลองเตย",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "phone": {
-            "example": "+66810001234",
-            "type": "string"
-          },
-          "postcode": {
-            "example": "10110",
+          "postcodePrefix": {
+            "description": "First three digits of the postcode (P4-D1)",
+            "example": "101",
             "type": "string"
           },
           "province": {
             "$ref": "#/components/schemas/GeoRefDto"
-          },
-          "recipientName": {
-            "example": "สมหญิง ใจดี",
-            "type": "string"
           }
         },
         "required": [
-          "recipientName",
-          "phone",
-          "line1",
-          "line2",
-          "postcode",
+          "code",
+          "postcodePrefix",
           "province"
         ],
         "type": "object"
@@ -100431,6 +100576,11 @@
               "null"
             ]
           },
+          "destinationCode": {
+            "description": "The destination’s code within its job (`destinations[].code` of the job, P4-D1)",
+            "example": "D1",
+            "type": "string"
+          },
           "destinationId": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
             "format": "uuid",
@@ -100468,6 +100618,7 @@
         },
         "required": [
           "destinationId",
+          "destinationCode",
           "jobId",
           "jobNo",
           "orderCode",
@@ -107633,7 +107784,7 @@
             ]
           },
           "destination": {
-            "$ref": "#/components/schemas/ShipmentDestinationDto"
+            "$ref": "#/components/schemas/ShipmentAddressDto"
           },
           "events": {
             "items": {
@@ -286988,11 +287139,13 @@
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
+                      "code": "D1",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "line1": "1 ถนนทดสอบ",
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "postcodePrefix": "101",
                       "provinceNameEn": "Bangkok",
                       "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
@@ -303141,11 +303294,13 @@
                       "currentMilestoneKey": "printing",
                       "destinations": [
                         {
+                          "code": "D1",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                           "line1": "1 ถนนทดสอบ",
                           "line2": null,
                           "phone": "+66810001234",
                           "postcode": "10110",
+                          "postcodePrefix": "101",
                           "provinceNameEn": "Bangkok",
                           "provinceNameTh": "กรุงเทพมหานคร",
                           "quantity": 1000,
@@ -303449,11 +303604,13 @@
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
+                      "code": "D1",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "line1": "1 ถนนทดสอบ",
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "postcodePrefix": "101",
                       "provinceNameEn": "Bangkok",
                       "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
@@ -303772,11 +303929,13 @@
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
+                      "code": "D1",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "line1": "1 ถนนทดสอบ",
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "postcodePrefix": "101",
                       "provinceNameEn": "Bangkok",
                       "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
@@ -304139,11 +304298,13 @@
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
+                      "code": "D1",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "line1": "1 ถนนทดสอบ",
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "postcodePrefix": "101",
                       "provinceNameEn": "Bangkok",
                       "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
@@ -304497,11 +304658,13 @@
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
+                      "code": "D1",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "line1": "1 ถนนทดสอบ",
                       "line2": null,
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "postcodePrefix": "101",
                       "provinceNameEn": "Bangkok",
                       "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
@@ -330773,10 +330936,12 @@
                       "cartonsCount": 3,
                       "deliveredAt": null,
                       "destination": {
+                        "code": "D1",
                         "line1": "99/9 ถนนสุขุมวิท",
                         "line2": "แขวงคลองตัน เขตคลองเตย",
                         "phone": "+66810001234",
                         "postcode": "10110",
+                        "postcodePrefix": "101",
                         "province": {
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                           "nameEn": "Bangkok",
@@ -330802,6 +330967,7 @@
                       "items": [
                         {
                           "deliveredQuantity": null,
+                          "destinationCode": "D1",
                           "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                           "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                           "jobNo": "JOB-2610-0001",
@@ -331044,10 +331210,12 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
+                    "code": "D1",
                     "line1": "99/9 ถนนสุขุมวิท",
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
@@ -331073,6 +331241,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -331340,10 +331509,12 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
+                    "code": "D1",
                     "line1": "99/9 ถนนสุขุมวิท",
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
@@ -331369,6 +331540,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -331739,10 +331911,12 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
+                    "code": "D1",
                     "line1": "99/9 ถนนสุขุมวิท",
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
@@ -331768,6 +331942,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -332113,10 +332288,12 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
+                    "code": "D1",
                     "line1": "99/9 ถนนสุขุมวิท",
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
@@ -332142,6 +332319,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -332476,10 +332654,12 @@
                     "cartonsCount": 1,
                     "deliveredAt": null,
                     "destination": {
+                      "code": "D1",
                       "line1": "99/9 ถนนสุขุมวิท",
                       "line2": "แขวงคลองตัน เขตคลองเตย",
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "postcodePrefix": "101",
                       "province": {
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                         "nameEn": "Bangkok",
@@ -332505,6 +332685,7 @@
                     "items": [
                       {
                         "deliveredQuantity": null,
+                        "destinationCode": "D1",
                         "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                         "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                         "jobNo": "JOB-2610-0001",
@@ -332548,10 +332729,12 @@
                     "cartonsCount": 2,
                     "deliveredAt": null,
                     "destination": {
+                      "code": "D1",
                       "line1": "99/9 ถนนสุขุมวิท",
                       "line2": "แขวงคลองตัน เขตคลองเตย",
                       "phone": "+66810001234",
                       "postcode": "10110",
+                      "postcodePrefix": "101",
                       "province": {
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                         "nameEn": "Bangkok",
@@ -332577,6 +332760,7 @@
                     "items": [
                       {
                         "deliveredQuantity": null,
+                        "destinationCode": "D1",
                         "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                         "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                         "jobNo": "JOB-2610-0001",
@@ -333146,10 +333330,12 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
+                    "code": "D1",
                     "line1": "99/9 ถนนสุขุมวิท",
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
@@ -333175,6 +333361,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -333501,10 +333688,12 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
+                    "code": "D1",
                     "line1": "99/9 ถนนสุขุมวิท",
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
@@ -333530,6 +333719,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -333886,10 +334076,12 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
+                    "code": "D1",
                     "line1": "99/9 ถนนสุขุมวิท",
                     "line2": "แขวงคลองตัน เขตคลองเตย",
                     "phone": "+66810001234",
                     "postcode": "10110",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
@@ -333915,6 +334107,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -479619,7 +479812,7 @@
     },
     "/v1/partner/factories/{factoryId}/ship-plan": {
       "get": {
-        "description": "Completed jobs whose orders are not delivered yet: per destination the pieces already on live trips and what remains, and whether pickup would be refused today (instalments before shipping, getpack inspection — the checks of dispatch, B3.2 / D-076). Destination contacts only (D-142).\n\nImplements: D-013, D-076, D-142.",
+        "description": "Completed jobs whose orders are not delivered yet: per destination the pieces already on live trips and what remains, and whether pickup would be refused today (instalments before shipping, getpack inspection — the checks of dispatch, B3.2 / D-076). Destinations by code, province and postcode prefix only — never the recipient (P4-D1).\n\nImplements: D-013, D-076, D-142.",
         "operationId": "partner.shipments.shipPlan",
         "parameters": [
           {
@@ -479644,11 +479837,11 @@
                     "blockedReason": null,
                     "destinations": [
                       {
+                        "code": "D1",
                         "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
-                        "postcode": "10110",
+                        "postcodePrefix": "101",
                         "provinceNameTh": "กรุงเทพมหานคร",
                         "quantity": 600,
-                        "recipientName": "สมหญิง ใจดี",
                         "remainingQuantity": 600,
                         "shippedQuantity": 0
                       }
@@ -481744,15 +481937,12 @@
                       "currentMilestoneKey": "printing",
                       "destinations": [
                         {
+                          "code": "D1",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
-                          "line1": "1 ถนนทดสอบ",
-                          "line2": null,
-                          "phone": "+66810001234",
-                          "postcode": "10110",
+                          "postcodePrefix": "101",
                           "provinceNameEn": "Bangkok",
                           "provinceNameTh": "กรุงเทพมหานคร",
                           "quantity": 1000,
-                          "recipientName": "ผู้รับ ทดสอบ",
                           "shippedQuantity": 0
                         }
                       ],
@@ -488225,15 +488415,12 @@
                       "currentMilestoneKey": "printing",
                       "destinations": [
                         {
+                          "code": "D1",
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
-                          "line1": "1 ถนนทดสอบ",
-                          "line2": null,
-                          "phone": "+66810001234",
-                          "postcode": "10110",
+                          "postcodePrefix": "101",
                           "provinceNameEn": "Bangkok",
                           "provinceNameTh": "กรุงเทพมหานคร",
                           "quantity": 1000,
-                          "recipientName": "ผู้รับ ทดสอบ",
                           "shippedQuantity": 0
                         }
                       ],
@@ -488669,7 +488856,7 @@
     },
     "/v1/partner/production-jobs/{jobId}": {
       "get": {
-        "description": "Spec, the approved artwork and dieline (download the approved version only), delivery contacts (D-142), milestones.\n\nImplements: D-142, D-075.",
+        "description": "Spec, the approved artwork and dieline (download the approved version only), destinations by code, province and postcode prefix — never the recipient (P4-D1) — and milestones.\n\nImplements: D-142, D-075.",
         "operationId": "partner.production.get",
         "parameters": [
           {
@@ -488702,15 +488889,12 @@
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
+                      "code": "D1",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
-                      "line1": "1 ถนนทดสอบ",
-                      "line2": null,
-                      "phone": "+66810001234",
-                      "postcode": "10110",
+                      "postcodePrefix": "101",
                       "provinceNameEn": "Bangkok",
                       "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ",
                       "shippedQuantity": 0
                     }
                   ],
@@ -488989,15 +489173,12 @@
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
+                      "code": "D1",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
-                      "line1": "1 ถนนทดสอบ",
-                      "line2": null,
-                      "phone": "+66810001234",
-                      "postcode": "10110",
+                      "postcodePrefix": "101",
                       "provinceNameEn": "Bangkok",
                       "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ",
                       "shippedQuantity": 0
                     }
                   ],
@@ -489346,15 +489527,12 @@
                   "currentMilestoneKey": "printing",
                   "destinations": [
                     {
+                      "code": "D1",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
-                      "line1": "1 ถนนทดสอบ",
-                      "line2": null,
-                      "phone": "+66810001234",
-                      "postcode": "10110",
+                      "postcodePrefix": "101",
                       "provinceNameEn": "Bangkok",
                       "provinceNameTh": "กรุงเทพมหานคร",
                       "quantity": 1000,
-                      "recipientName": "ผู้รับ ทดสอบ",
                       "shippedQuantity": 0
                     }
                   ],
@@ -490760,15 +490938,12 @@
                     "currentMilestoneKey": "printing",
                     "destinations": [
                       {
+                        "code": "D1",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
-                        "line1": "1 ถนนทดสอบ",
-                        "line2": null,
-                        "phone": "+66810001234",
-                        "postcode": "10110",
+                        "postcodePrefix": "101",
                         "provinceNameEn": "Bangkok",
                         "provinceNameTh": "กรุงเทพมหานคร",
                         "quantity": 1000,
-                        "recipientName": "ผู้รับ ทดสอบ",
                         "shippedQuantity": 0
                       }
                     ],
@@ -492766,7 +492941,7 @@
     },
     "/v1/partner/shipments": {
       "get": {
-        "description": "Newest first; `view` groups the statuses (open, in transit, delivered, exceptions). Destination contacts only (D-142), no prices; each trip says whether unpaid instalments block pickup and whether a carrier was asked for.\n\nImplements: D-013, D-142.",
+        "description": "Newest first; `view` groups the statuses (open, in transit, delivered, exceptions). Destinations by code, province and postcode prefix — no recipient name, phone or address (P4-D1) — and no prices; each trip says whether unpaid instalments block pickup and whether a carrier was asked for.\n\nImplements: D-013, D-142.",
         "operationId": "partner.shipments.list",
         "parameters": [
           {
@@ -492880,16 +493055,13 @@
                       "cartonsCount": 3,
                       "deliveredAt": null,
                       "destination": {
-                        "line1": "99/9 ถนนสุขุมวิท",
-                        "line2": "แขวงคลองตัน เขตคลองเตย",
-                        "phone": "+66810001234",
-                        "postcode": "10110",
+                        "code": "D1",
+                        "postcodePrefix": "101",
                         "province": {
                           "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                           "nameEn": "Bangkok",
                           "nameTh": "กรุงเทพมหานคร"
-                        },
-                        "recipientName": "สมหญิง ใจดี"
+                        }
                       },
                       "events": [
                         {
@@ -492906,6 +493078,7 @@
                       "items": [
                         {
                           "deliveredQuantity": null,
+                          "destinationCode": "D1",
                           "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                           "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                           "jobNo": "JOB-2610-0001",
@@ -493159,16 +493332,13 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
-                    "line1": "99/9 ถนนสุขุมวิท",
-                    "line2": "แขวงคลองตัน เขตคลองเตย",
-                    "phone": "+66810001234",
-                    "postcode": "10110",
+                    "code": "D1",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
-                    },
-                    "recipientName": "สมหญิง ใจดี"
+                    }
                   },
                   "events": [
                     {
@@ -493185,6 +493355,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -493484,16 +493655,13 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
-                    "line1": "99/9 ถนนสุขุมวิท",
-                    "line2": "แขวงคลองตัน เขตคลองเตย",
-                    "phone": "+66810001234",
-                    "postcode": "10110",
+                    "code": "D1",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
-                    },
-                    "recipientName": "สมหญิง ใจดี"
+                    }
                   },
                   "events": [
                     {
@@ -493510,6 +493678,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -493762,16 +493931,13 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
-                    "line1": "99/9 ถนนสุขุมวิท",
-                    "line2": "แขวงคลองตัน เขตคลองเตย",
-                    "phone": "+66810001234",
-                    "postcode": "10110",
+                    "code": "D1",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
-                    },
-                    "recipientName": "สมหญิง ใจดี"
+                    }
                   },
                   "events": [
                     {
@@ -493788,6 +493954,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -494081,16 +494248,13 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
-                    "line1": "99/9 ถนนสุขุมวิท",
-                    "line2": "แขวงคลองตัน เขตคลองเตย",
-                    "phone": "+66810001234",
-                    "postcode": "10110",
+                    "code": "D1",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
-                    },
-                    "recipientName": "สมหญิง ใจดี"
+                    }
                   },
                   "events": [
                     {
@@ -494107,6 +494271,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -494400,16 +494565,13 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
-                    "line1": "99/9 ถนนสุขุมวิท",
-                    "line2": "แขวงคลองตัน เขตคลองเตย",
-                    "phone": "+66810001234",
-                    "postcode": "10110",
+                    "code": "D1",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
-                    },
-                    "recipientName": "สมหญิง ใจดี"
+                    }
                   },
                   "events": [
                     {
@@ -494426,6 +494588,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -494753,16 +494916,13 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
-                    "line1": "99/9 ถนนสุขุมวิท",
-                    "line2": "แขวงคลองตัน เขตคลองเตย",
-                    "phone": "+66810001234",
-                    "postcode": "10110",
+                    "code": "D1",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
-                    },
-                    "recipientName": "สมหญิง ใจดี"
+                    }
                   },
                   "events": [
                     {
@@ -494779,6 +494939,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -495091,16 +495252,13 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
-                    "line1": "99/9 ถนนสุขุมวิท",
-                    "line2": "แขวงคลองตัน เขตคลองเตย",
-                    "phone": "+66810001234",
-                    "postcode": "10110",
+                    "code": "D1",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
-                    },
-                    "recipientName": "สมหญิง ใจดี"
+                    }
                   },
                   "events": [
                     {
@@ -495117,6 +495275,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",
@@ -495439,16 +495598,13 @@
                   "cartonsCount": 3,
                   "deliveredAt": null,
                   "destination": {
-                    "line1": "99/9 ถนนสุขุมวิท",
-                    "line2": "แขวงคลองตัน เขตคลองเตย",
-                    "phone": "+66810001234",
-                    "postcode": "10110",
+                    "code": "D1",
+                    "postcodePrefix": "101",
                     "province": {
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000f2007",
                       "nameEn": "Bangkok",
                       "nameTh": "กรุงเทพมหานคร"
-                    },
-                    "recipientName": "สมหญิง ใจดี"
+                    }
                   },
                   "events": [
                     {
@@ -495465,6 +495621,7 @@
                   "items": [
                     {
                       "deliveredQuantity": null,
+                      "destinationCode": "D1",
                       "destinationId": "0192f3a0-7c1e-7d2a-9b1f-0000000f2002",
                       "jobId": "0192f3a0-7c1e-7d2a-9b1f-0000000f1001",
                       "jobNo": "JOB-2610-0001",

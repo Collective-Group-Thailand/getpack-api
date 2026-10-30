@@ -1,11 +1,14 @@
 import { statusLabels } from '@common/labels/status-labels';
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
+import { destinationCode, postcodePrefix } from '@common/privacy/partner-destination';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
 
 import { ADMIN_JOB_ACTIONS, PARTNER_JOB_ACTIONS } from './job-actions';
 import {
+  type AdminJobDestinationDto,
   type AdminJobDto,
+  type JobDestinationDto,
   type JobIssueDto,
   type MilestoneDto,
   type PartnerJobDto,
@@ -82,7 +85,38 @@ export interface JobExtras {
 }
 const NO_EXTRAS: JobExtras = { shipped: new Map(), proofs: new Map() };
 
-/** The factory's projection: what to make and where to deliver — no price, no customer beyond D-142. */
+/**
+ * The factory's destinations (P4-01 / P4-D1): code, province and postcode prefix — never the recipient's name,
+ * phone, address lines or full postcode. `row.order.destinations` is in stable order (`sort`, then id).
+ */
+export function partnerJobDestinations(row: JobRow, extras: JobExtras = NO_EXTRAS): JobDestinationDto[] {
+  return row.order.destinations.map((d, i) => ({
+    id: d.publicId,
+    code: destinationCode(i),
+    postcodePrefix: postcodePrefix(d.postcode),
+    provinceNameTh: d.province.nameTh,
+    provinceNameEn: d.province.nameEn,
+    quantity: d.quantity,
+    shippedQuantity: extras.shipped.get(d.id) ?? 0,
+  }));
+}
+
+/** Staff only: the factory's destinations plus the recipient's contact (D-142). */
+export function adminJobDestinations(row: JobRow, extras: JobExtras = NO_EXTRAS): AdminJobDestinationDto[] {
+  return partnerJobDestinations(row, extras).map((d, i) => {
+    const full = row.order.destinations[i]!;
+    return {
+      ...d,
+      recipientName: full.recipientName,
+      phone: full.phone,
+      line1: full.line1,
+      line2: full.line2,
+      postcode: full.postcode,
+    };
+  });
+}
+
+/** The factory's projection: what to make and where to deliver — no price, no customer identity (P4-D1). */
 export function partnerJobDto(
   row: JobRow,
   photos: Map<bigint, string[]>,
@@ -145,18 +179,7 @@ export function partnerJobDto(
           resultAt: iso(inspection.resultAt),
         }
       : null,
-    destinations: row.order.destinations.map((d) => ({
-      id: d.publicId,
-      recipientName: d.recipientName,
-      phone: d.phone,
-      line1: d.line1,
-      line2: d.line2,
-      postcode: d.postcode,
-      provinceNameTh: d.province.nameTh,
-      provinceNameEn: d.province.nameEn,
-      quantity: d.quantity,
-      shippedQuantity: extras.shipped.get(d.id) ?? 0,
-    })),
+    destinations: partnerJobDestinations(row, extras),
     milestones: milestoneDtos(row, photos),
     nextActions: nextActions(row, PARTNER_JOB_ACTIONS, perms),
   };
@@ -186,6 +209,7 @@ export function adminJobDto(
   const buy = row.buyPriceSnapshot as { buyCostNet?: string | null };
   return {
     ...partnerJobDto(row, photos, extras),
+    destinations: adminJobDestinations(row, extras),
     orderId: row.order.publicId,
     orderCode: row.order.orderCode,
     factoryId: row.factory.publicId,

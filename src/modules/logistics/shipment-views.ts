@@ -1,5 +1,6 @@
 import { statusLabels } from '@common/labels/status-labels';
 import { nextActions, NO_PERMISSIONS } from '@common/next-actions/next-actions';
+import { codeAmong, postcodePrefix } from '@common/privacy/partner-destination';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type DeliveryReconciliation, type Prisma } from '@generated/prisma/client';
 
@@ -21,7 +22,13 @@ export const SHIPMENT_INCLUDE = {
     orderBy: { id: 'asc' },
     include: {
       order: {
-        select: { publicId: true, orderCode: true, deliveryReconciliation: { select: { outcome: true } } },
+        select: {
+          publicId: true,
+          orderCode: true,
+          deliveryReconciliation: { select: { outcome: true } },
+          // P4-D1: the destination's code within the job is its position in the order's stable destination order.
+          destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }], select: { id: true } },
+        },
       },
       orderDestination: { select: { publicId: true } },
       productionJob: { select: { publicId: true, jobNo: true } },
@@ -69,12 +76,13 @@ function exceptionDto(row: ShipmentRow): AdminShipmentDto['exception'] {
 }
 const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 
-function podDto(row: ShipmentRow, photos: string[]): ProofOfDeliveryDto | null {
+function podDto(row: ShipmentRow, photos: string[], surface: 'partner' | 'admin'): ProofOfDeliveryDto | null {
   const pod = row.proofOfDelivery;
   if (!pod) return null;
   return {
     kind: pod.kind,
-    receiverName: pod.receiverName,
+    // P4-D1: a carrier POD carries the recipient's name copied from the shipment — not for the factory.
+    receiverName: surface === 'partner' && pod.kind === 'carrier_pod' ? null : pod.receiverName,
     deliveredQuantity: pod.deliveredQuantity,
     capturedAt: toBangkokIso(pod.capturedAt),
     signatureFileId: pod.signatureFile?.publicId ?? null,
@@ -83,7 +91,18 @@ function podDto(row: ShipmentRow, photos: string[]): ProofOfDeliveryDto | null {
   };
 }
 
-/** The factory's projection (D-142): where to deliver and what, no price. */
+const itemCode = (i: ShipmentRow['items'][number]) => codeAmong(i.order.destinations, i.orderDestinationId);
+
+/** The factory's destination (P4-01 / P4-D1): code, province, postcode prefix — no recipient identity. */
+export function partnerShipmentDestination(row: ShipmentRow): PartnerShipmentDto['destination'] {
+  const first = row.items[0];
+  return {
+    code: first ? itemCode(first) : 'D?',
+    postcodePrefix: postcodePrefix(row.postcode),
+    province: province(row),
+  };
+}
+
 const shipmentFacts = (row: ShipmentRow, blockedByPayment: boolean): ShipmentFacts => ({
   status: row.status,
   carrier: row.carrier.code,
@@ -106,14 +125,7 @@ export function partnerShipmentDto(
     ...statusLabels('ShipmentStatus', row.status),
     carrier: row.carrier.code,
     trackingNo: row.trackingNo,
-    destination: {
-      recipientName: row.recipientName,
-      phone: row.phone,
-      line1: row.line1,
-      line2: row.line2,
-      postcode: row.postcode,
-      province: province(row),
-    },
+    destination: partnerShipmentDestination(row),
     cartonsCount: row.cartonsCount,
     weightG: row.weightG,
     volumeCm3: row.volumeCm3 === null ? null : Number(row.volumeCm3),
@@ -125,6 +137,7 @@ export function partnerShipmentDto(
     packingListFileId: row.packingListFile?.publicId ?? null,
     items: row.items.map((i) => ({
       destinationId: i.orderDestination.publicId,
+      destinationCode: itemCode(i),
       jobId: i.productionJob.publicId,
       jobNo: i.productionJob.jobNo,
       orderCode: i.order.orderCode,
@@ -140,7 +153,7 @@ export function partnerShipmentDto(
       location: e.location,
       note: e.note,
     })),
-    proofOfDelivery: podDto(row, podPhotos),
+    proofOfDelivery: podDto(row, podPhotos, 'partner'),
     note: row.note,
     cartons: row.cartons.map((c) => ({ seq: c.seq, labelCode: c.labelCode, weightG: c.weightG })),
     blockedByPayment,
@@ -162,6 +175,15 @@ export function adminShipmentDto(
   const review = row.proofOfDelivery?.reviews[0];
   return {
     ...partnerShipmentDto(row, podPhotos, blockedByPayment),
+    destination: {
+      ...partnerShipmentDestination(row),
+      recipientName: row.recipientName,
+      phone: row.phone,
+      line1: row.line1,
+      line2: row.line2,
+      postcode: row.postcode,
+    },
+    proofOfDelivery: podDto(row, podPhotos, 'admin'),
     factoryId: row.factory.publicId,
     factoryCode: row.factory.code,
     carrierBookingRef: row.carrierBookingRef,

@@ -396,6 +396,12 @@ export class ShipmentItemDto {
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.destination })
   destinationId!: string;
 
+  @ApiProperty({
+    example: 'D1',
+    description: 'The destination’s code within its job (`destinations[].code` of the job, P4-D1)',
+  })
+  destinationCode!: string;
+
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.job })
   jobId!: string;
 
@@ -452,8 +458,15 @@ export class ProofOfDeliveryDto {
   @ApiProperty({ enum: ['factory_photo_signature', 'carrier_pod'], enumName: 'PodKind' })
   kind!: string;
 
-  @ApiProperty({ example: 'สมหญิง ใจดี' })
-  receiverName!: string;
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'สมหญิง ใจดี',
+    description:
+      'Who received it. On the partner surface null for a carrier POD (the carrier copies the recipient, P4-D1); ' +
+      'a factory POD shows the name the factory recorded',
+  })
+  receiverName!: string | null;
 
   @ApiProperty({ type: 'integer', example: 590 })
   deliveredQuantity!: number;
@@ -471,7 +484,27 @@ export class ProofOfDeliveryDto {
   carrierPodRef!: string | null;
 }
 
+/**
+ * A shipment's destination as the factory sees it (P4-01 / P4-D1): the job destination's code, the province and
+ * the first three digits of the postcode — never the recipient's name, phone, address lines or full postcode.
+ * The carton count is `cartonsCount` on the shipment.
+ */
 export class ShipmentDestinationDto {
+  @ApiProperty({
+    example: 'D1',
+    description: 'The job destination’s code (`D1`, `D2` …) of the trip’s first item (P4-D1)',
+  })
+  code!: string;
+
+  @ApiProperty({ example: '101', description: 'First three digits of the postcode (P4-D1)' })
+  postcodePrefix!: string;
+
+  @ApiProperty({ type: GeoRefDto })
+  province!: GeoRefDto;
+}
+
+/** Staff only: the factory's view of the destination plus the recipient's contact (D-142). */
+export class AdminShipmentDestinationDto extends ShipmentDestinationDto {
   @ApiProperty({ example: 'สมหญิง ใจดี' })
   recipientName!: string;
 
@@ -481,7 +514,25 @@ export class ShipmentDestinationDto {
   @ApiProperty({ example: '99/9 ถนนสุขุมวิท' })
   line1!: string;
 
-  @ApiProperty({ nullable: true, example: 'แขวงคลองตัน เขตคลองเตย' })
+  @ApiProperty({ type: String, nullable: true, example: 'แขวงคลองตัน เขตคลองเตย' })
+  line2!: string | null;
+
+  @ApiProperty({ example: '10110' })
+  postcode!: string;
+}
+
+/** The customer's own delivery address on their shipment (D-142). */
+export class ShipmentAddressDto {
+  @ApiProperty({ example: 'สมหญิง ใจดี' })
+  recipientName!: string;
+
+  @ApiProperty({ example: '+66810001234' })
+  phone!: string;
+
+  @ApiProperty({ example: '99/9 ถนนสุขุมวิท' })
+  line1!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'แขวงคลองตัน เขตคลองเตย' })
   line2!: string | null;
 
   @ApiProperty({ example: '10110' })
@@ -514,7 +565,7 @@ export class CarrierRequestDto {
 export const RequestCarrierDto = CancelShipmentDto;
 export type RequestCarrierDto = CancelShipmentDto;
 
-/** The factory's view (D-142): destination contacts, no price, no customer identity beyond the recipient. */
+/** The factory's view: no price and no customer identity — destination code, province, postcode prefix (P4-D1). */
 export class PartnerShipmentDto {
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.shipment })
   id!: string;
@@ -668,6 +719,9 @@ export class ShipmentRefDto {
 }
 
 export class AdminShipmentDto extends PartnerShipmentDto {
+  // Staff see the recipient's contact (P4-D1); documented below, after the class.
+  declare destination: AdminShipmentDestinationDto;
+
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.factory })
   factoryId!: string;
 
@@ -714,6 +768,12 @@ export class AdminShipmentDto extends PartnerShipmentDto {
   splitFrom!: ShipmentRefDto | null;
 }
 
+// A `declare` field takes no decorator: document the staff destination on the class itself.
+ApiProperty({ type: AdminShipmentDestinationDto, description: 'With the recipient’s contact (staff only)' })(
+  AdminShipmentDto.prototype,
+  'destination',
+);
+
 export class SplitShipmentResultDto {
   @ApiProperty({ type: AdminShipmentDto, description: 'The original, with what stays on it' })
   shipment!: AdminShipmentDto;
@@ -749,6 +809,20 @@ export class ShipmentCarrierQuoteDto {
 
 export class CreatedShipmentDto extends PartnerShipmentDto {}
 
+const EXAMPLE_PROVINCE = {
+  id: '0192f3a0-7c1e-7d2a-9b1f-0000000f2007',
+  nameTh: 'กรุงเทพมหานคร',
+  nameEn: 'Bangkok',
+};
+/** The recipient's contact: staff and the customer only, never the factory (P4-D1). */
+const EXAMPLE_ADDRESS = {
+  recipientName: 'สมหญิง ใจดี',
+  phone: '+66810001234',
+  line1: '99/9 ถนนสุขุมวิท',
+  line2: 'แขวงคลองตัน เขตคลองเตย',
+  postcode: '10110',
+};
+
 const SHIPMENT_BASE = {
   id: SHIPMENT_IDS.shipment,
   shipmentNo: 'SH-2610-0001',
@@ -757,12 +831,9 @@ const SHIPMENT_BASE = {
   carrier: 'factory_fleet',
   trackingNo: null,
   destination: {
-    recipientName: 'สมหญิง ใจดี',
-    phone: '+66810001234',
-    line1: '99/9 ถนนสุขุมวิท',
-    line2: 'แขวงคลองตัน เขตคลองเตย',
-    postcode: '10110',
-    province: { id: '0192f3a0-7c1e-7d2a-9b1f-0000000f2007', nameTh: 'กรุงเทพมหานคร', nameEn: 'Bangkok' },
+    code: 'D1',
+    postcodePrefix: '101',
+    province: EXAMPLE_PROVINCE,
   },
   cartonsCount: 3,
   weightG: 18000,
@@ -776,6 +847,7 @@ const SHIPMENT_BASE = {
   items: [
     {
       destinationId: SHIPMENT_IDS.destination,
+      destinationCode: 'D1',
       jobId: SHIPMENT_IDS.job,
       jobNo: 'JOB-2610-0001',
       orderCode: 'PK-2610-0001-01',
@@ -808,6 +880,7 @@ const SHIPMENT_BASE = {
 export const PARTNER_SHIPMENT_EXAMPLE = SHIPMENT_BASE;
 export const ADMIN_SHIPMENT_EXAMPLE = {
   ...SHIPMENT_BASE,
+  destination: { ...SHIPMENT_BASE.destination, ...EXAMPLE_ADDRESS },
   factoryId: SHIPMENT_IDS.factory,
   factoryCode: 'F-0001',
   carrierBookingRef: null,
@@ -963,8 +1036,8 @@ export class StoreShipmentDto {
   @ApiProperty({ nullable: true, example: null })
   trackingUrl!: string | null;
 
-  @ApiProperty({ type: ShipmentDestinationDto })
-  destination!: ShipmentDestinationDto;
+  @ApiProperty({ type: ShipmentAddressDto })
+  destination!: ShipmentAddressDto;
 
   @ApiProperty({ type: 'integer', example: 3 })
   cartonsCount!: number;
@@ -993,7 +1066,7 @@ export const STORE_SHIPMENT_EXAMPLE = {
   carrier: 'getpack',
   trackingNo: null,
   trackingUrl: null,
-  destination: SHIPMENT_BASE.destination,
+  destination: { ...EXAMPLE_ADDRESS, province: EXAMPLE_PROVINCE },
   cartonsCount: 3,
   pickedUpAt: '2026-10-20T08:00:00+07:00',
   deliveredAt: '2026-10-21T14:05:00+07:00',
@@ -1039,11 +1112,14 @@ export class ShipPlanDestinationDto {
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.destination })
   destinationId!: string;
 
-  @ApiProperty({ example: 'สมหญิง ใจดี' })
-  recipientName!: string;
+  @ApiProperty({
+    example: 'D1',
+    description: 'The destination’s code within the job (`D1`, `D2` …, P4-D1)',
+  })
+  code!: string;
 
-  @ApiProperty({ example: '10110' })
-  postcode!: string;
+  @ApiProperty({ example: '101', description: 'First three digits of the postcode (P4-D1)' })
+  postcodePrefix!: string;
 
   @ApiProperty({ example: 'กรุงเทพมหานคร' })
   provinceNameTh!: string;
@@ -1097,8 +1173,8 @@ export const SHIP_PLAN_EXAMPLE: ShipPlanJobDto = {
   destinations: [
     {
       destinationId: SHIPMENT_IDS.destination,
-      recipientName: 'สมหญิง ใจดี',
-      postcode: '10110',
+      code: 'D1',
+      postcodePrefix: '101',
       provinceNameTh: 'กรุงเทพมหานคร',
       quantity: 600,
       shippedQuantity: 0,

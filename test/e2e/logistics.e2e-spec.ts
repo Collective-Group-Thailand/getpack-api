@@ -38,6 +38,7 @@ interface Shipment {
   id: string;
   status: string;
   carrier: string;
+  destination: Record<string, unknown>;
   labelFileId: string | null;
   packingListFileId: string | null;
   items: { destinationId: string; quantity: number; deliveredQuantity: number | null }[];
@@ -229,6 +230,13 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
     const s1 = (await createShipment(shipper, o.jobId, [[d1.id, 600]]).expect(201)).body as Shipment;
     const s2 = (await createShipment(shipper, o.jobId, [[d2.id, 400]], 1).expect(201)).body as Shipment;
     expect(s1).toMatchObject({ status: 'draft', carrier: 'factory_fleet' });
+    // P4-01 / P4-D1: the factory sees the destination by code and postcode prefix, never the recipient.
+    expect(s1.destination).toMatchObject({
+      code: expect.stringMatching(/^D\d+$/),
+      postcodePrefix: expect.any(String),
+    });
+    for (const field of ['recipientName', 'phone', 'line1', 'line2', 'postcode'])
+      expect(s1.destination).not.toHaveProperty(field);
     // Never more than the job made.
     expect((await createShipment(shipper, o.jobId, [[d2.id, 1]]).expect(422)).body.code).toBe(
       'shipments.quantity_exceeds',
@@ -488,6 +496,12 @@ describe('logistics: shipments, POD, tolerance and completion (e2e, B4.3)', () =
       remainingQuantity: 0,
     });
     expect(planned.destinations.find((d) => d.destinationId === d2.id)).toMatchObject({ shippedQuantity: 0 });
+    // P4-D1: codes and postcode prefixes, never the recipient.
+    for (const d of planned.destinations) {
+      expect(d).toMatchObject({ code: expect.stringMatching(/^D\d+$/), postcodePrefix: expect.any(String) });
+      expect(d).not.toHaveProperty('recipientName');
+      expect(d).not.toHaveProperty('postcode');
+    }
 
     const logistics = await staffToken(ctx, 'logistics');
     await ctx.prisma.carrier.update({ where: { code: 'flash_express' }, data: { enabled: true } });
