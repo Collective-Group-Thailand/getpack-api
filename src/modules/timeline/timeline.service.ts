@@ -17,7 +17,7 @@ import { Injectable, type OnModuleInit } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { FilesService } from '@platform/files/files.service';
 
-import { activityMessage } from './activity-messages';
+import { customerWords, activityMessage } from './activity-messages';
 import {
   type OrderProgressDto,
   type ProgressStepDto,
@@ -432,7 +432,8 @@ export class TimelineService implements OnModuleInit {
       const step = route.steps.find((s) => s.seq === m.seq);
       return {
         key: m.stepKey,
-        labelTh: step?.customerLabelTh ?? step?.nameTh ?? m.stepKey,
+        // The job's route snapshot is write-once, so jobs released before D-439 still carry the old word.
+        labelTh: customerWords(step?.customerLabelTh ?? step?.nameTh ?? m.stepKey),
         labelEn: step?.customerLabelEn ?? step?.nameEn ?? m.stepKey,
         status: m.status,
         ...statusLabels('MilestoneStatus', m.status),
