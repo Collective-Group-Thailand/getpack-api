@@ -45,7 +45,13 @@ export const TRANSIT_STATUSES = ['in_transit', 'out_for_delivery', 'failed', 're
 export const CARRIER_CODES = ['factory_fleet', 'flash_express', 'deliveree'] as const;
 export const FALLBACK_CARRIERS = ['flash_express', 'deliveree'] as const;
 /** Staff work queues (U-B0.2): pickup, transit, delivery exceptions (D-230) and POD reviews (D-229). */
-export const SHIPMENT_QUEUES = ['awaiting_pickup', 'in_transit', 'exceptions', 'pod_review'] as const;
+export const SHIPMENT_QUEUES = [
+  'awaiting_pickup',
+  'in_transit',
+  'exceptions',
+  'pod_review',
+  'without_goods_receipt',
+] as const;
 export const EXCEPTION_RESOLUTIONS = ['retry', 'return', 'cancel'] as const;
 export const TOLERANCE_OUTCOMES = [
   'exact',
@@ -374,7 +380,8 @@ export class AdminShipmentListQuery extends ShipmentListQuery {
     enumName: 'ShipmentQueue',
     description:
       'awaiting_pickup = packed; in_transit = picked up, in transit or out for delivery; exceptions = failed, or ' +
-      'returned and not closed (D-230); pod_review = delivered with a POD not reviewed yet (D-229)',
+      'returned and not closed (D-230); pod_review = delivered with a POD not reviewed yet (D-229); ' +
+      'without_goods_receipt = delivered with no goods receipt yet (the finance card, D-165)',
   })
   @IsOptional()
   @IsIn(SHIPMENT_QUEUES)
@@ -455,19 +462,20 @@ export class ShipmentEventDto {
   note!: string | null;
 }
 
-export class ProofOfDeliveryDto {
+/**
+ * The factory's view of a proof of delivery (D-463 amendment, 2026-10-31): never the receiver's name — not even
+ * the one the factory typed itself — and no carrier reference; only that a receiver was recorded.
+ */
+export class PartnerProofOfDeliveryDto {
   @ApiProperty({ enum: ['factory_photo_signature', 'carrier_pod'], enumName: 'PodKind' })
   kind!: string;
 
   @ApiProperty({
-    type: String,
-    nullable: true,
-    example: 'สมหญิง ใจดี',
+    example: true,
     description:
-      'Who received it. On the partner surface null for a carrier POD (the carrier copies the recipient, P4-D1); ' +
-      'a factory POD shows the name the factory recorded',
+      'D-463: a receiver name is on the POD. The name itself is staff-only, also when the factory recorded it',
   })
-  receiverName!: string | null;
+  receiverRecorded!: boolean;
 
   @ApiProperty({ type: 'integer', example: 590 })
   deliveredQuantity!: number;
@@ -480,8 +488,22 @@ export class ProofOfDeliveryDto {
 
   @ApiProperty({ type: [String], format: 'uuid', example: [SHIPMENT_IDS.photo] })
   photoFileIds!: string[];
+}
 
-  @ApiProperty({ nullable: true, example: null })
+/** Staff: the full proof of delivery. */
+export class ProofOfDeliveryDto extends PartnerProofOfDeliveryDto {
+  @ApiProperty({
+    example: 'สมหญิง ใจดี',
+    description:
+      'Who received it (staff only, D-463): typed by the factory, or the recipient on a carrier POD',
+  })
+  receiverName!: string;
+
+  @ApiProperty({
+    nullable: true,
+    example: null,
+    description: 'The carrier’s POD reference (staff only, D-463)',
+  })
   carrierPodRef!: string | null;
 }
 
@@ -566,6 +588,10 @@ export class CarrierRequestDto {
 export const RequestCarrierDto = CancelShipmentDto;
 export type RequestCarrierDto = CancelShipmentDto;
 
+/** D-463: why staff re-issue a shipment's partner documents — `{ reason }` (3–400 characters), audited. */
+export const ReissueShipmentDocumentsDto = CancelShipmentDto;
+export type ReissueShipmentDocumentsDto = CancelShipmentDto;
+
 /** The factory's view: no price and no customer identity — destination code, province, postcode prefix (P4-D1). */
 export class PartnerShipmentDto {
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.shipment })
@@ -586,8 +612,13 @@ export class PartnerShipmentDto {
   @ApiProperty({ enum: CARRIER_CODES, enumName: 'CarrierCode', example: 'factory_fleet' })
   carrier!: string;
 
-  @ApiProperty({ nullable: true, example: null })
-  trackingNo!: string | null;
+  @ApiProperty({
+    example: false,
+    description:
+      'D-463: getpack booked a fallback carrier for the trip ("booked"). The carrier’s tracking number and tracking ' +
+      'URL are staff-only — they open the recipient’s details on the carrier’s site',
+  })
+  carrierBooked!: boolean;
 
   @ApiProperty({ type: ShipmentDestinationDto })
   destination!: ShipmentDestinationDto;
@@ -630,8 +661,12 @@ export class PartnerShipmentDto {
   @ApiProperty({ type: [ShipmentEventDto] })
   events!: ShipmentEventDto[];
 
-  @ApiProperty({ type: ProofOfDeliveryDto, nullable: true })
-  proofOfDelivery!: ProofOfDeliveryDto | null;
+  @ApiProperty({
+    type: PartnerProofOfDeliveryDto,
+    nullable: true,
+    description: 'D-463: `receiverRecorded` instead of the receiver’s name',
+  })
+  proofOfDelivery!: PartnerProofOfDeliveryDto | null;
 
   @ApiProperty({ nullable: true, example: null })
   note!: string | null;
@@ -907,8 +942,9 @@ export class ShipmentRefDto {
 }
 
 export class AdminShipmentDto extends PartnerShipmentDto {
-  // Staff see the recipient's contact (P4-D1); documented below, after the class.
+  // Staff see the recipient's contact (P4-D1) and the receiver's name (D-463); documented below, after the class.
   declare destination: AdminShipmentDestinationDto;
+  declare proofOfDelivery: ProofOfDeliveryDto | null;
 
   @ApiProperty({ format: 'uuid', example: SHIPMENT_IDS.factory })
   factoryId!: string;
@@ -918,6 +954,13 @@ export class AdminShipmentDto extends PartnerShipmentDto {
 
   @ApiProperty({ nullable: true, example: null })
   carrierBookingRef!: string | null;
+
+  @ApiProperty({
+    nullable: true,
+    example: null,
+    description: 'The fallback carrier’s tracking number (staff only, D-463)',
+  })
+  trackingNo!: string | null;
 
   @ApiProperty({ nullable: true, example: null })
   trackingUrl!: string | null;
@@ -969,6 +1012,11 @@ ApiProperty({ type: AdminShipmentDestinationDto, description: 'With the recipien
   AdminShipmentDto.prototype,
   'destination',
 );
+ApiProperty({
+  type: ProofOfDeliveryDto,
+  nullable: true,
+  description: 'With the receiver’s name and the carrier’s POD reference (staff only, D-463)',
+})(AdminShipmentDto.prototype, 'proofOfDelivery');
 
 export class SplitShipmentResultDto {
   @ApiProperty({ type: AdminShipmentDto, description: 'The original, with what stays on it' })
@@ -1025,7 +1073,7 @@ const SHIPMENT_BASE = {
   status: 'ready',
   ...statusLabels('ShipmentStatus', 'ready'),
   carrier: 'factory_fleet',
-  trackingNo: null,
+  carrierBooked: false,
   destination: {
     code: 'D1',
     postcodePrefix: '101',
@@ -1081,6 +1129,7 @@ export const ADMIN_SHIPMENT_EXAMPLE = {
   factoryId: SHIPMENT_IDS.factory,
   factoryCode: 'F-0001',
   carrierBookingRef: null,
+  trackingNo: null,
   trackingUrl: null,
   payoutAmount: '120.00',
   carrierCostAmount: null,
@@ -1091,13 +1140,19 @@ export const ADMIN_SHIPMENT_EXAMPLE = {
   splitFrom: null,
   handover: null,
 };
-export const POD_EXAMPLE = {
+/** The factory's POD (D-463): whether a receiver was recorded, never the name. */
+export const PARTNER_POD_EXAMPLE = {
   kind: 'factory_photo_signature',
-  receiverName: 'สมหญิง ใจดี',
+  receiverRecorded: true,
   deliveredQuantity: 590,
   capturedAt: '2026-10-21T14:05:00+07:00',
   signatureFileId: SHIPMENT_IDS.signature,
   photoFileIds: [SHIPMENT_IDS.photo],
+};
+/** Staff: the full POD. */
+export const POD_EXAMPLE = {
+  ...PARTNER_POD_EXAMPLE,
+  receiverName: 'สมหญิง ใจดี',
   carrierPodRef: null,
 };
 

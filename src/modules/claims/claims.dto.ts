@@ -27,6 +27,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { CLAIM_QUEUES, type ClaimQueue } from './claim-queues';
 import { LIABILITY_RULES } from './liability';
 
 export { ReorderQuantityLimitsDto };
@@ -454,6 +455,16 @@ export class ClaimListQuery extends PageQuery {
 export const CLAIM_ORIGINS = ['customer', 'tolerance_auto', 'staff'] as const;
 
 export class AdminClaimListQuery extends ClaimListQuery {
+  @ApiPropertyOptional({
+    enum: CLAIM_QUEUES,
+    enumName: 'ClaimQueue',
+    description:
+      'A work queue: `open` = submitted, under review, need info or factory review (the dashboard card)',
+  })
+  @IsOptional()
+  @IsIn(CLAIM_QUEUES)
+  queue?: ClaimQueue;
+
   @ApiPropertyOptional({ enum: CLAIM_TYPES, enumName: 'ClaimType' })
   @IsOptional()
   @IsIn(CLAIM_TYPES)

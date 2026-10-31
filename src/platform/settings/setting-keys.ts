@@ -46,6 +46,8 @@ export interface SettingValues {
     default: { min: number; max: number };
     zones: Record<string, { min: number; max: number }>;
   };
+  /** D-463 days a driver handover link stays valid at most (1–30, default 7). */
+  'logistics.handover_link_ttl_days': number;
   /** D-060 calendar days until an unpaid order group is cancelled (proposed, B3.1). */
   'orders.unpaid_expiry_days': number;
   /** accounting-design §2 nature of the sale per product type code (⚖ pending CPA). */

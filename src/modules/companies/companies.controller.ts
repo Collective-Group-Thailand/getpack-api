@@ -13,7 +13,6 @@ import {
 } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
-import { type Prisma } from '@generated/prisma/client';
 import { ReasonDto } from '@modules/iam/admin/users-admin.dto';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import {
@@ -56,6 +55,7 @@ import {
   UpdateCompanySettingsDto,
 } from './companies.dto';
 import { CompaniesService, type CompanyApprovalRow, companyEtag, type CompanyRow } from './companies.service';
+import { companyListWhere } from './company-queues';
 import { adminCompanyDto, companyDto, invitationDto } from './company-views';
 import { CreditService } from './credit.service';
 
@@ -550,18 +550,7 @@ export class AdminCompaniesController {
   @ApiPaginated(AdminCompanyDto, { example: ADMIN_COMPANY_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@Query() q: CompanyListQuery) {
-    const where: Prisma.CompanyWhereInput = {
-      ...(q.status && { status: q.status }),
-      ...(q.creditStatus && { creditStatus: q.creditStatus }),
-      ...(q.q && {
-        OR: [
-          { taxId: q.q },
-          { companyCode: { equals: q.q, mode: 'insensitive' as const } },
-          { legalName: { contains: q.q, mode: 'insensitive' as const } },
-        ],
-      }),
-    };
-    const [rows, total] = await this.companies.list(where, q.page, q.perPage);
+    const [rows, total] = await this.companies.list(companyListWhere(q), q.page, q.perPage);
     return {
       data: await Promise.all(rows.map((r) => this.view(r))),
       meta: { page: q.page, perPage: q.perPage, total },

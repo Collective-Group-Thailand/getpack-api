@@ -6,7 +6,7 @@ import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { codeAmong, postcodePrefix } from '@common/privacy/partner-destination';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type Shipment, type ShipmentStatus } from '@generated/prisma/client';
+import { type FileObject, type Shipment, type ShipmentStatus } from '@generated/prisma/client';
 import {
   type CarrierBookingRequest,
   type CarrierContact,
@@ -231,18 +231,7 @@ export class ShipmentsService {
   async markReady(actor: Actor, shipmentId: bigint): Promise<void> {
     const shipment = await this.prisma.shipment.findUniqueOrThrow({
       where: { id: shipmentId },
-      include: {
-        items: {
-          orderBy: { id: 'asc' },
-          include: {
-            order: {
-              include: { destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }], select: { id: true } } },
-            },
-            productionJob: true,
-          },
-        },
-        province: { select: { nameTh: true, nameEn: true } },
-      },
+      include: { items: { orderBy: { id: 'asc' }, take: 1, select: { orderId: true } } },
     });
     if (shipment.status !== 'draft')
       throw new DomainException('shipments.invalid_status', { params: { status: shipment.status } });
@@ -252,56 +241,7 @@ export class ShipmentsService {
       seq: i + 1,
       labelCode: `${randomBytes(6).toString('hex').toUpperCase()}-${String(i + 1).padStart(2, '0')}`,
     }));
-    const first = shipment.items[0];
-    const doc: PartnerShipmentDocument = {
-      shipmentNo: shipment.shipmentNo,
-      trackingUrl: this.trackingUrl(token),
-      sender: await this.documentSender(shipment.entityId, at),
-      destination: {
-        code: first ? codeAmong(first.order.destinations, first.orderDestinationId) : 'D?',
-        provinceNameTh: shipment.province.nameTh,
-        provinceNameEn: shipment.province.nameEn,
-        postcodePrefix: postcodePrefix(shipment.postcode),
-      },
-      jobNos: [...new Set(shipment.items.map((i) => i.productionJob.jobNo))],
-      cartons,
-      items: shipment.items.map((i) => ({
-        jobNo: i.productionJob.jobNo,
-        description: (i.productionJob.specSnapshot as { productTypeNameTh?: string }).productTypeNameTh ?? '',
-        quantity: i.quantity,
-      })),
-      totalWeightKg: (shipment.weightG / 1000).toFixed(2),
-      plannedShipOn: shipment.plannedShipOn?.toISOString().slice(0, 10) ?? null,
-      note: shipment.note,
-    };
-    const [labelsHtml, packingHtml] = [await renderLabelsHtml(doc), renderPackingListHtml(doc)];
-    // D-463 defence in depth: a partner document that would carry the recipient is never produced.
-    const recipient = {
-      name: shipment.recipientName,
-      phone: shipment.phone,
-      line1: shipment.line1,
-      line2: shipment.line2,
-    };
-    if (leakedRecipientFields(labelsHtml + packingHtml, recipient).length > 0)
-      throw new Error(`D-463: partner documents of shipment ${shipment.publicId} would carry recipient data`);
-    // Rendered and stored first: a rolled-back transaction leaves only unreferenced objects.
-    const [labels, packingList] = await Promise.all([
-      this.pdf.render(labelsHtml),
-      this.pdf.render(packingHtml),
-    ]);
-    const store = (body: Buffer, kind: 'labels' | 'packing') =>
-      this.files.storeSystem({
-        body,
-        fileName: partnerDocumentFileName(shipment.shipmentNo, kind),
-        mimeType: 'application/pdf',
-        retentionClass: 'standard',
-        ownerUserId: null,
-        ownerFactoryId: shipment.factoryId,
-      });
-    const [labelFile, packingFile] = await Promise.all([
-      store(labels, 'labels'),
-      store(packingList, 'packing'),
-    ]);
+    const { labelFile, packingFile } = await this.renderPartnerDocuments(shipment.id, token, cartons, at);
     const payout = await this.rates.factoryPayout(
       shipment.factoryId,
       shipment.postcode,
@@ -347,6 +287,88 @@ export class ShipmentsService {
         actor,
       );
     });
+  }
+
+  /**
+   * D-463: renders and stores the factory's carton labels and packing list for `token` (the carton QR) and `cartons`.
+   * Rendered and stored before any transaction: a rolled-back one leaves only unreferenced objects. The files are
+   * owned by the factory (its scope reads them) and marked `metadata_stripped_at` — the renderer removes the PDF Info
+   * (D-442) — which is also how a document made under D-463 is told from one made before it
+   * ({@link isD463PartnerDocument}). Refused when a recipient value would appear (defence in depth).
+   */
+  async renderPartnerDocuments(
+    shipmentId: bigint,
+    token: string,
+    cartons: { seq: number; labelCode: string }[],
+    at: Date,
+  ): Promise<{ labelFile: FileObject; packingFile: FileObject }> {
+    const shipment = await this.prisma.shipment.findUniqueOrThrow({
+      where: { id: shipmentId },
+      include: {
+        items: {
+          orderBy: { id: 'asc' },
+          include: {
+            order: {
+              include: { destinations: { orderBy: [{ sort: 'asc' }, { id: 'asc' }], select: { id: true } } },
+            },
+            productionJob: true,
+          },
+        },
+        province: { select: { nameTh: true, nameEn: true } },
+      },
+    });
+    const first = shipment.items[0];
+    const doc: PartnerShipmentDocument = {
+      shipmentNo: shipment.shipmentNo,
+      trackingUrl: this.trackingUrl(token),
+      sender: await this.documentSender(shipment.entityId, at),
+      destination: {
+        code: first ? codeAmong(first.order.destinations, first.orderDestinationId) : 'D?',
+        provinceNameTh: shipment.province.nameTh,
+        provinceNameEn: shipment.province.nameEn,
+        postcodePrefix: postcodePrefix(shipment.postcode),
+      },
+      jobNos: [...new Set(shipment.items.map((i) => i.productionJob.jobNo))],
+      cartons,
+      items: shipment.items.map((i) => ({
+        jobNo: i.productionJob.jobNo,
+        description: (i.productionJob.specSnapshot as { productTypeNameTh?: string }).productTypeNameTh ?? '',
+        quantity: i.quantity,
+      })),
+      totalWeightKg: (shipment.weightG / 1000).toFixed(2),
+      plannedShipOn: shipment.plannedShipOn?.toISOString().slice(0, 10) ?? null,
+      note: shipment.note,
+    };
+    const [labelsHtml, packingHtml] = [await renderLabelsHtml(doc), renderPackingListHtml(doc)];
+    // D-463 defence in depth: a partner document that would carry the recipient is never produced.
+    const recipient = {
+      name: shipment.recipientName,
+      phone: shipment.phone,
+      line1: shipment.line1,
+      line2: shipment.line2,
+    };
+    if (leakedRecipientFields(labelsHtml + packingHtml, recipient).length > 0)
+      throw new Error(`D-463: partner documents of shipment ${shipment.publicId} would carry recipient data`);
+    const [labels, packingList] = await Promise.all([
+      this.pdf.render(labelsHtml),
+      this.pdf.render(packingHtml),
+    ]);
+    const store = async (body: Buffer, kind: 'labels' | 'packing') => {
+      const file = await this.files.storeSystem({
+        body,
+        fileName: partnerDocumentFileName(shipment.shipmentNo, kind),
+        mimeType: 'application/pdf',
+        retentionClass: 'standard',
+        ownerUserId: null,
+        ownerFactoryId: shipment.factoryId,
+      });
+      return this.prisma.fileObject.update({ where: { id: file.id }, data: { metadataStrippedAt: at } });
+    };
+    const [labelFile, packingFile] = await Promise.all([
+      store(labels, 'labels'),
+      store(packingList, 'packing'),
+    ]);
+    return { labelFile, packingFile };
   }
 
   // --- pickup (the shipping gate) -----------------------------------------------------------------------------
@@ -562,7 +584,8 @@ export class ShipmentsService {
         tx,
         locked,
         'shipment.carrier_booked',
-        { carrier: code, trackingNo: booking.trackingNo, reason: opts.reason ?? null },
+        // D-463: partner-visible activity — no carrier tracking number (staff read it on the shipment).
+        { carrier: code, reason: opts.reason ?? null },
         actor,
       );
     });

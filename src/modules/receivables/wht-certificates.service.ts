@@ -20,6 +20,19 @@ export type CertRow = Prisma.CustomerWhtCertificateGetPayload<{ include: typeof 
  * certificate to collect; Finance records it (number, date, the uploaded copy) or waives it with a reason.
  * The pending list is the missing-certificate report that drives collection.
  */
+/** The `admin.receivables.whtCertificates` filter, shared with the dashboard's missing-50-ทวิ card (`status=pending`). */
+export function whtCertificateWhere(
+  filter: { status?: WhtCertStatus; olderThanDays?: number },
+  now = new Date(),
+): Prisma.CustomerWhtCertificateWhereInput {
+  return {
+    ...(filter.status && { status: filter.status }),
+    ...(filter.olderThanDays !== undefined && {
+      createdAt: { lt: new Date(now.getTime() - filter.olderThanDays * 86_400_000) },
+    }),
+  };
+}
+
 @Injectable()
 export class WhtCertificatesService {
   constructor(
@@ -29,12 +42,7 @@ export class WhtCertificatesService {
   ) {}
 
   async list(filter: { status?: WhtCertStatus; olderThanDays?: number }, page: number, perPage: number) {
-    const where: Prisma.CustomerWhtCertificateWhereInput = {
-      ...(filter.status && { status: filter.status }),
-      ...(filter.olderThanDays !== undefined && {
-        createdAt: { lt: new Date(Date.now() - filter.olderThanDays * 86_400_000) },
-      }),
-    };
+    const where = whtCertificateWhere(filter);
     const [rows, total] = await Promise.all([
       this.prisma.customerWhtCertificate.findMany({
         where,

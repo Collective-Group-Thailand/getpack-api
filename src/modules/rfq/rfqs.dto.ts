@@ -36,6 +36,7 @@ import {
 } from 'class-validator';
 
 import { MAX_RFQ_FILES, MAX_RFQ_TIERS, RFQ_FIELD_TYPES } from './rfq-form';
+import { RFQ_QUEUES, type RfqQueue } from './rfq-queues';
 
 /** Requests for quote (D-100, D-043, D-102, schema-design §3.5). */
 
@@ -463,6 +464,16 @@ export class RfqListQuery extends PageQuery {
 }
 
 export class AdminRfqListQuery extends RfqListQuery {
+  @ApiPropertyOptional({
+    enum: RFQ_QUEUES,
+    enumName: 'RfqQueue',
+    description:
+      'A work queue: `awaiting_first_response` = open and not answered yet (the dashboard card, D-175)',
+  })
+  @IsOptional()
+  @IsIn(RFQ_QUEUES)
+  queue?: RfqQueue;
+
   @ApiPropertyOptional({
     example: true,
     description: 'Only open requests past their first-response due time',

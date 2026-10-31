@@ -33,6 +33,7 @@ import {
 import { ApiBody, ApiParam, ApiTags } from '@nestjs/swagger';
 import { type Response } from 'express';
 
+import { RFQ_QUEUE_WHERE } from './rfq-queues';
 import { factoryConsultationDto, rfqDto, staffRfqDto } from './rfq-views';
 import {
   AcceptRfqQuoteDto,
@@ -420,7 +421,8 @@ export class AdminRfqsController {
     summary: 'List requests for quote',
     description:
       '`q` matches the RFQ code; filter by status, assignee, overdue first response, product type, channel, ' +
-      'submission dates (Bangkok) or an open factory consultation (`awaitingFactory`) (D-100).',
+      'submission dates (Bangkok) or an open factory consultation (`awaitingFactory`) (D-100); `queue=awaiting_first_response` ' +
+      'is the dashboard card (open, not answered yet).',
     implements: DECISIONS,
   })
   @ApiPaginated(StaffRfqDto, { example: STAFF_EXAMPLE })
@@ -440,15 +442,13 @@ export class AdminRfqsController {
         },
       }),
       ...(query.awaitingFactory && { consultations: { some: { status: 'requested' } } }),
-      ...(query.overdue
-        ? {
-            status: { in: ['submitted', 'in_review', 'need_info'] },
-            firstResponseAt: null,
-            slaDueAt: { lt: now },
-          }
-        : {}),
     };
-    const { rows, total } = await this.rfqs.list(where, query.page, query.perPage);
+    const queue: Prisma.RfqWhereInput = {
+      // `queue` is the dashboard card's own filter (RFQ_QUEUE_WHERE, shared with DashboardService).
+      ...(query.queue && RFQ_QUEUE_WHERE[query.queue]),
+      ...(query.overdue && { ...RFQ_QUEUE_WHERE.awaiting_first_response, slaDueAt: { lt: now } }),
+    };
+    const { rows, total } = await this.rfqs.list({ AND: [where, queue] }, query.page, query.perPage);
     const grants = await this.grants(actor);
     const ctx = await this.rfqs.staffContext(rows, now);
     return {

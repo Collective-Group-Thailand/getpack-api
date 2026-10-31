@@ -954,6 +954,19 @@ export const SETTINGS: readonly SettingSeed[] = [
     syncConfirmation: true,
     ownerRole: 'admin',
   },
+  {
+    key: 'logistics.handover_link_ttl_days',
+    valueType: 'integer',
+    value: 7,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-463 how long a driver handover link (`<web>/l/<token>`, the only place outside staff that shows the ' +
+      'recipient’s name, phone and address) stays valid at most, in calendar days from issue; it also ends when the ' +
+      'trip is delivered, cancelled or returned. Applies to links issued from the version’s effective date; links ' +
+      'already issued keep their expiry. 7 = the D-463 default (business lead 2026-10-30), 1–30',
+    decisions: ['D-463'],
+    ownerRole: 'admin',
+  },
   // --- Launch monitoring (B6.3, D-113). Operational thresholds, not business values: proposed, superadmin.
   {
     key: 'ops.alert_thresholds',

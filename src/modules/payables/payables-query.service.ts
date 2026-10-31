@@ -7,10 +7,14 @@ import { type Prisma } from '@generated/prisma/client';
 import { ScopingService } from '@modules/iam/scoping.service';
 import { Injectable } from '@nestjs/common';
 
+import { STATEMENT_QUEUE_WHERE, type StatementQueue } from './statement-queues';
 import { INVOICE_INCLUDE } from './vendor-invoices.service';
 
+/** The factory's name and code are read for the admin views only (`adminPoDto`, `adminBsDto`). */
+const FACTORY_REF = { select: { publicId: true, code: true, legalName: true, tradeName: true } } as const;
+
 export const PO_INCLUDE = {
-  factory: { select: { publicId: true } },
+  factory: FACTORY_REF,
   productionJob: { select: { jobNo: true } },
   order: { select: { orderCode: true } },
   lines: { orderBy: { lineNo: 'asc' } },
@@ -24,7 +28,7 @@ export const GR_INCLUDE = {
 export type GrRow = Prisma.GoodsReceiptGetPayload<{ include: typeof GR_INCLUDE }>;
 
 export const BS_INCLUDE = {
-  factory: { select: { publicId: true } },
+  factory: FACTORY_REF,
   confirmedBy: { select: { publicId: true, displayName: true } },
   lines: {
     orderBy: { lineNo: 'asc' },
@@ -145,10 +149,16 @@ export class PayablesQueryService {
     return { rows, total };
   }
 
-  async statements(actor: Actor, q: Page & { factoryId?: string; status?: string }) {
+  async statements(actor: Actor, q: Page & { factoryId?: string; status?: string; queue?: StatementQueue }) {
     const where: Prisma.BillingStatementWhereInput = {
-      ...(await this.factoryWhere(actor, q.factoryId)),
-      ...(q.status && { status: q.status as Prisma.BillingStatementWhereInput['status'] }),
+      AND: [
+        {
+          ...(await this.factoryWhere(actor, q.factoryId)),
+          ...(q.status && { status: q.status as Prisma.BillingStatementWhereInput['status'] }),
+        },
+        // The dashboard card's own filter (STATEMENT_QUEUE_WHERE, shared with DashboardService).
+        q.queue ? STATEMENT_QUEUE_WHERE[q.queue] : {},
+      ],
     };
     const [rows, total] = await Promise.all([
       this.prisma.billingStatement.findMany({

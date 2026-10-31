@@ -1,6 +1,9 @@
 import { ReasonDto } from '@common/dto/reason.dto';
+import { dateOnly } from '@common/ledger-core/dates';
 import { NextActionDto } from '@common/next-actions/next-action.dto';
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { bangkokDate } from '@common/time/bangkok';
+import { type Prisma } from '@generated/prisma/client';
 import { PersonRefDto } from '@modules/financial-reports/financial-reports.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
@@ -781,6 +784,33 @@ export class ReceivableListQuery extends PageQuery {
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   overdue?: boolean;
+
+  @ApiPropertyOptional({
+    type: Boolean,
+    example: true,
+    description: 'Only company (B2B) receivables — with `overdue=true` the dashboard card',
+  })
+  @IsOptional()
+  @Transform(({ value }) => value === true || value === 'true')
+  @IsBoolean()
+  b2b?: boolean;
+}
+
+/** The `admin.receivables.list` filter, shared with the dashboard's overdue-B2B card (`overdue=true&b2b=true`). */
+export function receivableListWhere(
+  q: Pick<ReceivableListQuery, 'status' | 'companyId' | 'customerId' | 'overdue' | 'b2b'>,
+  now = new Date(),
+): Prisma.ReceivableItemWhereInput {
+  return {
+    ...(q.status && { status: q.status }),
+    ...(q.companyId && { company: { publicId: q.companyId } }),
+    ...(q.customerId && { customer: { publicId: q.customerId } }),
+    ...(q.b2b === true && !q.companyId && { companyId: { not: null } }),
+    ...(q.overdue === true && {
+      status: { in: ['open', 'partially_paid'] },
+      dueDate: { lt: dateOnly(bangkokDate(now)) },
+    }),
+  };
 }
 
 export class AgingBucketsDto {

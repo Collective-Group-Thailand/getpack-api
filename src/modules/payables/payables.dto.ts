@@ -21,6 +21,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { STATEMENT_QUEUES, type StatementQueue } from './statement-queues';
+
 /** Payables (B5.3): factory POs, GRs, billing statements, vendor invoices, payables, vendors. Money: strings, THB. */
 
 const MONEY = /^\d{1,12}\.\d{2}$/;
@@ -153,6 +155,28 @@ export const PO_EXAMPLE: PurchaseOrderDto = {
   grossAmount: '8560.00',
   currency: 'THB',
   lines: [LINE_EXAMPLE],
+};
+
+/**
+ * Admin finance (D-463 follow-up, 2026-10-31): staff see which factory a purchase order is for by name and code,
+ * not only its id. Admin only — the factory reads its own POs as {@link PurchaseOrderDto}; customers never see
+ * factories (D-050, D-435). No rule restricts factory names on getpack's own finance documents (D-010, D-090).
+ */
+export class AdminPurchaseOrderDto extends PurchaseOrderDto {
+  @ApiProperty({
+    example: 'โรงพิมพ์ตัวอย่าง',
+    description: 'The factory’s trade name, else its legal name',
+  })
+  factoryName!: string;
+
+  @ApiProperty({ example: 'F0001', description: 'Staff-facing factory code' })
+  factoryCode!: string;
+}
+
+export const ADMIN_PO_EXAMPLE: AdminPurchaseOrderDto = {
+  ...PO_EXAMPLE,
+  factoryName: 'โรงพิมพ์ตัวอย่าง',
+  factoryCode: 'F0001',
 };
 
 export class ApListQuery extends PageQuery {
@@ -436,6 +460,24 @@ export const BS_EXAMPLE: BillingStatementDto = {
   ],
 };
 
+/** Admin finance: the billing statement with the factory's name and code (D-463 follow-up; admin only). */
+export class AdminBillingStatementDto extends BillingStatementDto {
+  @ApiProperty({
+    example: 'โรงพิมพ์ตัวอย่าง',
+    description: 'The factory’s trade name, else its legal name',
+  })
+  factoryName!: string;
+
+  @ApiProperty({ example: 'F0001', description: 'Staff-facing factory code' })
+  factoryCode!: string;
+}
+
+export const ADMIN_BS_EXAMPLE: AdminBillingStatementDto = {
+  ...BS_EXAMPLE,
+  factoryName: 'โรงพิมพ์ตัวอย่าง',
+  factoryCode: 'F0001',
+};
+
 export class DisputeStatementDto {
   @ApiProperty({ example: 'ยอดขนส่งไม่ตรงกับใบส่งของ', description: 'What is wrong with the statement' })
   @IsString()
@@ -467,6 +509,17 @@ export class StatementListQuery extends PageQuery {
   @IsOptional()
   @IsIn(BS_STATUSES)
   status?: (typeof BS_STATUSES)[number];
+
+  @ApiPropertyOptional({
+    enum: STATEMENT_QUEUES,
+    enumName: 'BillingStatementQueue',
+    description:
+      'A work queue: `missing_tax_invoice` = confirmed with no recorded or validated factory tax invoice (the ' +
+      'dashboard card, D-090)',
+  })
+  @IsOptional()
+  @IsIn(STATEMENT_QUEUES)
+  queue?: StatementQueue;
 }
 
 export class CaptureTaxInvoiceDto {

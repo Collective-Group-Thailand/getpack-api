@@ -7,6 +7,7 @@ import { type DeliveryReconciliation, type Prisma } from '@generated/prisma/clie
 import {
   type AdminShipmentDto,
   type DeliveryReconciliationDto,
+  type PartnerProofOfDeliveryDto,
   type PartnerShipmentDto,
   type ProofOfDeliveryDto,
   type ShipmentHandoverSummaryDto,
@@ -77,19 +78,30 @@ function exceptionDto(row: ShipmentRow): AdminShipmentDto['exception'] {
 }
 const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 
-function podDto(row: ShipmentRow, photos: string[], surface: 'partner' | 'admin'): ProofOfDeliveryDto | null {
+/**
+ * D-463 (2026-10-31 amendment): the factory learns only that a receiver was recorded — never the name, not even the
+ * one it typed itself (the reply that would echo it back is a partner response too), and never the carrier's POD
+ * reference (a lookup key into the carrier's record of the recipient).
+ */
+function partnerPodDto(row: ShipmentRow, photos: string[]): PartnerProofOfDeliveryDto | null {
   const pod = row.proofOfDelivery;
   if (!pod) return null;
   return {
     kind: pod.kind,
-    // P4-D1: a carrier POD carries the recipient's name copied from the shipment — not for the factory.
-    receiverName: surface === 'partner' && pod.kind === 'carrier_pod' ? null : pod.receiverName,
+    receiverRecorded: pod.receiverName.trim().length > 0,
     deliveredQuantity: pod.deliveredQuantity,
     capturedAt: toBangkokIso(pod.capturedAt),
     signatureFileId: pod.signatureFile?.publicId ?? null,
     photoFileIds: photos,
-    carrierPodRef: pod.carrierPodRef,
   };
+}
+
+/** Staff: the full POD. */
+function adminPodDto(row: ShipmentRow, photos: string[]): ProofOfDeliveryDto | null {
+  const partner = partnerPodDto(row, photos);
+  const pod = row.proofOfDelivery;
+  if (!partner || !pod) return null;
+  return { ...partner, receiverName: pod.receiverName, carrierPodRef: pod.carrierPodRef };
 }
 
 const itemCode = (i: ShipmentRow['items'][number]) => codeAmong(i.order.destinations, i.orderDestinationId);
@@ -126,7 +138,8 @@ export function partnerShipmentDto(
     status: row.status,
     ...statusLabels('ShipmentStatus', row.status),
     carrier: row.carrier.code,
-    trackingNo: row.trackingNo,
+    // D-463: "booked" only — the carrier's tracking number / URL open the recipient on the carrier's site.
+    carrierBooked: row.bookedAt !== null,
     destination: partnerShipmentDestination(row),
     cartonsCount: row.cartonsCount,
     weightG: row.weightG,
@@ -155,7 +168,7 @@ export function partnerShipmentDto(
       location: e.location,
       note: e.note,
     })),
-    proofOfDelivery: podDto(row, podPhotos, 'partner'),
+    proofOfDelivery: partnerPodDto(row, podPhotos),
     note: row.note,
     cartons: row.cartons.map((c) => ({ seq: c.seq, labelCode: c.labelCode, weightG: c.weightG })),
     blockedByPayment,
@@ -191,10 +204,11 @@ export function adminShipmentDto(
       line2: row.line2,
       postcode: row.postcode,
     },
-    proofOfDelivery: podDto(row, podPhotos, 'admin'),
+    proofOfDelivery: adminPodDto(row, podPhotos),
     factoryId: row.factory.publicId,
     factoryCode: row.factory.code,
     carrierBookingRef: row.carrierBookingRef,
+    trackingNo: row.trackingNo,
     trackingUrl: row.trackingUrl,
     payoutAmount: grants.cost ? (row.payoutAmount?.toFixed(2) ?? null) : null,
     carrierCostAmount: grants.cost ? (row.carrierCostAmount?.toFixed(2) ?? null) : null,

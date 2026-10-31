@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { LogisticsSubscribers } from './carrier-events.subscriber';
 import { DeliveryService } from './delivery.service';
 import { ShipmentHandoverService } from './handover.service';
+import { ShipmentReissueService } from './shipment-reissue.service';
 import { ShipmentsService } from './shipments.service';
 import { ShipmentsQueryService } from './shipments-query.service';
 
@@ -11,6 +12,7 @@ const SERVICES = [
   ShipmentsQueryService,
   DeliveryService,
   ShipmentHandoverService,
+  ShipmentReissueService,
   LogisticsSubscribers,
 ];
 

@@ -34,6 +34,8 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
+import { SLIP_QUEUE_WHERE } from './payment-queues';
+
 const D = (v: string | Prisma.Decimal | number) => new MoneyDecimal(v.toString());
 const OPEN = ['pending', 'due', 'partially_paid', 'overdue'] as const;
 /** 2C2P payment tokens live 30 minutes (provider limit, not a business value). */
@@ -831,7 +833,7 @@ export class PaymentsService implements OnModuleInit {
   }
 
   async slipQueue(page: number, perPage: number) {
-    const where: Prisma.SlipWhereInput = { verificationStatus: 'manual_review' };
+    const where = SLIP_QUEUE_WHERE;
     const [rows, total] = await Promise.all([
       this.prisma.slip.findMany({
         where,

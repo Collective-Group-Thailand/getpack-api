@@ -20,6 +20,7 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Res
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { type Response } from 'express';
 
+import { CLAIM_QUEUE_WHERE } from './claim-queues';
 import { adminClaimDto, claimSla, partnerClaimDto, storeClaimDto } from './claim-views';
 import {
   ADMIN_CLAIM_EXAMPLE,
@@ -82,11 +83,17 @@ const listWhere = (q: ClaimListQuery): Prisma.ClaimWhereInput => ({
   ...(q.orderId && { order: { publicId: q.orderId } }),
 });
 const adminListWhere = (q: AdminClaimListQuery): Prisma.ClaimWhereInput => ({
-  ...listWhere(q),
-  ...(q.type && { type: q.type }),
-  ...(q.origin && { origin: q.origin }),
-  ...(q.customerId && { customer: { publicId: q.customerId } }),
-  ...(q.factoryId && { factory: { publicId: q.factoryId } }),
+  AND: [
+    {
+      ...listWhere(q),
+      ...(q.type && { type: q.type }),
+      ...(q.origin && { origin: q.origin }),
+      ...(q.customerId && { customer: { publicId: q.customerId } }),
+      ...(q.factoryId && { factory: { publicId: q.factoryId } }),
+    },
+    // The dashboard card's own filter (CLAIM_QUEUE_WHERE, shared with DashboardService).
+    q.queue ? CLAIM_QUEUE_WHERE[q.queue] : {},
+  ],
 });
 
 type Photos = { product: string[]; carton: string[] };
@@ -545,8 +552,8 @@ export class AdminClaimsController extends ClaimViews {
     id: 'admin.claims.list',
     summary: 'List claims',
     description:
-      'Newest first; `type`, `origin` (customer, automatic from the tolerance, staff), `customerId` and ' +
-      '`factoryId` narrow it. Each row names the customer.',
+      'Newest first; `type`, `origin` (customer, automatic from the tolerance, staff), `customerId`, ' +
+      '`factoryId` and `queue` (`open`: the dashboard card) narrow it. Each row names the customer.',
     implements: ['D-082'],
   })
   @ApiPaginated(AdminClaimDto, { example: ADMIN_CLAIM_EXAMPLE })

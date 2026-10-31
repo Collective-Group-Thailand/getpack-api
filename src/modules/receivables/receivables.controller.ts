@@ -52,6 +52,7 @@ import {
   ReasonDto,
   ReceivableItemDto,
   ReceivableListQuery,
+  receivableListWhere,
   RecordWhtCertificateDto,
   RequestCorrectionDto,
   RequestCreditNoteDto,
@@ -553,22 +554,14 @@ export class AdminReceivablesController {
     id: 'admin.receivables.list',
     summary: 'List receivables',
     description:
-      'AR open items by due date: invoices and final tax invoices with a remainder, debit notes (§6).',
+      'AR open items by due date: invoices and final tax invoices with a remainder, debit notes (§6); ' +
+      '`overdue=true&b2b=true` is the dashboard’s overdue B2B card.',
     implements: ['D-033', 'D-121'],
   })
   @ApiPaginated(ReceivableItemDto, { example: ITEM_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@Query() q: ReceivableListQuery) {
-    const where: Prisma.ReceivableItemWhereInput = {
-      ...(q.status && { status: q.status }),
-      ...(q.companyId && { company: { publicId: q.companyId } }),
-      ...(q.customerId && { customer: { publicId: q.customerId } }),
-      ...(q.overdue === true && {
-        status: { in: ['open', 'partially_paid'] },
-        dueDate: { lt: dateOnly(bangkokDate(new Date())) },
-      }),
-    };
-    const { rows, total } = await this.receivables.items(where, q.page, q.perPage);
+    const { rows, total } = await this.receivables.items(receivableListWhere(q), q.page, q.perPage);
     return { data: rows.map(itemDto), meta: { page: q.page, perPage: q.perPage, total } };
   }
 
