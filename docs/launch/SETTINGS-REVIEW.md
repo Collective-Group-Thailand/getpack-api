@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**131 settings** — 77 confirmed · 22 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**132 settings** — 78 confirmed · 22 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -72,6 +72,7 @@
 | `fulfilment.colour_tolerance_delta_e` | `{"standard":"3","flexo":"5"}` | confirmed | superadmin | D-186 | D-186 published colour tolerance, ΔE2000 against the approved proof, for printed products (≤ 3; ≤ 5 for flexo) |
 | `fulfilment.dimensional_tolerance_mm` | `{"folding":"1","tag_sleeve":"1","corrugate":"3"}` | confirmed | superadmin | D-186 | D-186 published dimensional tolerance ± mm per calculator (folding cartons incl. tags & sleeves ± 1, corrugated ± 3); a calculator not listed publishes none |
 | `fulfilment.tolerance_default_pct` | `5` | confirmed | superadmin | D-163, D-021 | D-163 default quantity tolerance ± % (shortage and overage) until a factory sets its own |
+| `logistics.handover_link_ttl_days` | `7` | confirmed | admin | D-463 | D-463 how long a driver handover link (`<web>/l/<token>`, the only place outside staff that shows the recipient’s name, phone and address) stays valid at most, in calendar days from issue; it also ends when the trip is delivered, cancelled or returned. Applies to links issued from the version’s effective date; links already issued keep their expiry. 7 = the D-463 default (business lead 2026-10-30), 1–30 |
 | `loyalty.activity_rewards` | `{"signupBaht":"50.00","lineLinkingBaht":"20.00","reviewBaht":"10.00"}` | confirmed | superadmin | D-135, D-131 | D-135 activity rewards in baht, converted to points at the point value (rounded down) |
 | `loyalty.earn_rate` | `{"bahtPerPoint":"500.00","basis":"paid_before_vat_excluding_shipping"}` | confirmed | superadmin | D-130 | D-130 one point per THB 500 paid (before VAT, excluding shipping) |
 | `loyalty.expected_redemption_rate_pct` | `100` | pending_cpa | superadmin | D-131, D-033 | D-131 / P10 expected redemption rate for the points liability (accounting-design.md §5, ⚖ points liability method) |

@@ -10,15 +10,26 @@ import { type ShipmentHandoverLink, type ShipmentStatus } from '@generated/prism
 import { PDF_RENDERER, type PdfRenderer } from '@integrations/pdf/pdf-renderer.port';
 import { Inject, Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
+import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
 import { renderWaybillHtml, type WaybillDocument } from './shipment-documents';
 import { hashToken, ShipmentsService } from './shipments.service';
 
+/** The setting that says how long a driver handover link stays valid at most (D-463, amended 2026-10-31). */
+export const HANDOVER_TTL_SETTING = 'logistics.handover_link_ttl_days';
 /**
- * D-463: how long a driver handover link stays valid at most (it also ends at delivery, cancellation or return).
- * A technical default set by the decision; change it here (and in D-463) if operations needs longer.
+ * D-463: the seeded value of {@link HANDOVER_TTL_SETTING} and what a link gets while the setting has no version in
+ * force; the link also ends at delivery, cancellation or return. Bounds as the setting's schema (1–30 days).
  */
-export const HANDOVER_LINK_TTL_DAYS = 7;
+export const HANDOVER_LINK_TTL_DEFAULT_DAYS = 7;
+export const HANDOVER_LINK_TTL_MIN_DAYS = 1;
+export const HANDOVER_LINK_TTL_MAX_DAYS = 30;
+
+/** The days a link issued at `at` lives: the setting in force, else the default; clamped to 1–30 (pure). */
+export function handoverTtlDays(value: unknown): number {
+  if (typeof value !== 'number' || !Number.isInteger(value)) return HANDOVER_LINK_TTL_DEFAULT_DAYS;
+  return Math.min(HANDOVER_LINK_TTL_MAX_DAYS, Math.max(HANDOVER_LINK_TTL_MIN_DAYS, value));
+}
 
 /** `d` + 32 base64url characters (24 random bytes). The first letter keeps it apart from notification links (D-299). */
 export const HANDOVER_TOKEN = /^d[A-Za-z0-9_-]{32}$/;
@@ -96,7 +107,7 @@ const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
  * D-463 "sealed carrier label": the recipient's name, phone and address reach the carrier / driver only — through
  * the getpack waybill (staff download) and a handover link (`<web>/l/<token>`) that getpack staff issue and send to
  * the driver. The token is random, SHA-256 stored only, bound to one shipment, valid until the trip ends and at most
- * {@link HANDOVER_LINK_TTL_DAYS}; regenerating revokes the previous link. Every open and every pickup confirmation
+ * `logistics.handover_link_ttl_days` (default 7); regenerating revokes the previous link. Every open and every pickup confirmation
  * is an audit row (`data_access`, with the request's IP and user agent). The partner surface only learns whether a
  * waybill was issued.
  */
@@ -108,14 +119,25 @@ export class ShipmentHandoverService {
     private readonly audit: AuditService,
     private readonly shipments: ShipmentsService,
     @Inject(PDF_RENDERER) private readonly pdf: PdfRenderer,
+    private readonly settings: SettingsService,
   ) {}
+
+  /** `logistics.handover_link_ttl_days` in force at `at` (effective-dated, audited setting); 7 while unset. */
+  async ttlDays(at: Date): Promise<number> {
+    try {
+      return handoverTtlDays((await this.settings.at(HANDOVER_TTL_SETTING, { at })).value);
+    } catch (error) {
+      if (error instanceof SettingNotFoundError) return HANDOVER_LINK_TTL_DEFAULT_DAYS;
+      throw error;
+    }
+  }
 
   // --- staff ---------------------------------------------------------------------------------------------------
 
   /** Issue (or regenerate) the shipment's handover link. The URL and token are returned once; only the hash is kept. */
   async issue(actor: UserActor, shipmentId: bigint, now = new Date()): Promise<IssuedHandoverLink> {
     const token = newHandoverToken();
-    const expiresAt = new Date(now.getTime() + HANDOVER_LINK_TTL_DAYS * 86_400_000);
+    const expiresAt = new Date(now.getTime() + (await this.ttlDays(now)) * 86_400_000);
     await this.prisma.withTx(async (tx) => {
       const shipment = await this.shipments.lock(tx, shipmentId);
       if (!HANDOVER_ISSUABLE.includes(shipment.status))

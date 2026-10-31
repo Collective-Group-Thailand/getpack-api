@@ -4,7 +4,12 @@ import { DECORATORS } from '@nestjs/swagger';
 import {
   ADMIN_SHIPMENT_EXAMPLE,
   AdminShipmentDestinationDto,
+  AdminShipmentDto,
+  PARTNER_POD_EXAMPLE,
   PARTNER_SHIPMENT_EXAMPLE,
+  PartnerProofOfDeliveryDto,
+  PartnerShipmentDto,
+  ProofOfDeliveryDto,
   SHIP_PLAN_EXAMPLE,
   ShipmentAddressDto,
   ShipmentDestinationDto,
@@ -19,7 +24,10 @@ const swaggerFields = (cls: abstract new () => unknown): string[] =>
   ).map((k) => k.replace(/^:/, ''));
 
 const at = new Date('2026-10-20T03:00:00Z');
-const row = (podKind: 'carrier_pod' | 'factory_photo_signature' | null = null) =>
+const row = (
+  podKind: 'carrier_pod' | 'factory_photo_signature' | null = null,
+  over: Record<string, unknown> = {},
+) =>
   ({
     id: 1n,
     publicId: '0192f3a0-7c1e-7d2a-9b1f-000000000001',
@@ -29,6 +37,7 @@ const row = (podKind: 'carrier_pod' | 'factory_photo_signature' | null = null) =
     trackingNo: null,
     trackingUrl: null,
     carrierBookingRef: null,
+    bookedAt: null,
     recipientName: 'สมหญิง ใจดี',
     phone: '+66810001234',
     line1: '99/9 ถนนสุขุมวิท',
@@ -92,6 +101,7 @@ const row = (podKind: 'carrier_pod' | 'factory_photo_signature' | null = null) =
           reviews: [],
         }
       : null,
+    ...over,
   }) as unknown as ShipmentRow;
 
 describe('shipment views: no customer identity for the factory (P4-01 / P4-D1)', () => {
@@ -111,14 +121,59 @@ describe('shipment views: no customer identity for the factory (P4-01 / P4-D1)',
     expect(json).not.toContain('สุขุมวิท');
   });
 
-  it('hides the recipient name a carrier POD copies, keeps the factory-recorded one', () => {
-    expect(partnerShipmentDto(row('carrier_pod'), []).proofOfDelivery?.receiverName).toBeNull();
-    expect(partnerShipmentDto(row('factory_photo_signature'), []).proofOfDelivery?.receiverName).toBe(
-      'สมหญิง ใจดี',
+  it('D-463: a factory-recorded POD returns receiverRecorded, never the name; staff keep it', () => {
+    for (const kind of ['factory_photo_signature', 'carrier_pod'] as const) {
+      const pod = partnerShipmentDto(row(kind), ['p1']).proofOfDelivery!;
+      expect(pod).toEqual({
+        kind,
+        receiverRecorded: true,
+        deliveredQuantity: 600,
+        capturedAt: '2026-10-20T10:00:00+07:00',
+        signatureFileId: null,
+        photoFileIds: ['p1'],
+      });
+      expect(pod).not.toHaveProperty('receiverName');
+      expect(pod).not.toHaveProperty('carrierPodRef');
+      expect(JSON.stringify(partnerShipmentDto(row(kind)))).not.toContain('สมหญิง');
+      expect(adminShipmentDto(row(kind), { cost: false }).proofOfDelivery).toMatchObject({
+        receiverName: 'สมหญิง ใจดี',
+        receiverRecorded: true,
+        carrierPodRef: kind === 'carrier_pod' ? 'FLASH-1' : null,
+      });
+    }
+    expect(swaggerFields(PartnerProofOfDeliveryDto)).toContain('receiverRecorded');
+    expect(swaggerFields(PartnerProofOfDeliveryDto)).not.toContain('receiverName');
+    expect(swaggerFields(ProofOfDeliveryDto)).toEqual(
+      expect.arrayContaining(['receiverName', 'carrierPodRef']),
     );
-    expect(adminShipmentDto(row('carrier_pod'), { cost: false }).proofOfDelivery?.receiverName).toBe(
-      'สมหญิง ใจดี',
-    );
+    expect(PARTNER_POD_EXAMPLE).not.toHaveProperty('receiverName');
+  });
+
+  it('D-463: a fallback carrier shows the factory its name and "booked" only; staff keep tracking', () => {
+    const booked = row(null, {
+      carrier: { code: 'flash_express' },
+      trackingNo: 'TH0123456789',
+      trackingUrl: 'https://flashexpress.example/track?pno=TH0123456789',
+      carrierBookingRef: 'TH0123456789',
+      bookedAt: at,
+    });
+    const partner = partnerShipmentDto(booked);
+    expect(partner.carrier).toBe('flash_express');
+    expect(partner.carrierBooked).toBe(true);
+    expect(partner).not.toHaveProperty('trackingNo');
+    expect(partner).not.toHaveProperty('trackingUrl');
+    expect(partner).not.toHaveProperty('carrierBookingRef');
+    expect(JSON.stringify(partner)).not.toContain('TH0123456789');
+    expect(partnerShipmentDto(row()).carrierBooked).toBe(false);
+    expect(adminShipmentDto(booked, { cost: false })).toMatchObject({
+      carrierBooked: true,
+      trackingNo: 'TH0123456789',
+      trackingUrl: 'https://flashexpress.example/track?pno=TH0123456789',
+      carrierBookingRef: 'TH0123456789',
+    });
+    expect(swaggerFields(PartnerShipmentDto)).not.toContain('trackingNo');
+    expect(swaggerFields(AdminShipmentDto)).toContain('trackingNo');
+    expect(PARTNER_SHIPMENT_EXAMPLE).not.toHaveProperty('trackingNo');
   });
 
   it('keeps the full address for staff and for the customer', () => {

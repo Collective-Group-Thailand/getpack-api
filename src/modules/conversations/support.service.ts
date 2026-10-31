@@ -236,7 +236,7 @@ export class SupportService {
     const respondBy = await this.respondBy(now, t.topic);
     const queue = queueFor(t.topic, await this.optional('support.topic_queues', now));
     const { ticket, conversationId } = await this.prisma.withTx(async (tx) => {
-      const conversation = await this.conversations.openForTicket(tx, customerUserId, t.body);
+      const conversation = await this.conversations.openForTicket(tx, customerUserId, t.body, respondBy);
       const ticket = await tx.supportTicket.create({
         data: {
           ticketNo: await this.numbering.next(tx, 'support_ticket', now),

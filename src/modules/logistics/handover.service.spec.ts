@@ -1,9 +1,12 @@
 import { DomainException } from '@common/errors/domain.exception';
+import { SettingNotFoundError } from '@platform/settings/settings.service';
 
 import {
-  HANDOVER_LINK_TTL_DAYS,
+  HANDOVER_LINK_TTL_DEFAULT_DAYS,
   HANDOVER_TOKEN,
+  HANDOVER_TTL_SETTING,
   handoverLinkState,
+  handoverTtlDays,
   newHandoverToken,
   ShipmentHandoverService,
 } from './handover.service';
@@ -34,7 +37,7 @@ describe('driver handover link (D-463)', () => {
 
   function setup(
     link: Record<string, unknown> | null,
-    opts: { status?: string; carrier?: string; dispatch?: () => Promise<void> } = {},
+    opts: { status?: string; carrier?: string; dispatch?: () => Promise<void>; ttl?: unknown } = {},
   ) {
     const status = opts.status ?? 'ready';
     const row = link && {
@@ -74,14 +77,22 @@ describe('driver handover link (D-463)', () => {
       documentSender: jest.fn().mockResolvedValue({ name: 'getpack', phone: '+6620000000' }),
     };
     const config = { get: jest.fn().mockReturnValue('https://www.getpack.example/') };
+    const settings = {
+      at: jest.fn(() =>
+        'ttl' in opts
+          ? Promise.resolve({ value: opts.ttl })
+          : Promise.reject(new SettingNotFoundError(HANDOVER_TTL_SETTING, now)),
+      ),
+    };
     const service = new ShipmentHandoverService(
       prisma as never,
       config as never,
       audit as never,
       shipments as never,
       { render: jest.fn() },
+      settings as never,
     );
-    return { service, prisma, tx, audit, shipments };
+    return { service, prisma, tx, audit, shipments, settings };
   }
 
   const codeOf = async (p: Promise<unknown>) => {
@@ -107,7 +118,9 @@ describe('driver handover link (D-463)', () => {
     expect(
       JSON.stringify(created.data, (_k, v: unknown) => (typeof v === 'bigint' ? String(v) : v)),
     ).not.toContain(issued.token);
-    expect(created.data.expiresAt).toEqual(new Date(now.getTime() + HANDOVER_LINK_TTL_DAYS * 86_400_000));
+    expect(created.data.expiresAt).toEqual(
+      new Date(now.getTime() + HANDOVER_LINK_TTL_DEFAULT_DAYS * 86_400_000),
+    );
     expect(audit.record).toHaveBeenCalledWith(
       tx,
       expect.objectContaining({ category: 'data_access', action: 'shipment.handover_link_regenerated' }),
@@ -120,6 +133,18 @@ describe('driver handover link (D-463)', () => {
       { regenerated: true },
       expect.anything(),
     );
+  });
+
+  it('takes the link lifetime from `logistics.handover_link_ttl_days` (default 7, bounded 1–30)', async () => {
+    const { service, tx, settings } = setup(null, { ttl: 3 });
+    await service.issue({ type: 'user', userId: 7n } as never, 1n, now);
+    expect(settings.at).toHaveBeenCalledWith(HANDOVER_TTL_SETTING, { at: now });
+    const created = tx.shipmentHandoverLink.create.mock.calls[0]![0] as { data: { expiresAt: Date } };
+    expect(created.data.expiresAt).toEqual(new Date(now.getTime() + 3 * 86_400_000));
+    expect(handoverTtlDays(undefined)).toBe(7);
+    expect(handoverTtlDays(0)).toBe(1);
+    expect(handoverTtlDays(90)).toBe(30);
+    expect(handoverTtlDays('5')).toBe(7);
   });
 
   it('refuses a link before the trip is packed', async () => {

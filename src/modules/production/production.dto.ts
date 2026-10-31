@@ -28,6 +28,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+import { JOB_QUEUES, type JobQueue } from './job-queues';
+
 /** Production jobs and milestones (D-073…D-076, D-012, D-101, D-142). */
 
 export const JOB_KINDS = ['production', 'mockup', 'reproduction'] as const;
@@ -104,13 +106,13 @@ export class JobListQuery extends PageQuery {
   status?: (typeof JOB_STATUSES)[number];
 
   @ApiPropertyOptional({
-    enum: ['escalated', 'at_risk', 'awaiting_acceptance'],
+    enum: JOB_QUEUES,
     enumName: 'JobQueue',
     description: 'Work queues',
   })
   @IsOptional()
-  @IsIn(['escalated', 'at_risk', 'awaiting_acceptance'])
-  queue?: 'escalated' | 'at_risk' | 'awaiting_acceptance';
+  @IsIn(JOB_QUEUES)
+  queue?: JobQueue;
 
   @ApiPropertyOptional({ format: 'uuid', example: JOB_IDS.order })
   @IsOptional()

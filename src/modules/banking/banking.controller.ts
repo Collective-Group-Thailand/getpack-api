@@ -6,7 +6,6 @@ import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { bangkokDate } from '@common/time/bangkok';
-import { type Prisma } from '@generated/prisma/client';
 import { ReasonDto } from '@modules/receivables/receivables.dto';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
@@ -38,6 +37,7 @@ import {
   UnidentifiedReceiptDto,
 } from './banking.dto';
 import { BankingService } from './banking.service';
+import { bankLineWhere } from './banking-queues';
 import { cashDto, companyAccountDto, lineDto, receiptDto } from './banking-views';
 import { CompanyBankAccountsService } from './company-bank-accounts.service';
 
@@ -188,11 +188,7 @@ export class AdminBankingController {
   @ApiPaginated(BankStatementLineDto, { example: LINE_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async lines(@Query() q: StatementLineQuery) {
-    const where: Prisma.BankStatementLineWhereInput = {
-      ...(q.companyBankAccountId && { companyBankAccount: { publicId: q.companyBankAccountId } }),
-      ...(q.matchStatus && { matchStatus: q.matchStatus }),
-    };
-    const { rows, total } = await this.banking.lines(where, q.page, q.perPage);
+    const { rows, total } = await this.banking.lines(bankLineWhere(q), q.page, q.perPage);
     return { data: rows.map(lineDto), meta: { page: q.page, perPage: q.perPage, total } };
   }
 

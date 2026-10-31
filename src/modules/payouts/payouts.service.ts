@@ -132,15 +132,16 @@ export class PayoutsService {
     return row;
   }
 
-  async list(page: number, perPage: number) {
+  async list(page: number, perPage: number, where: Prisma.PayoutRunWhereInput = {}) {
     const [rows, total] = await Promise.all([
       this.prisma.payoutRun.findMany({
+        where,
         include: RUN_INCLUDE,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * perPage,
         take: perPage,
       }),
-      this.prisma.payoutRun.count(),
+      this.prisma.payoutRun.count({ where }),
     ]);
     return { rows, total };
   }

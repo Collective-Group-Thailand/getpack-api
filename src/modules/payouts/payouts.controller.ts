@@ -42,6 +42,8 @@ import {
   PayoutExceptionDto,
   PayoutItemDocumentsDto,
   PayoutRunDto,
+  PayoutRunListQuery,
+  payoutRunWhere,
   PayoutScheduleJobDto,
   PayoutStatementQuery,
   RUN_EXAMPLE,
@@ -133,13 +135,14 @@ export class AdminPayoutsController {
   @ApiEndpoint({
     id: 'admin.payouts.list',
     summary: 'List payout runs',
-    description: 'Newest first, with their items and approval (D-166).',
+    description:
+      'Newest first, with their items and approval (D-166); `status=proposed` = awaiting approval.',
     implements: DOCS,
   })
   @ApiPaginated(PayoutRunDto, { example: RUN_EXAMPLE })
   @ApiStandardErrors('validation.failed')
-  async list(@CurrentActor() actor: Actor, @Query() q: PageQuery) {
-    const { rows, total } = await this.payouts.list(q.page, q.perPage);
+  async list(@CurrentActor() actor: Actor, @Query() q: PayoutRunListQuery) {
+    const { rows, total } = await this.payouts.list(q.page, q.perPage, payoutRunWhere(q));
     const perms = await permissionsOf(this.permissions, actor);
     return { data: rows.map((r) => runDto(r, perms)), meta: { page: q.page, perPage: q.perPage, total } };
   }

@@ -9,6 +9,7 @@ import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
+import { refundListWhere } from './payment-queues';
 import { refundDto } from './payment-views';
 import {
   CompleteRefundDto,
@@ -83,7 +84,7 @@ export class AdminRefundsController {
   @ApiPaginated(RefundDto, { example: REFUND_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   async list(@Query() q: RefundListQuery) {
-    const { rows, total } = await this.refunds.list(q.status ? { status: q.status } : {}, q.page, q.perPage);
+    const { rows, total } = await this.refunds.list(refundListWhere(q), q.page, q.perPage);
     return { data: rows.map(refundDto), meta: { page: q.page, perPage: q.perPage, total } };
   }
 

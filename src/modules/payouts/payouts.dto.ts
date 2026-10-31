@@ -1,4 +1,6 @@
 import { NextActionDto } from '@common/next-actions/next-action.dto';
+import { PageQuery } from '@common/pagination/pagination.dto';
+import { type Prisma } from '@generated/prisma/client';
 import { PAYOUT_TRIGGERS } from '@modules/partners/configuration/configuration.dto';
 import { PAYABLE_SOURCES, PAYABLE_STATUSES, PO_STATUSES } from '@modules/payables/payables.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -313,6 +315,19 @@ export class ConfirmPayoutRunDto {
   @IsOptional()
   @IsUUID()
   fileId?: string;
+}
+
+/** `admin.payouts.list` filter: `status=proposed` is the dashboard's "awaiting approval" card (D-166). */
+export class PayoutRunListQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: RUN_STATUSES, enumName: 'PayoutRunStatus' })
+  @IsOptional()
+  @IsIn(RUN_STATUSES)
+  status?: (typeof RUN_STATUSES)[number];
+}
+
+/** The payout-run list filter, shared with the dashboard counts (U-B0.3). */
+export function payoutRunWhere(q: { status?: (typeof RUN_STATUSES)[number] }): Prisma.PayoutRunWhereInput {
+  return q.status ? { status: q.status } : {};
 }
 
 export class EligibleQuery {

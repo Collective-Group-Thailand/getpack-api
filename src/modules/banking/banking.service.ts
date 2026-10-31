@@ -20,6 +20,7 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { EntitiesService } from '@platform/entities/entities.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { unidentifiedWhere } from './banking-queues';
 import { CompanyBankAccountsService } from './company-bank-accounts.service';
 
 const D = (v: { toString(): string } | string | number) => new MoneyDecimal(v.toString());
@@ -966,7 +967,7 @@ export class BankingService {
 
   async unidentified(status?: 'open' | 'matched' | 'refunded') {
     return this.prisma.unidentifiedReceipt.findMany({
-      where: status ? { status } : {},
+      where: unidentifiedWhere(status),
       include: { statementLine: true },
       orderBy: { createdAt: 'desc' },
       take: 200,

@@ -180,7 +180,11 @@ export class ConversationsService implements OnModuleInit {
         rowVersion: { increment: 1 },
       },
     });
-    const earliest = [lineThread.firstResponseDueAt, support.firstResponseDueAt]
+    // Only a clock still waiting counts: an answered LINE thread's due time is not a new deadline.
+    const earliest = [
+      lineThread.firstRespondedAt ? null : lineThread.firstResponseDueAt,
+      support.firstResponseDueAt,
+    ]
       .filter((d): d is Date => d !== null)
       .sort((a, b) => a.getTime() - b.getTime())[0];
     await tx.conversation.update({
@@ -276,7 +280,20 @@ export class ConversationsService implements OnModuleInit {
    * new `contact` conversation for a guest (answered by phone or e-mail); the requester's message (if any) arrives on
    * it.
    */
-  async openForTicket(tx: Tx, customerUserId: bigint | null, body: string | null): Promise<Conversation> {
+  /**
+   * The conversation a contact / hand-off ticket lives in, with the ticket's message. D-221 / D-458: the ticket's
+   * `respondBy` is the first-response target, so a clock this ticket starts runs to `respondBy` — the conversation's
+   * `sla` and the ticket then show the same due time (they used to differ: the conversation took the global
+   * business days from the message, the ticket its topic's target, so `sla.state` could say overdue while the
+   * ticket's due time was still ahead). A ticket without a message starts the clock too. A clock already running
+   * for an earlier unanswered message keeps its (earlier) due time.
+   */
+  async openForTicket(
+    tx: Tx,
+    customerUserId: bigint | null,
+    body: string | null,
+    respondBy?: Date,
+  ): Promise<Conversation> {
     let conversation = customerUserId ? await this.liveSupport(tx, customerUserId) : null;
     if (!conversation) {
       if (customerUserId) conversation = await this.openWeb(tx, customerUserId, null);
@@ -291,13 +308,23 @@ export class ConversationsService implements OnModuleInit {
       }
     }
     if (body !== null)
-      await this.inbound(tx, conversation, {
-        kind: 'text',
-        body,
-        providerMessageId: null,
-        sentAt: new Date(),
-        senderUserId: customerUserId,
-        via: customerUserId ? 'web' : null,
+      await this.inbound(
+        tx,
+        conversation,
+        {
+          kind: 'text',
+          body,
+          providerMessageId: null,
+          sentAt: new Date(),
+          senderUserId: customerUserId,
+          via: customerUserId ? 'web' : null,
+        },
+        respondBy,
+      );
+    else if (respondBy)
+      await tx.conversation.updateMany({
+        where: { id: conversation.id, firstRespondedAt: null, firstResponseDueAt: null },
+        data: { firstResponseDueAt: respondBy },
       });
     return conversation;
   }
@@ -402,6 +429,8 @@ export class ConversationsService implements OnModuleInit {
       contextCard?: ContextCard | null;
       fileObjectId?: bigint | null;
     },
+    /** The first-response due time when this message starts the clock (a ticket's `respondBy`); else computed. */
+    dueAt?: Date,
   ): Promise<ConversationMessage> {
     const message = await tx.conversationMessage.create({
       data: {
@@ -426,7 +455,7 @@ export class ConversationsService implements OnModuleInit {
         lastMessageAt: m.sentAt,
         status: 'open',
         ...(m.via && { lastInboundVia: m.via }),
-        ...(startClock && { firstResponseDueAt: await this.firstResponseDue(m.sentAt) }),
+        ...(startClock && { firstResponseDueAt: dueAt ?? (await this.firstResponseDue(m.sentAt)) }),
         rowVersion: { increment: 1 },
       },
     });

@@ -4,6 +4,8 @@ import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { type Vendor } from '@generated/prisma/client';
 
 import {
+  type AdminBillingStatementDto,
+  type AdminPurchaseOrderDto,
   type ApLineDto,
   type BillingStatementDto,
   type GoodsReceiptDto,
@@ -52,6 +54,17 @@ export const poDto = (r: PoRow): PurchaseOrderDto => ({
   grossAmount: m(r.grossAmount),
   currency: 'THB',
   lines: r.lines.map(lineDto),
+});
+
+/** The factory as staff name it: trade name, else legal name (as the agents views do). */
+export const factoryLabel = (f: { legalName: string; tradeName: string | null }): string =>
+  f.tradeName?.trim() || f.legalName;
+
+/** Admin finance only: the PO with the factory's name and code (never on a partner or store response). */
+export const adminPoDto = (r: PoRow): AdminPurchaseOrderDto => ({
+  ...poDto(r),
+  factoryName: factoryLabel(r.factory),
+  factoryCode: r.factory.code,
 });
 
 export const grDto = (r: GrRow): GoodsReceiptDto => ({
@@ -145,6 +158,13 @@ export const bsDto = (
       : [],
   };
 };
+
+/** Admin finance only: the statement with the factory's name and code. */
+export const adminBsDto = (r: BsRow, dto: BillingStatementDto): AdminBillingStatementDto => ({
+  ...dto,
+  factoryName: factoryLabel(r.factory),
+  factoryCode: r.factory.code,
+});
 
 export const invoiceDto = (r: InvoiceRow): VendorInvoiceDto => ({
   id: r.publicId,

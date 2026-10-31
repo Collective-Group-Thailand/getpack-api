@@ -12,6 +12,7 @@ import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
+import { JOB_QUEUE_WHERE } from './job-queues';
 import { adminJobDto, issueDto, type JobRow, qcDto } from './job-views';
 import { JobsQueryService } from './jobs-query.service';
 import { MilestoneRoutesService, type RouteRow } from './milestone-routes.service';
@@ -126,15 +127,8 @@ export class AdminProductionController {
       ...(q.productTypeCode && {
         order: { ...(q.orderId && { publicId: q.orderId }), productType: { code: q.productTypeCode } },
       }),
-      ...(q.queue === 'awaiting_acceptance' && { status: 'released' }),
-      ...(q.queue === 'escalated' && {
-        escalatedAt: { not: null },
-        status: { in: ['released', 'rejected'] },
-      }),
-      ...(q.queue === 'at_risk' && {
-        atRiskSince: { not: null },
-        status: { in: ['accepted', 'in_progress', 'on_hold'] },
-      }),
+      // The queue's own filter (JOB_QUEUE_WHERE, shared with the dashboard counts).
+      ...(q.queue && JOB_QUEUE_WHERE[q.queue]),
     };
     const [rows, total] = await this.jobs.list(actor, where, q.page, q.perPage);
     return { data: await this.dtos(actor, rows), meta: { page: q.page, perPage: q.perPage, total } };

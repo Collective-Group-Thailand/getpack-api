@@ -193,6 +193,18 @@ describe('seed data (B1.2 step 3)', () => {
     });
   });
 
+  it('D-463: seeds the driver handover link lifetime as a bounded, Admin-owned setting (7 days, 1–30)', () => {
+    const byKey = (key: string) => SETTINGS.find((s) => s.key === key)!;
+    expect(byKey('logistics.handover_link_ttl_days')).toMatchObject({
+      valueType: 'integer',
+      value: 7,
+      valueSchema: { minimum: 1, maximum: 30 },
+      decisions: ['D-463'],
+      ownerRole: 'admin',
+    });
+    expect(byKey('logistics.handover_link_ttl_days').unset).toBeUndefined();
+  });
+
   it('does not seed values a decision leaves open', () => {
     const keys = SETTINGS.map((s) => s.key);
     expect(keys.filter((k) => /expir(y|ed)_at|code_format/.test(k))).toEqual([]);

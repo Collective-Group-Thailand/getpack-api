@@ -46,12 +46,14 @@ import {
   HandoverTokenDto,
   ISSUED_HANDOVER_EXAMPLE,
   IssuedHandoverLinkDto,
+  PARTNER_POD_EXAMPLE,
   PARTNER_SHIPMENT_EXAMPLE,
   PartnerShipmentDto,
   PartnerShipmentListQuery,
   POD_EXAMPLE,
   RECONCILIATION_EXAMPLE,
   RecordPodDto,
+  ReissueShipmentDocumentsDto,
   RequestCarrierDto,
   ResolveShipmentExceptionDto,
   ReviewPodDto,
@@ -67,6 +69,7 @@ import {
   StoreShipmentDto,
 } from './logistics.dto';
 import { SHIPMENT_QUEUE_WHERE as QUEUES } from './shipment-queues';
+import { ShipmentReissueService } from './shipment-reissue.service';
 import {
   adminShipmentDto,
   partnerShipmentDto,
@@ -327,7 +330,7 @@ export class PartnerShipmentsController {
   @ApiSuccess(201, {
     description: 'Delivered',
     type: PartnerShipmentDto,
-    example: { ...PARTNER_SHIPMENT_EXAMPLE, status: 'delivered', proofOfDelivery: POD_EXAMPLE },
+    example: { ...PARTNER_SHIPMENT_EXAMPLE, status: 'delivered', proofOfDelivery: PARTNER_POD_EXAMPLE },
   })
   @ApiStandardErrors(
     'http.bad_request',
@@ -505,6 +508,7 @@ export class AdminShipmentsController {
     private readonly permissions: PermissionResolver,
     private readonly prisma: PrismaService,
     private readonly handover: ShipmentHandoverService,
+    private readonly reissue: ShipmentReissueService,
   ) {}
 
   private async canSeeCost(actor: Actor): Promise<boolean> {
@@ -606,6 +610,7 @@ export class AdminShipmentsController {
     example: {
       ...ADMIN_SHIPMENT_EXAMPLE,
       carrier: 'flash_express',
+      carrierBooked: true,
       carrierBookingRef: 'FLASH-1',
       trackingNo: 'TH0123',
     },
@@ -978,6 +983,58 @@ export class AdminShipmentsController {
     return this.dto(actor, shipmentId);
   }
 
+  @Post('shipments/:shipmentId/actions/reissue-documents')
+  @HttpCode(200)
+  @Idempotent()
+  @Can('shipments.manage')
+  @shipmentParam
+  @ApiEndpoint({
+    id: 'admin.shipments.reissueDocuments',
+    summary: 'Re-issue the factory’s carton labels and packing list',
+    description:
+      'D-463 (amendment 2026-10-31): for a trip packed before the sealed carrier label, whose stored labels / packing ' +
+      'list still carry the recipient. Issues a new carton tracking token (the shipment’s old tracking links are ' +
+      'revoked — the customer’s order links are not), renders both documents again with the D-463 partner document ' +
+      '(no recipient identity, render refused if one would appear), stores them and detaches the old files from the ' +
+      'factory (staff keep them; nothing is deleted). Packed (`ready`) trips only, and not once a driver confirmed ' +
+      'pickup on the handover link — otherwise `shipments.invalid_status`. With a reason; audited ' +
+      '(`data_access`, `shipment.documents_reissued`) and the factory sees an activity row without data (print the ' +
+      'labels again). Requires `Idempotency-Key`.',
+    implements: ['D-463', 'D-442', 'D-050'],
+  })
+  @ApiConcurrency({ optional: true })
+  @ApiBody({
+    type: ReissueShipmentDocumentsDto,
+    examples: { default: { value: { reason: 'ใบปะหน้าเดิมก่อน D-463 มีชื่อผู้รับ' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Re-issued: the shipment with its new label and packing-list files',
+    type: AdminShipmentDto,
+    example: {
+      ...ADMIN_SHIPMENT_EXAMPLE,
+      labelFileId: '0192f3a0-7c1e-7d2a-9b1f-0000000f2010',
+      packingListFileId: '0192f3a0-7c1e-7d2a-9b1f-0000000f2011',
+    },
+  })
+  @ApiStandardErrors(
+    'http.bad_request',
+    'http.malformed_json',
+    'http.not_found',
+    'validation.failed',
+    'shipments.invalid_status',
+  )
+  async reissueDocuments(
+    @CurrentActor() actor: Actor,
+    @Param('shipmentId', ParseUUIDPipe) shipmentId: string,
+    @Body() body: ReissueShipmentDocumentsDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const row = await this.query.get(actor, shipmentId);
+    await this.reissue.reissue(staff(actor), row.id, { reason: body.reason, ifMatch });
+    return this.dto(actor, shipmentId, res);
+  }
+
   @Post('shipments/:shipmentId/handover-link')
   @HttpCode(201)
   @Can('shipments.manage')
@@ -988,7 +1045,7 @@ export class AdminShipmentsController {
     description:
       'D-463 (sealed carrier label): a random, single-shipment link `<web>/l/<token>` for the carrier / driver, the ' +
       'only place outside getpack staff that shows the recipient’s name, phone and address. Valid until the trip is ' +
-      'delivered, cancelled or returned and at most 7 days; issuing again revokes the previous link. The URL and ' +
+      'delivered, cancelled or returned and at most `logistics.handover_link_ttl_days` (default 7 days, 1–30); issuing again revokes the previous link. The URL and ' +
       'token are returned once (only the hash is kept) — send them to the driver, never to the factory. Packed ' +
       'shipments up to delivery only. Audited (`data_access`); the factory sees only `waybillIssued`.',
     implements: ['D-463', 'D-050'],
@@ -1181,7 +1238,7 @@ export class DriverHandoverController {
       'the recipient’s name, phone and address, the shipment code and its cartons — never the factory, prices or ' +
       'other orders (D-050). The token is sent in the body, not the URL path, so it stays out of access logs. ' +
       'Unknown or regenerated (revoked) links → 404; a trip that is delivered, cancelled or returned, or a link older ' +
-      'than 7 days → 410 `handover.expired`. Every open, refused ones included, is an audit row. Rate-limited.',
+      'past its lifetime (`logistics.handover_link_ttl_days`, default 7 days) → 410 `handover.expired`. Every open, refused ones included, is an audit row. Rate-limited.',
     implements: ['D-463', 'D-050'],
   })
   @ApiBody({

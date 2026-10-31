@@ -343,6 +343,7 @@ export class JobsQueryService implements OnModuleInit {
     const columns = new Map<string, BoardColumnDto & { order: number }>();
     for (const job of jobs) {
       const current = job.status === 'released' ? null : currentMilestone(job);
+      // `awaiting_acceptance` = JOB_QUEUE_WHERE.awaiting_acceptance (status released): the list and the dashboard card.
       const key = job.status === 'released' ? 'awaiting_acceptance' : (current?.stepKey ?? 'finishing');
       const route = job.routeSnapshot as unknown as RouteSnapshot;
       const step = current ? route.steps.find((s) => s.seq === current.seq) : undefined;
