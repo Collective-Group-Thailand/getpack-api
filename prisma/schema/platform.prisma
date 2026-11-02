@@ -977,6 +977,7 @@ model FileObject {
   // --- Sales agents D-416 (generated back-relations)
   salesAgentApplicationIdDocuments SalesAgentApplication[] @relation("SalesAgentApplicationIdDocument")
   salesAgentApplicationBankBooks   SalesAgentApplication[] @relation("SalesAgentApplicationBankBook")
+  salesAgentStatementTaxInvoices   SalesAgentStatement[]   @relation("SalesAgentStatementTaxInvoice")
   // --- end Sales agents
 
   // --- Documents D-428 – D-431 (back-relations)

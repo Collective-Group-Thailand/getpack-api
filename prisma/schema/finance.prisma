@@ -1801,30 +1801,33 @@ model VendorInvoiceLine {
 /// AP open item (§6): net and VAT separately (factory payables are carried at net, VAT at payment — P14,
 /// P17); withholding bases per line type; eligible per the payout-policy snapshot (D-022, D-164).
 model PayableItem {
-  id                BigInt        @id(map: "pk_payable_items") @default(autoincrement())
-  publicId          String        @unique(map: "ux_payable_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  entityId          BigInt        @map("entity_id")
-  vendorId          BigInt        @map("vendor_id")
-  source            PayableSource
-  purchaseOrderId   BigInt?       @map("purchase_order_id")
-  goodsReceiptId    BigInt?       @map("goods_receipt_id")
-  vendorInvoiceId   BigInt?       @map("vendor_invoice_id")
-  orderId           BigInt?       @map("order_id")
-  netAmount         Decimal       @map("net_amount") @db.Decimal(14, 2)
-  vatAmount         Decimal       @map("vat_amount") @db.Decimal(14, 2)
-  openNetAmount     Decimal       @map("open_net_amount") @db.Decimal(14, 2)
-  openVatAmount     Decimal       @map("open_vat_amount") @db.Decimal(14, 2)
-  whtBaseHire       Decimal       @default(0) @map("wht_base_hire") @db.Decimal(14, 2)
-  whtBaseTransport  Decimal       @default(0) @map("wht_base_transport") @db.Decimal(14, 2)
-  whtBaseService    Decimal       @default(0) @map("wht_base_service") @db.Decimal(14, 2)
+  id                 BigInt        @id(map: "pk_payable_items") @default(autoincrement())
+  publicId           String        @unique(map: "ux_payable_items__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId           BigInt        @map("entity_id")
+  vendorId           BigInt        @map("vendor_id")
+  source             PayableSource
+  purchaseOrderId    BigInt?       @map("purchase_order_id")
+  goodsReceiptId     BigInt?       @map("goods_receipt_id")
+  vendorInvoiceId    BigInt?       @map("vendor_invoice_id")
+  orderId            BigInt?       @map("order_id")
+  netAmount          Decimal       @map("net_amount") @db.Decimal(14, 2)
+  vatAmount          Decimal       @map("vat_amount") @db.Decimal(14, 2)
+  openNetAmount      Decimal       @map("open_net_amount") @db.Decimal(14, 2)
+  openVatAmount      Decimal       @map("open_vat_amount") @db.Decimal(14, 2)
+  whtBaseHire        Decimal       @default(0) @map("wht_base_hire") @db.Decimal(14, 2)
+  whtBaseTransport   Decimal       @default(0) @map("wht_base_transport") @db.Decimal(14, 2)
+  whtBaseService     Decimal       @default(0) @map("wht_base_service") @db.Decimal(14, 2)
   /// D-421: commission to an individual (s.40(2)).
-  whtBaseCommission Decimal       @default(0) @map("wht_base_commission") @db.Decimal(14, 2)
-  retentionPct      Decimal       @default(0) @map("retention_pct") @db.Decimal(7, 4)
-  eligibleAt        DateTime?     @map("eligible_at") @db.Timestamptz(6)
-  status            PayableStatus @default(open)
-  createdAt         DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion        Int           @default(1) @map("row_version")
+  whtBaseCommission  Decimal       @default(0) @map("wht_base_commission") @db.Decimal(14, 2)
+  /// D-465: the withholding on the commission base decided when the agent statement was approved (progressive
+  /// s.50(1)); the payout run uses it as is instead of a flat rate. Null = rate by category.
+  whtCommissionFixed Decimal?      @map("wht_commission_fixed") @db.Decimal(14, 2)
+  retentionPct       Decimal       @default(0) @map("retention_pct") @db.Decimal(7, 4)
+  eligibleAt         DateTime?     @map("eligible_at") @db.Timestamptz(6)
+  status             PayableStatus @default(open)
+  createdAt          DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int           @default(1) @map("row_version")
 
   entity        Entity                 @relation("PayableItemEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payable_items__entity_id")
   vendor        Vendor                 @relation("PayableItemVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_payable_items__vendor_id")
