@@ -265,7 +265,7 @@ describe('agent-facing responses carry no profit, margin or cap (D-464)', () => 
   });
 
   it('accepts customer leads only (P-03)', () => {
-    const op = contract.paths['/v1/store/agent/leads']?.['post'] as Node | undefined;
+    const op = contract.paths['/v1/store/agent/leads']?.['post'];
     expect(JSON.stringify(op)).toContain('agents.lead_kind_unsupported');
     const kinds = contract.components.schemas['StoreAgentLeadKind'] as { enum?: string[] } | undefined;
     expect(kinds?.enum).toEqual(['customer']);
