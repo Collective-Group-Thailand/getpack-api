@@ -2099,6 +2099,38 @@
     "tax_declaration_decided": {
       "title": "Already decided",
       "detail": "This ล.ย.01 has been decided"
+    },
+    "programme_closed": {
+      "title": "Not open yet",
+      "detail": "Applications are not open yet; join the waiting list"
+    },
+    "phone_unverified": {
+      "title": "Verify your phone",
+      "detail": "The phone must be this account’s verified phone; verify it with an OTP"
+    },
+    "bank_name_mismatch": {
+      "title": "Account name differs",
+      "detail": "The bank account name must match the legal name"
+    },
+    "payout_profile_not_applicable": {
+      "title": "Not needed",
+      "detail": "Payout details are for freelance agents only"
+    },
+    "payout_profile_waiting": {
+      "title": "Waiting for Finance",
+      "detail": "Your payout details wait for Finance; you can change them after"
+    },
+    "payout_profile_verified": {
+      "title": "Already verified",
+      "detail": "Your payout details are verified"
+    },
+    "payout_profile_not_submitted": {
+      "title": "Not submitted",
+      "detail": "The payout details are {status}"
+    },
+    "payout_profile_missing": {
+      "title": "Payout details needed",
+      "detail": "The agent has no verified payout details yet; the statement waits, nothing is lost"
     }
   },
   "documents": {
