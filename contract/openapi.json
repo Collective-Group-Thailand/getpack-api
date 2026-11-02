@@ -188,6 +188,17 @@
           "type": "https://errors.getpack/agents.backdated"
         }
       },
+      "problem.agents.bank_name_mismatch": {
+        "summary": "agents.bank_name_mismatch",
+        "value": {
+          "code": "agents.bank_name_mismatch",
+          "detail": "ชื่อบัญชีธนาคารต้องตรงกับชื่อตามกฎหมาย",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ชื่อบัญชีไม่ตรง",
+          "type": "https://errors.getpack/agents.bank_name_mismatch"
+        }
+      },
       "problem.agents.code_invalid": {
         "summary": "agents.code_invalid",
         "value": {
@@ -342,6 +353,61 @@
           "type": "https://errors.getpack/agents.nothing_to_export"
         }
       },
+      "problem.agents.payout_profile_missing": {
+        "summary": "agents.payout_profile_missing",
+        "value": {
+          "code": "agents.payout_profile_missing",
+          "detail": "ตัวแทนยังไม่มีข้อมูลรับเงินที่ตรวจแล้ว สรุปนี้รอไว้ก่อน ไม่มีรายการสูญหาย",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "รอข้อมูลรับเงิน",
+          "type": "https://errors.getpack/agents.payout_profile_missing"
+        }
+      },
+      "problem.agents.payout_profile_not_applicable": {
+        "summary": "agents.payout_profile_not_applicable",
+        "value": {
+          "code": "agents.payout_profile_not_applicable",
+          "detail": "ข้อมูลรับเงินใช้กับตัวแทนอิสระเท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่ต้องกรอก",
+          "type": "https://errors.getpack/agents.payout_profile_not_applicable"
+        }
+      },
+      "problem.agents.payout_profile_not_submitted": {
+        "summary": "agents.payout_profile_not_submitted",
+        "value": {
+          "code": "agents.payout_profile_not_submitted",
+          "detail": "ข้อมูลรับเงินอยู่ในสถานะ {status}",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่ได้ส่ง",
+          "type": "https://errors.getpack/agents.payout_profile_not_submitted"
+        }
+      },
+      "problem.agents.payout_profile_verified": {
+        "summary": "agents.payout_profile_verified",
+        "value": {
+          "code": "agents.payout_profile_verified",
+          "detail": "ข้อมูลรับเงินตรวจแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตรวจแล้ว",
+          "type": "https://errors.getpack/agents.payout_profile_verified"
+        }
+      },
+      "problem.agents.payout_profile_waiting": {
+        "summary": "agents.payout_profile_waiting",
+        "value": {
+          "code": "agents.payout_profile_waiting",
+          "detail": "ข้อมูลรับเงินรอทีมบัญชีตรวจ แก้ไขได้หลังตรวจแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "รอตรวจอยู่",
+          "type": "https://errors.getpack/agents.payout_profile_waiting"
+        }
+      },
       "problem.agents.period_open": {
         "summary": "agents.period_open",
         "value": {
@@ -351,6 +417,17 @@
           "status": 422,
           "title": "เดือนยังไม่จบ",
           "type": "https://errors.getpack/agents.period_open"
+        }
+      },
+      "problem.agents.phone_unverified": {
+        "summary": "agents.phone_unverified",
+        "value": {
+          "code": "agents.phone_unverified",
+          "detail": "เบอร์โทรต้องเป็นเบอร์ที่ยืนยันแล้วของบัญชีนี้ กรุณายืนยันด้วยรหัส OTP",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ยืนยันเบอร์โทรก่อน",
+          "type": "https://errors.getpack/agents.phone_unverified"
         }
       },
       "problem.agents.plan_code_taken": {
@@ -406,6 +483,17 @@
           "status": 409,
           "title": "ฉบับนี้พิจารณาแล้ว",
           "type": "https://errors.getpack/agents.plan_version_decided"
+        }
+      },
+      "problem.agents.programme_closed": {
+        "summary": "agents.programme_closed",
+        "value": {
+          "code": "agents.programme_closed",
+          "detail": "ขณะนี้ยังไม่เปิดรับสมัครตัวแทน ลงทะเบียนรอเปิดรับได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่เปิดรับสมัคร",
+          "type": "https://errors.getpack/agents.programme_closed"
         }
       },
       "problem.agents.self_link": {
@@ -7021,8 +7109,12 @@
       "AdminAgentApplicationDto": {
         "properties": {
           "address": {
-            "example": "99/1 ถนนพระราม 9 …",
-            "type": "string"
+            "description": "Before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "agentId": {
             "description": "The agent created",
@@ -7043,13 +7135,20 @@
             "type": "integer"
           },
           "bankAccountName": {
-            "example": "สมชาย ขายเก่ง",
-            "type": "string"
+            "description": "Before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "bankAccountNoLast4": {
-            "description": "Last 4 digits only (PDPA)",
-            "example": "7890",
-            "type": "string"
+            "description": "Last 4 digits only (PDPA); before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "bankBook": {
             "anyOf": [
@@ -7069,8 +7168,12 @@
             ]
           },
           "bankCode": {
-            "example": "014",
-            "type": "string"
+            "description": "Before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "branchCode": {
             "example": "00000",
@@ -7123,7 +7226,15 @@
             "type": "string"
           },
           "idDocument": {
-            "$ref": "#/components/schemas/AgentFileRefDto"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentFileRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Before D-466 only"
           },
           "isVatRegistered": {
             "example": false,
@@ -7141,6 +7252,13 @@
             "example": "สมชาย ขายเก่ง",
             "type": "string"
           },
+          "lineId": {
+            "example": "somchai.sales",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "phone": {
             "example": "+66810005678",
             "type": [
@@ -7156,8 +7274,21 @@
             ]
           },
           "postcode": {
-            "example": "10310",
-            "type": "string"
+            "description": "Before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "salesChannels": {
+            "example": [
+              "line_groups"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AgentSalesChannel"
+            },
+            "type": "array"
           },
           "status": {
             "allOf": [
@@ -7173,8 +7304,12 @@
             "type": "string"
           },
           "taxId": {
-            "example": "0000000000127",
-            "type": "string"
+            "description": "Before D-466 only (now in the payout profile)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "user": {
             "allOf": [
@@ -7195,6 +7330,10 @@
           "isVatRegistered",
           "address",
           "postcode",
+          "phone",
+          "email",
+          "lineId",
+          "salesChannels",
           "pitch",
           "bankCode",
           "bankBranchName",
@@ -7208,8 +7347,6 @@
           "decidedAt",
           "decisionReason",
           "user",
-          "phone",
-          "email",
           "decidedBy",
           "agentId",
           "checks"
@@ -7837,6 +7974,172 @@
           "companyName",
           "reason",
           "endedReason"
+        ],
+        "type": "object"
+      },
+      "AdminAgentPayoutProfileDto": {
+        "properties": {
+          "address": {
+            "example": "99/1 ถนนพระราม 9 …",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agent": {
+            "$ref": "#/components/schemas/AgentRefDto"
+          },
+          "bankAccountName": {
+            "example": "สมชาย ขายเก่ง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankAccountNoLast4": {
+            "description": "Last 4 digits only (PDPA)",
+            "example": "7890",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankBook": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentFileRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bankBranchName": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankCode": {
+            "example": "014",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "branchCode": {
+            "example": "00000",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+            "format": "uuid",
+            "type": "string"
+          },
+          "idDocument": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentFileRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isVatRegistered": {
+            "example": false,
+            "type": "boolean"
+          },
+          "legalName": {
+            "example": "สมชาย ขายเก่ง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "postcode": {
+            "example": "10310",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rejectReason": {
+            "description": "Why Finance rejected it",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rowVersion": {
+            "example": 2,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentPayoutProfileStatus"
+              }
+            ],
+            "example": "submitted"
+          },
+          "submittedAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxId": {
+            "example": "0000000000124",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "legalName",
+          "taxId",
+          "branchCode",
+          "isVatRegistered",
+          "address",
+          "postcode",
+          "idDocument",
+          "bankCode",
+          "bankBranchName",
+          "bankAccountName",
+          "bankAccountNoLast4",
+          "bankBook",
+          "submittedAt",
+          "verifiedAt",
+          "rejectReason",
+          "rowVersion",
+          "agent",
+          "verifiedBy"
         ],
         "type": "object"
       },
@@ -15447,8 +15750,12 @@
       "AgentApplicationDto": {
         "properties": {
           "address": {
-            "example": "99/1 ถนนพระราม 9 …",
-            "type": "string"
+            "description": "Before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "agreementAcceptedAt": {
             "example": "2026-10-16T10:00:00+07:00",
@@ -15460,13 +15767,20 @@
             "type": "integer"
           },
           "bankAccountName": {
-            "example": "สมชาย ขายเก่ง",
-            "type": "string"
+            "description": "Before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "bankAccountNoLast4": {
-            "description": "Last 4 digits only (PDPA)",
-            "example": "7890",
-            "type": "string"
+            "description": "Last 4 digits only (PDPA); before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "bankBook": {
             "anyOf": [
@@ -15486,8 +15800,12 @@
             ]
           },
           "bankCode": {
-            "example": "014",
-            "type": "string"
+            "description": "Before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "branchCode": {
             "example": "00000",
@@ -15509,13 +15827,28 @@
               "null"
             ]
           },
+          "email": {
+            "example": "somchai@example.invalid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6002",
             "format": "uuid",
             "type": "string"
           },
           "idDocument": {
-            "$ref": "#/components/schemas/AgentFileRefDto"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentFileRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Before D-466 only"
           },
           "isVatRegistered": {
             "example": false,
@@ -15533,6 +15866,20 @@
             "example": "สมชาย ขายเก่ง",
             "type": "string"
           },
+          "lineId": {
+            "example": "somchai.sales",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66810005678",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "pitch": {
             "example": null,
             "type": [
@@ -15541,8 +15888,21 @@
             ]
           },
           "postcode": {
-            "example": "10310",
-            "type": "string"
+            "description": "Before D-466 only",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "salesChannels": {
+            "example": [
+              "line_groups"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AgentSalesChannel"
+            },
+            "type": "array"
           },
           "status": {
             "allOf": [
@@ -15558,8 +15918,12 @@
             "type": "string"
           },
           "taxId": {
-            "example": "0000000000127",
-            "type": "string"
+            "description": "Before D-466 only (now in the payout profile)",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "required": [
@@ -15572,6 +15936,10 @@
           "isVatRegistered",
           "address",
           "postcode",
+          "phone",
+          "email",
+          "lineId",
+          "salesChannels",
           "pitch",
           "bankCode",
           "bankBranchName",
@@ -15717,6 +16085,31 @@
           "statementNo",
           "note",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "AgentCommissionExampleDto": {
+        "properties": {
+          "firstOrder": {
+            "description": "Commission when it is the customer’s first order",
+            "example": "5000.00",
+            "type": "string"
+          },
+          "orderValue": {
+            "description": "Order value before VAT, excluding shipping (the base)",
+            "example": "100000.00",
+            "type": "string"
+          },
+          "repeatOrder": {
+            "description": "Commission on a later order",
+            "example": "3000.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "orderValue",
+          "firstOrder",
+          "repeatOrder"
         ],
         "type": "object"
       },
@@ -16215,6 +16608,166 @@
         ],
         "type": "object"
       },
+      "AgentPayoutProfileDto": {
+        "properties": {
+          "address": {
+            "example": "99/1 ถนนพระราม 9 …",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankAccountName": {
+            "example": "สมชาย ขายเก่ง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankAccountNoLast4": {
+            "description": "Last 4 digits only (PDPA)",
+            "example": "7890",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankBook": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentFileRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "bankBranchName": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankCode": {
+            "example": "014",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "branchCode": {
+            "example": "00000",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+            "format": "uuid",
+            "type": "string"
+          },
+          "idDocument": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentFileRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "isVatRegistered": {
+            "example": false,
+            "type": "boolean"
+          },
+          "legalName": {
+            "example": "สมชาย ขายเก่ง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "postcode": {
+            "example": "10310",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rejectReason": {
+            "description": "Why Finance rejected it",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rowVersion": {
+            "example": 2,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentPayoutProfileStatus"
+              }
+            ],
+            "example": "submitted"
+          },
+          "submittedAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxId": {
+            "example": "0000000000124",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "verifiedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "legalName",
+          "taxId",
+          "branchCode",
+          "isVatRegistered",
+          "address",
+          "postcode",
+          "idDocument",
+          "bankCode",
+          "bankBranchName",
+          "bankAccountName",
+          "bankAccountNoLast4",
+          "bankBook",
+          "submittedAt",
+          "verifiedAt",
+          "rejectReason",
+          "rowVersion"
+        ],
+        "type": "object"
+      },
+      "AgentPayoutProfileStatus": {
+        "enum": [
+          "draft",
+          "submitted",
+          "verified",
+          "rejected"
+        ],
+        "type": "string"
+      },
       "AgentPayrollExportDto": {
         "properties": {
           "expiresAt": {
@@ -16647,6 +17200,18 @@
           "kind"
         ],
         "type": "object"
+      },
+      "AgentSalesChannel": {
+        "enum": [
+          "line_groups",
+          "facebook",
+          "own_network",
+          "agency",
+          "print_shop",
+          "design_studio",
+          "other"
+        ],
+        "type": "string"
       },
       "AgentStatementDetailDto": {
         "properties": {
@@ -76496,6 +77061,46 @@
         ],
         "type": "object"
       },
+      "MyPayoutProfileDto": {
+        "properties": {
+          "applicable": {
+            "description": "Freelance agents fill it in; employees are paid through payroll",
+            "example": true,
+            "type": "boolean"
+          },
+          "juristicType": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JuristicType"
+              }
+            ],
+            "example": "individual"
+          },
+          "payoutReady": {
+            "description": "Commission can be paid now (verified, or set up before D-466)",
+            "example": false,
+            "type": "boolean"
+          },
+          "profile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentPayoutProfileDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Null before the first save"
+          }
+        },
+        "required": [
+          "applicable",
+          "payoutReady",
+          "juristicType",
+          "profile"
+        ],
+        "type": "object"
+      },
       "MyReferralDto": {
         "properties": {
           "code": {
@@ -88803,6 +89408,77 @@
         "required": [
           "name",
           "agree"
+        ],
+        "type": "object"
+      },
+      "PublicAgentProgrammeDto": {
+        "properties": {
+          "agreement": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentAgreementTextDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The agreement in force (public text)"
+          },
+          "applyOpen": {
+            "description": "Applying is open (feature flag `agents.programme`); else a waiting list",
+            "example": true,
+            "type": "boolean"
+          },
+          "examples": {
+            "description": "Worked examples at fixed order values",
+            "items": {
+              "$ref": "#/components/schemas/AgentCommissionExampleDto"
+            },
+            "type": "array"
+          },
+          "faqs": {
+            "description": "Published FAQs of the CMS category `agent_programme`",
+            "items": {
+              "$ref": "#/components/schemas/StoreFaqDto"
+            },
+            "type": "array"
+          },
+          "leadProtectionDays": {
+            "description": "Days a registered lead is protected",
+            "example": 60,
+            "type": "integer"
+          },
+          "linkCookieDays": {
+            "description": "Days a visit through an agent link is remembered",
+            "example": 90,
+            "type": "integer"
+          },
+          "paymentTermsDays": {
+            "description": "Statements are made on the 1st; payment within this many days of approval (`agents.rules`)",
+            "example": 15,
+            "type": "integer"
+          },
+          "terms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/StoreAgentTermsDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The standard freelance plan in force"
+          }
+        },
+        "required": [
+          "terms",
+          "linkCookieDays",
+          "leadProtectionDays",
+          "paymentTermsDays",
+          "applyOpen",
+          "agreement",
+          "examples",
+          "faqs"
         ],
         "type": "object"
       },
@@ -113953,68 +114629,24 @@
       },
       "SubmitAgentApplicationDto": {
         "properties": {
-          "address": {
-            "example": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
-            "maxLength": 500,
-            "minLength": 10,
-            "type": "string"
-          },
           "agreementVersionNo": {
             "description": "The agreement version read and accepted",
             "example": 1,
             "minimum": 1,
             "type": "integer"
           },
-          "bankAccountName": {
-            "description": "Must match the legal name",
+          "displayName": {
+            "description": "Your name (an individual) or the registered name (a company or partnership)",
             "example": "สมชาย ขายเก่ง",
             "maxLength": 200,
             "minLength": 2,
             "type": "string"
           },
-          "bankAccountNo": {
-            "description": "Digits only; stored encrypted",
-            "example": "1234567890",
-            "pattern": "^[0-9 -]{6,20}$",
+          "email": {
+            "example": "somchai@example.invalid",
+            "format": "email",
+            "maxLength": 200,
             "type": "string"
-          },
-          "bankBookFileId": {
-            "example": null,
-            "format": "uuid",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "bankBranchName": {
-            "example": "สาขาลาดพร้าว",
-            "maxLength": 120,
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "bankCode": {
-            "description": "Bank code",
-            "example": "014",
-            "pattern": "^\\d{3}$",
-            "type": "string"
-          },
-          "branchCode": {
-            "example": "00000",
-            "pattern": "^\\d{5}$",
-            "type": "string"
-          },
-          "idDocumentFileId": {
-            "description": "ID card or company certificate (uploaded)",
-            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
-            "format": "uuid",
-            "type": "string"
-          },
-          "isVatRegistered": {
-            "description": "VAT registered (juristic agents)",
-            "example": false,
-            "type": "boolean"
           },
           "juristicType": {
             "allOf": [
@@ -114024,11 +114656,18 @@
             ],
             "example": "individual"
           },
-          "legalName": {
-            "description": "As on the ID card or company certificate",
-            "example": "สมชาย ขายเก่ง",
-            "maxLength": 200,
-            "minLength": 2,
+          "lineId": {
+            "example": "somchai.sales",
+            "maxLength": 60,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "description": "Must be the verified phone of the signed-in account, else `agents.phone_unverified` (run OTP)",
+            "example": "+66810005678",
+            "pattern": "^\\+[1-9]\\d{7,14}$",
             "type": "string"
           },
           "pitch": {
@@ -114039,28 +114678,26 @@
               "null"
             ]
           },
-          "postcode": {
-            "example": "10310",
-            "pattern": "^\\d{5}$",
-            "type": "string"
-          },
-          "taxId": {
-            "description": "Citizen id or company tax id",
-            "example": "0000000000127",
-            "pattern": "^\\d{13}$",
-            "type": "string"
+          "salesChannels": {
+            "description": "How you sell (at least one)",
+            "example": [
+              "line_groups",
+              "own_network"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AgentSalesChannel"
+            },
+            "maxItems": 7,
+            "minItems": 1,
+            "type": "array"
           }
         },
         "required": [
           "juristicType",
-          "legalName",
-          "taxId",
-          "address",
-          "postcode",
-          "idDocumentFileId",
-          "bankCode",
-          "bankAccountName",
-          "bankAccountNo",
+          "displayName",
+          "phone",
+          "email",
+          "salesChannels",
           "agreementVersionNo"
         ],
         "type": "object"
@@ -121312,6 +121949,111 @@
         ],
         "type": "object"
       },
+      "UpsertAgentPayoutProfileDto": {
+        "properties": {
+          "address": {
+            "example": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankAccountName": {
+            "description": "Must match the legal name",
+            "example": "สมชาย ขายเก่ง",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankAccountNo": {
+            "description": "Digits; stored encrypted",
+            "example": "1234567890",
+            "maxLength": 20,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankBookFileId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankBranchName": {
+            "example": "สาขาลาดพร้าว",
+            "maxLength": 120,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bankCode": {
+            "example": "014",
+            "maxLength": 3,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "branchCode": {
+            "example": "00000",
+            "maxLength": 5,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "idDocumentFileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isVatRegistered": {
+            "description": "Juristic agents only",
+            "example": false,
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "legalName": {
+            "description": "As on the ID card or company certificate",
+            "example": "สมชาย ขายเก่ง",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "postcode": {
+            "example": "10310",
+            "maxLength": 5,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxId": {
+            "description": "13 digits with a valid check digit",
+            "example": "0000000000124",
+            "maxLength": 17,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "UserAdminDto": {
         "properties": {
           "createdAt": {
@@ -124212,35 +124954,37 @@
                 "example": {
                   "data": [
                     {
-                      "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                      "address": null,
                       "agentId": null,
                       "agreementAcceptedAt": "2026-10-16T10:00:00+07:00",
                       "agreementVersionNo": 1,
-                      "bankAccountName": "สมชาย ขายเก่ง",
-                      "bankAccountNoLast4": "7890",
+                      "bankAccountName": null,
+                      "bankAccountNoLast4": null,
                       "bankBook": null,
                       "bankBranchName": null,
-                      "bankCode": "014",
+                      "bankCode": null,
                       "branchCode": "00000",
                       "checks": [],
                       "decidedAt": null,
                       "decidedBy": null,
                       "decisionReason": null,
-                      "email": null,
+                      "email": "somchai@example.invalid",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6002",
-                      "idDocument": {
-                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
-                        "originalName": "id-card.jpg"
-                      },
+                      "idDocument": null,
                       "isVatRegistered": false,
                       "juristicType": "individual",
                       "legalName": "สมชาย ขายเก่ง",
+                      "lineId": "somchai.sales",
                       "phone": "+66810005678",
                       "pitch": null,
-                      "postcode": "10310",
+                      "postcode": null,
+                      "salesChannels": [
+                        "line_groups",
+                        "own_network"
+                      ],
                       "status": "submitted",
                       "submittedAt": "2026-10-16T10:00:00+07:00",
-                      "taxId": "0000000000127",
+                      "taxId": null,
                       "user": {
                         "displayName": "สมชาย ขายเก่ง",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6010"
@@ -124433,35 +125177,37 @@
             "content": {
               "application/json": {
                 "example": {
-                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "address": null,
                   "agentId": null,
                   "agreementAcceptedAt": "2026-10-16T10:00:00+07:00",
                   "agreementVersionNo": 1,
-                  "bankAccountName": "สมชาย ขายเก่ง",
-                  "bankAccountNoLast4": "7890",
+                  "bankAccountName": null,
+                  "bankAccountNoLast4": null,
                   "bankBook": null,
                   "bankBranchName": null,
-                  "bankCode": "014",
+                  "bankCode": null,
                   "branchCode": "00000",
                   "checks": [],
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionReason": null,
-                  "email": null,
+                  "email": "somchai@example.invalid",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6002",
-                  "idDocument": {
-                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
-                    "originalName": "id-card.jpg"
-                  },
+                  "idDocument": null,
                   "isVatRegistered": false,
                   "juristicType": "individual",
                   "legalName": "สมชาย ขายเก่ง",
+                  "lineId": "somchai.sales",
                   "phone": "+66810005678",
                   "pitch": null,
-                  "postcode": "10310",
+                  "postcode": null,
+                  "salesChannels": [
+                    "line_groups",
+                    "own_network"
+                  ],
                   "status": "submitted",
                   "submittedAt": "2026-10-16T10:00:00+07:00",
-                  "taxId": "0000000000127",
+                  "taxId": null,
                   "user": {
                     "displayName": "สมชาย ขายเก่ง",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6010"
@@ -124978,35 +125724,37 @@
             "content": {
               "application/json": {
                 "example": {
-                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "address": null,
                   "agentId": null,
                   "agreementAcceptedAt": "2026-10-16T10:00:00+07:00",
                   "agreementVersionNo": 1,
-                  "bankAccountName": "สมชาย ขายเก่ง",
-                  "bankAccountNoLast4": "7890",
+                  "bankAccountName": null,
+                  "bankAccountNoLast4": null,
                   "bankBook": null,
                   "bankBranchName": null,
-                  "bankCode": "014",
+                  "bankCode": null,
                   "branchCode": "00000",
                   "checks": [],
                   "decidedAt": null,
                   "decidedBy": null,
                   "decisionReason": null,
-                  "email": null,
+                  "email": "somchai@example.invalid",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6002",
-                  "idDocument": {
-                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
-                    "originalName": "id-card.jpg"
-                  },
+                  "idDocument": null,
                   "isVatRegistered": false,
                   "juristicType": "individual",
                   "legalName": "สมชาย ขายเก่ง",
+                  "lineId": "somchai.sales",
                   "phone": "+66810005678",
                   "pitch": null,
-                  "postcode": "10310",
+                  "postcode": null,
+                  "salesChannels": [
+                    "line_groups",
+                    "own_network"
+                  ],
                   "status": "submitted",
                   "submittedAt": "2026-10-16T10:00:00+07:00",
-                  "taxId": "0000000000127",
+                  "taxId": null,
                   "user": {
                     "displayName": "สมชาย ขายเก่ง",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6010"
@@ -128217,6 +128965,1067 @@
         ]
       }
     },
+    "/v1/admin/agent-payout-profiles": {
+      "get": {
+        "description": "Newest submitted first; filter by status (D-466).\n\nImplements: D-466.",
+        "operationId": "admin.agentPayoutProfiles.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AgentPayoutProfileStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                      "agent": {
+                        "code": "K7QX2MAP",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                        "kind": "freelance",
+                        "legalName": "สมชาย ขายเก่ง"
+                      },
+                      "bankAccountName": "สมชาย ขายเก่ง",
+                      "bankAccountNoLast4": "7890",
+                      "bankBook": null,
+                      "bankBranchName": null,
+                      "bankCode": "014",
+                      "branchCode": "00000",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+                      "idDocument": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                        "originalName": "id-card.jpg"
+                      },
+                      "isVatRegistered": false,
+                      "legalName": "สมชาย ขายเก่ง",
+                      "postcode": "10310",
+                      "rejectReason": null,
+                      "rowVersion": 2,
+                      "status": "submitted",
+                      "submittedAt": "2026-11-03T10:00:00+07:00",
+                      "taxId": "0000000000124",
+                      "verifiedAt": null,
+                      "verifiedBy": null
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminAgentPayoutProfileDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List agents’ payout profiles",
+        "tags": [
+          "admin.agentPayoutProfiles"
+        ],
+        "x-required-permissions": [
+          "agent_payout_profiles.verify"
+        ]
+      }
+    },
+    "/v1/admin/agent-payout-profiles/{payoutProfileId}": {
+      "get": {
+        "description": "With its documents (open them through `admin.files.download`) (D-466).\n\nImplements: D-466.",
+        "operationId": "admin.agentPayoutProfiles.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payoutProfileId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "bankAccountName": "สมชาย ขายเก่ง",
+                  "bankAccountNoLast4": "7890",
+                  "bankBook": null,
+                  "bankBranchName": null,
+                  "bankCode": "014",
+                  "branchCode": "00000",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+                  "idDocument": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                    "originalName": "id-card.jpg"
+                  },
+                  "isVatRegistered": false,
+                  "legalName": "สมชาย ขายเก่ง",
+                  "postcode": "10310",
+                  "rejectReason": null,
+                  "rowVersion": 2,
+                  "status": "submitted",
+                  "submittedAt": "2026-11-03T10:00:00+07:00",
+                  "taxId": "0000000000124",
+                  "verifiedAt": null,
+                  "verifiedBy": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAgentPayoutProfileDto"
+                }
+              }
+            },
+            "description": "Payout profile",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a payout profile",
+        "tags": [
+          "admin.agentPayoutProfiles"
+        ],
+        "x-required-permissions": [
+          "agent_payout_profiles.verify"
+        ]
+      }
+    },
+    "/v1/admin/agent-payout-profiles/{payoutProfileId}/actions/reject": {
+      "post": {
+        "description": "With a reason the agent reads; they correct it and send it again (D-466).\n\nImplements: D-466.",
+        "operationId": "admin.agentPayoutProfiles.reject",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payoutProfileId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "reason": "ตรวจสอบแล้ว ตามที่ตกลงในที่ประชุมฝ่ายขาย"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ReasonDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "bankAccountName": "สมชาย ขายเก่ง",
+                  "bankAccountNoLast4": "7890",
+                  "bankBook": null,
+                  "bankBranchName": null,
+                  "bankCode": "014",
+                  "branchCode": "00000",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+                  "idDocument": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                    "originalName": "id-card.jpg"
+                  },
+                  "isVatRegistered": false,
+                  "legalName": "สมชาย ขายเก่ง",
+                  "postcode": "10310",
+                  "rejectReason": "ชื่อบัญชีไม่ตรงกับบัตร",
+                  "rowVersion": 2,
+                  "status": "rejected",
+                  "submittedAt": "2026-11-03T10:00:00+07:00",
+                  "taxId": "0000000000124",
+                  "verifiedAt": null,
+                  "verifiedBy": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAgentPayoutProfileDto"
+                }
+              }
+            },
+            "description": "Payout profile",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.payout_profile_not_submitted": {
+                    "$ref": "#/components/examples/problem.agents.payout_profile_not_submitted"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.payout_profile_not_submitted`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Reject a payout profile",
+        "tags": [
+          "admin.agentPayoutProfiles"
+        ],
+        "x-required-permissions": [
+          "agent_payout_profiles.verify"
+        ]
+      }
+    },
+    "/v1/admin/agent-payout-profiles/{payoutProfileId}/actions/verify": {
+      "post": {
+        "description": "Creates or updates the agent’s vendor (legal name, tax id, VAT, address) and proposes the bank account through the dual approval (B5.3) when it changed; statements held for a missing profile are released. Guarded by `If-Match` (D-466).\n\nImplements: D-466, D-420.",
+        "operationId": "admin.agentPayoutProfiles.verify",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "payoutProfileId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "bankAccountName": "สมชาย ขายเก่ง",
+                  "bankAccountNoLast4": "7890",
+                  "bankBook": null,
+                  "bankBranchName": null,
+                  "bankCode": "014",
+                  "branchCode": "00000",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+                  "idDocument": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                    "originalName": "id-card.jpg"
+                  },
+                  "isVatRegistered": false,
+                  "legalName": "สมชาย ขายเก่ง",
+                  "postcode": "10310",
+                  "rejectReason": null,
+                  "rowVersion": 2,
+                  "status": "verified",
+                  "submittedAt": "2026-11-03T10:00:00+07:00",
+                  "taxId": "0000000000124",
+                  "verifiedAt": null,
+                  "verifiedBy": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAgentPayoutProfileDto"
+                }
+              }
+            },
+            "description": "Payout profile",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.payout_profile_not_submitted": {
+                    "$ref": "#/components/examples/problem.agents.payout_profile_not_submitted"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.payout_profile_not_submitted`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Verify a payout profile",
+        "tags": [
+          "admin.agentPayoutProfiles"
+        ],
+        "x-required-permissions": [
+          "agent_payout_profiles.verify"
+        ]
+      }
+    },
     "/v1/admin/agent-plans": {
       "get": {
         "description": "Every plan with its versions, the terms in force and its active agents (D-418).\n\nImplements: D-418.",
@@ -131225,6 +133034,9 @@
                   "agent_statements.tax_invoice_required": {
                     "$ref": "#/components/examples/problem.agent_statements.tax_invoice_required"
                   },
+                  "agents.payout_profile_missing": {
+                    "$ref": "#/components/examples/problem.agents.payout_profile_missing"
+                  },
                   "agents.statement_invalid_status": {
                     "$ref": "#/components/examples/problem.agents.statement_invalid_status"
                   },
@@ -131240,7 +133052,7 @@
                 }
               }
             },
-            "description": "Problem: `agent_statements.tax_invoice_required`, `agents.statement_invalid_status`, `idempotency.in_progress`, `payables.invoice_duplicate`",
+            "description": "Problem: `agent_statements.tax_invoice_required`, `agents.payout_profile_missing`, `agents.statement_invalid_status`, `idempotency.in_progress`, `payables.invoice_duplicate`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -502950,30 +504762,34 @@
             "content": {
               "application/json": {
                 "example": {
-                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "address": null,
                   "agreementAcceptedAt": "2026-10-16T10:00:00+07:00",
                   "agreementVersionNo": 1,
-                  "bankAccountName": "สมชาย ขายเก่ง",
-                  "bankAccountNoLast4": "7890",
+                  "bankAccountName": null,
+                  "bankAccountNoLast4": null,
                   "bankBook": null,
                   "bankBranchName": null,
-                  "bankCode": "014",
+                  "bankCode": null,
                   "branchCode": "00000",
                   "decidedAt": null,
                   "decisionReason": null,
+                  "email": "somchai@example.invalid",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6002",
-                  "idDocument": {
-                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
-                    "originalName": "id-card.jpg"
-                  },
+                  "idDocument": null,
                   "isVatRegistered": false,
                   "juristicType": "individual",
                   "legalName": "สมชาย ขายเก่ง",
+                  "lineId": "somchai.sales",
+                  "phone": "+66810005678",
                   "pitch": null,
-                  "postcode": "10310",
+                  "postcode": null,
+                  "salesChannels": [
+                    "line_groups",
+                    "own_network"
+                  ],
                   "status": "submitted",
                   "submittedAt": "2026-10-16T10:00:00+07:00",
-                  "taxId": "0000000000127"
+                  "taxId": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AgentApplicationDto"
@@ -503134,7 +504950,7 @@
         ]
       },
       "post": {
-        "description": "Legal name, Thai tax id, address, an identity document and a bank account (uploaded files of mine), and acceptance of the agent agreement version in force — recorded with its evidence (D-416). One open application at a time; Sales decides.\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "description": "Step 1 of joining (D-466): name, the account’s verified phone (else `agents.phone_unverified` — the web runs OTP), e-mail, LINE id, how I sell and acceptance of the agent agreement version in force — recorded with its evidence (D-416). Tax id, address, identity document and bank come in the payout profile, before the first payout. Closed while the feature flag `agents.programme` is off (`agents.programme_closed`). One open application at a time; Sales decides.\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464, D-466.",
         "operationId": "store.agent.apply",
         "parameters": [
           {
@@ -503147,16 +504963,16 @@
               "examples": {
                 "default": {
                   "value": {
-                    "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
                     "agreementVersionNo": 1,
-                    "bankAccountName": "สมชาย ขายเก่ง",
-                    "bankAccountNo": "1234567890",
-                    "bankCode": "014",
-                    "idDocumentFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                    "displayName": "สมชาย ขายเก่ง",
+                    "email": "somchai@example.invalid",
                     "juristicType": "individual",
-                    "legalName": "สมชาย ขายเก่ง",
-                    "postcode": "10310",
-                    "taxId": "0000000000127"
+                    "lineId": "somchai.sales",
+                    "phone": "+66810005678",
+                    "salesChannels": [
+                      "line_groups",
+                      "own_network"
+                    ]
                   }
                 }
               },
@@ -503172,30 +504988,34 @@
             "content": {
               "application/json": {
                 "example": {
-                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "address": null,
                   "agreementAcceptedAt": "2026-10-16T10:00:00+07:00",
                   "agreementVersionNo": 1,
-                  "bankAccountName": "สมชาย ขายเก่ง",
-                  "bankAccountNoLast4": "7890",
+                  "bankAccountName": null,
+                  "bankAccountNoLast4": null,
                   "bankBook": null,
                   "bankBranchName": null,
-                  "bankCode": "014",
+                  "bankCode": null,
                   "branchCode": "00000",
                   "decidedAt": null,
                   "decisionReason": null,
+                  "email": "somchai@example.invalid",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6002",
-                  "idDocument": {
-                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
-                    "originalName": "id-card.jpg"
-                  },
+                  "idDocument": null,
                   "isVatRegistered": false,
                   "juristicType": "individual",
                   "legalName": "สมชาย ขายเก่ง",
+                  "lineId": "somchai.sales",
+                  "phone": "+66810005678",
                   "pitch": null,
-                  "postcode": "10310",
+                  "postcode": null,
+                  "salesChannels": [
+                    "line_groups",
+                    "own_network"
+                  ],
                   "status": "submitted",
                   "submittedAt": "2026-10-16T10:00:00+07:00",
-                  "taxId": "0000000000127"
+                  "taxId": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AgentApplicationDto"
@@ -503299,6 +505119,9 @@
                   },
                   "agents.application_open": {
                     "$ref": "#/components/examples/problem.agents.application_open"
+                  },
+                  "agents.programme_closed": {
+                    "$ref": "#/components/examples/problem.agents.programme_closed"
                   }
                 },
                 "schema": {
@@ -503306,7 +505129,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.agreement_missing`, `agents.agreement_outdated`, `agents.already_agent`, `agents.application_open`",
+            "description": "Problem: `agents.agreement_missing`, `agents.agreement_outdated`, `agents.already_agent`, `agents.application_open`, `agents.programme_closed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -503317,6 +505140,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.phone_unverified": {
+                    "$ref": "#/components/examples/problem.agents.phone_unverified"
+                  },
                   "validation.failed": {
                     "$ref": "#/components/examples/problem.validation.failed"
                   }
@@ -503326,7 +505152,7 @@
                 }
               }
             },
-            "description": "Problem: `validation.failed`",
+            "description": "Problem: `agents.phone_unverified`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -503382,7 +505208,7 @@
             "customer": []
           }
         ],
-        "summary": "Apply to become a sales agent",
+        "summary": "Apply to become a sales agent (step 1)",
         "tags": [
           "store.agent"
         ]
@@ -503402,30 +505228,34 @@
             "content": {
               "application/json": {
                 "example": {
-                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "address": null,
                   "agreementAcceptedAt": "2026-10-16T10:00:00+07:00",
                   "agreementVersionNo": 1,
-                  "bankAccountName": "สมชาย ขายเก่ง",
-                  "bankAccountNoLast4": "7890",
+                  "bankAccountName": null,
+                  "bankAccountNoLast4": null,
                   "bankBook": null,
                   "bankBranchName": null,
-                  "bankCode": "014",
+                  "bankCode": null,
                   "branchCode": "00000",
                   "decidedAt": null,
                   "decisionReason": null,
+                  "email": "somchai@example.invalid",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6002",
-                  "idDocument": {
-                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
-                    "originalName": "id-card.jpg"
-                  },
+                  "idDocument": null,
                   "isVatRegistered": false,
                   "juristicType": "individual",
                   "legalName": "สมชาย ขายเก่ง",
+                  "lineId": "somchai.sales",
+                  "phone": "+66810005678",
                   "pitch": null,
-                  "postcode": "10310",
+                  "postcode": null,
+                  "salesChannels": [
+                    "line_groups",
+                    "own_network"
+                  ],
                   "status": "withdrawn",
                   "submittedAt": "2026-10-16T10:00:00+07:00",
-                  "taxId": "0000000000127"
+                  "taxId": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AgentApplicationDto"
@@ -505023,6 +506853,765 @@
         ]
       }
     },
+    "/v1/store/agent/payout-profile": {
+      "get": {
+        "description": "Step 2 of joining (D-466): who I am paid as and where. Needed before the first payout, not before approval; statements wait as drafts until Finance verifies it. The account number shows its last 4 digits.\n\nImplements: D-466.",
+        "operationId": "store.agentPayoutProfile.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "applicable": true,
+                  "juristicType": "individual",
+                  "payoutReady": false,
+                  "profile": {
+                    "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                    "bankAccountName": "สมชาย ขายเก่ง",
+                    "bankAccountNoLast4": "7890",
+                    "bankBook": null,
+                    "bankBranchName": null,
+                    "bankCode": "014",
+                    "branchCode": "00000",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+                    "idDocument": {
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                      "originalName": "id-card.jpg"
+                    },
+                    "isVatRegistered": false,
+                    "legalName": "สมชาย ขายเก่ง",
+                    "postcode": "10310",
+                    "rejectReason": null,
+                    "rowVersion": 2,
+                    "status": "submitted",
+                    "submittedAt": "2026-11-03T10:00:00+07:00",
+                    "taxId": "0000000000124",
+                    "verifiedAt": null
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/MyPayoutProfileDto"
+                }
+              }
+            },
+            "description": "Payout profile",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my payout profile",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      },
+      "put": {
+        "description": "Any subset of the fields; Thai tax id with its check digit; the bank account name must match the legal name (`agents.bank_name_mismatch`). A change after verification is a new draft to verify again. `If-Match` once a profile exists (D-466).\n\nImplements: D-466.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "store.agentPayoutProfile.upsert",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IfMatchOptional"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                    "bankAccountName": "สมชาย ขายเก่ง",
+                    "bankAccountNo": "1234567890",
+                    "bankCode": "014",
+                    "legalName": "สมชาย ขายเก่ง",
+                    "postcode": "10310",
+                    "taxId": "0000000000124"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpsertAgentPayoutProfileDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "bankAccountName": "สมชาย ขายเก่ง",
+                  "bankAccountNoLast4": "7890",
+                  "bankBook": null,
+                  "bankBranchName": null,
+                  "bankCode": "014",
+                  "branchCode": "00000",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+                  "idDocument": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                    "originalName": "id-card.jpg"
+                  },
+                  "isVatRegistered": false,
+                  "legalName": "สมชาย ขายเก่ง",
+                  "postcode": "10310",
+                  "rejectReason": null,
+                  "rowVersion": 2,
+                  "status": "draft",
+                  "submittedAt": "2026-11-03T10:00:00+07:00",
+                  "taxId": "0000000000124",
+                  "verifiedAt": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPayoutProfileDto"
+                }
+              }
+            },
+            "description": "Payout profile",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.payout_profile_waiting": {
+                    "$ref": "#/components/examples/problem.agents.payout_profile_waiting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.payout_profile_waiting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.bank_name_mismatch": {
+                    "$ref": "#/components/examples/problem.agents.bank_name_mismatch"
+                  },
+                  "agents.payout_profile_not_applicable": {
+                    "$ref": "#/components/examples/problem.agents.payout_profile_not_applicable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.bank_name_mismatch`, `agents.payout_profile_not_applicable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Save my payout profile (draft)",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/payout-profile/actions/submit": {
+      "post": {
+        "description": "Every required field filled (else `validation.failed` naming them); Finance verifies (D-466).\n\nImplements: D-466.",
+        "operationId": "store.agentPayoutProfile.submit",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "address": "99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ",
+                  "bankAccountName": "สมชาย ขายเก่ง",
+                  "bankAccountNoLast4": "7890",
+                  "bankBook": null,
+                  "bankBranchName": null,
+                  "bankCode": "014",
+                  "branchCode": "00000",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6020",
+                  "idDocument": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                    "originalName": "id-card.jpg"
+                  },
+                  "isVatRegistered": false,
+                  "legalName": "สมชาย ขายเก่ง",
+                  "postcode": "10310",
+                  "rejectReason": null,
+                  "rowVersion": 2,
+                  "status": "submitted",
+                  "submittedAt": "2026-11-03T10:00:00+07:00",
+                  "taxId": "0000000000124",
+                  "verifiedAt": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPayoutProfileDto"
+                }
+              }
+            },
+            "description": "Payout profile",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.payout_profile_verified": {
+                    "$ref": "#/components/examples/problem.agents.payout_profile_verified"
+                  },
+                  "agents.payout_profile_waiting": {
+                    "$ref": "#/components/examples/problem.agents.payout_profile_waiting"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.payout_profile_verified`, `agents.payout_profile_waiting`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Send my payout profile to Finance",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
     "/v1/store/agent/programme": {
       "get": {
         "description": "The agent agreement in force, the standard freelance plan’s terms, the programme rules and where the signed-in customer stands (none, applied, rejected, withdrawn, agent) (D-416, D-418).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
@@ -505190,6 +507779,349 @@
           }
         ],
         "summary": "Read the agent programme",
+        "tags": [
+          "store.agent"
+        ]
+      }
+    },
+    "/v1/store/agent/programme/example": {
+      "get": {
+        "description": "Anonymous, for the landing’s calculator: the commission at the standard freelance rates for an order value before VAT, excluding shipping, as a first and as a later order — the web does no money arithmetic (D-466).\n\nImplements: D-466, D-464.",
+        "operationId": "store.agentProgramme.example",
+        "parameters": [
+          {
+            "description": "Order value before VAT (baht, up to 2 decimals)",
+            "in": "query",
+            "name": "orderValue",
+            "required": true,
+            "schema": {
+              "example": "250000",
+              "pattern": "^\\d{1,10}(\\.\\d{1,2})?$",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "firstOrder": "12500.00",
+                  "orderValue": "250000.00",
+                  "repeatOrder": "7500.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentCommissionExampleDto"
+                }
+              }
+            },
+            "description": "Example",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.plan_not_in_force": {
+                    "$ref": "#/components/examples/problem.agents.plan_not_in_force"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.plan_not_in_force`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Work out the commission on an order value",
+        "tags": [
+          "store.agent"
+        ]
+      }
+    },
+    "/v1/store/agent/programme/public": {
+      "get": {
+        "description": "Anonymous, for getpack.co/agent: the standard freelance terms (no cap, D-464), link and lead protection days, payment terms, whether applying is open (feature flag `agents.programme`; else the landing offers a waiting list), the agreement in force, worked commission examples and the published FAQs of the CMS category `agent_programme`. Nothing about factories. Cacheable 5 minutes; a matching `If-None-Match` gets 304 (D-466).\n\nImplements: D-466, D-464.",
+        "operationId": "store.agentProgramme.public",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "agreement": {
+                    "effectiveFrom": "2026-01-01T00:00:00+07:00",
+                    "key": "sales_agent_agreement",
+                    "textEn": null,
+                    "textTh": "ข้อตกลงตัวแทนขาย getpack (ฉบับที่ 1) …",
+                    "versionNo": 1
+                  },
+                  "applyOpen": false,
+                  "examples": [
+                    {
+                      "firstOrder": "1000.00",
+                      "orderValue": "20000.00",
+                      "repeatOrder": "600.00"
+                    },
+                    {
+                      "firstOrder": "5000.00",
+                      "orderValue": "100000.00",
+                      "repeatOrder": "3000.00"
+                    },
+                    {
+                      "firstOrder": "50000.00",
+                      "orderValue": "1000000.00",
+                      "repeatOrder": "30000.00"
+                    }
+                  ],
+                  "faqs": [
+                    {
+                      "answerEn": null,
+                      "answerTh": "สรุปทุกต้นเดือน แล้วโอนภายใน 15 วันหลังทีมบัญชีอนุมัติ",
+                      "questionEn": "When am I paid?",
+                      "questionTh": "ได้ค่าคอมเมื่อไร"
+                    }
+                  ],
+                  "leadProtectionDays": 60,
+                  "linkCookieDays": 90,
+                  "paymentTermsDays": 15,
+                  "terms": {
+                    "attributionMonths": 12,
+                    "firstOrderPct": "5",
+                    "minBaseAmount": "0.00",
+                    "repeatOrderPct": "3",
+                    "uncapped": true
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PublicAgentProgrammeDto"
+                }
+              }
+            },
+            "description": "Programme",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Read the agent programme (public landing)",
         "tags": [
           "store.agent"
         ]
@@ -590757,6 +593689,10 @@
     {
       "description": "Structure Advisor for staff: evaluate a configuration, read and replay the recommendation log (D-237, D-240).",
       "name": "admin.advisory"
+    },
+    {
+      "description": "Freelance agents’ payout profiles, verified by Finance before the first payout (D-466).",
+      "name": "admin.agentPayoutProfiles"
     },
     {
       "description": "Commission plans and their maker-checked versions (D-418).",
