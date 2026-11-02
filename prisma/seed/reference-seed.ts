@@ -668,7 +668,13 @@ async function ensureAgentProgramme(tx: Tx, count: (what: string) => void): Prom
   // worded without figures (the figures come from the plan and settings through the API).
   if (!(await tx.faqCategory.findUnique({ where: { code: AGENT_FAQ_CATEGORY } }))) {
     const category = await tx.faqCategory.create({
-      data: { code: AGENT_FAQ_CATEGORY, nameTh: 'ตัวแทนขาย getpack', nameEn: 'getpack sales agents', sort: 90, status: 'published' },
+      data: {
+        code: AGENT_FAQ_CATEGORY,
+        nameTh: 'ตัวแทนขาย getpack',
+        nameEn: 'getpack sales agents',
+        sort: 90,
+        status: 'published',
+      },
     });
     for (const [i, faq] of AGENT_FAQ_DRAFTS.entries())
       await tx.faq.create({ data: { categoryId: category.id, sort: (i + 1) * 10, status: 'draft', ...faq } });

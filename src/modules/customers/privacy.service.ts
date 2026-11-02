@@ -238,6 +238,8 @@ export class PrivacyService {
       where: { userId, revokedAt: null },
       data: { revokedAt: at, revokeReason: 'admin' },
     });
+    // D-467: hand-off codes carry the IP and browser of the request; they serve nothing after anonymisation.
+    await tx.authHandoffCode.deleteMany({ where: { userId } });
   }
 
   // --- export -----------------------------------------------------------------------------------------

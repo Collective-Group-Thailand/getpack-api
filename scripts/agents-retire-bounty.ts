@@ -23,7 +23,8 @@ async function main(): Promise<void> {
       `${plan.pendingFactoryLinks.length} pending factory link(s) to end, ` +
         `${plan.plansWithBounty.length} plan(s) with a bounty in force`,
     );
-    for (const l of plan.pendingFactoryLinks) console.log(`  link ${l.id}  agent ${l.agentCode}  ${l.linkedAt}`);
+    for (const l of plan.pendingFactoryLinks)
+      console.log(`  link ${l.id}  agent ${l.agentCode}  ${l.linkedAt}`);
     for (const p of plan.plansWithBounty) console.log(`  plan ${p.code} v${p.versionNo}  bounty ${p.bounty}`);
     if (!apply) {
       console.log('dry run: nothing written (add --apply)');
