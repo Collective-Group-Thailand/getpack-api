@@ -1551,6 +1551,14 @@ export const PERMISSIONS = [
     decisionRefs: ['D-420'],
   },
   {
+    key: 'agent_payout_profiles.verify',
+    audience: 'staff',
+    description:
+      'Read freelance agents’ payout profiles (legal identity, tax id, bank) and verify or reject them; verifying creates the agent’s vendor and proposes the bank account',
+    sensitive: true,
+    decisionRefs: ['D-466'],
+  },
+  {
     key: 'agent_tax_declarations.review',
     audience: 'staff',
     description:

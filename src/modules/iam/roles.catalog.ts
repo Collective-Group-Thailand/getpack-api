@@ -469,6 +469,7 @@ export const ROLES: readonly RoleDefinition[] = [
       'agent_commissions.adjust',
       'agent_statements.approve',
       'agent_tax_declarations.review',
+      'agent_payout_profiles.verify',
       'reports.export',
       'reports.schedule',
       'receivables.read',

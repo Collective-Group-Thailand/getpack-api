@@ -34,6 +34,7 @@ import { type Response } from 'express';
 import { AgentAttributionService } from './agent-attribution.service';
 import { type FactoryLinkRow } from './agent-attribution.service';
 import { AgentCommissionsService } from './agent-commissions.service';
+import { AgentPayoutProfilesService, payoutProfileEtag } from './agent-payout-profiles.service';
 import { AgentStatementsService, periodBounds, statementEtag } from './agent-statements.service';
 import { type StatementRow } from './agent-statements.service';
 import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
@@ -44,6 +45,7 @@ import {
   ADMIN_APPLICATION_EXAMPLE,
   ADMIN_COMMISSION_EXAMPLE,
   ADMIN_LEAD_EXAMPLE,
+  ADMIN_PAYOUT_PROFILE_EXAMPLE,
   ADMIN_STATEMENT_DETAIL_EXAMPLE,
   ADMIN_STATEMENT_EXAMPLE,
   ADMIN_TAX_DECLARATION_EXAMPLE,
@@ -52,6 +54,7 @@ import {
   AdminAgentDto,
   AdminAgentLeadDto,
   AdminAgentLinkDto,
+  AdminAgentPayoutProfileDto,
   AdminAgentStatementDetailDto,
   AdminAgentStatementDto,
   AdminAgentTaxDeclarationDetailDto,
@@ -78,6 +81,7 @@ import {
   LeadListQuery,
   LinkAgentFactoryDto,
   LinkListQuery,
+  PayoutProfileListQuery,
   PLAN_EXAMPLE,
   StatementListQuery,
   TaxDeclarationListQuery,
@@ -91,6 +95,7 @@ import {
   adminApplicationDto,
   adminCommissionDto,
   adminLeadDto,
+  adminPayoutProfileDto,
   adminStatementDto,
   adminTaxDeclarationDto,
   factoryLinkDto,
@@ -855,6 +860,7 @@ export class AdminAgentsController {
     'validation.failed',
     'agents.statement_invalid_status',
     'agent_statements.tax_invoice_required',
+    'agents.payout_profile_missing',
     'payables.invoice_duplicate',
   )
   async approveStatement(
@@ -1248,5 +1254,101 @@ export class AdminAgentTaxDeclarationsController {
     @Body() body: DecideAgentTaxDeclarationDto,
   ): Promise<AdminAgentTaxDeclarationDto> {
     return adminTaxDeclarationDto(await this.declarations.decide(staff(actor), id, body));
+  }
+}
+
+/** D-466: Finance verifies freelance agents' payout profiles (step 2 of joining). */
+@ApiSurface('admin', 'agentPayoutProfiles')
+@Controller('agent-payout-profiles')
+export class AdminAgentPayoutProfilesController {
+  constructor(private readonly profiles: AgentPayoutProfilesService) {}
+
+  @Get()
+  @Can('agent_payout_profiles.verify')
+  @ApiEndpoint({
+    id: 'admin.agentPayoutProfiles.list',
+    summary: 'List agents’ payout profiles',
+    description: 'Newest submitted first; filter by status (D-466).',
+    implements: ['D-466'],
+  })
+  @ApiPaginated(AdminAgentPayoutProfileDto, { example: ADMIN_PAYOUT_PROFILE_EXAMPLE })
+  @ApiStandardErrors('validation.failed')
+  async list(@Query() q: PayoutProfileListQuery) {
+    const [rows, total] = await this.profiles.list(q.status ? { status: q.status } : {}, q.page, q.perPage);
+    return { data: rows.map(adminPayoutProfileDto), meta: { page: q.page, perPage: q.perPage, total } };
+  }
+
+  @Get(':payoutProfileId')
+  @Can('agent_payout_profiles.verify')
+  @ApiParam({ name: 'payoutProfileId', format: 'uuid' })
+  @ApiEtag()
+  @ApiEndpoint({
+    id: 'admin.agentPayoutProfiles.get',
+    summary: 'Get a payout profile',
+    description: 'With its documents (open them through `admin.files.download`) (D-466).',
+    implements: ['D-466'],
+  })
+  @ApiSuccess(200, { description: 'Payout profile', type: AdminAgentPayoutProfileDto, example: ADMIN_PAYOUT_PROFILE_EXAMPLE })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async get(
+    @Param('payoutProfileId', ParseUUIDPipe) id: string,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AdminAgentPayoutProfileDto> {
+    const row = await this.profiles.get(id);
+    res.setHeader('ETag', payoutProfileEtag(row));
+    return adminPayoutProfileDto(row);
+  }
+
+  @Post(':payoutProfileId/actions/verify')
+  @HttpCode(200)
+  @Can('agent_payout_profiles.verify')
+  @ApiParam({ name: 'payoutProfileId', format: 'uuid' })
+  @ApiConcurrency()
+  @ApiEndpoint({
+    id: 'admin.agentPayoutProfiles.verify',
+    summary: 'Verify a payout profile',
+    description:
+      'Creates or updates the agent’s vendor (legal name, tax id, VAT, address) and proposes the bank account ' +
+      'through the dual approval (B5.3) when it changed; statements held for a missing profile are released. ' +
+      'Guarded by `If-Match` (D-466).',
+    implements: ['D-466', 'D-420'],
+  })
+  @ApiSuccess(200, {
+    description: 'Payout profile',
+    type: AdminAgentPayoutProfileDto,
+    example: { ...ADMIN_PAYOUT_PROFILE_EXAMPLE, status: 'verified' },
+  })
+  @ApiStandardErrors(...WRITE, 'agents.payout_profile_not_submitted')
+  async verify(
+    @CurrentActor() actor: Actor,
+    @Param('payoutProfileId', ParseUUIDPipe) id: string,
+    @IfMatch() ifMatch: string | undefined,
+  ): Promise<AdminAgentPayoutProfileDto> {
+    return adminPayoutProfileDto(await this.profiles.verify(staff(actor), id, ifMatch));
+  }
+
+  @Post(':payoutProfileId/actions/reject')
+  @HttpCode(200)
+  @Can('agent_payout_profiles.verify')
+  @ApiParam({ name: 'payoutProfileId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.agentPayoutProfiles.reject',
+    summary: 'Reject a payout profile',
+    description: 'With a reason the agent reads; they correct it and send it again (D-466).',
+    implements: ['D-466'],
+  })
+  @ApiBody({ type: ReasonDto, examples: REASON_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Payout profile',
+    type: AdminAgentPayoutProfileDto,
+    example: { ...ADMIN_PAYOUT_PROFILE_EXAMPLE, status: 'rejected', rejectReason: 'ชื่อบัญชีไม่ตรงกับบัตร' },
+  })
+  @ApiStandardErrors(...WRITE, 'agents.payout_profile_not_submitted')
+  async reject(
+    @CurrentActor() actor: Actor,
+    @Param('payoutProfileId', ParseUUIDPipe) id: string,
+    @Body() body: ReasonDto,
+  ): Promise<AdminAgentPayoutProfileDto> {
+    return adminPayoutProfileDto(await this.profiles.reject(staff(actor), id, body.reason));
   }
 }
