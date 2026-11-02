@@ -259,6 +259,7 @@ export const ERROR_CODES = {
   'agents.programme_closed': HttpStatus.CONFLICT,
   /** D-466: the application's phone must be the account's verified phone (the web runs OTP). */
   'agents.phone_unverified': HttpStatus.UNPROCESSABLE_ENTITY,
+  'agents.phone_in_use': HttpStatus.CONFLICT,
   /** D-466: the bank account name must match the legal name. */
   'agents.bank_name_mismatch': HttpStatus.UNPROCESSABLE_ENTITY,
   'agents.payout_profile_not_applicable': HttpStatus.UNPROCESSABLE_ENTITY,

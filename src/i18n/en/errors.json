@@ -2131,6 +2131,10 @@
     "payout_profile_missing": {
       "title": "Payout details needed",
       "detail": "The agent has no verified payout details yet; the statement waits, nothing is lost"
+    },
+    "phone_in_use": {
+      "title": "Phone used by another account",
+      "detail": "This number belongs to another getpack account; sign in with it instead, or use another number"
     }
   },
   "documents": {

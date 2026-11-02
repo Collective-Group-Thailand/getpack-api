@@ -20,10 +20,12 @@ Migration `20270103000001_agent_p1_two_step` (non-destructive; rollback `down.sq
 | `store.agentPayoutProfile.get` | `GET /v1/store/agent/payout-profile` (ETag) | `agent.self` |
 | `store.agentPayoutProfile.upsert` | `PUT /v1/store/agent/payout-profile` (If-Match once it exists) | `agent.self` |
 | `store.agentPayoutProfile.submit` | `POST /v1/store/agent/payout-profile/actions/submit` (If-Match) | `agent.self` |
+| `store.agentPhone.request` | `POST /v1/store/agent/phone-verification` (OTP purpose `verify_phone`) | signed-in customer |
+| `store.agentPhone.confirm` | `POST /v1/store/agent/phone-verification/actions/confirm` → the account's verified phone (`agents.phone_in_use`) | signed-in customer |
 | `admin.agentPayoutProfiles.list/get/verify/reject` | `/v1/admin/agent-payout-profiles[/{id}[/actions/verify|reject]]` | `agent_payout_profiles.verify` (Finance Manager) |
 
 ## Error codes
-`agents.programme_closed` · `agents.phone_unverified` · `agents.bank_name_mismatch` · `agents.payout_profile_not_applicable` ·
+`agents.programme_closed` · `agents.phone_unverified` · `agents.phone_in_use` · `agents.bank_name_mismatch` · `agents.payout_profile_not_applicable` ·
 `agents.payout_profile_waiting` · `agents.payout_profile_verified` · `agents.payout_profile_not_submitted` ·
 `agents.payout_profile_missing`
 

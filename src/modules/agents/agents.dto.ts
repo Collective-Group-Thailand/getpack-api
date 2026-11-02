@@ -2138,3 +2138,17 @@ export class AgentCommissionExampleQuery {
   @Matches(/^\d{1,10}(\.\d{1,2})?$/)
   orderValue!: string;
 }
+
+// --- D-466 phone verification before applying --------------------------------------------------------------
+
+export class AgentPhoneOtpRequestDto {
+  @ApiProperty({ example: '0810005678', description: 'Thai mobile or E.164 number' })
+  @IsString()
+  @MaxLength(32)
+  phone!: string;
+}
+
+export class AgentPhoneVerifiedDto {
+  @ApiProperty({ example: '+66810005678', description: 'Now the account’s verified phone' })
+  phone!: string;
+}

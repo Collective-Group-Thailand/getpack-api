@@ -419,6 +419,17 @@
           "type": "https://errors.getpack/agents.period_open"
         }
       },
+      "problem.agents.phone_in_use": {
+        "summary": "agents.phone_in_use",
+        "value": {
+          "code": "agents.phone_in_use",
+          "detail": "เบอร์นี้ผูกกับบัญชี getpack อื่นแล้ว เข้าสู่ระบบด้วยเบอร์นี้แทน หรือใช้เบอร์อื่น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เบอร์นี้ใช้กับบัญชีอื่นแล้ว",
+          "type": "https://errors.getpack/agents.phone_in_use"
+        }
+      },
       "problem.agents.phone_unverified": {
         "summary": "agents.phone_unverified",
         "value": {
@@ -16795,6 +16806,33 @@
           "url",
           "expiresAt",
           "statements"
+        ],
+        "type": "object"
+      },
+      "AgentPhoneOtpRequestDto": {
+        "properties": {
+          "phone": {
+            "description": "Thai mobile or E.164 number",
+            "example": "0810005678",
+            "maxLength": 32,
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone"
+        ],
+        "type": "object"
+      },
+      "AgentPhoneVerifiedDto": {
+        "properties": {
+          "phone": {
+            "description": "Now the account’s verified phone",
+            "example": "+66810005678",
+            "type": "string"
+          }
+        },
+        "required": [
+          "phone"
         ],
         "type": "object"
       },
@@ -507609,6 +507647,450 @@
         ],
         "x-required-permissions": [
           "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/phone-verification": {
+      "post": {
+        "description": "For a customer signed in with LINE, Google or Apple who has no verified phone yet (D-466): a code by SMS (purpose `verify_phone`), with the usual OTP limits.\n\nImplements: D-466.",
+        "operationId": "store.agentPhone.request",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "phone": "0810005678"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AgentPhoneOtpRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "challengeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+                  "codeLength": 6,
+                  "expiresAt": "2026-11-03T14:10:00+07:00",
+                  "maxAttempts": 5,
+                  "resendAvailableAt": "2026-11-03T14:06:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/OtpChallengeDto"
+                }
+              }
+            },
+            "description": "Code sent",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.otp_rate_limited": {
+                    "$ref": "#/components/examples/problem.auth.otp_rate_limited"
+                  },
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.otp_rate_limited`, `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "503": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "provider.unavailable": {
+                    "$ref": "#/components/examples/problem.provider.unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `provider.unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Send an OTP to verify my phone before applying",
+        "tags": [
+          "store.agent"
+        ]
+      }
+    },
+    "/v1/store/agent/phone-verification/actions/confirm": {
+      "post": {
+        "description": "The number becomes the account’s verified phone, unless another customer holds it (`agents.phone_in_use`, naming no one) (D-466).\n\nImplements: D-466.",
+        "operationId": "store.agentPhone.confirm",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "challengeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+                    "code": "123456"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OtpVerifyDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "phone": "+66810005678"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPhoneVerifiedDto"
+                }
+              }
+            },
+            "description": "Verified",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.phone_in_use": {
+                    "$ref": "#/components/examples/problem.agents.phone_in_use"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.phone_in_use`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.otp_expired": {
+                    "$ref": "#/components/examples/problem.auth.otp_expired"
+                  },
+                  "auth.otp_invalid": {
+                    "$ref": "#/components/examples/problem.auth.otp_invalid"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.otp_expired`, `auth.otp_invalid`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Confirm the OTP: the phone becomes my verified phone",
+        "tags": [
+          "store.agent"
         ]
       }
     },

@@ -9,6 +9,7 @@ import { startOfBangkokDay, toBangkokIso } from '@common/time/bangkok';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
+import { OtpService } from '@modules/auth/login/otp.service';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { BankAccountsService } from '@modules/partners/bank-accounts/bank-accounts.service';
 import { Injectable } from '@nestjs/common';
@@ -106,6 +107,7 @@ export class AgentsService {
     private readonly config: AppConfig,
     private readonly permissions: PermissionResolver,
     private readonly flags: FeatureFlagsService,
+    private readonly otp: OtpService,
   ) {}
 
   linkFor(code: string): string {
@@ -208,6 +210,35 @@ export class AgentsService {
     const version = plan ? await planVersionAt(this.prisma, plan.id, new Date()) : null;
     if (!version) throw new DomainException('agents.plan_not_in_force');
     return commissionExample(version, orderValue);
+  }
+
+  /**
+   * D-466: a signed-in customer without a verified phone (signed in with LINE, Google or Apple) verifies one before
+   * applying: an OTP to the number (purpose `verify_phone`), then the code. The number becomes the account's verified
+   * phone unless another customer already holds it (`agents.phone_in_use`, never naming whom).
+   */
+  async requestPhoneOtp(phone: string, ip: string | undefined) {
+    return this.otp.request(phone, 'verify_phone', ip);
+  }
+
+  async confirmPhone(actor: UserActor, challengeId: string, code: string): Promise<{ phone: string }> {
+    const phone = await this.otp.verify(challengeId, code, 'verify_phone');
+    await this.prisma.withTx(async (tx) => {
+      const other = await tx.user.findFirst({
+        where: { kind: 'customer', phone, anonymisedAt: null, id: { not: actor.userId } },
+      });
+      if (other) throw new DomainException('agents.phone_in_use');
+      await tx.user.update({ where: { id: actor.userId }, data: { phone, phoneVerifiedAt: new Date() } });
+      await this.audit.record(tx, {
+        category: 'security',
+        action: 'customer.phone_verified',
+        actor,
+        resourceType: 'user',
+        resourcePublicId: actor.publicId,
+        data: { via: 'agent_apply' },
+      });
+    });
+    return { phone };
   }
 
   // --- applications (D-416) ----------------------------------------------------------------------------

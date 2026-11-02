@@ -6,6 +6,9 @@ import { IfMatch } from '@common/etag/etag.interceptor';
 import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { toBangkokIso } from '@common/time/bangkok';
+import { OtpChallengeDto, OtpVerifyDto } from '@modules/auth/auth.dto';
+import { toE164 } from '@modules/auth/login/phone';
 import { AttributeReferralDto } from '@modules/promotions/referrals.dto';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, Get, Header, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Req, Res } from '@nestjs/common';
@@ -16,6 +19,7 @@ import { type Request, type Response } from 'express';
 import { AgentAttributionService } from './agent-attribution.service';
 import { AgentCommissionsService } from './agent-commissions.service';
 import { AgentPayoutProfilesService, payoutProfileEtag } from './agent-payout-profiles.service';
+import { invalid } from './agent-shared';
 import { AgentStatementsService } from './agent-statements.service';
 import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
 import {
@@ -31,6 +35,8 @@ import {
   AgentLeadDto,
   AgentLinkDto,
   AgentPayoutProfileDto,
+  AgentPhoneOtpRequestDto,
+  AgentPhoneVerifiedDto,
   AgentProgrammeDto,
   AgentStatementDetailDto,
   AgentStatementDto,
@@ -71,6 +77,14 @@ import {
 
 const DECISIONS = ['D-416', 'D-417', 'D-418', 'D-420', 'D-422', 'D-464'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'validation.failed'] as const;
+
+const AGENT_OTP_EXAMPLE: OtpChallengeDto = {
+  challengeId: '0192f3a0-7c1e-7d2a-9b1f-00000000c0de',
+  expiresAt: '2026-11-03T14:10:00+07:00',
+  resendAvailableAt: '2026-11-03T14:06:00+07:00',
+  codeLength: 6,
+  maxAttempts: 5,
+};
 
 function customer(actor: Actor): UserActor {
   if (actor.type !== 'user' || actor.audience !== 'customer') throw new DomainException('auth.forbidden');
@@ -666,5 +680,52 @@ export class StoreAgentController {
     const row = await this.payoutProfiles.submit(me, await this.agents.mine(me.userId), ifMatch);
     res.setHeader('ETag', payoutProfileEtag(row));
     return payoutProfileDto(row);
+  }
+
+  @Post('phone-verification')
+  @HttpCode(200)
+  @ApiEndpoint({
+    id: 'store.agentPhone.request',
+    summary: 'Send an OTP to verify my phone before applying',
+    description:
+      'For a customer signed in with LINE, Google or Apple who has no verified phone yet (D-466): a code by SMS ' +
+      '(purpose `verify_phone`), with the usual OTP limits.',
+    implements: ['D-466'],
+  })
+  @ApiBody({ type: AgentPhoneOtpRequestDto, examples: { default: { value: { phone: '0810005678' } } } })
+  @ApiSuccess(200, { description: 'Code sent', type: OtpChallengeDto, example: AGENT_OTP_EXAMPLE })
+  @ApiStandardErrors(...WRITE, 'auth.otp_rate_limited', 'provider.unavailable')
+  async requestPhoneOtp(@CurrentActor() actor: Actor, @Body() body: AgentPhoneOtpRequestDto, @Req() req: Request) {
+    customer(actor);
+    const phone = toE164(body.phone);
+    if (!phone) invalid('phone', 'a valid phone number', 'phone');
+    const issued = await this.agents.requestPhoneOtp(phone, req.ip);
+    return {
+      challengeId: issued.challengeId,
+      expiresAt: toBangkokIso(issued.expiresAt),
+      resendAvailableAt: toBangkokIso(issued.resendAvailableAt),
+      codeLength: issued.codeLength,
+      maxAttempts: issued.maxAttempts,
+    };
+  }
+
+  @Post('phone-verification/actions/confirm')
+  @HttpCode(200)
+  @ApiEndpoint({
+    id: 'store.agentPhone.confirm',
+    summary: 'Confirm the OTP: the phone becomes my verified phone',
+    description:
+      'The number becomes the account’s verified phone, unless another customer holds it (`agents.phone_in_use`, ' +
+      'naming no one) (D-466).',
+    implements: ['D-466'],
+  })
+  @ApiBody({
+    type: OtpVerifyDto,
+    examples: { default: { value: { challengeId: '0192f3a0-7c1e-7d2a-9b1f-00000000c0de', code: '123456' } } },
+  })
+  @ApiSuccess(200, { description: 'Verified', type: AgentPhoneVerifiedDto, example: { phone: '+66810005678' } })
+  @ApiStandardErrors(...WRITE, 'auth.otp_invalid', 'auth.otp_expired', 'agents.phone_in_use')
+  confirmPhone(@CurrentActor() actor: Actor, @Body() body: OtpVerifyDto): Promise<AgentPhoneVerifiedDto> {
+    return this.agents.confirmPhone(customer(actor), body.challengeId, body.code);
   }
 }
