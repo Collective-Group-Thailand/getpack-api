@@ -189,6 +189,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `agents.manage` — Approve or reject agent applications, create employee agents, change plans, suspend, reactivate or end agents, assign, transfer or end customer links, release leads and decide held commission (D-416, D-417, D-423) | ● | ● |  |  | ● |  |  |  |  |  |  |  | ● |  |  |  |
 | `agent_commissions.adjust` — Add a signed manual commission adjustment with a reason (D-418) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |
 | `agent_statements.approve` — Generate, approve or void agent statements; export the payroll file and mark employee statements paid (D-420) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |
+| `agent_payout_profiles.verify` — Read freelance agents’ payout profiles (legal identity, tax id, bank) and verify or reject them; verifying creates the agent’s vendor and proposes the bank account (D-466) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |
 | `agent_tax_declarations.review` — Read agents’ ล.ย.01 allowance declarations with their evidence and accept or reject them (progressive withholding) (D-465) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |
 | `agent_plans.manage` — Create commission plans and draft their versions (D-418) | ● | ● |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |
 | `agent_plans.approve` — Approve or reject a commission plan version drafted by someone else (D-418) | ◆ | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |  |

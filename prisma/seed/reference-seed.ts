@@ -5,7 +5,13 @@ import { PERMISSIONS } from '../../src/modules/iam/permissions.catalog';
 import { ROLES } from '../../src/modules/iam/roles.catalog';
 import { type EntityReturnAddress } from '../../src/platform/settings/setting-keys';
 import { settingValueError } from '../../src/platform/settings/setting-value';
-import { AGENT_AGREEMENT_KEY, AGENT_AGREEMENT_V1_TH, AGENT_PLANS } from './data/agents';
+import {
+  AGENT_AGREEMENT_KEY,
+  AGENT_AGREEMENT_V1_TH,
+  AGENT_FAQ_CATEGORY,
+  AGENT_FAQ_DRAFTS,
+  AGENT_PLANS,
+} from './data/agents';
 import { APPROVAL_POLICIES, thresholdAmendmentOf } from './data/approval-policies';
 import { PARTNER_KNOWLEDGE_CATEGORIES, PRODUCT_TYPES } from './data/catalog';
 import {
@@ -26,7 +32,7 @@ import { AGREEMENT_TEMPLATES } from './data/partners';
 import { CUSTOMER_POSTING_RULES } from './data/posting-rules-customer';
 import { VENDOR_POSTING_RULES } from './data/posting-rules-vendor';
 import { PRICING_FEATURE_FLAGS, QUOTE_LOSS_REASONS, UNMET_DEMAND_REASONS } from './data/quotes';
-import { CREDIT_NOTE_REASONS, FINANCE_FEATURE_FLAGS } from './data/receivables';
+import { AGENT_FEATURE_FLAGS, CREDIT_NOTE_REASONS, FINANCE_FEATURE_FLAGS } from './data/receivables';
 import { CONSENT_PURPOSES, NATIONAL_CALENDAR, SOD_RULES, TAX_RATES, TEAMS } from './data/reference';
 import {
   ENTITY_RETURN_ADDRESS_SETTING,
@@ -658,6 +664,16 @@ async function ensureAgentProgramme(tx: Tx, count: (what: string) => void): Prom
     });
     count('sales_agent_plans');
   }
+  // D-466: the landing reads the FAQs of this category. The items are DRAFTS for Marketing to review and publish —
+  // worded without figures (the figures come from the plan and settings through the API).
+  if (!(await tx.faqCategory.findUnique({ where: { code: AGENT_FAQ_CATEGORY } }))) {
+    const category = await tx.faqCategory.create({
+      data: { code: AGENT_FAQ_CATEGORY, nameTh: 'ตัวแทนขาย getpack', nameEn: 'getpack sales agents', sort: 90, status: 'published' },
+    });
+    for (const [i, faq] of AGENT_FAQ_DRAFTS.entries())
+      await tx.faq.create({ data: { categoryId: category.id, sort: (i + 1) * 10, status: 'draft', ...faq } });
+    count('faq_categories');
+  }
 }
 
 async function ensureTaxRates(tx: Tx, count: (what: string) => void): Promise<void> {
@@ -875,6 +891,7 @@ async function ensurePaymentFeatureFlags(tx: Tx, count: (what: string) => void):
     ...FULFILMENT_FEATURE_FLAGS,
     ...FINANCE_FEATURE_FLAGS,
     ...PRICING_FEATURE_FLAGS,
+    ...AGENT_FEATURE_FLAGS,
   ]) {
     const devOnly = 'devOnly' in flag && flag.devOnly === true;
     const existing = await tx.featureFlag.findUnique({ where: { key: flag.key } });

@@ -19,6 +19,7 @@ import { FilesService } from '@platform/files/files.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { COMMISSION_INCLUDE } from './agent-commissions.service';
+import { AgentPayoutProfilesService } from './agent-payout-profiles.service';
 import { AGENT_REF_SELECT, D, invalid, recordAgentEvent, ZERO } from './agent-shared';
 import {
   type DeclarationAllowanceKey,
@@ -100,6 +101,7 @@ export class AgentStatementsService {
     private readonly invoices: VendorInvoicesService,
     private readonly rates: TaxRatesReader,
     private readonly settings: SettingsService,
+    private readonly payoutProfiles: AgentPayoutProfilesService,
     private readonly entities: EntitiesService,
     private readonly files: FilesService,
     private readonly audit: AuditService,
@@ -157,6 +159,9 @@ export class AgentStatementsService {
             where: { id: { in: entries.map((e) => e.id) } },
             data: { status: 'statemented', statementId: statement.id },
           });
+          // D-466: no verified payout profile yet → the statement waits as a draft and the agent is told.
+          if (!(await this.payoutProfiles.payoutReady(agent, tx)))
+            await this.payoutProfiles.holdStatement(tx, statement, agent.userId);
           await recordAgentEvent(this, tx, {
             type: 'sales_agent_statement.generated',
             aggregateType: 'sales_agent_statement',
@@ -189,6 +194,15 @@ export class AgentStatementsService {
    * / Cr 2410 through the event, for payroll.
    */
   async approve(actor: UserActor, publicId: string, ifMatch: string | undefined): Promise<StatementRow> {
+    // D-466: a freelance agent is paid only with a verified payout profile; the statement stays a draft, flagged.
+    const pre = await this.prisma.salesAgentStatement.findUnique({
+      where: { publicId },
+      include: { agent: true },
+    });
+    if (pre && pre.status === 'draft' && !(await this.payoutProfiles.payoutReady(pre.agent))) {
+      await this.prisma.withTx((tx) => this.payoutProfiles.holdStatement(tx, pre, pre.agent.userId));
+      throw new DomainException('agents.payout_profile_missing');
+    }
     await this.prisma.withTx(async (tx) => {
       const s = await this.lock(tx, publicId, ['draft']);
       assertIfMatch(ifMatch, statementEtag(s), { required: true });

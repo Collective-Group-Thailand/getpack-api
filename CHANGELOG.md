@@ -3,6 +3,16 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## Unreleased — Agent portal Phase 1: two-step onboarding, payout profile, public programme
+
+D-466. Details and the web checklist: `docs/design/agent-portal/API-CHANGES-P1.md`.
+
+- **Breaking (store):** `store.agent.apply` takes step 1 only (name, verified phone, e-mail, LINE id, sales channels,
+  pitch, agreement); application tax / bank fields are nullable. Applying is behind the flag `agents.programme`.
+- **New:** `store.agentProgramme.public|example` (anonymous), `store.agentPayoutProfile.get|upsert|submit`,
+  `admin.agentPayoutProfiles.list|get|verify|reject` (permission `agent_payout_profiles.verify`).
+- Freelance statements wait (draft, `payout_profile_missing`) until the payout profile is verified.
+
 ## Unreleased — Agent portal Phase 0: no commission cap, factory referral retired, progressive withholding
 
 D-464, D-465. Details and the web checklist: `docs/design/agent-portal/API-CHANGES-P0.md`.

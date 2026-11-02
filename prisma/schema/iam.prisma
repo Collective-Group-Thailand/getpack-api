@@ -860,6 +860,7 @@ model User {
   salesAgentApplications           SalesAgentApplication[]    @relation("SalesAgentApplicationUser")
   salesAgentApplicationsDecided    SalesAgentApplication[]    @relation("SalesAgentApplicationDecidedBy")
   salesAgentTaxDeclarationsDecided SalesAgentTaxDeclaration[] @relation("SalesAgentTaxDeclarationDecidedBy")
+  salesAgentPayoutProfilesVerified SalesAgentPayoutProfile[]  @relation("SalesAgentPayoutProfileVerifiedBy")
   salesAgent                       SalesAgent?                @relation("SalesAgentUser")
   salesAgentsAsStaff               SalesAgent[]               @relation("SalesAgentStaffUser")
   salesAgentLinks                  SalesAgentLink[]           @relation("SalesAgentLinkCustomer")

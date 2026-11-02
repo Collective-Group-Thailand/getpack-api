@@ -255,6 +255,19 @@ export const ERROR_CODES = {
   'agents.tax_declaration_open': HttpStatus.CONFLICT,
   'agents.tax_declaration_not_applicable': HttpStatus.UNPROCESSABLE_ENTITY,
   'agents.tax_declaration_decided': HttpStatus.CONFLICT,
+  /** D-466: applying is closed (feature flag `agents.programme`); the landing still shows the programme. */
+  'agents.programme_closed': HttpStatus.CONFLICT,
+  /** D-466: the application's phone must be the account's verified phone (the web runs OTP). */
+  'agents.phone_unverified': HttpStatus.UNPROCESSABLE_ENTITY,
+  'agents.phone_in_use': HttpStatus.CONFLICT,
+  /** D-466: the bank account name must match the legal name. */
+  'agents.bank_name_mismatch': HttpStatus.UNPROCESSABLE_ENTITY,
+  'agents.payout_profile_not_applicable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'agents.payout_profile_waiting': HttpStatus.CONFLICT,
+  'agents.payout_profile_verified': HttpStatus.CONFLICT,
+  'agents.payout_profile_not_submitted': HttpStatus.CONFLICT,
+  /** D-466: a freelance statement waits (draft) until the agent's payout profile is verified. */
+  'agents.payout_profile_missing': HttpStatus.CONFLICT,
   'referrals.code_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
   'referrals.self_referral': HttpStatus.UNPROCESSABLE_ENTITY,
   'referrals.already_attributed': HttpStatus.CONFLICT,

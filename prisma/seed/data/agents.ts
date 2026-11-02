@@ -90,3 +90,46 @@ export const AGENT_AGREEMENT_V1_TH = `ข้อตกลงตัวแทนข
 
 9. การเปลี่ยนแปลงข้อตกลง
 บริษัทอาจออกข้อตกลงฉบับใหม่โดยแจ้งล่วงหน้าผ่านระบบ การใช้งานต่อหลังวันที่มีผลถือเป็นการยอมรับ`;
+
+/** D-466: the CMS FAQ category the public landing reads (`store.agentProgramme.public`). */
+export const AGENT_FAQ_CATEGORY = 'agent_programme';
+
+/** Draft FAQ items for Marketing to review and publish (no figures: those come from the plan through the API). */
+export const AGENT_FAQ_DRAFTS: readonly { questionTh: string; answerTh: string; questionEn: string; answerEn: string }[] = [
+  {
+    questionTh: 'ต้องมีประสบการณ์ขายบรรจุภัณฑ์ไหม',
+    answerTh: 'ไม่จำเป็น ถ้าคุณรู้จักร้านค้าหรือธุรกิจที่ใช้กล่องและบรรจุภัณฑ์ คุณแนะนำ getpack ได้ ลูกค้าออกแบบ ดูราคา และสั่งผ่านระบบเอง',
+    questionEn: 'Do I need packaging sales experience?',
+    answerEn: 'No. If you know shops or businesses that use boxes and packaging, you can introduce getpack; customers design, price and order in the system themselves.',
+  },
+  {
+    questionTh: 'ได้ค่าคอมจากอะไร',
+    answerTh: 'จากยอดสินค้าก่อน VAT ไม่รวมค่าส่ง ของคำสั่งซื้อที่ลูกค้าที่ผูกกับคุณชำระแล้ว ทั้งออเดอร์แรกและออเดอร์ถัดไปตามระยะเวลาในแผน ไม่จำกัดรายได้',
+    questionEn: 'What do I earn commission on?',
+    answerEn: 'On the goods before VAT, excluding shipping, of paid orders from customers linked to you — first and later orders for the plan’s months, with no cap.',
+  },
+  {
+    questionTh: 'ลูกค้าจะผูกกับฉันได้อย่างไร',
+    answerTh: 'ลูกค้าใหม่ที่เปิดลิงก์หรือสแกน QR ของคุณแล้วสมัคร หรือผู้มุ่งหวังที่คุณลงทะเบียนไว้ก่อนแล้วสมัครด้วยเบอร์ อีเมล หรือเลขผู้เสียภาษีเดียวกัน',
+    questionEn: 'How does a customer get linked to me?',
+    answerEn: 'A new customer who opens your link or QR and signs up, or a lead you registered first who signs up with the same phone, e-mail or tax id.',
+  },
+  {
+    questionTh: 'ได้รับเงินเมื่อไร',
+    answerTh: 'ระบบสรุปค่าคอมทุกต้นเดือน ทีมบัญชีอนุมัติแล้วโอนเข้าบัญชีที่ตรวจแล้ว พร้อมหนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ)',
+    questionEn: 'When am I paid?',
+    answerEn: 'Commission is summarised at the start of each month; once Finance approves it, it is transferred to your verified account with a withholding tax certificate.',
+  },
+  {
+    questionTh: 'ต้องส่งเอกสารอะไรบ้าง',
+    answerTh: 'สมัครใช้แค่ชื่อ เบอร์ที่ยืนยันแล้ว และอีเมล ส่วนเลขประจำตัวผู้เสียภาษี ที่อยู่ สำเนาบัตร และบัญชีธนาคาร กรอกภายหลังก่อนรับเงินครั้งแรก',
+    questionEn: 'What documents do I need?',
+    answerEn: 'To apply, only your name, a verified phone and e-mail. Your tax id, address, ID copy and bank account come later, before your first payment.',
+  },
+  {
+    questionTh: 'ต้องสต็อกสินค้าหรือตามงานผลิตเองไหม',
+    answerTh: 'ไม่ต้อง getpack ดูแลการผลิต การจัดส่ง และบริการหลังการขายทั้งหมด คุณแนะนำลูกค้าและติดตามความคืบหน้าได้ในหน้าตัวแทน',
+    questionEn: 'Do I hold stock or follow up on production?',
+    answerEn: 'No. getpack handles production, delivery and after-sales service; you introduce customers and follow their progress on your agent pages.',
+  },
+];

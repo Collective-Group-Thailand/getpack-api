@@ -6,6 +6,8 @@ import { AgentCommissionsService } from '@modules/agents/agent-commissions.servi
 import { AgentStatementsService } from '@modules/agents/agent-statements.service';
 import { OrdersService } from '@modules/orders/orders.service';
 import { PaymentSchedulesService } from '@modules/payment-schedules/payment-schedules.service';
+import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';
+import request from 'supertest';
 
 import { type DevFolding } from '../../prisma/seed/dev-folding';
 import {
@@ -122,39 +124,52 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
     return ctx.app.get(AgentStatementsService).previousPeriod();
   }
 
-  it('a customer applies with the agreement; Sales approves: agent, vendor, bank proposal, agent pages', async () => {
+  it('applies in two steps (D-466): step 1 then approval; the payout profile makes the vendor and bank proposal', async () => {
     const { token, phone } = await customerToken(ctx, 1);
     const programme = await as(ctx, token).get('/v1/store/agent/programme').expect(200);
     expect(programme.body).toMatchObject({
       state: 'none',
       agreement: { key: 'sales_agent_agreement', versionNo: 1 },
-      plan: { firstOrderPct: '5', repeatOrderPct: '3', attributionMonths: 12 },
+      plan: { firstOrderPct: '5', repeatOrderPct: '3', attributionMonths: 12, uncapped: true },
     });
+    expect(programme.body.plan).not.toHaveProperty('marginCapPct');
+    // The public landing reads the programme without signing in, applying open or not.
+    const pub = await request(ctx.server).get('/v1/store/agent/programme/public').expect(200);
+    expect(pub.body).toMatchObject({ applyOpen: false, terms: { uncapped: true } });
+    expect(pub.body.examples[1]).toMatchObject({ orderValue: '100000.00', firstOrder: '5000.00' });
     await as(ctx, token).get('/v1/store/agent').expect(403);
 
-    const idDocument = await uploadFile(ctx, token, 'id card (fake)', 'evidence');
     const body = {
       juristicType: 'individual',
-      legalName: '[E2E] ตัวแทน ขายดี (fake)',
-      taxId: `1${String(ctx.run).padStart(12, '0').slice(-12)}`,
-      address: '99/1 ถนนทดสอบ แขวงทดสอบ เขตทดสอบ กรุงเทพฯ (fake)',
-      postcode: '10310',
-      idDocumentFileId: idDocument,
-      bankCode: '014',
-      bankAccountName: '[E2E] ตัวแทน ขายดี (fake)',
-      bankAccountNo: '123-4-56789-0',
+      displayName: '[E2E] ตัวแทน ขายดี (fake)',
+      phone,
+      email: `agent.${ctx.run}@example.invalid`,
+      lineId: 'e2e.agent',
+      salesChannels: ['line_groups', 'own_network'],
       agreementVersionNo: 1,
     };
+    // FEATURE_AGENT_PROGRAMME off: closed.
+    expect((await as(ctx, token).post('/v1/store/agent/application', body).expect(409)).body.code).toBe(
+      'agents.programme_closed',
+    );
+    await ctx.prisma.featureFlag.update({ where: { key: 'agents.programme' }, data: { enabled: true } });
+    ctx.app.get(FeatureFlagsService).invalidate();
+    // Another phone than the account's verified one.
+    expect(
+      (await as(ctx, token).post('/v1/store/agent/application', { ...body, phone: '+66899999999' }).expect(422))
+        .body.code,
+    ).toBe('agents.phone_unverified');
     await as(ctx, token)
       .post('/v1/store/agent/application', { ...body, agreementVersionNo: 9 })
       .expect(409);
     const applied = await as(ctx, token).post('/v1/store/agent/application', body).expect(201);
     expect(applied.body).toMatchObject({
       status: 'submitted',
-      bankAccountNoLast4: '7890',
+      taxId: null,
+      bankAccountNoLast4: null,
+      salesChannels: ['line_groups', 'own_network'],
       agreementVersionNo: 1,
     });
-    expect(JSON.stringify(applied.body)).not.toContain('1234567890');
     const again = await as(ctx, token).post('/v1/store/agent/application', body).expect(409);
     expect(again.body.code).toBe('agents.application_open');
 
@@ -181,17 +196,60 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
       kind: 'freelance',
       status: 'active',
       juristicType: 'individual',
-      bankAccount: 'pending_approval',
+      vendorId: null,
+      bankAccount: 'none',
       plan: { code: 'freelance_standard' },
     });
-    const vendor = await ctx.prisma.vendor.findUniqueOrThrow({ where: { publicId: approved.body.vendorId } });
-    expect(vendor).toMatchObject({
+
+    // Step 2: the payout profile, checked and verified by Finance.
+    const empty = await as(ctx, token).get('/v1/store/agent/payout-profile').expect(200);
+    expect(empty.body).toMatchObject({ applicable: true, payoutReady: false, profile: null });
+    const idDocument = await uploadFile(ctx, token, 'id card (fake)', 'evidence');
+    const legalName = '[E2E] ตัวแทน ขายดี (fake)';
+    const profile = {
+      legalName,
+      taxId: '0000000000124',
+      address: '99/1 ถนนทดสอบ แขวงทดสอบ เขตทดสอบ กรุงเทพฯ (fake)',
+      postcode: '10310',
+      idDocumentFileId: idDocument,
+      bankCode: '014',
+      bankAccountName: 'นาย ตัวแทน ขายดี (fake)',
+      bankAccountNo: '123-4-56789-0',
+    };
+    expect(
+      (await as(ctx, token).put('/v1/store/agent/payout-profile', { ...profile, taxId: '0000000000125' }).expect(422))
+        .body.code,
+    ).toBe('validation.failed');
+    expect((await as(ctx, token).put('/v1/store/agent/payout-profile', profile).expect(422)).body.code).toBe(
+      'agents.bank_name_mismatch',
+    );
+    const saved = await as(ctx, token)
+      .put('/v1/store/agent/payout-profile', { ...profile, bankAccountName: legalName })
+      .expect(200);
+    expect(saved.body).toMatchObject({ status: 'draft', bankAccountNoLast4: '7890' });
+    expect(JSON.stringify(saved.body)).not.toContain('1234567890');
+    const submitted = await as(ctx, token)
+      .post('/v1/store/agent/payout-profile/actions/submit')
+      .set('If-Match', saved.headers['etag'] as string)
+      .expect(200);
+    const read = await as(ctx, financeManager).get(`/v1/admin/agent-payout-profiles/${submitted.body.id}`).expect(200);
+    await as(ctx, financeManager)
+      .post(`/v1/admin/agent-payout-profiles/${submitted.body.id}/actions/verify`)
+      .set('If-Match', read.headers['etag'] as string)
+      .expect(200);
+    const agentRow = await ctx.prisma.salesAgent.findUniqueOrThrow({
+      where: { publicId: approved.body.id },
+      include: { vendor: true },
+    });
+    expect(agentRow.vendor).toMatchObject({
       kind: 'sales_agent',
       defaultWhtCategory: 'commission',
       paymentTermsDays: 15,
+      taxId: '0000000000124',
     });
-    const proposal = await ctx.prisma.vendorBankAccount.findFirstOrThrow({ where: { vendorId: vendor.id } });
+    const proposal = await ctx.prisma.vendorBankAccount.findFirstOrThrow({ where: { vendorId: agentRow.vendorId! } });
     expect(proposal).toMatchObject({ status: 'pending_approval', accountNoLast4: '7890' });
+    expect((await as(ctx, token).get('/v1/store/agent/payout-profile').expect(200)).body.payoutReady).toBe(true);
 
     const me = await as(ctx, token).get('/v1/store/agent').expect(200);
     expect(me.body).toMatchObject({
@@ -206,7 +264,7 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
       phone,
       id: approved.body.id,
       code: approved.body.code,
-      vendorId: approved.body.vendorId,
+      vendorId: agentRow.vendor!.publicId,
     };
   });
 
@@ -373,7 +431,7 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
       })
       .expect(409);
     expect(existing.body.code).toBe('agents.lead_existing_customer');
-    // D-440: a factory already in getpack gets one neutral refusal that names no reason.
+    // P-03 / D-464: agents register customers only; factories apply at /partner-with-us.
     const known = await ctx.prisma.factory.findFirstOrThrow();
     const factoryLead = await as(ctx, agent.token)
       .post('/v1/store/agent/leads', {
@@ -382,9 +440,9 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
         taxId: known.taxId,
         consentConfirmed: true,
       })
-      .expect(409);
-    expect(factoryLead.body.code).toBe('agents.lead_unavailable');
-    expect(`${factoryLead.body.title} ${factoryLead.body.detail}`).not.toMatch(/โรงงาน|factory/i);
+      .expect(422);
+    expect(factoryLead.body.code).toBe('agents.lead_kind_unsupported');
+    expect(factoryLead.body.detail).toContain('partner-with-us');
     await as(ctx, agent.token)
       .post('/v1/store/agent/leads', {
         kind: 'customer',
@@ -467,9 +525,9 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
         attributionMonths: 12,
         marginCapPct: '20',
         minBaseAmount: '0.00',
-        factoryBountyAmount: '1000.00',
-        factoryQualifyJobs: 3,
-        factoryQualifyDays: 120,
+        factoryBountyAmount: '0.00',
+        factoryQualifyJobs: 0,
+        factoryQualifyDays: 0,
         reason: 'ทดสอบ (fake)',
       })
       .expect(201);

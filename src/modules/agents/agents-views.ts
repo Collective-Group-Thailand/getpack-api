@@ -2,6 +2,7 @@ import { toBangkokIso } from '@common/time/bangkok';
 
 import { type FactoryLinkRow, type LeadRow, type LinkRow } from './agent-attribution.service';
 import { type CommissionRow } from './agent-commissions.service';
+import { type PayoutProfileRow } from './agent-payout-profiles.service';
 import { agentRef, D, maskName, storeTermsOf, termsOf, userRef } from './agent-shared';
 import { type StatementRow } from './agent-statements.service';
 import { type TaxDeclarationRow } from './agent-tax-declarations.service';
@@ -11,6 +12,7 @@ import {
   type AdminAgentDto,
   type AdminAgentLeadDto,
   type AdminAgentLinkDto,
+  type AdminAgentPayoutProfileDto,
   type AdminAgentStatementDto,
   type AdminAgentTaxDeclarationDto,
   type AdminAgentTotalsDto,
@@ -20,6 +22,7 @@ import {
   type AgentFactoryLinkDto,
   type AgentLeadDto,
   type AgentLinkDto,
+  type AgentPayoutProfileDto,
   type AgentPlanDto,
   type AgentPlanVersionDto,
   type AgentStatementDto,
@@ -42,12 +45,18 @@ export function applicationDto(r: ApplicationRow): AgentApplicationDto {
     isVatRegistered: r.isVatRegistered,
     address: r.address,
     postcode: r.postcode,
+    phone: r.phone,
+    email: r.email,
+    lineId: r.lineId,
+    salesChannels: r.salesChannels,
     pitch: r.pitch,
     bankCode: r.bankCode,
     bankBranchName: r.bankBranchName,
     bankAccountName: r.bankAccountName,
     bankAccountNoLast4: r.bankAccountNoLast4,
-    idDocument: { id: r.idDocumentFile.publicId, originalName: r.idDocumentFile.originalName },
+    idDocument: r.idDocumentFile
+      ? { id: r.idDocumentFile.publicId, originalName: r.idDocumentFile.originalName }
+      : null,
     bankBook: r.bankBookFile
       ? { id: r.bankBookFile.publicId, originalName: r.bankBookFile.originalName }
       : null,
@@ -63,8 +72,9 @@ export function adminApplicationDto(r: ApplicationRow, checks: string[]): AdminA
   return {
     ...applicationDto(r),
     user: { id: r.user.publicId, displayName: r.user.displayName },
-    phone: r.user.phone,
-    email: r.user.email,
+    // Before D-466 an application carried no contact of its own: the account's.
+    phone: r.phone ?? r.user.phone,
+    email: r.email ?? r.user.email,
     decidedBy: userRef(r.decidedBy),
     agentId: r.agent?.publicId ?? null,
     checks,
@@ -371,4 +381,34 @@ export function taxDeclarationDto(r: TaxDeclarationRow): AgentTaxDeclarationDto 
 
 export function adminTaxDeclarationDto(r: TaxDeclarationRow): AdminAgentTaxDeclarationDto {
   return { ...taxDeclarationDto(r), agent: agentRef(r.agent), decidedBy: userRef(r.decidedBy) };
+}
+
+/** D-466 payout profile as the agent sees it (the account number by its last 4 digits only). */
+export function payoutProfileDto(r: PayoutProfileRow): AgentPayoutProfileDto {
+  return {
+    id: r.publicId,
+    status: r.status,
+    legalName: r.legalName,
+    taxId: r.taxId,
+    branchCode: r.branchCode,
+    isVatRegistered: r.isVatRegistered,
+    address: r.address,
+    postcode: r.postcode,
+    idDocument: r.idDocumentFile
+      ? { id: r.idDocumentFile.publicId, originalName: r.idDocumentFile.originalName }
+      : null,
+    bankCode: r.bankCode,
+    bankBranchName: r.bankBranchName,
+    bankAccountName: r.bankAccountName,
+    bankAccountNoLast4: r.bankAccountNoLast4,
+    bankBook: r.bankBookFile ? { id: r.bankBookFile.publicId, originalName: r.bankBookFile.originalName } : null,
+    submittedAt: iso(r.submittedAt),
+    verifiedAt: iso(r.verifiedAt),
+    rejectReason: r.rejectReason,
+    rowVersion: r.rowVersion,
+  };
+}
+
+export function adminPayoutProfileDto(r: PayoutProfileRow): AdminAgentPayoutProfileDto {
+  return { ...payoutProfileDto(r), agent: agentRef(r.agent), verifiedBy: userRef(r.verifiedBy) };
 }

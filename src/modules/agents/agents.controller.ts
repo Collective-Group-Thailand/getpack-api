@@ -1,19 +1,25 @@
-import { CurrentActor } from '@common/auth/auth.decorators';
+import { CurrentActor, Public } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { IfMatch } from '@common/etag/etag.interceptor';
+import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
+import { toBangkokIso } from '@common/time/bangkok';
+import { OtpChallengeDto, OtpVerifyDto } from '@modules/auth/auth.dto';
+import { toE164 } from '@modules/auth/login/phone';
 import { AttributeReferralDto } from '@modules/promotions/referrals.dto';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query, Req } from '@nestjs/common';
+import { Body, Controller, Get, Header, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Req, Res } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { DownloadUrlDto } from '@platform/files/files.dto';
-import { type Request } from 'express';
+import { type Request, type Response } from 'express';
 
 import { AgentAttributionService } from './agent-attribution.service';
 import { AgentCommissionsService } from './agent-commissions.service';
+import { AgentPayoutProfilesService, payoutProfileEtag } from './agent-payout-profiles.service';
+import { invalid } from './agent-shared';
 import { AgentStatementsService } from './agent-statements.service';
 import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
 import {
@@ -23,9 +29,14 @@ import {
   AGENT_PROGRAMME_EXAMPLE,
   AgentApplicationDto,
   AgentCommissionDto,
+  AgentCommissionExampleDto,
+  AgentCommissionExampleQuery,
   AgentDto,
   AgentLeadDto,
   AgentLinkDto,
+  AgentPayoutProfileDto,
+  AgentPhoneOtpRequestDto,
+  AgentPhoneVerifiedDto,
   AgentProgrammeDto,
   AgentStatementDetailDto,
   AgentStatementDto,
@@ -34,17 +45,23 @@ import {
   ClaimedAgentLinkDto,
   COMMISSION_EXAMPLE,
   LEAD_EXAMPLE,
+  MY_PAYOUT_PROFILE_EXAMPLE,
   MY_TAX_DECLARATION_EXAMPLE,
   MyCommissionListQuery,
   MyLeadListQuery,
   MyLinkListQuery,
+  MyPayoutProfileDto,
   MyTaxDeclarationDto,
+  PAYOUT_PROFILE_EXAMPLE,
+  PUBLIC_PROGRAMME_EXAMPLE,
+  PublicAgentProgrammeDto,
   RegisterAgentLeadDto,
   STATEMENT_DETAIL_EXAMPLE,
   STATEMENT_EXAMPLE,
   SubmitAgentApplicationDto,
   SubmitAgentTaxDeclarationDto,
   TAX_DECLARATION_EXAMPLE,
+  UpsertAgentPayoutProfileDto,
 } from './agents.dto';
 import { AgentsService } from './agents.service';
 import {
@@ -53,12 +70,21 @@ import {
   applicationDto,
   commissionDto,
   leadDto,
+  payoutProfileDto,
   statementDto,
   taxDeclarationDto,
 } from './agents-views';
 
 const DECISIONS = ['D-416', 'D-417', 'D-418', 'D-420', 'D-422', 'D-464'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'validation.failed'] as const;
+
+const AGENT_OTP_EXAMPLE: OtpChallengeDto = {
+  challengeId: '0192f3a0-7c1e-7d2a-9b1f-00000000c0de',
+  expiresAt: '2026-11-03T14:10:00+07:00',
+  resendAvailableAt: '2026-11-03T14:06:00+07:00',
+  codeLength: 6,
+  maxAttempts: 5,
+};
 
 function customer(actor: Actor): UserActor {
   if (actor.type !== 'user' || actor.audience !== 'customer') throw new DomainException('auth.forbidden');
@@ -80,6 +106,7 @@ export class StoreAgentController {
     private readonly commissions: AgentCommissionsService,
     private readonly statements: AgentStatementsService,
     private readonly declarations: AgentTaxDeclarationsService,
+    private readonly payoutProfiles: AgentPayoutProfilesService,
   ) {}
 
   @Get('programme')
@@ -114,12 +141,14 @@ export class StoreAgentController {
   @Post('application')
   @ApiEndpoint({
     id: 'store.agent.apply',
-    summary: 'Apply to become a sales agent',
+    summary: 'Apply to become a sales agent (step 1)',
     description:
-      'Legal name, Thai tax id, address, an identity document and a bank account (uploaded files of mine), ' +
-      'and acceptance of the agent agreement version in force — recorded with its evidence (D-416). One open ' +
+      'Step 1 of joining (D-466): name, the account’s verified phone (else `agents.phone_unverified` — the web runs ' +
+      'OTP), e-mail, LINE id, how I sell and acceptance of the agent agreement version in force — recorded with its ' +
+      'evidence (D-416). Tax id, address, identity document and bank come in the payout profile, before the first ' +
+      'payout. Closed while the feature flag `agents.programme` is off (`agents.programme_closed`). One open ' +
       'application at a time; Sales decides.',
-    implements: DECISIONS,
+    implements: [...DECISIONS, 'D-466'],
   })
   @ApiBody({
     type: SubmitAgentApplicationDto,
@@ -127,14 +156,11 @@ export class StoreAgentController {
       default: {
         value: {
           juristicType: 'individual',
-          legalName: 'สมชาย ขายเก่ง',
-          taxId: '0000000000127',
-          address: '99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ',
-          postcode: '10310',
-          idDocumentFileId: AGENT_IDS.file,
-          bankCode: '014',
-          bankAccountName: 'สมชาย ขายเก่ง',
-          bankAccountNo: '1234567890',
+          displayName: 'สมชาย ขายเก่ง',
+          phone: '+66810005678',
+          email: 'somchai@example.invalid',
+          lineId: 'somchai.sales',
+          salesChannels: ['line_groups', 'own_network'],
           agreementVersionNo: 1,
         },
       },
@@ -147,6 +173,8 @@ export class StoreAgentController {
   })
   @ApiStandardErrors(
     ...WRITE,
+    'agents.programme_closed',
+    'agents.phone_unverified',
     'agents.already_agent',
     'agents.application_open',
     'agents.agreement_missing',
@@ -504,5 +532,200 @@ export class StoreAgentController {
     const me = customer(actor);
     const agent = await this.agents.mine(me.userId);
     return taxDeclarationDto(await this.declarations.submit(me, agent, body));
+  }
+
+  // --- D-466 public programme and payout profile -----------------------------------------------------------
+
+  @Get('programme/public')
+  @Public()
+  @Header('Cache-Control', 'public, max-age=300')
+  @ApiEtag()
+  @ApiEndpoint({
+    id: 'store.agentProgramme.public',
+    summary: 'Read the agent programme (public landing)',
+    description:
+      'Anonymous, for getpack.co/agent: the standard freelance terms (no cap, D-464), link and lead protection days, ' +
+      'payment terms, whether applying is open (feature flag `agents.programme`; else the landing offers a waiting ' +
+      'list), the agreement in force, worked commission examples and the published FAQs of the CMS category ' +
+      '`agent_programme`. Nothing about factories. Cacheable 5 minutes; a matching `If-None-Match` gets 304 (D-466).',
+    implements: ['D-466', 'D-464'],
+  })
+  @ApiSuccess(200, { description: 'Programme', type: PublicAgentProgrammeDto, example: PUBLIC_PROGRAMME_EXAMPLE })
+  @ApiStandardErrors()
+  publicProgramme(): Promise<PublicAgentProgrammeDto> {
+    return this.agents.publicProgramme();
+  }
+
+  @Get('programme/example')
+  @Public()
+  @Header('Cache-Control', 'public, max-age=300')
+  @ApiEndpoint({
+    id: 'store.agentProgramme.example',
+    summary: 'Work out the commission on an order value',
+    description:
+      'Anonymous, for the landing’s calculator: the commission at the standard freelance rates for an order value ' +
+      'before VAT, excluding shipping, as a first and as a later order — the web does no money arithmetic (D-466).',
+    implements: ['D-466', 'D-464'],
+  })
+  @ApiSuccess(200, {
+    description: 'Example',
+    type: AgentCommissionExampleDto,
+    example: { orderValue: '250000.00', firstOrder: '12500.00', repeatOrder: '7500.00' },
+  })
+  @ApiStandardErrors('validation.failed', 'agents.plan_not_in_force')
+  commissionExample(@Query() q: AgentCommissionExampleQuery): Promise<AgentCommissionExampleDto> {
+    return this.agents.commissionExample(q.orderValue);
+  }
+
+  @Get('payout-profile')
+  @Can('agent.self')
+  @ApiEtag()
+  @ApiEndpoint({
+    id: 'store.agentPayoutProfile.get',
+    summary: 'Get my payout profile',
+    description:
+      'Step 2 of joining (D-466): who I am paid as and where. Needed before the first payout, not before approval; ' +
+      'statements wait as drafts until Finance verifies it. The account number shows its last 4 digits.',
+    implements: ['D-466'],
+  })
+  @ApiSuccess(200, { description: 'Payout profile', type: MyPayoutProfileDto, example: MY_PAYOUT_PROFILE_EXAMPLE })
+  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  async payoutProfile(
+    @CurrentActor() actor: Actor,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<MyPayoutProfileDto> {
+    const agent = await this.agents.mine(customer(actor).userId);
+    const row = await this.payoutProfiles.forAgent(agent.id);
+    if (row) res.setHeader('ETag', payoutProfileEtag(row));
+    return {
+      applicable: agent.kind === 'freelance',
+      payoutReady: await this.payoutProfiles.payoutReady(agent),
+      juristicType: agent.juristicType,
+      profile: row ? payoutProfileDto(row) : null,
+    };
+  }
+
+  @Put('payout-profile')
+  @Can('agent.self')
+  @ApiConcurrency({ optional: true })
+  @ApiEndpoint({
+    id: 'store.agentPayoutProfile.upsert',
+    summary: 'Save my payout profile (draft)',
+    description:
+      'Any subset of the fields; Thai tax id with its check digit; the bank account name must match the legal name ' +
+      '(`agents.bank_name_mismatch`). A change after verification is a new draft to verify again. `If-Match` once ' +
+      'a profile exists (D-466).',
+    implements: ['D-466'],
+  })
+  @ApiBody({
+    type: UpsertAgentPayoutProfileDto,
+    examples: {
+      default: {
+        value: {
+          legalName: 'สมชาย ขายเก่ง',
+          taxId: '0000000000124',
+          address: '99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ',
+          postcode: '10310',
+          bankCode: '014',
+          bankAccountName: 'สมชาย ขายเก่ง',
+          bankAccountNo: '1234567890',
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, { description: 'Payout profile', type: AgentPayoutProfileDto, example: { ...PAYOUT_PROFILE_EXAMPLE, status: 'draft' } })
+  @ApiStandardErrors(
+    ...WRITE,
+    'agents.not_agent',
+    'agents.payout_profile_not_applicable',
+    'agents.payout_profile_waiting',
+    'agents.bank_name_mismatch',
+  )
+  async savePayoutProfile(
+    @CurrentActor() actor: Actor,
+    @Body() body: UpsertAgentPayoutProfileDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AgentPayoutProfileDto> {
+    const me = customer(actor);
+    const row = await this.payoutProfiles.upsert(me, await this.agents.mine(me.userId), body, ifMatch);
+    res.setHeader('ETag', payoutProfileEtag(row));
+    return payoutProfileDto(row);
+  }
+
+  @Post('payout-profile/actions/submit')
+  @HttpCode(200)
+  @Can('agent.self')
+  @ApiConcurrency()
+  @ApiEndpoint({
+    id: 'store.agentPayoutProfile.submit',
+    summary: 'Send my payout profile to Finance',
+    description: 'Every required field filled (else `validation.failed` naming them); Finance verifies (D-466).',
+    implements: ['D-466'],
+  })
+  @ApiSuccess(200, { description: 'Payout profile', type: AgentPayoutProfileDto, example: PAYOUT_PROFILE_EXAMPLE })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    'agents.not_agent',
+    'agents.payout_profile_waiting',
+    'agents.payout_profile_verified',
+  )
+  async submitPayoutProfile(
+    @CurrentActor() actor: Actor,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AgentPayoutProfileDto> {
+    const me = customer(actor);
+    const row = await this.payoutProfiles.submit(me, await this.agents.mine(me.userId), ifMatch);
+    res.setHeader('ETag', payoutProfileEtag(row));
+    return payoutProfileDto(row);
+  }
+
+  @Post('phone-verification')
+  @HttpCode(200)
+  @ApiEndpoint({
+    id: 'store.agentPhone.request',
+    summary: 'Send an OTP to verify my phone before applying',
+    description:
+      'For a customer signed in with LINE, Google or Apple who has no verified phone yet (D-466): a code by SMS ' +
+      '(purpose `verify_phone`), with the usual OTP limits.',
+    implements: ['D-466'],
+  })
+  @ApiBody({ type: AgentPhoneOtpRequestDto, examples: { default: { value: { phone: '0810005678' } } } })
+  @ApiSuccess(200, { description: 'Code sent', type: OtpChallengeDto, example: AGENT_OTP_EXAMPLE })
+  @ApiStandardErrors(...WRITE, 'auth.otp_rate_limited', 'provider.unavailable')
+  async requestPhoneOtp(@CurrentActor() actor: Actor, @Body() body: AgentPhoneOtpRequestDto, @Req() req: Request) {
+    customer(actor);
+    const phone = toE164(body.phone);
+    if (!phone) invalid('phone', 'a valid phone number', 'phone');
+    const issued = await this.agents.requestPhoneOtp(phone, req.ip);
+    return {
+      challengeId: issued.challengeId,
+      expiresAt: toBangkokIso(issued.expiresAt),
+      resendAvailableAt: toBangkokIso(issued.resendAvailableAt),
+      codeLength: issued.codeLength,
+      maxAttempts: issued.maxAttempts,
+    };
+  }
+
+  @Post('phone-verification/actions/confirm')
+  @HttpCode(200)
+  @ApiEndpoint({
+    id: 'store.agentPhone.confirm',
+    summary: 'Confirm the OTP: the phone becomes my verified phone',
+    description:
+      'The number becomes the account’s verified phone, unless another customer holds it (`agents.phone_in_use`, ' +
+      'naming no one) (D-466).',
+    implements: ['D-466'],
+  })
+  @ApiBody({
+    type: OtpVerifyDto,
+    examples: { default: { value: { challengeId: '0192f3a0-7c1e-7d2a-9b1f-00000000c0de', code: '123456' } } },
+  })
+  @ApiSuccess(200, { description: 'Verified', type: AgentPhoneVerifiedDto, example: { phone: '+66810005678' } })
+  @ApiStandardErrors(...WRITE, 'auth.otp_invalid', 'auth.otp_expired', 'agents.phone_in_use')
+  confirmPhone(@CurrentActor() actor: Actor, @Body() body: OtpVerifyDto): Promise<AgentPhoneVerifiedDto> {
+    return this.agents.confirmPhone(customer(actor), body.challengeId, body.code);
   }
 }

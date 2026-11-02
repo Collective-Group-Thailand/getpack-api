@@ -975,9 +975,11 @@ model FileObject {
   erpQualityCheckPdf ErpQualityCheck[] @relation("ErpQualityCheckPdf")
 
   // --- Sales agents D-416 (generated back-relations)
-  salesAgentApplicationIdDocuments SalesAgentApplication[] @relation("SalesAgentApplicationIdDocument")
-  salesAgentApplicationBankBooks   SalesAgentApplication[] @relation("SalesAgentApplicationBankBook")
-  salesAgentStatementTaxInvoices   SalesAgentStatement[]   @relation("SalesAgentStatementTaxInvoice")
+  salesAgentApplicationIdDocuments SalesAgentApplication[]   @relation("SalesAgentApplicationIdDocument")
+  salesAgentApplicationBankBooks   SalesAgentApplication[]   @relation("SalesAgentApplicationBankBook")
+  salesAgentStatementTaxInvoices   SalesAgentStatement[]     @relation("SalesAgentStatementTaxInvoice")
+  salesAgentPayoutIdDocuments      SalesAgentPayoutProfile[] @relation("SalesAgentPayoutProfileIdDocument")
+  salesAgentPayoutBankBooks        SalesAgentPayoutProfile[] @relation("SalesAgentPayoutProfileBankBook")
   // --- end Sales agents
 
   // --- Documents D-428 – D-431 (back-relations)

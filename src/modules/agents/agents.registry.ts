@@ -2,6 +2,7 @@ import { type Type } from '@nestjs/common';
 
 import { StoreAgentController } from './agents.controller';
 import {
+  AdminAgentPayoutProfilesController,
   AdminAgentPlansController,
   AdminAgentsController,
   AdminAgentTaxDeclarationsController,
@@ -12,4 +13,5 @@ export const AGENTS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminAgentsController,
   AdminAgentPlansController,
   AdminAgentTaxDeclarationsController,
+  AdminAgentPayoutProfilesController,
 ];

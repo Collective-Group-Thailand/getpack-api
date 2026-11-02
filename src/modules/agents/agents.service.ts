@@ -9,18 +9,21 @@ import { startOfBangkokDay, toBangkokIso } from '@common/time/bangkok';
 import { AppConfig } from '@config/app-config';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
+import { OtpService } from '@modules/auth/login/otp.service';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { BankAccountsService } from '@modules/partners/bank-accounts/bank-accounts.service';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
 import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
+import { FeatureFlagsService } from '@platform/feature-flags/feature-flags.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
 import {
   D,
   invalid,
   newAgentCode,
+  normalisePhone,
   planVersionAt,
   recordAgentEvent,
   storeTermsOf,
@@ -58,6 +61,31 @@ export const PLAN_INCLUDE = {
 } as const satisfies Prisma.SalesAgentPlanInclude;
 export type PlanRow = Prisma.SalesAgentPlanGetPayload<{ include: typeof PLAN_INCLUDE }>;
 
+/** D-466: FEATURE_AGENT_PROGRAMME — gates applying; the public programme reads regardless. */
+export const PROGRAMME_FLAG = 'agents.programme';
+
+/** Names compared as the bank and the Revenue Department print them: spacing, case and titles ignored. */
+export function sameName(a: string, b: string): boolean {
+  const fold = (v: string) =>
+    v
+      .normalize('NFC')
+      .replace(/^(นาย|นางสาว|นาง|น\.ส\.|mr\.?|mrs\.?|ms\.?|miss)\s*/i, '')
+      .replace(/[\s.,()]+/g, '')
+      .toLowerCase();
+  return fold(a) === fold(b);
+}
+
+/** D-466: CMS FAQ category the landing reads (Marketing publishes the items). */
+export const AGENT_FAQ_CATEGORY = 'agent_programme';
+const EXAMPLE_ORDER_VALUES = ['20000.00', '100000.00', '1000000.00'];
+
+function commissionExample(version: { firstOrderPct: Prisma.Decimal; repeatOrderPct: Prisma.Decimal; minBaseAmount: Prisma.Decimal }, orderValue: string) {
+  const base = D(orderValue);
+  const below = base.lt(version.minBaseAmount.toString());
+  const at = (pct: Prisma.Decimal) => (below ? '0.00' : formatMoney(base.mul(pct.toString()).div(100)));
+  return { orderValue: formatMoney(base), firstOrder: at(version.firstOrderPct), repeatOrder: at(version.repeatOrderPct) };
+}
+
 export const agentEtag = (a: { publicId: string; rowVersion: number }) => etagOf(a.publicId, a.rowVersion);
 
 /**
@@ -78,6 +106,8 @@ export class AgentsService {
     readonly activity: ActivityLogService,
     private readonly config: AppConfig,
     private readonly permissions: PermissionResolver,
+    private readonly flags: FeatureFlagsService,
+    private readonly otp: OtpService,
   ) {}
 
   linkFor(code: string): string {
@@ -130,6 +160,87 @@ export class AgentsService {
     };
   }
 
+  /**
+   * D-466: the programme as the public landing shows it (no sign-in): standard terms, the rules a visitor needs, whether
+   * applying is open (feature flag), the agreement in force, worked examples at fixed order values and the published
+   * FAQs of the CMS category `agent_programme`.
+   */
+  async publicProgramme() {
+    const now = new Date();
+    const [agreement, plan, rules, open, faqs] = await Promise.all([
+      this.agreementInForce(),
+      this.prisma.salesAgentPlan.findUnique({ where: { code: FREELANCE_PLAN } }),
+      this.settings.at('agents.rules', { at: now }),
+      this.flags.isEnabled(PROGRAMME_FLAG),
+      this.prisma.faq.findMany({
+        where: { status: 'published', deletedAt: null, category: { code: AGENT_FAQ_CATEGORY, status: 'published' } },
+        orderBy: [{ sort: 'asc' }, { id: 'asc' }],
+        take: 30,
+      }),
+    ]);
+    const version = plan ? await planVersionAt(this.prisma, plan.id, now) : null;
+    return {
+      terms: storeTermsOf(version),
+      linkCookieDays: rules.value.linkCookieDays,
+      leadProtectionDays: rules.value.leadProtectionDays,
+      paymentTermsDays: rules.value.paymentTermsDays,
+      applyOpen: open,
+      agreement: agreement
+        ? {
+            key: AGREEMENT_KEY,
+            versionNo: agreement.versionNo,
+            effectiveFrom: toBangkokIso(agreement.effectiveFrom),
+            textTh: agreement.textTh,
+            textEn: agreement.textEn,
+          }
+        : null,
+      examples: version ? EXAMPLE_ORDER_VALUES.map((v) => commissionExample(version, v)) : [],
+      faqs: faqs.map((f) => ({
+        questionTh: f.questionTh,
+        questionEn: f.questionEn,
+        answerTh: f.answerTh,
+        answerEn: f.answerEn,
+      })),
+    };
+  }
+
+  /** D-466: the commission on an order value at the standard freelance rates (the landing's calculator). */
+  async commissionExample(orderValue: string) {
+    const plan = await this.prisma.salesAgentPlan.findUnique({ where: { code: FREELANCE_PLAN } });
+    const version = plan ? await planVersionAt(this.prisma, plan.id, new Date()) : null;
+    if (!version) throw new DomainException('agents.plan_not_in_force');
+    return commissionExample(version, orderValue);
+  }
+
+  /**
+   * D-466: a signed-in customer without a verified phone (signed in with LINE, Google or Apple) verifies one before
+   * applying: an OTP to the number (purpose `verify_phone`), then the code. The number becomes the account's verified
+   * phone unless another customer already holds it (`agents.phone_in_use`, never naming whom).
+   */
+  async requestPhoneOtp(phone: string, ip: string | undefined) {
+    return this.otp.request(phone, 'verify_phone', ip);
+  }
+
+  async confirmPhone(actor: UserActor, challengeId: string, code: string): Promise<{ phone: string }> {
+    const phone = await this.otp.verify(challengeId, code, 'verify_phone');
+    await this.prisma.withTx(async (tx) => {
+      const other = await tx.user.findFirst({
+        where: { kind: 'customer', phone, anonymisedAt: null, id: { not: actor.userId } },
+      });
+      if (other) throw new DomainException('agents.phone_in_use');
+      await tx.user.update({ where: { id: actor.userId }, data: { phone, phoneVerifiedAt: new Date() } });
+      await this.audit.record(tx, {
+        category: 'security',
+        action: 'customer.phone_verified',
+        actor,
+        resourceType: 'user',
+        resourcePublicId: actor.publicId,
+        data: { via: 'agent_apply' },
+      });
+    });
+    return { phone };
+  }
+
   // --- applications (D-416) ----------------------------------------------------------------------------
 
   async myApplication(userId: bigint): Promise<ApplicationRow> {
@@ -142,16 +253,23 @@ export class AgentsService {
     return row;
   }
 
+  /**
+   * D-466 step 1 — apply. Behind the feature flag `agents.programme` (FEATURE_AGENT_PROGRAMME): off → 409
+   * `agents.programme_closed` (the landing still reads the public programme). The phone must be the account's verified
+   * phone (else `agents.phone_unverified`, the web runs OTP). Tax id, address, identity document and bank come in the
+   * payout profile, before the first payout.
+   */
   async submit(
     actor: UserActor,
     input: SubmitAgentApplicationDto,
     evidence: { ip: string | null; userAgent: string | null },
   ): Promise<ApplicationRow> {
-    const accountNo = input.bankAccountNo.replace(/[^0-9]/g, '');
-    if (accountNo.length < 6 || accountNo.length > 15) invalid('bankAccountNo', '6 to 15 digits');
-    if (input.juristicType === 'individual' && input.isVatRegistered === undefined)
-      input.isVatRegistered = false;
+    if (!(await this.flags.isEnabled(PROGRAMME_FLAG, actor))) throw new DomainException('agents.programme_closed');
+    const phone = normalisePhone(input.phone);
     const id = await this.prisma.withTx(async (tx) => {
+      const user = await tx.user.findUniqueOrThrow({ where: { id: actor.userId } });
+      if (!phone || user.phone !== phone || !user.phoneVerifiedAt)
+        throw new DomainException('agents.phone_unverified');
       if (await tx.salesAgent.findUnique({ where: { userId: actor.userId } }))
         throw new DomainException('agents.already_agent');
       if (await tx.salesAgentApplication.findFirst({ where: { userId: actor.userId, status: 'submitted' } }))
@@ -162,10 +280,6 @@ export class AgentsService {
         throw new DomainException('agents.agreement_outdated', {
           params: { versionNo: agreement.versionNo },
         });
-      const idDocument = await this.ownFile(tx, actor, input.idDocumentFileId, 'idDocumentFileId');
-      const bankBook = input.bankBookFileId
-        ? await this.ownFile(tx, actor, input.bankBookFileId, 'bankBookFileId')
-        : null;
       const acceptedAt = new Date();
       const evidenceSha256 = createHash('sha256')
         .update(
@@ -182,20 +296,12 @@ export class AgentsService {
         data: {
           userId: actor.userId,
           juristicType: input.juristicType,
-          legalName: input.legalName.trim(),
-          taxId: input.taxId,
-          branchCode: input.branchCode ?? '00000',
-          isVatRegistered: input.isVatRegistered ?? false,
-          address: input.address.trim(),
-          postcode: input.postcode,
+          legalName: input.displayName.trim(),
+          phone,
+          email: input.email.trim().toLowerCase(),
+          lineId: input.lineId?.trim() || null,
+          salesChannels: [...new Set(input.salesChannels)],
           pitch: input.pitch?.trim() || null,
-          idDocumentFileId: idDocument.id,
-          bankCode: input.bankCode,
-          bankBranchName: input.bankBranchName?.trim() || null,
-          bankAccountName: input.bankAccountName.trim(),
-          bankAccountNoEnc: this.encryption.encrypt(accountNo),
-          bankAccountNoLast4: accountNo.slice(-4),
-          bankBookFileId: bankBook?.id ?? null,
           agreementVersionId: agreement.id,
           agreementAcceptedAt: acceptedAt,
           agreementEvidenceSha256: evidenceSha256,
@@ -268,13 +374,12 @@ export class AgentsService {
   async checks(row: ApplicationRow): Promise<string[]> {
     const out: string[] = [];
     const [agentTax, vendorTax, orders] = await Promise.all([
-      this.prisma.salesAgent.count({ where: { taxId: row.taxId } }),
-      this.prisma.vendor.count({ where: { taxId: row.taxId, kind: { not: 'sales_agent' } } }),
+      row.taxId ? this.prisma.salesAgent.count({ where: { taxId: row.taxId } }) : 0,
+      row.taxId ? this.prisma.vendor.count({ where: { taxId: row.taxId, kind: { not: 'sales_agent' } } }) : 0,
       this.prisma.orderGroup.count({ where: { customerUserId: row.userId, status: { not: 'cancelled' } } }),
     ]);
     if (agentTax + vendorTax > 0) out.push('tax_id_in_use');
-    const fold = (v: string) => v.replace(/\s+/g, '').toLowerCase();
-    if (fold(row.bankAccountName) !== fold(row.legalName)) out.push('name_mismatch');
+    if (row.bankAccountName && !sameName(row.bankAccountName, row.legalName)) out.push('name_mismatch');
     if (orders > 0) out.push('has_orders');
     return out;
   }
@@ -290,29 +395,35 @@ export class AgentsService {
       const plan = await this.activePlan(tx, input.planId, 'freelance');
       const now = new Date();
       const rules = await this.settings.at('agents.rules', { at: now, tx });
-      const vendor = await tx.vendor.create({
-        data: {
-          kind: 'sales_agent',
-          legalName: app.legalName,
-          juristicType: app.juristicType,
-          taxId: app.taxId,
-          branchCode: app.branchCode,
-          isVatRegistered: app.isVatRegistered,
-          addressLine1: app.address,
-          postcode: app.postcode,
-          defaultWhtCategory: app.juristicType === 'individual' ? 'commission' : 'service',
-          paymentTermsDays: rules.value.paymentTermsDays,
-          createdById: actor.userId,
-        },
-      });
-      await this.audit.record(tx, {
-        category: 'finance',
-        action: 'vendor.created',
-        actor,
-        resourceType: 'vendor',
-        resourcePublicId: vendor.publicId,
-        data: { kind: 'sales_agent', legalName: app.legalName, applicationId: app.publicId },
-      });
+      // Before D-466 the application carried tax and bank details: the vendor and its bank account come with the
+      // approval, as they did. A two-step application gets them when Finance verifies the payout profile.
+      const legacy = app.taxId && app.bankCode && app.bankAccountName && app.bankAccountNoEnc && app.address;
+      const vendor = legacy
+        ? await tx.vendor.create({
+            data: {
+              kind: 'sales_agent',
+              legalName: app.legalName,
+              juristicType: app.juristicType,
+              taxId: app.taxId!,
+              branchCode: app.branchCode,
+              isVatRegistered: app.isVatRegistered,
+              addressLine1: app.address,
+              postcode: app.postcode,
+              defaultWhtCategory: app.juristicType === 'individual' ? 'commission' : 'service',
+              paymentTermsDays: rules.value.paymentTermsDays,
+              createdById: actor.userId,
+            },
+          })
+        : null;
+      if (vendor)
+        await this.audit.record(tx, {
+          category: 'finance',
+          action: 'vendor.created',
+          actor,
+          resourceType: 'vendor',
+          resourcePublicId: vendor.publicId,
+          data: { kind: 'sales_agent', legalName: app.legalName, applicationId: app.publicId },
+        });
       const agent = await tx.salesAgent.create({
         data: {
           userId: app.userId,
@@ -322,7 +433,7 @@ export class AgentsService {
           legalName: app.legalName,
           juristicType: app.juristicType,
           taxId: app.taxId,
-          vendorId: vendor.id,
+          vendorId: vendor?.id ?? null,
           applicationId: app.id,
           note: input.note?.trim() || null,
         },
@@ -339,12 +450,13 @@ export class AgentsService {
       });
       await this.grantRole(tx, app.userId, actor, `agent application ${app.publicId} approved`);
       // The account number travels encrypted from the application to the vendor's dual-approved account (§8).
-      await this.bankAccounts.proposeForVendorIn(tx, actor, vendor.id, {
-        bankCode: app.bankCode,
-        branchName: app.bankBranchName,
-        accountName: app.bankAccountName,
-        accountNo: this.encryption.decrypt(app.bankAccountNoEnc),
-      });
+      if (vendor)
+        await this.bankAccounts.proposeForVendorIn(tx, actor, vendor.id, {
+          bankCode: app.bankCode!,
+          branchName: app.bankBranchName,
+          accountName: app.bankAccountName!,
+          accountNo: this.encryption.decrypt(app.bankAccountNoEnc!),
+        });
       const user = await tx.user.findUniqueOrThrow({ where: { id: app.userId }, select: { publicId: true } });
       await recordAgentEvent(this, tx, {
         type: 'sales_agent_application.approved',
@@ -362,7 +474,13 @@ export class AgentsService {
         type: 'sales_agent.created',
         aggregateType: 'sales_agent',
         aggregateId: agent.publicId,
-        payload: { agentId: agent.publicId, kind: 'freelance', plan: plan.code, vendorId: vendor.publicId },
+        payload: {
+          agentId: agent.publicId,
+          kind: 'freelance',
+          plan: plan.code,
+          vendorId: vendor?.publicId ?? null,
+          payoutProfileNeeded: !vendor,
+        },
         actor,
       });
       return agent.publicId;
