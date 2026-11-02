@@ -301,7 +301,11 @@ export function adminStatementDto(
     voidedAt: iso(r.voidedAt),
     voidReason: r.voidReason,
     whtWorking:
-      r.whtMethod === 'progressive_40_2' && r.whtYtdPaid && r.whtProjected && r.whtAllowances && r.whtAnnualTax
+      r.whtMethod === 'progressive_40_2' &&
+      r.whtYtdPaid &&
+      r.whtProjected &&
+      r.whtAllowances &&
+      r.whtAnnualTax
         ? {
             ytdPaid: r.whtYtdPaid.toFixed(2),
             projected: r.whtProjected.toFixed(2),
@@ -401,7 +405,9 @@ export function payoutProfileDto(r: PayoutProfileRow): AgentPayoutProfileDto {
     bankBranchName: r.bankBranchName,
     bankAccountName: r.bankAccountName,
     bankAccountNoLast4: r.bankAccountNoLast4,
-    bankBook: r.bankBookFile ? { id: r.bankBookFile.publicId, originalName: r.bankBookFile.originalName } : null,
+    bankBook: r.bankBookFile
+      ? { id: r.bankBookFile.publicId, originalName: r.bankBookFile.originalName }
+      : null,
     submittedAt: iso(r.submittedAt),
     verifiedAt: iso(r.verifiedAt),
     rejectReason: r.rejectReason,

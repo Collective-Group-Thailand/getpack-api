@@ -3,7 +3,13 @@ import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { IfMatch } from '@common/etag/etag.interceptor';
-import { ApiConcurrency, ApiEndpoint, ApiEtag, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import {
+  ApiConcurrency,
+  ApiEndpoint,
+  ApiEtag,
+  ApiStandardErrors,
+  ApiSuccess,
+} from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -11,7 +17,21 @@ import { OtpChallengeDto, OtpVerifyDto } from '@modules/auth/auth.dto';
 import { toE164 } from '@modules/auth/login/phone';
 import { AttributeReferralDto } from '@modules/promotions/referrals.dto';
 import { ApiSurface } from '@modules/surfaces/surfaces';
-import { Body, Controller, Get, Header, HttpCode, Param, ParseUUIDPipe, Post, Put, Query, Req, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Query,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { DownloadUrlDto } from '@platform/files/files.dto';
 import { type Request, type Response } from 'express';
@@ -22,6 +42,7 @@ import { AgentPayoutProfilesService, payoutProfileEtag } from './agent-payout-pr
 import { invalid } from './agent-shared';
 import { AgentStatementsService } from './agent-statements.service';
 import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
+import { AgentAccess, AgentZoneGuard } from './agent-zone.guard';
 import {
   AGENT_EXAMPLE,
   AGENT_IDS,
@@ -95,10 +116,12 @@ function customer(actor: Actor): UserActor {
  * The agent pages of the storefront (D-416 – D-422): any signed-in customer reads the programme, applies
  * and claims an agent link; an approved agent (`agent.self`) works their link, leads, customers,
  * commission and statements. An agent sees only their own rows; customers who came through the link show
- * masked (D-422).
+ * masked (D-422). D-467: `AgentZoneGuard` checks every handler — `@AgentAccess('anyone')` before becoming an
+ * agent, otherwise an active or suspended agent; an ended agent keeps the statements and 50 ทวิ (`records`).
  */
 @ApiSurface('store', 'agent')
 @Controller('agent')
+@UseGuards(AgentZoneGuard)
 export class StoreAgentController {
   constructor(
     private readonly agents: AgentsService,
@@ -110,6 +133,7 @@ export class StoreAgentController {
   ) {}
 
   @Get('programme')
+  @AgentAccess('anyone')
   @ApiEndpoint({
     id: 'store.agent.programme',
     summary: 'Read the agent programme',
@@ -125,6 +149,7 @@ export class StoreAgentController {
   }
 
   @Get('application')
+  @AgentAccess('anyone')
   @ApiEndpoint({
     id: 'store.agent.getApplication',
     summary: 'Get my latest agent application',
@@ -139,6 +164,7 @@ export class StoreAgentController {
   }
 
   @Post('application')
+  @AgentAccess('anyone')
   @ApiEndpoint({
     id: 'store.agent.apply',
     summary: 'Apply to become a sales agent (step 1)',
@@ -190,6 +216,7 @@ export class StoreAgentController {
   }
 
   @Post('application/actions/withdraw')
+  @AgentAccess('anyone')
   @HttpCode(200)
   @ApiEndpoint({
     id: 'store.agent.withdrawApplication',
@@ -208,6 +235,7 @@ export class StoreAgentController {
   }
 
   @Post('claims')
+  @AgentAccess('anyone')
   @HttpCode(200)
   @ApiEndpoint({
     id: 'store.agent.claimLink',
@@ -240,7 +268,7 @@ export class StoreAgentController {
     implements: DECISIONS,
   })
   @ApiSuccess(200, { description: 'Agent', type: AgentDto, example: AGENT_EXAMPLE })
-  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  @ApiStandardErrors('validation.failed', 'agents.not_agent', 'agents.ended')
   async me(@CurrentActor() actor: Actor): Promise<AgentDto> {
     const row = await this.agents.mine(customer(actor).userId);
     return agentDto(
@@ -262,7 +290,7 @@ export class StoreAgentController {
     implements: DECISIONS,
   })
   @ApiPaginated(AgentLinkDto, { example: AGENT_LINK_EXAMPLE })
-  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  @ApiStandardErrors('validation.failed', 'agents.not_agent', 'agents.ended')
   async customers(@CurrentActor() actor: Actor, @Query() q: MyLinkListQuery) {
     const agent = await this.agents.mine(customer(actor).userId);
     const [rows, total] = await this.attribution.links(
@@ -285,7 +313,7 @@ export class StoreAgentController {
     implements: DECISIONS,
   })
   @ApiPaginated(AgentLeadDto, { example: LEAD_EXAMPLE })
-  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  @ApiStandardErrors('validation.failed', 'agents.not_agent', 'agents.ended')
   async leads(@CurrentActor() actor: Actor, @Query() q: MyLeadListQuery) {
     const agent = await this.agents.mine(customer(actor).userId);
     const [rows, total] = await this.attribution.leads(
@@ -327,6 +355,7 @@ export class StoreAgentController {
   @ApiStandardErrors(
     ...WRITE,
     'agents.not_agent',
+    'agents.ended',
     'agents.agent_inactive',
     'agents.lead_kind_unsupported',
     'agents.too_many_leads',
@@ -358,7 +387,13 @@ export class StoreAgentController {
     type: AgentLeadDto,
     example: { ...LEAD_EXAMPLE, status: 'withdrawn' },
   })
-  @ApiStandardErrors('http.not_found', 'validation.failed', 'agents.not_agent', 'agents.lead_closed')
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    'agents.not_agent',
+    'agents.ended',
+    'agents.lead_closed',
+  )
   async withdrawLead(
     @CurrentActor() actor: Actor,
     @Param('leadId', ParseUUIDPipe) leadId: string,
@@ -378,7 +413,7 @@ export class StoreAgentController {
     implements: DECISIONS,
   })
   @ApiPaginated(AgentCommissionDto, { example: COMMISSION_EXAMPLE })
-  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  @ApiStandardErrors('validation.failed', 'agents.not_agent', 'agents.ended')
   async myCommissions(@CurrentActor() actor: Actor, @Query() q: MyCommissionListQuery) {
     const agent = await this.agents.mine(customer(actor).userId);
     const [rows, total] = await this.commissions.list(
@@ -393,6 +428,7 @@ export class StoreAgentController {
   }
 
   @Get('statements')
+  @AgentAccess('records')
   @Can('agent.self')
   @ApiEndpoint({
     id: 'store.agent.statements',
@@ -402,7 +438,7 @@ export class StoreAgentController {
     implements: DECISIONS,
   })
   @ApiPaginated(AgentStatementDto, { example: STATEMENT_EXAMPLE })
-  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  @ApiStandardErrors('validation.failed', 'agents.not_agent', 'agents.ended')
   async myStatements(@CurrentActor() actor: Actor, @Query() q: PageQuery) {
     const agent = await this.agents.mine(customer(actor).userId);
     const [rows, total] = await this.statements.list(
@@ -417,6 +453,7 @@ export class StoreAgentController {
   }
 
   @Get('statements/:statementId')
+  @AgentAccess('records')
   @Can('agent.self')
   @ApiParam({ name: 'statementId', format: 'uuid' })
   @ApiEndpoint({
@@ -430,7 +467,7 @@ export class StoreAgentController {
     type: AgentStatementDetailDto,
     example: STATEMENT_DETAIL_EXAMPLE,
   })
-  @ApiStandardErrors('http.not_found', 'validation.failed', 'agents.not_agent')
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'agents.not_agent', 'agents.ended')
   async myStatement(
     @CurrentActor() actor: Actor,
     @Param('statementId', ParseUUIDPipe) id: string,
@@ -445,6 +482,7 @@ export class StoreAgentController {
   }
 
   @Get('statements/:statementId/wht-certificate')
+  @AgentAccess('records')
   @Can('agent.self')
   @ApiParam({ name: 'statementId', format: 'uuid' })
   @ApiEndpoint({
@@ -458,7 +496,7 @@ export class StoreAgentController {
     type: DownloadUrlDto,
     example: { url: 'https://getpack-files.s3.example.com/…', expiresAt: '2026-11-26T10:05:00+07:00' },
   })
-  @ApiStandardErrors('http.not_found', 'validation.failed', 'agents.not_agent')
+  @ApiStandardErrors('http.not_found', 'validation.failed', 'agents.not_agent', 'agents.ended')
   async certificate(
     @CurrentActor() actor: Actor,
     @Param('statementId', ParseUUIDPipe) id: string,
@@ -482,8 +520,12 @@ export class StoreAgentController {
       'allowance is used (D-465).',
     implements: ['D-465'],
   })
-  @ApiSuccess(200, { description: 'Declaration', type: MyTaxDeclarationDto, example: MY_TAX_DECLARATION_EXAMPLE })
-  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  @ApiSuccess(200, {
+    description: 'Declaration',
+    type: MyTaxDeclarationDto,
+    example: MY_TAX_DECLARATION_EXAMPLE,
+  })
+  @ApiStandardErrors('validation.failed', 'agents.not_agent', 'agents.ended')
   async taxDeclaration(@CurrentActor() actor: Actor): Promise<MyTaxDeclarationDto> {
     const agent = await this.agents.mine(customer(actor).userId);
     const taxYear = this.declarations.currentTaxYear();
@@ -518,10 +560,15 @@ export class StoreAgentController {
       },
     },
   })
-  @ApiSuccess(201, { description: 'Declaration', type: AgentTaxDeclarationDto, example: TAX_DECLARATION_EXAMPLE })
+  @ApiSuccess(201, {
+    description: 'Declaration',
+    type: AgentTaxDeclarationDto,
+    example: TAX_DECLARATION_EXAMPLE,
+  })
   @ApiStandardErrors(
     ...WRITE,
     'agents.not_agent',
+    'agents.ended',
     'agents.tax_declaration_open',
     'agents.tax_declaration_not_applicable',
   )
@@ -537,6 +584,7 @@ export class StoreAgentController {
   // --- D-466 public programme and payout profile -----------------------------------------------------------
 
   @Get('programme/public')
+  @AgentAccess('anyone')
   @Public()
   @Header('Cache-Control', 'public, max-age=300')
   @ApiEtag()
@@ -550,13 +598,18 @@ export class StoreAgentController {
       '`agent_programme`. Nothing about factories. Cacheable 5 minutes; a matching `If-None-Match` gets 304 (D-466).',
     implements: ['D-466', 'D-464'],
   })
-  @ApiSuccess(200, { description: 'Programme', type: PublicAgentProgrammeDto, example: PUBLIC_PROGRAMME_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Programme',
+    type: PublicAgentProgrammeDto,
+    example: PUBLIC_PROGRAMME_EXAMPLE,
+  })
   @ApiStandardErrors()
   publicProgramme(): Promise<PublicAgentProgrammeDto> {
     return this.agents.publicProgramme();
   }
 
   @Get('programme/example')
+  @AgentAccess('anyone')
   @Public()
   @Header('Cache-Control', 'public, max-age=300')
   @ApiEndpoint({
@@ -588,8 +641,12 @@ export class StoreAgentController {
       'statements wait as drafts until Finance verifies it. The account number shows its last 4 digits.',
     implements: ['D-466'],
   })
-  @ApiSuccess(200, { description: 'Payout profile', type: MyPayoutProfileDto, example: MY_PAYOUT_PROFILE_EXAMPLE })
-  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  @ApiSuccess(200, {
+    description: 'Payout profile',
+    type: MyPayoutProfileDto,
+    example: MY_PAYOUT_PROFILE_EXAMPLE,
+  })
+  @ApiStandardErrors('validation.failed', 'agents.not_agent', 'agents.ended')
   async payoutProfile(
     @CurrentActor() actor: Actor,
     @Res({ passthrough: true }) res: Response,
@@ -633,10 +690,15 @@ export class StoreAgentController {
       },
     },
   })
-  @ApiSuccess(200, { description: 'Payout profile', type: AgentPayoutProfileDto, example: { ...PAYOUT_PROFILE_EXAMPLE, status: 'draft' } })
+  @ApiSuccess(200, {
+    description: 'Payout profile',
+    type: AgentPayoutProfileDto,
+    example: { ...PAYOUT_PROFILE_EXAMPLE, status: 'draft' },
+  })
   @ApiStandardErrors(
     ...WRITE,
     'agents.not_agent',
+    'agents.ended',
     'agents.payout_profile_not_applicable',
     'agents.payout_profile_waiting',
     'agents.bank_name_mismatch',
@@ -660,14 +722,20 @@ export class StoreAgentController {
   @ApiEndpoint({
     id: 'store.agentPayoutProfile.submit',
     summary: 'Send my payout profile to Finance',
-    description: 'Every required field filled (else `validation.failed` naming them); Finance verifies (D-466).',
+    description:
+      'Every required field filled (else `validation.failed` naming them); Finance verifies (D-466).',
     implements: ['D-466'],
   })
-  @ApiSuccess(200, { description: 'Payout profile', type: AgentPayoutProfileDto, example: PAYOUT_PROFILE_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Payout profile',
+    type: AgentPayoutProfileDto,
+    example: PAYOUT_PROFILE_EXAMPLE,
+  })
   @ApiStandardErrors(
     ...WRITE,
     'http.not_found',
     'agents.not_agent',
+    'agents.ended',
     'agents.payout_profile_waiting',
     'agents.payout_profile_verified',
   )
@@ -683,6 +751,7 @@ export class StoreAgentController {
   }
 
   @Post('phone-verification')
+  @AgentAccess('anyone')
   @HttpCode(200)
   @ApiEndpoint({
     id: 'store.agentPhone.request',
@@ -695,7 +764,11 @@ export class StoreAgentController {
   @ApiBody({ type: AgentPhoneOtpRequestDto, examples: { default: { value: { phone: '0810005678' } } } })
   @ApiSuccess(200, { description: 'Code sent', type: OtpChallengeDto, example: AGENT_OTP_EXAMPLE })
   @ApiStandardErrors(...WRITE, 'auth.otp_rate_limited', 'provider.unavailable')
-  async requestPhoneOtp(@CurrentActor() actor: Actor, @Body() body: AgentPhoneOtpRequestDto, @Req() req: Request) {
+  async requestPhoneOtp(
+    @CurrentActor() actor: Actor,
+    @Body() body: AgentPhoneOtpRequestDto,
+    @Req() req: Request,
+  ) {
     customer(actor);
     const phone = toE164(body.phone);
     if (!phone) invalid('phone', 'a valid phone number', 'phone');
@@ -710,6 +783,7 @@ export class StoreAgentController {
   }
 
   @Post('phone-verification/actions/confirm')
+  @AgentAccess('anyone')
   @HttpCode(200)
   @ApiEndpoint({
     id: 'store.agentPhone.confirm',
@@ -723,7 +797,11 @@ export class StoreAgentController {
     type: OtpVerifyDto,
     examples: { default: { value: { challengeId: '0192f3a0-7c1e-7d2a-9b1f-00000000c0de', code: '123456' } } },
   })
-  @ApiSuccess(200, { description: 'Verified', type: AgentPhoneVerifiedDto, example: { phone: '+66810005678' } })
+  @ApiSuccess(200, {
+    description: 'Verified',
+    type: AgentPhoneVerifiedDto,
+    example: { phone: '+66810005678' },
+  })
   @ApiStandardErrors(...WRITE, 'auth.otp_invalid', 'auth.otp_expired', 'agents.phone_in_use')
   confirmPhone(@CurrentActor() actor: Actor, @Body() body: OtpVerifyDto): Promise<AgentPhoneVerifiedDto> {
     return this.agents.confirmPhone(customer(actor), body.challengeId, body.code);

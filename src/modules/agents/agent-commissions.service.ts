@@ -32,7 +32,6 @@ export type CommissionRow = Prisma.SalesAgentCommissionGetPayload<{ include: typ
 /** Instalment statuses that still leave something to pay (the loyalty credit rule, D-132). */
 const OPEN_INSTALMENTS = ['pending', 'due', 'overdue', 'partially_paid'] as const;
 
-
 /**
  * The commission ledger (D-418, D-464): an entry when an attributed order completes — first or repeat rate
  * LOCKED for the order (the plan version in force when the group was placed, or a quote's locked rate), with no
@@ -107,7 +106,10 @@ export class AgentCommissionsService {
     const result = commissionFor({
       base: formatMoney(base),
       isFirstOrder,
-      plan: { firstOrderPct: version.firstOrderPct.toString(), repeatOrderPct: version.repeatOrderPct.toString() },
+      plan: {
+        firstOrderPct: version.firstOrderPct.toString(),
+        repeatOrderPct: version.repeatOrderPct.toString(),
+      },
       lock: await this.rateLockFor(tx, order.id),
       grossMargin: margin === null ? null : formatMoney(margin),
       alertPct,

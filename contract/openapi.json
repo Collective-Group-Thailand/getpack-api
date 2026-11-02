@@ -221,6 +221,17 @@
           "type": "https://errors.getpack/agents.commission_not_held"
         }
       },
+      "problem.agents.ended": {
+        "summary": "agents.ended",
+        "value": {
+          "code": "agents.ended",
+          "detail": "บัญชีตัวแทนนี้สิ้นสุดแล้ว ยังดูสรุปค่าตอบแทนและหนังสือรับรองการหักภาษี ณ ที่จ่าย (50 ทวิ) ได้ตามระยะเวลาเก็บเอกสาร",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "บัญชีตัวแทนสิ้นสุดแล้ว",
+          "type": "https://errors.getpack/agents.ended"
+        }
+      },
       "problem.agents.factory_links_retired": {
         "summary": "agents.factory_links_retired",
         "value": {
@@ -505359,6 +505370,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -505374,7 +505388,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -506482,6 +506496,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -506497,7 +506514,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -506734,6 +506751,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -506749,7 +506769,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -506989,6 +507009,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -507004,7 +507027,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -507204,6 +507227,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -507219,7 +507245,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -507424,6 +507450,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -507439,7 +507468,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -507653,6 +507682,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -507668,7 +507700,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -507884,6 +507916,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -507899,7 +507934,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -508140,6 +508175,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -508155,7 +508193,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -509429,6 +509467,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -509444,7 +509485,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -509629,6 +509670,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -509644,7 +509688,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -509820,6 +509864,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -509835,7 +509882,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -510018,6 +510065,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -510033,7 +510083,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -510235,6 +510285,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
                   "agents.not_agent": {
                     "$ref": "#/components/examples/problem.agents.not_agent"
                   },
@@ -510250,7 +510303,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"

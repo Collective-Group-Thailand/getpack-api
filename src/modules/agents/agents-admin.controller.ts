@@ -637,7 +637,10 @@ export class AdminAgentsController {
   })
   @ApiSuccess(201, { description: 'Factory link', type: AgentFactoryLinkDto, example: FACTORY_LINK_EXAMPLE })
   @ApiStandardErrors(...WRITE, 'agents.factory_links_retired')
-  linkFactory(@CurrentActor() actor: Actor, @Body() _body: LinkAgentFactoryDto): Promise<AgentFactoryLinkDto> {
+  linkFactory(
+    @CurrentActor() actor: Actor,
+    @Body() _body: LinkAgentFactoryDto,
+  ): Promise<AgentFactoryLinkDto> {
     staff(actor);
     throw new DomainException('agents.factory_links_retired');
   }
@@ -917,7 +920,12 @@ export class AdminAgentsController {
   @ApiSuccess(200, {
     description: 'Statement',
     type: AdminAgentStatementDto,
-    example: { ...ADMIN_STATEMENT_EXAMPLE, status: 'draft', taxInvoiceNo: 'INV-2611-0012', hasTaxInvoice: true },
+    example: {
+      ...ADMIN_STATEMENT_EXAMPLE,
+      status: 'draft',
+      taxInvoiceNo: 'INV-2611-0012',
+      hasTaxInvoice: true,
+    },
   })
   @ApiStandardErrors(...WRITE, 'agents.statement_invalid_status')
   async attachTaxInvoice(
@@ -1288,7 +1296,11 @@ export class AdminAgentPayoutProfilesController {
     description: 'With its documents (open them through `admin.files.download`) (D-466).',
     implements: ['D-466'],
   })
-  @ApiSuccess(200, { description: 'Payout profile', type: AdminAgentPayoutProfileDto, example: ADMIN_PAYOUT_PROFILE_EXAMPLE })
+  @ApiSuccess(200, {
+    description: 'Payout profile',
+    type: AdminAgentPayoutProfileDto,
+    example: ADMIN_PAYOUT_PROFILE_EXAMPLE,
+  })
   @ApiStandardErrors('http.not_found', 'validation.failed')
   async get(
     @Param('payoutProfileId', ParseUUIDPipe) id: string,
