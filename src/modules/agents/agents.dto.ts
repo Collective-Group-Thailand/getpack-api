@@ -21,6 +21,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 
 /** The sales agent programme (D-416 – D-423). Money: decimal strings, THB. */
@@ -437,7 +438,8 @@ export class SubmitAgentApplicationDto {
   @ApiProperty({
     example: '+66810005678',
     pattern: E164.source,
-    description: 'Must be the verified phone of the signed-in account, else `agents.phone_unverified` (run OTP)',
+    description:
+      'Must be the verified phone of the signed-in account, else `agents.phone_unverified` (run OTP)',
   })
   @Matches(E164)
   phone!: string;
@@ -504,7 +506,12 @@ export class AgentApplicationDto {
   @ApiProperty({ example: 'สมชาย ขายเก่ง' })
   legalName!: string;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Before D-466 only (now in the payout profile)' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Before D-466 only (now in the payout profile)',
+  })
   taxId!: string | null;
 
   @ApiProperty({ example: '00000' })
@@ -528,7 +535,12 @@ export class AgentApplicationDto {
   @ApiProperty({ type: String, nullable: true, example: 'somchai.sales' })
   lineId!: string | null;
 
-  @ApiProperty({ enum: SALES_CHANNELS, enumName: 'AgentSalesChannel', isArray: true, example: ['line_groups'] })
+  @ApiProperty({
+    enum: SALES_CHANNELS,
+    enumName: 'AgentSalesChannel',
+    isArray: true,
+    example: ['line_groups'],
+  })
   salesChannels!: string[];
 
   @ApiProperty({ type: String, nullable: true, example: null })
@@ -543,7 +555,12 @@ export class AgentApplicationDto {
   @ApiProperty({ type: String, nullable: true, example: null, description: 'Before D-466 only' })
   bankAccountName!: string | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'Last 4 digits only (PDPA); before D-466 only' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'Last 4 digits only (PDPA); before D-466 only',
+  })
   bankAccountNoLast4!: string | null;
 
   @ApiProperty({ type: AgentFileRefDto, nullable: true, description: 'Before D-466 only' })
@@ -740,7 +757,8 @@ export class AdminAgentDto extends AgentDto {
   @ApiProperty({
     type: AgentPlanTermsDto,
     nullable: true,
-    description: 'Staff: the full plan version in force (history fields such as the retired margin cap included)',
+    description:
+      'Staff: the full plan version in force (history fields such as the retired margin cap included)',
   })
   planTerms!: AgentPlanTermsDto | null;
 
@@ -1355,7 +1373,8 @@ export class AdminAgentCommissionDto extends AgentCommissionDto {
 
   @ApiProperty({
     example: false,
-    description: 'D-464: commission ÷ gross margin exceeded `agent.margin_alert_pct` (internal; amount unchanged)',
+    description:
+      'D-464: commission ÷ gross margin exceeded `agent.margin_alert_pct` (internal; amount unchanged)',
   })
   marginAlert!: boolean;
 
@@ -1567,7 +1586,12 @@ export class AdminAgentStatementDto extends AgentStatementDto {
   })
   whtWorking!: AgentWhtWorkingDto | null;
 
-  @ApiProperty({ type: String, nullable: true, example: null, description: 'D-465 juristic agent’s tax invoice no.' })
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'D-465 juristic agent’s tax invoice no.',
+  })
   taxInvoiceNo!: string | null;
 
   @ApiProperty({ example: false, description: 'D-465 a tax invoice file is attached' })
@@ -1721,7 +1745,12 @@ export class SubmitAgentTaxDeclarationDto {
   @IsObject()
   allowances!: Record<string, string>;
 
-  @ApiProperty({ type: [String], format: 'uuid', example: [AGENT_IDS.file], description: 'My uploaded evidence' })
+  @ApiProperty({
+    type: [String],
+    format: 'uuid',
+    example: [AGENT_IDS.file],
+    description: 'My uploaded evidence',
+  })
   @IsArray()
   @ArrayMaxSize(20)
   @IsUUID('all', { each: true })
@@ -1771,7 +1800,11 @@ export class MyTaxDeclarationDto {
   @ApiProperty({ example: '60000.00', description: 'Used when no declaration is accepted' })
   personalAllowance!: string;
 
-  @ApiProperty({ type: AgentTaxDeclarationDto, nullable: true, description: 'My latest declaration this year' })
+  @ApiProperty({
+    type: AgentTaxDeclarationDto,
+    nullable: true,
+    description: 'My latest declaration this year',
+  })
   declaration!: AgentTaxDeclarationDto | null;
 }
 
@@ -1825,7 +1858,11 @@ export const ADMIN_TAX_DECLARATION_EXAMPLE: AdminAgentTaxDeclarationDto = {
 };
 
 export class DecideAgentTaxDeclarationDto {
-  @ApiProperty({ enum: ['accepted', 'rejected'], enumName: 'AgentTaxDeclarationDecision', example: 'accepted' })
+  @ApiProperty({
+    enum: ['accepted', 'rejected'],
+    enumName: 'AgentTaxDeclarationDecision',
+    example: 'accepted',
+  })
   @IsIn(['accepted', 'rejected'])
   decision!: 'accepted' | 'rejected';
 
@@ -1873,13 +1910,23 @@ export const isTaxId = (v: string) => TAX_ID.test(v);
 export const PAYOUT_PROFILE_STATUSES = ['draft', 'submitted', 'verified', 'rejected'] as const;
 
 export class UpsertAgentPayoutProfileDto {
-  @ApiPropertyOptional({ type: String, nullable: true, example: 'สมชาย ขายเก่ง', description: 'As on the ID card or company certificate' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'สมชาย ขายเก่ง',
+    description: 'As on the ID card or company certificate',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(200)
   legalName?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: '0000000000124', description: '13 digits with a valid check digit' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '0000000000124',
+    description: '13 digits with a valid check digit',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(17)
@@ -1896,7 +1943,11 @@ export class UpsertAgentPayoutProfileDto {
   @IsBoolean()
   isVatRegistered?: boolean | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: '99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)
@@ -1925,13 +1976,23 @@ export class UpsertAgentPayoutProfileDto {
   @MaxLength(120)
   bankBranchName?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: 'สมชาย ขายเก่ง', description: 'Must match the legal name' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: 'สมชาย ขายเก่ง',
+    description: 'Must match the legal name',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(200)
   bankAccountName?: string | null;
 
-  @ApiPropertyOptional({ type: String, nullable: true, example: '1234567890', description: 'Digits; stored encrypted' })
+  @ApiPropertyOptional({
+    type: String,
+    nullable: true,
+    example: '1234567890',
+    description: 'Digits; stored encrypted',
+  })
   @IsOptional()
   @IsString()
   @MaxLength(20)
@@ -2000,10 +2061,16 @@ export class AgentPayoutProfileDto {
 }
 
 export class MyPayoutProfileDto {
-  @ApiProperty({ example: true, description: 'Freelance agents fill it in; employees are paid through payroll' })
+  @ApiProperty({
+    example: true,
+    description: 'Freelance agents fill it in; employees are paid through payroll',
+  })
   applicable!: boolean;
 
-  @ApiProperty({ example: false, description: 'Commission can be paid now (verified, or set up before D-466)' })
+  @ApiProperty({
+    example: false,
+    description: 'Commission can be paid now (verified, or set up before D-466)',
+  })
   payoutReady!: boolean;
 
   @ApiProperty({ enum: JURISTIC_TYPES, enumName: 'JuristicType', example: 'individual' })
@@ -2076,10 +2143,18 @@ export class AgentCommissionExampleDto {
 }
 
 export class PublicAgentProgrammeDto {
-  @ApiProperty({ type: StoreAgentTermsDto, nullable: true, description: 'The standard freelance plan in force' })
+  @ApiProperty({
+    type: StoreAgentTermsDto,
+    nullable: true,
+    description: 'The standard freelance plan in force',
+  })
   terms!: StoreAgentTermsDto | null;
 
-  @ApiProperty({ type: 'integer', example: 90, description: 'Days a visit through an agent link is remembered' })
+  @ApiProperty({
+    type: 'integer',
+    example: 90,
+    description: 'Days a visit through an agent link is remembered',
+  })
   linkCookieDays!: number;
 
   @ApiProperty({ type: 'integer', example: 60, description: 'Days a registered lead is protected' })
@@ -2092,10 +2167,17 @@ export class PublicAgentProgrammeDto {
   })
   paymentTermsDays!: number;
 
-  @ApiProperty({ example: true, description: 'Applying is open (feature flag `agents.programme`); else a waiting list' })
+  @ApiProperty({
+    example: true,
+    description: 'Applying is open (feature flag `agents.programme`); else a waiting list',
+  })
   applyOpen!: boolean;
 
-  @ApiProperty({ type: AgentAgreementTextDto, nullable: true, description: 'The agreement in force (public text)' })
+  @ApiProperty({
+    type: AgentAgreementTextDto,
+    nullable: true,
+    description: 'The agreement in force (public text)',
+  })
   agreement!: AgentAgreementTextDto | null;
 
   @ApiProperty({ type: [AgentCommissionExampleDto], description: 'Worked examples at fixed order values' })
@@ -2152,3 +2234,112 @@ export class AgentPhoneVerifiedDto {
   @ApiProperty({ example: '+66810005678', description: 'Now the account’s verified phone' })
   phone!: string;
 }
+
+// --- agent zone: notification preferences (D-467) -----------------------------------------------------------------
+export const AGENT_NOTIFICATION_EVENT_VALUES = [
+  'lead_converted',
+  'lead_protection_expiring',
+  'commission_earned',
+  'statement_ready',
+  'payout_paid',
+  'payout_profile_needed',
+] as const;
+export const AGENT_NOTIFICATION_CHANNEL_VALUES = ['web_push', 'line', 'email'] as const;
+type AgentNotificationEventValue = (typeof AGENT_NOTIFICATION_EVENT_VALUES)[number];
+type AgentNotificationChannelValue = (typeof AGENT_NOTIFICATION_CHANNEL_VALUES)[number];
+
+const EVENT_DOC =
+  '`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · ' +
+  '`commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · ' +
+  '`payout_profile_needed` a statement waits for payout details';
+const CHANNEL_DOC = '`web_push` push to the agent zone (getpack Agent) · `line` LINE OA · `email`';
+
+export class SetAgentNotificationPreferenceDto {
+  @ApiProperty({
+    enum: AGENT_NOTIFICATION_EVENT_VALUES,
+    enumName: 'AgentNotificationEvent',
+    example: 'commission_earned',
+    description: EVENT_DOC,
+  })
+  @IsIn(AGENT_NOTIFICATION_EVENT_VALUES)
+  event!: AgentNotificationEventValue;
+
+  @ApiProperty({
+    enum: AGENT_NOTIFICATION_CHANNEL_VALUES,
+    // Same values as the partner zone's channels; one component (no duplicate schema shapes in the contract).
+    enumName: 'PartnerNotificationChannel',
+    example: 'line',
+    description: CHANNEL_DOC,
+  })
+  @IsIn(AGENT_NOTIFICATION_CHANNEL_VALUES)
+  channel!: AgentNotificationChannelValue;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  enabled!: boolean;
+}
+
+export class AgentNotificationPreferenceDto extends SetAgentNotificationPreferenceDto {
+  @ApiProperty({
+    example: false,
+    description:
+      'Cannot be switched off: e-mail of payment and tax records (statement_ready, payout_paid, payout_profile_needed; D-144)',
+  })
+  locked!: boolean;
+}
+
+export class SetAgentNotificationPreferencesDto {
+  @ApiProperty({
+    type: [SetAgentNotificationPreferenceDto],
+    minItems: 1,
+    maxItems: 18,
+    description: 'The choices to change; what is not listed keeps its value',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(18)
+  @ValidateNested({ each: true })
+  @Type(() => SetAgentNotificationPreferenceDto)
+  items!: SetAgentNotificationPreferenceDto[];
+}
+
+export class AgentNotificationReachDto {
+  @ApiProperty({ example: true, description: 'At least one agent-zone browser accepts push' })
+  webPush!: boolean;
+
+  @ApiProperty({
+    example: true,
+    description: 'A LINE account is linked to this person (LINE OA messages need it)',
+  })
+  line!: boolean;
+
+  @ApiProperty({ example: true, description: 'The account has an e-mail address' })
+  email!: boolean;
+}
+
+export class AgentNotificationPreferencesDto {
+  @ApiProperty({
+    type: [AgentNotificationPreferenceDto],
+    description: 'Every event × channel (18 rows); default on',
+  })
+  items!: AgentNotificationPreferenceDto[];
+
+  @ApiProperty({ type: AgentNotificationReachDto })
+  reachable!: AgentNotificationReachDto;
+}
+
+export const AGENT_NOTIFICATION_PREFERENCES_EXAMPLE: AgentNotificationPreferencesDto = {
+  items: AGENT_NOTIFICATION_EVENT_VALUES.flatMap((event) =>
+    AGENT_NOTIFICATION_CHANNEL_VALUES.map((channel) => {
+      const locked =
+        channel === 'email' && ['statement_ready', 'payout_paid', 'payout_profile_needed'].includes(event);
+      return {
+        event,
+        channel,
+        enabled: locked || !(event === 'commission_earned' && channel === 'line'),
+        locked,
+      };
+    }),
+  ),
+  reachable: { webPush: true, line: true, email: true },
+};

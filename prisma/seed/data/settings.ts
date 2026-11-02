@@ -482,6 +482,18 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'finance_manager',
   },
   {
+    key: 'agents.ended_record_access_years',
+    valueType: 'integer',
+    value: 5,
+    valueSchema: { minimum: 5, maximum: 10 },
+    description:
+      'D-467 years after an agent ended during which they still read their commission statements and download ' +
+      'their 50 ทวิ (withholding certificates) in the agent zone; everything else is refused. 5 = the tax record ' +
+      'retention (Revenue Code s.87/3), 5–10',
+    decisions: ['D-467'],
+    ownerRole: 'finance_manager',
+  },
+  {
     key: 'tax.pit_brackets',
     valueType: 'json',
     value: PIT_BRACKETS_SEED,
@@ -502,7 +514,8 @@ export const SETTINGS: readonly SettingSeed[] = [
     key: 'tax.wht_40_2.expense_cap',
     valueType: 'money',
     value: '100000.00',
-    description: 'D-465 cap of the s.40(2) expense deduction (combined with s.40(1)) in the progressive withholding',
+    description:
+      'D-465 cap of the s.40(2) expense deduction (combined with s.40(1)) in the progressive withholding',
     decisions: ['D-465'],
     ownerRole: 'finance_manager',
   },
@@ -830,6 +843,18 @@ export const SETTINGS: readonly SettingSeed[] = [
     valueSchema: { minimum: 600, maximum: 900 },
     description: 'D-063 / ADR-0004 access-token lifetime in seconds (contract §4: 10–15 minutes)',
     decisions: ['D-063'],
+    confirmation: 'proposed',
+  },
+  {
+    key: 'auth.handoff_code_ttl_seconds',
+    valueType: 'integer',
+    value: 60,
+    valueSchema: { minimum: 30, maximum: 120 },
+    description:
+      'D-467 how long a one-time code that moves a signed-in customer from the storefront to the agent zone ' +
+      '(agent.getpack.co) stays valid, in seconds; single use, bound to the device. A technical / security limit, ' +
+      'not a business value: 60 (PLAN A-08), 30–120',
+    decisions: ['D-467'],
     confirmation: 'proposed',
   },
   {

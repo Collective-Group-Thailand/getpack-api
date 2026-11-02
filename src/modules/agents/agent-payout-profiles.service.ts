@@ -20,9 +20,12 @@ export const PAYOUT_PROFILE_INCLUDE = {
   bankBookFile: { select: { publicId: true, originalName: true } },
   verifiedBy: { select: { publicId: true, displayName: true } },
 } as const satisfies Prisma.SalesAgentPayoutProfileInclude;
-export type PayoutProfileRow = Prisma.SalesAgentPayoutProfileGetPayload<{ include: typeof PAYOUT_PROFILE_INCLUDE }>;
+export type PayoutProfileRow = Prisma.SalesAgentPayoutProfileGetPayload<{
+  include: typeof PAYOUT_PROFILE_INCLUDE;
+}>;
 
-export const payoutProfileEtag = (p: { publicId: string; rowVersion: number }) => etagOf(p.publicId, p.rowVersion);
+export const payoutProfileEtag = (p: { publicId: string; rowVersion: number }) =>
+  etagOf(p.publicId, p.rowVersion);
 
 /** Thai 13-digit tax id / citizen id check digit (Revenue Department algorithm). */
 export function isThaiTaxId(value: string): boolean {
@@ -84,13 +87,19 @@ export class AgentPayoutProfilesService {
   }
 
   async get(publicId: string, db: Tx = this.prisma): Promise<PayoutProfileRow> {
-    const row = await db.salesAgentPayoutProfile.findUnique({ where: { publicId }, include: PAYOUT_PROFILE_INCLUDE });
+    const row = await db.salesAgentPayoutProfile.findUnique({
+      where: { publicId },
+      include: PAYOUT_PROFILE_INCLUDE,
+    });
     if (!row) throw new DomainException('http.not_found');
     return row;
   }
 
   /** Whether commission can be paid to a freelance agent: a vendor, and no profile change waiting (D-466). */
-  async payoutReady(agent: Pick<SalesAgent, 'id' | 'kind' | 'vendorId'>, db: Tx = this.prisma): Promise<boolean> {
+  async payoutReady(
+    agent: Pick<SalesAgent, 'id' | 'kind' | 'vendorId'>,
+    db: Tx = this.prisma,
+  ): Promise<boolean> {
     if (agent.kind !== 'freelance') return true;
     if (agent.vendorId === null) return false;
     const profile = await db.salesAgentPayoutProfile.findUnique({ where: { agentId: agent.id } });
@@ -120,7 +129,12 @@ export class AgentPayoutProfilesService {
         if (publicId === undefined) return undefined;
         if (publicId === null) return null;
         const f = await tx.fileObject.findUnique({ where: { publicId } });
-        if (!f || f.ownerUserId !== actor.userId || f.uploadStatus !== 'uploaded' || f.scanStatus === 'infected')
+        if (
+          !f ||
+          f.ownerUserId !== actor.userId ||
+          f.uploadStatus !== 'uploaded' ||
+          f.scanStatus === 'infected'
+        )
           invalid(path, 'an uploaded file of yours', 'fileReady');
         return f.id;
       };
@@ -137,7 +151,9 @@ export class AgentPayoutProfilesService {
         ...(input.postcode !== undefined && { postcode: input.postcode || null }),
         ...(input.bankCode !== undefined && { bankCode: input.bankCode || null }),
         ...(input.bankBranchName !== undefined && { bankBranchName: input.bankBranchName?.trim() || null }),
-        ...(input.bankAccountName !== undefined && { bankAccountName: input.bankAccountName?.trim() || null }),
+        ...(input.bankAccountName !== undefined && {
+          bankAccountName: input.bankAccountName?.trim() || null,
+        }),
         ...(accountNo && {
           bankAccountNoEnc: this.encryption.encrypt(accountNo),
           bankAccountNoLast4: accountNo.slice(-4),
@@ -159,7 +175,11 @@ export class AgentPayoutProfilesService {
         type: 'sales_agent_payout_profile.saved',
         aggregateType: 'sales_agent_payout_profile',
         aggregateId: row.publicId,
-        payload: { payoutProfileId: row.publicId, agentId: agent.publicId, wasVerified: current?.status === 'verified' },
+        payload: {
+          payoutProfileId: row.publicId,
+          agentId: agent.publicId,
+          wasVerified: current?.status === 'verified',
+        },
         actor,
       });
       return row.publicId;
@@ -206,7 +226,10 @@ export class AgentPayoutProfilesService {
    */
   async verify(actor: UserActor, publicId: string, ifMatch: string | undefined): Promise<PayoutProfileRow> {
     await this.prisma.withTx(async (tx) => {
-      const row = await tx.salesAgentPayoutProfile.findUnique({ where: { publicId }, include: { agent: true } });
+      const row = await tx.salesAgentPayoutProfile.findUnique({
+        where: { publicId },
+        include: { agent: true },
+      });
       if (!row) throw new DomainException('http.not_found');
       assertIfMatch(ifMatch, payoutProfileEtag(row), { required: true });
       if (row.status !== 'submitted')
@@ -265,7 +288,12 @@ export class AgentPayoutProfilesService {
       });
       await tx.salesAgentPayoutProfile.update({
         where: { id: row.id },
-        data: { status: 'verified', verifiedAt: now, verifiedById: actor.userId, rowVersion: { increment: 1 } },
+        data: {
+          status: 'verified',
+          verifiedAt: now,
+          verifiedById: actor.userId,
+          rowVersion: { increment: 1 },
+        },
       });
       const held = await tx.salesAgentStatement.findMany({
         where: { agentId: agent.id, status: 'draft', flags: { has: 'payout_profile_missing' } },
@@ -273,7 +301,10 @@ export class AgentPayoutProfilesService {
       for (const s of held)
         await tx.salesAgentStatement.update({
           where: { id: s.id },
-          data: { flags: s.flags.filter((f) => f !== 'payout_profile_missing'), rowVersion: { increment: 1 } },
+          data: {
+            flags: s.flags.filter((f) => f !== 'payout_profile_missing'),
+            rowVersion: { increment: 1 },
+          },
         });
       await this.audit.record(tx, {
         category: 'finance',
@@ -283,7 +314,10 @@ export class AgentPayoutProfilesService {
         resourcePublicId: row.publicId,
         data: { agentId: agent.publicId, vendorId: vendor.publicId, released: held.length },
       });
-      const user = await tx.user.findUniqueOrThrow({ where: { id: agent.userId }, select: { publicId: true } });
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: agent.userId },
+        select: { publicId: true },
+      });
       await recordAgentEvent(this, tx, {
         type: 'sales_agent_payout_profile.verified',
         aggregateType: 'sales_agent_payout_profile',
@@ -297,7 +331,10 @@ export class AgentPayoutProfilesService {
 
   async reject(actor: UserActor, publicId: string, reason: string): Promise<PayoutProfileRow> {
     await this.prisma.withTx(async (tx) => {
-      const row = await tx.salesAgentPayoutProfile.findUnique({ where: { publicId }, include: { agent: true } });
+      const row = await tx.salesAgentPayoutProfile.findUnique({
+        where: { publicId },
+        include: { agent: true },
+      });
       if (!row) throw new DomainException('http.not_found');
       if (row.status !== 'submitted')
         throw new DomainException('agents.payout_profile_not_submitted', { params: { status: row.status } });
@@ -313,7 +350,10 @@ export class AgentPayoutProfilesService {
         resourcePublicId: row.publicId,
         data: { reason },
       });
-      const user = await tx.user.findUniqueOrThrow({ where: { id: row.agent.userId }, select: { publicId: true } });
+      const user = await tx.user.findUniqueOrThrow({
+        where: { id: row.agent.userId },
+        select: { publicId: true },
+      });
       await recordAgentEvent(this, tx, {
         type: 'sales_agent_payout_profile.rejected',
         aggregateType: 'sales_agent_payout_profile',
@@ -339,7 +379,11 @@ export class AgentPayoutProfilesService {
   }
 
   /** Flags a freelance statement whose agent cannot be paid yet and tells the agent (D-466). */
-  async holdStatement(tx: Tx, statement: { id: bigint; publicId: string; flags: string[] }, agentUserId: bigint) {
+  async holdStatement(
+    tx: Tx,
+    statement: { id: bigint; publicId: string; flags: string[] },
+    agentUserId: bigint,
+  ) {
     if (statement.flags.includes('payout_profile_missing')) return;
     await tx.salesAgentStatement.update({
       where: { id: statement.id },

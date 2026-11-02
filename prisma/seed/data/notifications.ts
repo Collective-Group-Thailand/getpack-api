@@ -3,6 +3,7 @@ import {
   AGENT_EMAIL_TEMPLATES,
   AGENT_NOTIFICATION_ROUTES,
   AGENT_NOTIFICATION_TEMPLATES,
+  AGENT_ZONE_TEMPLATES,
 } from './notifications-agents';
 
 /**
@@ -282,6 +283,7 @@ export const NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] = [
   ...MATRIX_TEMPLATES,
   ...AGENT_NOTIFICATION_TEMPLATES,
   ...AGENT_EMAIL_TEMPLATES,
+  ...AGENT_ZONE_TEMPLATES,
 ];
 export const NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
   ...PLATFORM_ROUTES,

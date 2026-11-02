@@ -13,6 +13,7 @@ import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { agentEventOf, agentRouteMutable } from './agent-notification-events';
 import { nextMarketingSlot } from './quiet-hours';
 import { type Recipient, RecipientDirectory } from './recipients';
 
@@ -87,9 +88,22 @@ export class NotificationRouter {
     const window = await this.settings.value('notifications.marketing_window', now);
     const rows: Prisma.NotificationCreateManyInput[] = [];
 
+    const agentEvent = agentEventOf(event.type);
     for (const route of routes) {
       if (!conditionsHold(route.conditions, event.payload)) continue;
+      const mutable =
+        agentEvent !== undefined &&
+        route.audience === 'customer' &&
+        agentRouteMutable(agentEvent, route.channel);
       for (const recipient of await this.recipients.resolve(event, route, tx)) {
+        // D-467: the agent switched this channel off for this agent event.
+        if (mutable && recipient.userId !== undefined) {
+          const pref = await tx.salesAgentNotificationPreference.findFirst({
+            where: { agent: { userId: recipient.userId }, event: agentEvent, channel: route.channel },
+            select: { enabled: true },
+          });
+          if (pref?.enabled === false) continue;
+        }
         const version =
           route.template.versions.find((v) => v.locale === recipient.locale) ??
           route.template.versions.find((v) => v.locale === 'th');

@@ -2,6 +2,11 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsEmail, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength } from 'class-validator';
 
 export const TOKEN_AUDIENCES = ['customer', 'staff', 'partner'] as const;
+/** D-467: the web surface a customer signs in from; each opens its own sessions. */
+export const AUTH_CLIENTS = ['storefront', 'agent'] as const;
+export type AuthClientValue = (typeof AUTH_CLIENTS)[number];
+/** D-467: what a hand-off code opens (only the agent zone today). */
+export const HANDOFF_TARGETS = ['agent'] as const;
 
 // --- examples (obviously fake, contract/spectral/README.md) -----------------------------------
 const USER_ID = '0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b';
@@ -214,6 +219,22 @@ export class OtpVerifyDto {
   code!: string;
 }
 
+/** `auth.customer.verifyOtp` body: the code plus the surface signing in (D-467). */
+export class CustomerOtpVerifyDto extends OtpVerifyDto {
+  @ApiPropertyOptional({
+    enum: AUTH_CLIENTS,
+    enumName: 'AuthClient',
+    default: 'storefront',
+    example: 'agent',
+    description:
+      'The surface signing in (D-467): `agent` from the agent zone (agent.getpack.co), else `storefront`. The session ' +
+      'is recorded with it and listed / revoked per surface.',
+  })
+  @IsOptional()
+  @IsIn(AUTH_CLIENTS)
+  client?: AuthClientValue;
+}
+
 export class FirebaseLoginDto {
   @ApiProperty({
     example: 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImV4YW1wbGUifQ.eyJzdWIiOiJleGFtcGxlIn0.c2ln',
@@ -223,6 +244,19 @@ export class FirebaseLoginDto {
   @MinLength(1)
   @MaxLength(8192)
   idToken!: string;
+
+  @ApiPropertyOptional({
+    enum: AUTH_CLIENTS,
+    enumName: 'AuthClient',
+    default: 'storefront',
+    example: 'agent',
+    description:
+      'The surface signing in (D-467): `agent` from the agent zone (agent.getpack.co), else `storefront`. The session ' +
+      'is recorded with it and listed / revoked per surface.',
+  })
+  @IsOptional()
+  @IsIn(AUTH_CLIENTS)
+  client?: AuthClientValue;
 }
 
 export class LineLoginDto {
@@ -257,6 +291,79 @@ export class LineLoginDto {
   @IsOptional()
   @Matches(/^\d{4,8}$/)
   otpCode?: string;
+
+  @ApiPropertyOptional({
+    enum: AUTH_CLIENTS,
+    enumName: 'AuthClient',
+    default: 'storefront',
+    example: 'agent',
+    description:
+      'The surface signing in (D-467): `agent` from the agent zone (agent.getpack.co), else `storefront`. The session ' +
+      'is recorded with it and listed / revoked per surface.',
+  })
+  @IsOptional()
+  @IsIn(AUTH_CLIENTS)
+  client?: AuthClientValue;
+}
+
+// --- storefront → agent zone hand-off (D-467) -------------------------------------------------------
+const FINGERPRINT_DOC =
+  'Opaque device fingerprint chosen by the web server (e.g. a hash of the agent-zone device cookie id and the ' +
+  'user agent); the same string must be sent to redeem. Only its SHA-256 is stored.';
+
+export class CreateHandoffDto {
+  @ApiProperty({ enum: HANDOFF_TARGETS, enumName: 'HandoffTarget', example: 'agent' })
+  @IsIn(HANDOFF_TARGETS)
+  target!: (typeof HANDOFF_TARGETS)[number];
+
+  @ApiProperty({
+    example: 'fp_example_7c1e9b1f3c4d5e6f',
+    minLength: 16,
+    maxLength: 512,
+    description: FINGERPRINT_DOC,
+  })
+  @IsString()
+  @MinLength(16)
+  @MaxLength(512)
+  fingerprint!: string;
+}
+
+export class HandoffCodeDto {
+  @ApiProperty({
+    example: 'hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl',
+    description:
+      'One-time code (single use, shown once); pass it to the target zone’s server, never in a URL that is logged',
+  })
+  code!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-11-03T14:06:00+07:00',
+    description: 'Setting `auth.handoff_code_ttl_seconds` (60 s)',
+  })
+  expiresAt!: string;
+
+  @ApiProperty({ enum: HANDOFF_TARGETS, enumName: 'HandoffTarget', example: 'agent' })
+  target!: (typeof HANDOFF_TARGETS)[number];
+}
+
+export class RedeemHandoffDto {
+  @ApiProperty({ example: 'hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl', maxLength: 128 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(128)
+  code!: string;
+
+  @ApiProperty({
+    example: 'fp_example_7c1e9b1f3c4d5e6f',
+    minLength: 16,
+    maxLength: 512,
+    description: FINGERPRINT_DOC,
+  })
+  @IsString()
+  @MinLength(16)
+  @MaxLength(512)
+  fingerprint!: string;
 }
 
 // --- tokens ---------------------------------------------------------------------------------------

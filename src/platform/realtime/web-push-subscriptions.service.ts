@@ -2,6 +2,7 @@ import { type UserActor } from '@common/context/actor';
 import { FieldEncryption } from '@common/crypto/field-encryption';
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService } from '@database/prisma.service';
+import { type AuthClient } from '@generated/prisma/client';
 import { Injectable } from '@nestjs/common';
 
 /** VAPID web-push subscriptions per user and device (D-143 "web push when permitted"). */
@@ -12,13 +13,18 @@ export class WebPushSubscriptionsService {
     private readonly encryption: FieldEncryption,
   ) {}
 
-  /** One row per endpoint: a browser that signs in as someone else moves to that user. */
+  /**
+   * One row per endpoint: a browser that signs in as someone else moves to that user. `client` (D-467): the zone
+   * that registered it — `agent` for the agent zone, whose browsers get agent events only.
+   */
   async subscribe(
     actor: UserActor,
     input: { endpoint: string; p256dh: string; auth: string; userAgent?: string },
+    client: AuthClient = 'storefront',
   ) {
     const data = {
       userId: actor.userId,
+      client,
       p256dh: input.p256dh,
       authSecretEnc: this.encryption.encrypt(input.auth),
       userAgent: input.userAgent?.slice(0, 512) ?? null,
@@ -31,9 +37,9 @@ export class WebPushSubscriptionsService {
     });
   }
 
-  async unsubscribe(actor: UserActor, publicId: string): Promise<void> {
+  async unsubscribe(actor: UserActor, publicId: string, client?: AuthClient): Promise<void> {
     const updated = await this.prisma.webPushSubscription.updateMany({
-      where: { publicId, userId: actor.userId, revokedAt: null },
+      where: { publicId, userId: actor.userId, revokedAt: null, ...(client && { client }) },
       data: { revokedAt: new Date() },
     });
     if (updated.count === 0) throw new DomainException('http.not_found');

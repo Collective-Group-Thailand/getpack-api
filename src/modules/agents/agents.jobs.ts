@@ -41,6 +41,12 @@ export class AgentsJobs {
     return (await this.attribution.expireLeads()) + (await this.attribution.endExpiredLinks());
   }
 
+  /** D-467: tell agents once when a lead's protection ends in 7 days and once within a day. */
+  @ScheduledJob({ name: 'agents.protection_reminders', every: 3_600_000 })
+  protectionReminders(): Promise<number> {
+    return this.attribution.remindProtectionEnding();
+  }
+
   /** On the 1st, 03:00 Bangkok: last month's statements (D-420). */
   @ScheduledJob({ name: 'agents.statements', cron: '0 3 1 * *' })
   async statementsJob(): Promise<number> {

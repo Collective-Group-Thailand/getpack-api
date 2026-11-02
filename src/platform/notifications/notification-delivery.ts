@@ -14,6 +14,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 import { RealtimePublisher } from '@platform/realtime/realtime.publisher';
 
+import { agentEventOf } from './agent-notification-events';
 import { DeepLinksService } from './deep-links.service';
 import { readablePayload } from './policy-labels';
 import { renderTemplate } from './template-renderer';
@@ -213,8 +214,13 @@ export class NotificationDelivery {
       }
       case 'web_push': {
         if (!user) throw new NoAddressError('no user');
+        // D-467: agent events go to the agent zone's browsers only; other events never reach them.
         const subscriptions = await this.prisma.webPushSubscription.findMany({
-          where: { userId: user.id, revokedAt: null },
+          where: {
+            userId: user.id,
+            revokedAt: null,
+            client: agentEventOf(row.event.type) ? 'agent' : { not: 'agent' },
+          },
         });
         if (subscriptions.length === 0) throw new NoAddressError('no push subscription');
         const payload = JSON.stringify({

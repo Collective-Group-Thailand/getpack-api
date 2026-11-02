@@ -52,6 +52,15 @@ enum TokenAudience {
   @@map("token_audience")
 }
 
+/// D-467: the web surface a customer session was opened from. Agent-zone sign-ins (agent.getpack.co) are their own
+/// session families, listed and revoked separately. Staff and partner sessions keep the default (no meaning there).
+enum AuthClient {
+  storefront
+  agent
+
+  @@map("auth_client")
+}
+
 enum SessionRevokeReason {
   logout
   reuse_detected
@@ -165,6 +174,7 @@ model User {
   identities                    UserIdentity[]
   staffProfile                  StaffProfile?
   sessions                      AuthSession[]
+  handoffCodes                  AuthHandoffCode[]
   devicePins                    DevicePin[]
   passwordResetTokens           PasswordResetToken[]
   roles                         UserRole[]              @relation("UserRoleUser")
@@ -957,6 +967,8 @@ model AuthSession {
   refreshTokenHash Bytes                @unique(map: "ux_auth_sessions__refresh_token_hash") @map("refresh_token_hash")
   parentSessionId  BigInt?              @map("parent_session_id")
   loginMethod      LoginMethod          @map("login_method")
+  /// D-467: surface of the session (carried through rotation).
+  client           AuthClient           @default(storefront)
   issuedAt         DateTime             @default(now()) @map("issued_at") @db.Timestamptz(6)
   expiresAt        DateTime             @map("expires_at") @db.Timestamptz(6)
   idleExpiresAt    DateTime             @map("idle_expires_at") @db.Timestamptz(6)
@@ -976,6 +988,35 @@ model AuthSession {
   @@index([userId, revokedAt], map: "ix_auth_sessions__user_id__revoked_at")
   @@index([parentSessionId], map: "ix_auth_sessions__parent_session_id")
   @@map("auth_sessions")
+}
+
+/// D-467: one-time code that moves a signed-in customer from the storefront to the agent zone (agent.getpack.co)
+/// without a shared cookie. Only SHA-256 hashes of the code and of the caller's device fingerprint are stored; single
+/// use, lifetime from the setting `auth.handoff_code_ttl_seconds` (60 s). PDPA: purpose = sign-in hand-off;
+/// retention = deleted 24 h after expiry; access = the auth service only (never returned).
+model AuthHandoffCode {
+  id                      BigInt      @id(map: "pk_auth_handoff_codes") @default(autoincrement())
+  publicId                String      @unique(map: "ux_auth_handoff_codes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  userId                  BigInt      @map("user_id")
+  target                  AuthClient
+  codeHash                Bytes       @unique(map: "ux_auth_handoff_codes__code_hash") @map("code_hash")
+  fingerprintHash         Bytes       @map("fingerprint_hash")
+  /// The storefront session that asked for the code (its family id) and how it signed in (the new session keeps it).
+  sourceSessionFamilyId   String?     @map("source_session_family_id") @db.Uuid
+  loginMethod             LoginMethod @map("login_method")
+  expiresAt               DateTime    @map("expires_at") @db.Timestamptz(6)
+  consumedAt              DateTime?   @map("consumed_at") @db.Timestamptz(6)
+  /// The agent-zone session family it opened; null when the code was refused (e.g. wrong fingerprint).
+  redeemedSessionFamilyId String?     @map("redeemed_session_family_id") @db.Uuid
+  ip                      String?     @db.Inet
+  userAgent               String?     @map("user_agent")
+  createdAt               DateTime    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_auth_handoff_codes__user_id")
+
+  @@index([userId], map: "ix_auth_handoff_codes__user_id")
+  @@index([expiresAt], map: "ix_auth_handoff_codes__expires_at")
+  @@map("auth_handoff_codes")
 }
 
 /// The OTP code is never stored or logged — only its HMAC. Rows are deleted after expiry + 24 h.

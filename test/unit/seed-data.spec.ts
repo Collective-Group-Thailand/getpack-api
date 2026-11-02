@@ -50,6 +50,8 @@ describe('seed data (B1.2 step 3)', () => {
       'auth.otp_policy': 'proposed',
       'auth.password_lockout': 'proposed',
       'auth.device_pin_policy': 'proposed',
+      // D-467: the hand-off code lifetime is a technical / security limit.
+      'auth.handoff_code_ttl_seconds': 'proposed',
       // D-172: defined without a value until the business sets it.
       'partners.suggestion_deviation_band_pct': 'pending_business',
       // B2.4: no decision gives the carton, the pallet or the target shipping margin.

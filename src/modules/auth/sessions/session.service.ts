@@ -4,7 +4,12 @@ import { RequestContext } from '@common/context/request-context';
 import { sha256 } from '@common/crypto/hashing';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { REDIS } from '@database/redis.module';
-import { type LoginMethod, type SessionRevokeReason, type TokenAudience } from '@generated/prisma/client';
+import {
+  type AuthClient,
+  type LoginMethod,
+  type SessionRevokeReason,
+  type TokenAudience,
+} from '@generated/prisma/client';
 import { Inject, Injectable } from '@nestjs/common';
 import { AuditService } from '@platform/audit/audit.service';
 import { SettingsService } from '@platform/settings/settings.service';
@@ -44,7 +49,14 @@ export class SessionService {
 
   async create(
     tx: Tx,
-    input: { userId: bigint; audience: TokenAudience; loginMethod: LoginMethod; deviceId?: string },
+    input: {
+      userId: bigint;
+      audience: TokenAudience;
+      loginMethod: LoginMethod;
+      deviceId?: string;
+      /** D-467: the customer surface (default storefront). */
+      client?: AuthClient;
+    },
   ): Promise<IssuedSession> {
     const lifetime = (await this.settings.value('auth.refresh_token_lifetimes'))[input.audience];
     const now = Date.now();
@@ -84,6 +96,7 @@ export class SessionService {
         userId: current.userId,
         audience: current.audience,
         loginMethod: current.loginMethod,
+        client: current.client,
         deviceId: current.deviceId ?? undefined,
         familyId: current.familyId,
         parentSessionId: current.id,
@@ -165,6 +178,7 @@ export class SessionService {
       userId: bigint;
       audience: TokenAudience;
       loginMethod: LoginMethod;
+      client?: AuthClient;
       deviceId?: string;
       familyId: string;
       parentSessionId: bigint | null;
@@ -182,6 +196,7 @@ export class SessionService {
         refreshTokenHash: hashRefreshToken(refreshToken),
         parentSessionId: input.parentSessionId,
         loginMethod: input.loginMethod,
+        client: input.client ?? 'storefront',
         expiresAt: input.expiresAt,
         idleExpiresAt: input.idleExpiresAt,
         ip: context?.ip ?? null,

@@ -249,12 +249,25 @@ describe('agent-facing responses carry no profit, margin or cap (D-464)', () => 
     expect(agentOperations.length).toBeGreaterThan(10);
   });
 
+  it('covers the agent zone endpoints of D-467 (push, notification choices) with every check above', () => {
+    const ids = new Set(agentOperations.map(({ operation }) => operation.operationId));
+    for (const id of [
+      'store.agentPush.vapidPublicKey',
+      'store.agentPush.subscribe',
+      'store.agentPush.unsubscribe',
+      'store.agentNotificationPreferences.get',
+      'store.agentNotificationPreferences.set',
+    ])
+      expect(ids).toContain(id);
+  });
+
   it('has no margin, profit or cap field in any agent response schema or example', () => {
     const leaks: string[] = [];
     for (const { operation } of agentOperations)
       for (const [status, response] of Object.entries(operation.responses ?? {})) {
         for (const field of fieldsOf(response))
-          if (WORDING.test(field.split('.').pop()!)) leaks.push(`${operation.operationId} ${status}: ${field}`);
+          if (WORDING.test(field.split('.').pop()!))
+            leaks.push(`${operation.operationId} ${status}: ${field}`);
         if (!status.startsWith('2')) continue;
         for (const key of exampleKeysOf(response))
           if (WORDING.test(key)) leaks.push(`${operation.operationId} ${status}: ${key}`);

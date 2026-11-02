@@ -31,6 +31,8 @@ export const ERROR_CODES = {
   'auth.otp_expired': HttpStatus.UNPROCESSABLE_ENTITY,
   'auth.otp_rate_limited': HttpStatus.TOO_MANY_REQUESTS,
   'auth.identity_token_invalid': HttpStatus.UNAUTHORIZED,
+  /** D-467: a hand-off code that is unknown, expired, used or for another device — one neutral answer. */
+  'auth.handoff_invalid': HttpStatus.UNAUTHORIZED,
   'auth.identity_linked_elsewhere': HttpStatus.CONFLICT,
   'auth.identity_last_method': HttpStatus.CONFLICT,
   'auth.identity_not_unlinkable': HttpStatus.CONFLICT,
@@ -218,6 +220,8 @@ export const ERROR_CODES = {
   'agents.agreement_outdated': HttpStatus.CONFLICT,
   'agents.application_decided': HttpStatus.CONFLICT,
   'agents.not_agent': HttpStatus.FORBIDDEN,
+  /** D-467: an ended agent reads only statements and 50 ทวิ, for the record-keeping years after `endedAt`. */
+  'agents.ended': HttpStatus.FORBIDDEN,
   'agents.invalid_status': HttpStatus.CONFLICT,
   'agents.plan_code_taken': HttpStatus.CONFLICT,
   'agents.backdated': HttpStatus.UNPROCESSABLE_ENTITY,

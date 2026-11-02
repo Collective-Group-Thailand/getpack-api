@@ -156,8 +156,11 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
     ctx.app.get(FeatureFlagsService).invalidate();
     // Another phone than the account's verified one.
     expect(
-      (await as(ctx, token).post('/v1/store/agent/application', { ...body, phone: '+66899999999' }).expect(422))
-        .body.code,
+      (
+        await as(ctx, token)
+          .post('/v1/store/agent/application', { ...body, phone: '+66899999999' })
+          .expect(422)
+      ).body.code,
     ).toBe('agents.phone_unverified');
     await as(ctx, token)
       .post('/v1/store/agent/application', { ...body, agreementVersionNo: 9 })
@@ -217,8 +220,11 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
       bankAccountNo: '123-4-56789-0',
     };
     expect(
-      (await as(ctx, token).put('/v1/store/agent/payout-profile', { ...profile, taxId: '0000000000125' }).expect(422))
-        .body.code,
+      (
+        await as(ctx, token)
+          .put('/v1/store/agent/payout-profile', { ...profile, taxId: '0000000000125' })
+          .expect(422)
+      ).body.code,
     ).toBe('validation.failed');
     expect((await as(ctx, token).put('/v1/store/agent/payout-profile', profile).expect(422)).body.code).toBe(
       'agents.bank_name_mismatch',
@@ -232,7 +238,9 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
       .post('/v1/store/agent/payout-profile/actions/submit')
       .set('If-Match', saved.headers['etag'] as string)
       .expect(200);
-    const read = await as(ctx, financeManager).get(`/v1/admin/agent-payout-profiles/${submitted.body.id}`).expect(200);
+    const read = await as(ctx, financeManager)
+      .get(`/v1/admin/agent-payout-profiles/${submitted.body.id}`)
+      .expect(200);
     await as(ctx, financeManager)
       .post(`/v1/admin/agent-payout-profiles/${submitted.body.id}/actions/verify`)
       .set('If-Match', read.headers['etag'] as string)
@@ -247,9 +255,13 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
       paymentTermsDays: 15,
       taxId: '0000000000124',
     });
-    const proposal = await ctx.prisma.vendorBankAccount.findFirstOrThrow({ where: { vendorId: agentRow.vendorId! } });
+    const proposal = await ctx.prisma.vendorBankAccount.findFirstOrThrow({
+      where: { vendorId: agentRow.vendorId! },
+    });
     expect(proposal).toMatchObject({ status: 'pending_approval', accountNoLast4: '7890' });
-    expect((await as(ctx, token).get('/v1/store/agent/payout-profile').expect(200)).body.payoutReady).toBe(true);
+    expect((await as(ctx, token).get('/v1/store/agent/payout-profile').expect(200)).body.payoutReady).toBe(
+      true,
+    );
 
     const me = await as(ctx, token).get('/v1/store/agent').expect(200);
     expect(me.body).toMatchObject({
@@ -542,5 +554,108 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
   it('menu: Sales sees the agents desk', async () => {
     const me = await as(ctx, sales).get('/v1/admin/me').expect(200);
     expect((me.body as { menu: { key: string }[] }).menu.map((m) => m.key)).toContain('agents');
+  });
+
+  it('agent zone (D-467): hand-off, sessions per surface, push, notification choices, ended agent', async () => {
+    const storefront = employeeAccount;
+    const fingerprint = 'fp_e2e_agent_zone_device_0001';
+    const redeem = (code: string, fp = fingerprint) =>
+      request(ctx.server).post('/v1/auth/customer/handoff/actions/redeem').send({ code, fingerprint: fp });
+
+    // Hand-off: bearer required; single use; bound to the device; one neutral error.
+    await request(ctx.server)
+      .post('/v1/auth/customer/handoff')
+      .send({ target: 'agent', fingerprint })
+      .expect(401);
+    const burned = await as(ctx, storefront.token)
+      .post('/v1/auth/customer/handoff', { target: 'agent', fingerprint })
+      .expect(201);
+    expect((await redeem(burned.body.code, 'fp_e2e_another_device_0002').expect(401)).body.code).toBe(
+      'auth.handoff_invalid',
+    );
+    expect((await redeem(burned.body.code).expect(401)).body.code).toBe('auth.handoff_invalid');
+    const issued = await as(ctx, storefront.token)
+      .post('/v1/auth/customer/handoff', { target: 'agent', fingerprint })
+      .expect(201);
+    expect(issued.body.target).toBe('agent');
+    const pair = (await redeem(issued.body.code).expect(200)).body as {
+      accessToken: string;
+      refreshToken: string;
+    };
+    await redeem(issued.body.code).expect(401);
+    const zone = pair.accessToken;
+
+    // The agent-zone session is listed with its surface, apart from the storefront one.
+    const sessions = (await as(ctx, zone).get('/v1/store/me/sessions').expect(200)).body as {
+      data: { client: string; current: boolean }[];
+    };
+    expect(sessions.data).toContainEqual(expect.objectContaining({ client: 'agent', current: true }));
+    expect(sessions.data.some((s) => s.client === 'storefront')).toBe(true);
+    const refreshed = await request(ctx.server)
+      .post('/v1/auth/refresh')
+      .send({ refreshToken: pair.refreshToken })
+      .expect(200);
+    const after = (
+      await as(ctx, refreshed.body.accessToken as string)
+        .get('/v1/store/me/sessions')
+        .expect(200)
+    ).body as { data: { client: string; current: boolean }[] };
+    expect(after.data.find((s) => s.current)?.client).toBe('agent');
+
+    // Notification choices: 18 rows, e-mail of payment / tax records locked.
+    const prefs = await as(ctx, zone).get('/v1/store/agent/notification-preferences').expect(200);
+    expect(prefs.body.items).toHaveLength(18);
+    const locked = await as(ctx, zone)
+      .put('/v1/store/agent/notification-preferences', {
+        items: [{ event: 'payout_paid', channel: 'email', enabled: false }],
+      })
+      .expect(422);
+    expect(locked.body.errors[0].code).toBe('locked');
+    const changed = await as(ctx, zone)
+      .put('/v1/store/agent/notification-preferences', {
+        items: [{ event: 'commission_earned', channel: 'line', enabled: false }],
+      })
+      .expect(200);
+    expect(changed.body.items).toContainEqual({
+      event: 'commission_earned',
+      channel: 'line',
+      enabled: false,
+      locked: false,
+    });
+
+    // Push for the agent zone.
+    await as(ctx, zone).get('/v1/store/agent/push/vapid-public-key').expect(200);
+    const sub = await as(ctx, zone)
+      .post('/v1/store/agent/push/subscriptions', {
+        endpoint: 'https://push.example.com/subscription/e2e-agent-zone',
+        keys: { p256dh: 'BFakeP256dhKeyForTheE2eSuite0000000000000000', auth: 'e2eFakeAuthSecret00' },
+      })
+      .expect(201);
+    expect(
+      (await ctx.prisma.webPushSubscription.findUniqueOrThrow({ where: { publicId: sub.body.id } })).client,
+    ).toBe('agent');
+    await as(ctx, zone).delete(`/v1/store/agent/push/subscriptions/${sub.body.id}`).expect(204);
+
+    // Revoke every storefront session: the agent zone stays signed in.
+    await as(ctx, zone).post('/v1/store/me/sessions/actions/revoke', { client: 'storefront' }).expect(200);
+    await as(ctx, storefront.token).get('/v1/store/me').expect(401);
+    await as(ctx, zone).get('/v1/store/agent').expect(200);
+
+    // A customer who is not an agent still reads the programme.
+    const visitor = await customerToken(ctx, 9);
+    await as(ctx, visitor.token).get('/v1/store/agent/programme').expect(200);
+    await as(ctx, visitor.token).get('/v1/store/agent/notification-preferences').expect(403);
+
+    // Ended: statements and 50 ทวิ only (agents.ended_record_access_years), the rest is refused neutrally.
+    const me = (await as(ctx, zone).get('/v1/store/agent').expect(200)).body as { id: string };
+    await as(ctx, sales)
+      .post(`/v1/admin/agents/${me.id}/actions/end`, { reason: 'สิ้นสุดสัญญา (fake)' })
+      .expect(200);
+    expect((await as(ctx, zone).get('/v1/store/agent').expect(403)).body.code).toBe('agents.ended');
+    expect((await as(ctx, zone).get('/v1/store/agent/leads').expect(403)).body.code).toBe('agents.ended');
+    await as(ctx, zone).get('/v1/store/agent/notification-preferences').expect(403);
+    const statements = await as(ctx, zone).get('/v1/store/agent/statements').expect(200);
+    const first = (statements.body as Page<{ id: string }>).data[0]!;
+    await as(ctx, zone).get(`/v1/store/agent/statements/${first.id}`).expect(200);
   });
 });

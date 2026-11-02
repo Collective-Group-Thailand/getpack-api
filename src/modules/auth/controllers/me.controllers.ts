@@ -21,12 +21,17 @@ import {
   ADMIN_ME_EXAMPLE,
   AdminMeDto,
   IDENTITY_PROVIDERS,
+  MY_SESSIONS_EXAMPLE,
+  MySessionListDto,
   PARTNER_ME_EXAMPLE,
   PartnerMeDto,
+  RevokedSessionsDto,
+  RevokeMySessionsDto,
   STORE_ME_EXAMPLE,
   StoreMeDto,
   UpdatePreferencesDto,
 } from '../me.dto';
+import { SessionService } from '../sessions/session.service';
 
 function userActor(actor: Actor): UserActor {
   if (actor.type !== 'user') throw new DomainException('auth.forbidden');
@@ -125,7 +130,118 @@ export class StoreMeController {
     private readonly resolver: PermissionResolver,
     private readonly audit: AuditService,
     private readonly events: DomainEvents,
+    private readonly sessions: SessionService,
   ) {}
+
+  @Get('sessions')
+  @ApiEndpoint({
+    id: 'store.me.sessions',
+    summary: 'List my signed-in sessions',
+    description:
+      'Open sessions of the signed-in customer with the surface each was opened from (`storefront` or `agent` — ' +
+      'the agent zone agent.getpack.co), newest activity first (D-467). One row per session (refresh-token family).',
+    implements: ['ADR-0004', 'D-467'],
+  })
+  @ApiSuccess(200, { description: 'Sessions', type: MySessionListDto, example: MY_SESSIONS_EXAMPLE })
+  @ApiStandardErrors('auth.token_expired', 'auth.session_revoked', 'auth.wrong_audience')
+  async mySessions(@CurrentActor() actor: Actor): Promise<MySessionListDto> {
+    const me = userActor(actor);
+    const now = new Date();
+    // The live row of each family is the one not yet rotated; its first row tells when the person signed in.
+    const live = await this.prisma.authSession.findMany({
+      where: {
+        userId: me.userId,
+        audience: 'customer',
+        revokedAt: null,
+        rotatedAt: null,
+        idleExpiresAt: { gt: now },
+      },
+      orderBy: { issuedAt: 'desc' },
+    });
+    const firsts = await this.prisma.authSession.groupBy({
+      by: ['familyId'],
+      where: { familyId: { in: live.map((s) => s.familyId) } },
+      _min: { issuedAt: true },
+    });
+    const signedIn = new Map(firsts.map((f) => [f.familyId, f._min.issuedAt]));
+    return {
+      data: live.map((s) => ({
+        id: s.familyId,
+        client: s.client,
+        loginMethod: s.loginMethod,
+        signedInAt: toBangkokIso(signedIn.get(s.familyId) ?? s.issuedAt),
+        lastActiveAt: toBangkokIso(s.issuedAt),
+        expiresAt: toBangkokIso(s.idleExpiresAt),
+        userAgent: s.userAgent,
+        current: s.familyId === me.sessionId,
+      })),
+    };
+  }
+
+  @Post('sessions/actions/revoke')
+  @HttpCode(200)
+  @ApiEndpoint({
+    id: 'store.me.revokeSessions',
+    summary: 'Sign out every session of one surface',
+    description:
+      'Ends the open sessions of the signed-in customer opened from `client` (`storefront` or `agent`, D-467), ' +
+      'including access tokens already issued for them. The session making the request is kept unless ' +
+      '`includeCurrent` is true. Audited (`auth.sessions_revoked`) and evented (`customer.sessions_revoked`).',
+    implements: ['ADR-0004', 'D-467'],
+  })
+  @ApiBody({
+    type: RevokeMySessionsDto,
+    examples: {
+      default: { value: { client: 'agent' } },
+      everywhere: { value: { client: 'storefront', includeCurrent: true } },
+    },
+  })
+  @ApiSuccess(200, { description: 'Signed out', type: RevokedSessionsDto, example: { revoked: 2 } })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'auth.token_expired')
+  async revokeSessions(
+    @CurrentActor() actor: Actor,
+    @Body() body: RevokeMySessionsDto,
+  ): Promise<RevokedSessionsDto> {
+    const me = userActor(actor);
+    const keepCurrent = body.includeCurrent !== true && me.sessionId !== undefined;
+    const families = await this.prisma.withTx(async (tx) => {
+      const where = {
+        userId: me.userId,
+        audience: 'customer' as const,
+        client: body.client,
+        revokedAt: null,
+        ...(keepCurrent && { familyId: { not: me.sessionId! } }),
+      };
+      const open = await tx.authSession.findMany({
+        where,
+        select: { familyId: true },
+        distinct: ['familyId'],
+      });
+      await tx.authSession.updateMany({ where, data: { revokedAt: new Date(), revokeReason: 'logout' } });
+      const ids = open.map((s) => s.familyId);
+      await this.audit.record(tx, {
+        category: 'security',
+        action: 'auth.sessions_revoked',
+        resourceType: 'user',
+        resourcePublicId: me.publicId,
+        data: { client: body.client, sessions: ids.length, includeCurrent: !keepCurrent },
+        actor: me,
+      });
+      await this.events.record(
+        tx,
+        {
+          type: 'customer.sessions_revoked',
+          aggregateType: 'user',
+          aggregateId: me.publicId,
+          payload: { userId: me.publicId, client: body.client, sessions: ids.length },
+        },
+        me,
+      );
+      return ids;
+    });
+    await this.sessions.markRevoked(families);
+    return { revoked: families.length };
+  }
 
   @Delete('identities/:provider')
   @ApiParam({ name: 'provider', enum: IDENTITY_PROVIDERS, enumName: 'IdentityProvider' })

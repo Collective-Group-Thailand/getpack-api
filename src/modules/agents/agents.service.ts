@@ -79,11 +79,18 @@ export function sameName(a: string, b: string): boolean {
 export const AGENT_FAQ_CATEGORY = 'agent_programme';
 const EXAMPLE_ORDER_VALUES = ['20000.00', '100000.00', '1000000.00'];
 
-function commissionExample(version: { firstOrderPct: Prisma.Decimal; repeatOrderPct: Prisma.Decimal; minBaseAmount: Prisma.Decimal }, orderValue: string) {
+function commissionExample(
+  version: { firstOrderPct: Prisma.Decimal; repeatOrderPct: Prisma.Decimal; minBaseAmount: Prisma.Decimal },
+  orderValue: string,
+) {
   const base = D(orderValue);
   const below = base.lt(version.minBaseAmount.toString());
   const at = (pct: Prisma.Decimal) => (below ? '0.00' : formatMoney(base.mul(pct.toString()).div(100)));
-  return { orderValue: formatMoney(base), firstOrder: at(version.firstOrderPct), repeatOrder: at(version.repeatOrderPct) };
+  return {
+    orderValue: formatMoney(base),
+    firstOrder: at(version.firstOrderPct),
+    repeatOrder: at(version.repeatOrderPct),
+  };
 }
 
 export const agentEtag = (a: { publicId: string; rowVersion: number }) => etagOf(a.publicId, a.rowVersion);
@@ -173,7 +180,11 @@ export class AgentsService {
       this.settings.at('agents.rules', { at: now }),
       this.flags.isEnabled(PROGRAMME_FLAG),
       this.prisma.faq.findMany({
-        where: { status: 'published', deletedAt: null, category: { code: AGENT_FAQ_CATEGORY, status: 'published' } },
+        where: {
+          status: 'published',
+          deletedAt: null,
+          category: { code: AGENT_FAQ_CATEGORY, status: 'published' },
+        },
         orderBy: [{ sort: 'asc' }, { id: 'asc' }],
         take: 30,
       }),
@@ -264,7 +275,8 @@ export class AgentsService {
     input: SubmitAgentApplicationDto,
     evidence: { ip: string | null; userAgent: string | null },
   ): Promise<ApplicationRow> {
-    if (!(await this.flags.isEnabled(PROGRAMME_FLAG, actor))) throw new DomainException('agents.programme_closed');
+    if (!(await this.flags.isEnabled(PROGRAMME_FLAG, actor)))
+      throw new DomainException('agents.programme_closed');
     const phone = normalisePhone(input.phone);
     const id = await this.prisma.withTx(async (tx) => {
       const user = await tx.user.findUniqueOrThrow({ where: { id: actor.userId } });

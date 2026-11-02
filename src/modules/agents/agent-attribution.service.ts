@@ -1,5 +1,6 @@
 import { type Actor, systemActor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { bangkokDate, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma, type SalesAgent, type SalesAgentLead } from '@generated/prisma/client';
 import { Injectable, Logger } from '@nestjs/common';
@@ -255,6 +256,65 @@ export class AgentAttributionService {
       data: { status: 'expired', closedReason: 'protection_ended' },
     });
     return r.count;
+  }
+
+  /**
+   * D-467 scheduled (hourly): tell the agent once when a customer lead's protection ends in 7 days and once when it
+   * ends within a day (`sales_agent_lead.protection_expiring`, `daysLeft` 7 | 1). Idempotent through the lead's
+   * reminder markers, claimed with a conditional update in the event's transaction.
+   */
+  async remindProtectionEnding(now = new Date()): Promise<number> {
+    const leads = await this.prisma.salesAgentLead.findMany({
+      where: {
+        kind: 'customer',
+        status: 'registered',
+        protectedUntil: { gt: now, lte: new Date(now.getTime() + 7 * DAY_MS) },
+        OR: [{ protectionReminded7dAt: null }, { protectionReminded1dAt: null }],
+        agent: { status: { in: ['active', 'suspended'] } },
+      },
+      include: { agent: { select: { publicId: true, user: { select: { publicId: true } } } } },
+      orderBy: { protectedUntil: 'asc' },
+      take: 500,
+    });
+    let sent = 0;
+    for (const lead of leads) {
+      const daysLeft = protectionReminderDue(lead, now);
+      if (daysLeft === null) continue;
+      const claimed = await this.prisma.withTx(async (tx) => {
+        const marker =
+          daysLeft === 1
+            ? { protectionReminded1dAt: now, protectionReminded7dAt: lead.protectionReminded7dAt ?? now }
+            : { protectionReminded7dAt: now };
+        const r = await tx.salesAgentLead.updateMany({
+          where: {
+            id: lead.id,
+            status: 'registered',
+            ...(daysLeft === 1 ? { protectionReminded1dAt: null } : { protectionReminded7dAt: null }),
+          },
+          data: marker,
+        });
+        if (r.count === 0) return false;
+        await recordAgentEvent(this, tx, {
+          type: 'sales_agent_lead.protection_expiring',
+          aggregateType: 'sales_agent_lead',
+          aggregateId: lead.publicId,
+          // `customerId` addresses the agent's notification (they are a customer account).
+          payload: {
+            leadId: lead.publicId,
+            agentId: lead.agent.publicId,
+            contactName: lead.contactName,
+            daysLeft,
+            protectedUntil: toBangkokIso(lead.protectedUntil),
+            protectedUntilDate: bangkokDate(lead.protectedUntil),
+            customerId: lead.agent.user.publicId,
+          },
+          actor: systemActor('agents.protection_reminder'),
+        });
+        return true;
+      });
+      if (claimed) sent += 1;
+    }
+    return sent;
   }
 
   // --- conversions -----------------------------------------------------------------------------------------
@@ -640,4 +700,18 @@ export class AgentAttributionService {
     });
     this.logger.log(`lead ${lead.publicId} converted`);
   }
+}
+
+/**
+ * D-467: which protection reminder is due for a lead now — 1 when its protection ends within a day (not yet told),
+ * 7 when it ends within 7 days but more than one (not yet told), else null.
+ */
+export function protectionReminderDue(
+  lead: { protectedUntil: Date; protectionReminded7dAt: Date | null; protectionReminded1dAt: Date | null },
+  now: Date,
+): 7 | 1 | null {
+  const left = lead.protectedUntil.getTime() - now.getTime();
+  if (left <= 0 || left > 7 * DAY_MS) return null;
+  if (left <= DAY_MS) return lead.protectionReminded1dAt ? null : 1;
+  return lead.protectionReminded7dAt ? null : 7;
 }

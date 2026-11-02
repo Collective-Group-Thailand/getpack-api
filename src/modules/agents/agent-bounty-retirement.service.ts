@@ -42,7 +42,11 @@ export class AgentBountyRetirementService {
     for (const p of plans) {
       const v = await planVersionAt(this.prisma, p.id, now);
       if (v && D(v.factoryBountyAmount).gt(0))
-        plansWithBounty.push({ code: p.code, versionNo: v.versionNo, bounty: v.factoryBountyAmount.toFixed(2) });
+        plansWithBounty.push({
+          code: p.code,
+          versionNo: v.versionNo,
+          bounty: v.factoryBountyAmount.toFixed(2),
+        });
     }
     return {
       pendingFactoryLinks: links.map((l) => ({

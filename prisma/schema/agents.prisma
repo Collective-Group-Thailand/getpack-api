@@ -16,6 +16,18 @@ enum SalesAgentStatus {
   @@map("sales_agent_status")
 }
 
+/// D-467: the agent events a person chooses channels for (agent zone "การแจ้งเตือน").
+enum SalesAgentNotificationEvent {
+  lead_converted
+  lead_protection_expiring
+  commission_earned
+  statement_ready
+  payout_paid
+  payout_profile_needed
+
+  @@map("sales_agent_notification_event")
+}
+
 enum SalesAgentApplicationStatus {
   submitted
   approved
@@ -250,18 +262,19 @@ model SalesAgent {
   updatedAt     DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion    Int              @default(1) @map("row_version")
 
-  user            User                       @relation("SalesAgentUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__user_id")
-  plan            SalesAgentPlan             @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__plan_id")
-  vendor          Vendor?                    @relation("SalesAgentVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__vendor_id")
-  staffUser       User?                      @relation("SalesAgentStaffUser", fields: [staffUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__staff_user_id")
-  application     SalesAgentApplication?     @relation(fields: [applicationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__application_id")
-  links           SalesAgentLink[]
-  leads           SalesAgentLead[]
-  factoryLinks    SalesAgentFactoryLink[]
-  commissions     SalesAgentCommission[]
-  statements      SalesAgentStatement[]
-  taxDeclarations SalesAgentTaxDeclaration[]
-  payoutProfile   SalesAgentPayoutProfile?
+  user                    User                               @relation("SalesAgentUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__user_id")
+  plan                    SalesAgentPlan                     @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__plan_id")
+  vendor                  Vendor?                            @relation("SalesAgentVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__vendor_id")
+  staffUser               User?                              @relation("SalesAgentStaffUser", fields: [staffUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__staff_user_id")
+  application             SalesAgentApplication?             @relation(fields: [applicationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__application_id")
+  links                   SalesAgentLink[]
+  leads                   SalesAgentLead[]
+  factoryLinks            SalesAgentFactoryLink[]
+  commissions             SalesAgentCommission[]
+  statements              SalesAgentStatement[]
+  taxDeclarations         SalesAgentTaxDeclaration[]
+  payoutProfile           SalesAgentPayoutProfile?
+  notificationPreferences SalesAgentNotificationPreference[]
 
   @@index([status, kind], map: "ix_sales_agents__status__kind")
   @@index([planId], map: "ix_sales_agents__plan_id")
@@ -309,27 +322,30 @@ model SalesAgentLink {
 
 /// A prospect an agent registered (D-417, D-419), protected from other agents for a while. PII.
 model SalesAgentLead {
-  id                 BigInt               @id(map: "pk_sales_agent_leads") @default(autoincrement())
-  publicId           String               @unique(map: "ux_sales_agent_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  agentId            BigInt               @map("agent_id")
-  kind               SalesAgentLeadKind
-  status             SalesAgentLeadStatus @default(registered)
-  contactName        String               @map("contact_name")
-  organisationName   String?              @map("organisation_name")
+  id                     BigInt               @id(map: "pk_sales_agent_leads") @default(autoincrement())
+  publicId               String               @unique(map: "ux_sales_agent_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId                BigInt               @map("agent_id")
+  kind                   SalesAgentLeadKind
+  status                 SalesAgentLeadStatus @default(registered)
+  contactName            String               @map("contact_name")
+  organisationName       String?              @map("organisation_name")
   /// E.164 (+66…).
-  phone              String?
-  email              String?              @db.Citext
-  taxId              String?              @map("tax_id") @db.Char(13)
-  note               String?
-  protectedUntil     DateTime             @map("protected_until") @db.Timestamptz(6)
-  convertedAt        DateTime?            @map("converted_at") @db.Timestamptz(6)
-  convertedUserId    BigInt?              @map("converted_user_id")
-  convertedCompanyId BigInt?              @map("converted_company_id")
-  convertedFactoryId BigInt?              @map("converted_factory_id")
-  closedReason       String?              @map("closed_reason")
-  createdAt          DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion         Int                  @default(1) @map("row_version")
+  phone                  String?
+  email                  String?              @db.Citext
+  taxId                  String?              @map("tax_id") @db.Char(13)
+  note                   String?
+  protectedUntil         DateTime             @map("protected_until") @db.Timestamptz(6)
+  convertedAt            DateTime?            @map("converted_at") @db.Timestamptz(6)
+  convertedUserId        BigInt?              @map("converted_user_id")
+  convertedCompanyId     BigInt?              @map("converted_company_id")
+  convertedFactoryId     BigInt?              @map("converted_factory_id")
+  closedReason           String?              @map("closed_reason")
+  /// D-467: when the agent was told the protection ends in 7 days / 1 day (once each).
+  protectionReminded7dAt DateTime?            @map("protection_reminded_7d_at") @db.Timestamptz(6)
+  protectionReminded1dAt DateTime?            @map("protection_reminded_1d_at") @db.Timestamptz(6)
+  createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion             Int                  @default(1) @map("row_version")
 
   agent            SalesAgent              @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__agent_id")
   convertedUser    User?                   @relation("SalesAgentLeadConvertedUser", fields: [convertedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_user_id")
@@ -609,4 +625,23 @@ model SalesAgentPayoutProfile {
   @@index([bankBookFileId], map: "ix_sales_agent_payout_profiles__bank_book_file_id")
   @@index([verifiedById], map: "ix_sales_agent_payout_profiles__verified_by")
   @@map("sales_agent_payout_profiles")
+}
+
+/// D-467: an agent's channel choice per agent event (agent zone "การแจ้งเตือน"). Only changes are stored: no row =
+/// enabled. The notification router drops a disabled route for the agent; e-mail of statement_ready, payout_paid and
+/// payout_profile_needed cannot be switched off (D-144). PDPA: purpose = notification preferences; retention = while
+/// the agent profile exists; access = the agent and the notification router.
+model SalesAgentNotificationPreference {
+  id        BigInt                      @id(map: "pk_sales_agent_notification_preferences") @default(autoincrement())
+  agentId   BigInt                      @map("agent_id")
+  event     SalesAgentNotificationEvent
+  channel   NotificationChannel
+  enabled   Boolean
+  createdAt DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime                    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  agent SalesAgent @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_notification_preferences__agent_id")
+
+  @@unique([agentId, event, channel], map: "ux_sales_agent_notification_preferences__agent__event__channel")
+  @@map("sales_agent_notification_preferences")
 }
