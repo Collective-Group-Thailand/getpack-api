@@ -200,6 +200,15 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
       body: 'Follow up {{payload.contactName}} as planned ({{payload.followUpTime}})',
     },
   ),
+  inApp(
+    'sales_agent_quote.opened:customer',
+    'Agent: a customer opened a quotation the agent sent (D-468)',
+    {
+      subject: 'ลูกค้าเปิดใบเสนอราคาแล้ว',
+      body: '{{payload.contactName}} เปิดดูใบเสนอราคา {{payload.quoteCode}} แล้ว',
+    },
+    { subject: 'Quotation opened', body: '{{payload.contactName}} opened quotation {{payload.quoteCode}}' },
+  ),
 ];
 
 const EMAILS: readonly [string, string, string, string, string][] = [
@@ -279,6 +288,13 @@ const EMAILS: readonly [string, string, string, string, string][] = [
     'ติดตาม {{payload.contactName}} ตามที่นัดไว้ {{payload.followUpTime}} น. บันทึกผลการติดต่อและตั้งวันติดตามครั้งถัดไปได้ใน getpack Agent',
     'Time to follow up',
     'Follow up {{payload.contactName}} as planned ({{payload.followUpTime}}). Log the contact and set the next follow-up in getpack Agent.',
+  ],
+  [
+    'sales_agent_quote.opened',
+    'ลูกค้าเปิดใบเสนอราคาแล้ว',
+    '{{payload.contactName}} เปิดดูใบเสนอราคา {{payload.quoteCode}} แล้ว เป็นจังหวะดีที่จะติดต่อและตอบคำถาม',
+    'Quotation opened',
+    '{{payload.contactName}} opened quotation {{payload.quoteCode}}; a good moment to get in touch.',
   ],
   [
     'sales_agent_statement.paid',
@@ -362,6 +378,14 @@ const AGENT_ZONE_MESSAGES: readonly [
       subject: 'Commission paid',
       body: 'Statement {{payload.statementNo}} has been paid; the withholding certificate is in getpack Agent',
     },
+  ],
+  [
+    'sales_agent_quote.opened',
+    {
+      subject: 'ลูกค้าเปิดใบเสนอราคาแล้ว',
+      body: '{{payload.contactName}} เปิดดูใบเสนอราคา {{payload.quoteCode}} แล้ว',
+    },
+    { subject: 'Quotation opened', body: '{{payload.contactName}} opened quotation {{payload.quoteCode}}' },
   ],
   [
     'sales_agent_lead.follow_up_due',
@@ -452,6 +476,8 @@ export const AGENT_NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
       // D-468: follow-up reminders
       ['sales_agent_lead.follow_up_due', 'in_app'],
       ['sales_agent_lead.follow_up_due', 'email'],
+      ['sales_agent_quote.opened', 'in_app'],
+      ['sales_agent_quote.opened', 'email'],
       ...AGENT_ZONE_MESSAGES.flatMap(([event]) => [[event, 'web_push'] as const, [event, 'line'] as const]),
     ] as const
   ).map(([eventType, channel]): NotificationRouteSeed => ({

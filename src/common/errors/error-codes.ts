@@ -242,6 +242,8 @@ export const ERROR_CODES = {
   'agents.lead_stage_final': HttpStatus.CONFLICT,
   /** D-468: the CSV import was committed already or its 24 h dry run expired. */
   'agents.lead_import_closed': HttpStatus.CONFLICT,
+  /** D-468: the agent's quotation was withdrawn, accepted or expired. */
+  'agents.quote_closed': HttpStatus.CONFLICT,
   'agents.self_link': HttpStatus.UNPROCESSABLE_ENTITY,
   'agents.already_linked': HttpStatus.CONFLICT,
   'agents.link_ended': HttpStatus.CONFLICT,

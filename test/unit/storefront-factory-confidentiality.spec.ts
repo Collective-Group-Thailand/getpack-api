@@ -31,6 +31,25 @@ const FORBIDDEN_VALUE = /factory|capacity|โรงงาน/i;
  */
 const ALLOWED_ENUMS = new Set(['AgentCommissionKind']);
 
+/** D-468 (Phase 3): the agent zone's pipeline, quote, discount, deal, playbook, card-scan and forecast operations. */
+const P3_AGENT_OPERATIONS = [
+  'store.agentLeads.check',
+  'store.agentLeads.list',
+  'store.agentLeads.get',
+  'store.agentLeads.update',
+  'store.agentLeads.changeStage',
+  'store.agentLeads.addActivity',
+  'store.agentLeads.listActivities',
+  'store.agentLeads.export',
+  'store.agentLeads.importPreview',
+  'store.agentLeads.importCommit',
+  'store.agentQuotes.create',
+  'store.agentQuotes.list',
+  'store.agentQuotes.get',
+  'store.agentQuotes.resend',
+  'store.agentQuotes.withdraw',
+];
+
 /** Operations removed by D-435; they must not come back. */
 const REMOVED_PATHS = ['/v1/store/network/stats'];
 
@@ -259,6 +278,28 @@ describe('agent-facing responses carry no profit, margin or cap (D-464)', () => 
       'store.agentNotificationPreferences.set',
     ])
       expect(ids).toContain(id);
+  });
+
+  it('covers the agent pipeline and quote endpoints of D-468 with every check above', () => {
+    const ids = new Set(agentOperations.map(({ operation }) => operation.operationId));
+    for (const id of P3_AGENT_OPERATIONS) expect(ids).toContain(id);
+  });
+
+  it('never gives an agent a cost, buy price, margin or internal breakdown (D-468 quote on behalf)', () => {
+    // `BasisSizesDto.internal` is the inside size of a box, not a cost; the staff option (`AdminSavedQuoteOptionDto`,
+    // its `internal` cost breakdown) must never be reachable.
+    const COST = /cost|buyPrice|buy_price|breakdown|margin|selectedFactory|^Admin/i;
+    const leaks: string[] = [];
+    for (const { operation } of agentOperations)
+      for (const [status, response] of Object.entries(operation.responses ?? {})) {
+        if (!status.startsWith('2')) continue;
+        for (const field of fieldsOf(response))
+          if (COST.test(field.split('.').pop()!) || COST.test(field.split('.')[0]!))
+            leaks.push(`${operation.operationId}: ${field}`);
+        for (const key of exampleKeysOf(response))
+          if (COST.test(key)) leaks.push(`${operation.operationId}: ${key}`);
+      }
+    expect([...new Set(leaks)]).toEqual([]);
   });
 
   it('has no margin, profit or cap field in any agent response schema or example', () => {

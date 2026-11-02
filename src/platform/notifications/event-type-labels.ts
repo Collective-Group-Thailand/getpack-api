@@ -37,6 +37,7 @@ const DOMAINS: Record<string, { th: string; en: string }> = {
   erp_daily: { th: 'สรุปโรงงานประจำวัน', en: 'Factory daily summary' },
   sales_agent_application: { th: 'สมัครตัวแทนขาย', en: 'Agent application' },
   sales_agent_lead: { th: 'ผู้มุ่งหวัง', en: 'Lead' },
+  sales_agent_quote: { th: 'ใบเสนอราคาของตัวแทน', en: 'Agent quotation' },
   sales_agent_statement: { th: 'ค่าตอบแทนตัวแทน', en: 'Agent commission' },
   sales_agent_commission: { th: 'ค่าคอมตัวแทน', en: 'Agent commission' },
   sales_agent_tax_declaration: { th: 'ลดหย่อนภาษี (ล.ย.01)', en: 'Tax allowances' },

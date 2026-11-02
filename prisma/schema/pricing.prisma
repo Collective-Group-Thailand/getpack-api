@@ -634,6 +634,9 @@ model Quote {
   callOffAgreements CallOffAgreement[] @relation("CallOffQuote")
   callOffRelease    CallOffRelease?    @relation("CallOffReleaseQuote")
 
+  /// D-468: the agent who sent this quote on behalf of getpack, if any.
+  salesAgentQuote SalesAgentQuote? @relation("SalesAgentQuoteQuote")
+
   @@index([designDocumentVersionId], map: "ix_quotes__design_document_version_id")
   @@index([specHash], map: "ix_quotes__spec_hash")
   @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")

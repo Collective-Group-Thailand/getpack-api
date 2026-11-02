@@ -2353,6 +2353,7 @@ export const AGENT_NOTIFICATION_EVENT_VALUES = [
   'payout_paid',
   'payout_profile_needed',
   'follow_up_due',
+  'quote_opened',
 ] as const;
 export const AGENT_NOTIFICATION_CHANNEL_VALUES = ['web_push', 'line', 'email'] as const;
 type AgentNotificationEventValue = (typeof AGENT_NOTIFICATION_EVENT_VALUES)[number];
@@ -2362,7 +2363,7 @@ const EVENT_DOC =
   '`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · ' +
   '`commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · ' +
   '`payout_profile_needed` a statement waits for payout details · `follow_up_due` a follow-up time I set has come ' +
-  '(D-468; never in the quiet hours 21:00–08:00)';
+  '(D-468; never in the quiet hours 21:00–08:00) · `quote_opened` a customer opened a quotation I sent';
 const CHANNEL_DOC = '`web_push` push to the agent zone (getpack Agent) · `line` LINE OA · `email`';
 
 export class SetAgentNotificationPreferenceDto {
@@ -2403,12 +2404,12 @@ export class SetAgentNotificationPreferencesDto {
   @ApiProperty({
     type: [SetAgentNotificationPreferenceDto],
     minItems: 1,
-    maxItems: 21,
+    maxItems: 24,
     description: 'The choices to change; what is not listed keeps its value',
   })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(21)
+  @ArrayMaxSize(24)
   @ValidateNested({ each: true })
   @Type(() => SetAgentNotificationPreferenceDto)
   items!: SetAgentNotificationPreferenceDto[];

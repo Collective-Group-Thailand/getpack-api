@@ -746,6 +746,19 @@ export class AgentAttributionService {
     });
     // D-468: the timeline shows the sign-up.
     await appendLeadActivity(tx, { leadId: lead.id, kind: 'system', data: { event: 'converted' } });
+    // D-468: the quotes the agent sent this lead become the new customer's, so they can order them (D-051).
+    const owner = target.convertedUserId
+      ? { customerUserId: target.convertedUserId }
+      : target.convertedCompanyId
+        ? await tx.company
+            .findUniqueOrThrow({ where: { id: target.convertedCompanyId }, select: { appliedById: true } })
+            .then((c) => ({ customerUserId: c.appliedById, companyId: target.convertedCompanyId }))
+        : null;
+    if (owner)
+      await tx.quote.updateMany({
+        where: { customerUserId: null, salesAgentQuote: { leadId: lead.id, status: { not: 'withdrawn' } } },
+        data: { ...owner, rowVersion: { increment: 1 } },
+      });
     const agentUser = await tx.salesAgent.findUniqueOrThrow({
       where: { id: lead.agentId },
       select: { user: { select: { publicId: true } } },

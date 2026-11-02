@@ -28,6 +28,7 @@ describe('agent notification choices (D-467)', () => {
       payout_paid: 'sales_agent_statement.paid',
       payout_profile_needed: 'sales_agent_statement.payout_profile_needed',
       follow_up_due: 'sales_agent_lead.follow_up_due',
+      quote_opened: 'sales_agent_quote.opened',
     });
     expect(agentEventOf('sales_agent_statement.paid')).toBe('payout_paid');
     expect(agentEventOf('order.placed')).toBeUndefined();
@@ -38,7 +39,7 @@ describe('agent notification choices (D-467)', () => {
       { event: 'commission_earned', channel: 'line', enabled: false },
       { event: 'payout_paid', channel: 'email', enabled: false },
     ]);
-    expect(items).toHaveLength(21);
+    expect(items).toHaveLength(24);
     expect(items.find((i) => i.event === 'commission_earned' && i.channel === 'line')).toMatchObject({
       enabled: false,
       locked: false,
