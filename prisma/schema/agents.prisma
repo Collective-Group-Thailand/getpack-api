@@ -173,19 +173,24 @@ model SalesAgentApplication {
   status                  SalesAgentApplicationStatus @default(submitted)
   juristicType            JuristicType                @map("juristic_type")
   legalName               String                      @map("legal_name")
-  taxId                   String                      @map("tax_id") @db.Char(13)
+  taxId                   String?                     @map("tax_id") @db.Char(13)
   branchCode              String                      @default("00000") @map("branch_code") @db.Char(5)
   isVatRegistered         Boolean                     @default(false) @map("is_vat_registered")
-  address                 String
-  postcode                String                      @db.Char(5)
+  address                 String?
+  postcode                String?                     @db.Char(5)
   /// How the applicant plans to sell (free text).
   pitch                   String?
-  idDocumentFileId        BigInt                      @map("id_document_file_id")
-  bankCode                String                      @map("bank_code")
+  /// D-466 step 1. PDPA: contact data for Sales to reach the applicant; kept with the application.
+  phone                   String?
+  email                   String?                     @db.Citext
+  lineId                  String?                     @map("line_id")
+  salesChannels           SalesAgentSalesChannel[]    @default([]) @map("sales_channels")
+  idDocumentFileId        BigInt?                     @map("id_document_file_id")
+  bankCode                String?                     @map("bank_code")
   bankBranchName          String?                     @map("bank_branch_name")
-  bankAccountName         String                      @map("bank_account_name")
-  bankAccountNoEnc        Bytes                       @map("bank_account_no_enc")
-  bankAccountNoLast4      String                      @map("bank_account_no_last4") @db.Char(4)
+  bankAccountName         String?                     @map("bank_account_name")
+  bankAccountNoEnc        Bytes?                      @map("bank_account_no_enc")
+  bankAccountNoLast4      String?                     @map("bank_account_no_last4") @db.Char(4)
   bankBookFileId          BigInt?                     @map("bank_book_file_id")
   agreementVersionId      BigInt                      @map("agreement_version_id")
   agreementAcceptedAt     DateTime                    @map("agreement_accepted_at") @db.Timestamptz(6)
@@ -201,7 +206,7 @@ model SalesAgentApplication {
   rowVersion              Int                         @default(1) @map("row_version")
 
   user             User                     @relation("SalesAgentApplicationUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__user_id")
-  idDocumentFile   FileObject               @relation("SalesAgentApplicationIdDocument", fields: [idDocumentFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__id_document_file_id")
+  idDocumentFile   FileObject?              @relation("SalesAgentApplicationIdDocument", fields: [idDocumentFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__id_document_file_id")
   bankBookFile     FileObject?              @relation("SalesAgentApplicationBankBook", fields: [bankBookFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__bank_book_file_id")
   agreementVersion AgreementTemplateVersion @relation("SalesAgentApplicationAgreement", fields: [agreementVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__agreement_version_id")
   decidedBy        User?                    @relation("SalesAgentApplicationDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_applications__decided_by") // client: keep
@@ -256,6 +261,7 @@ model SalesAgent {
   commissions     SalesAgentCommission[]
   statements      SalesAgentStatement[]
   taxDeclarations SalesAgentTaxDeclaration[]
+  payoutProfile   SalesAgentPayoutProfile?
 
   @@index([status, kind], map: "ix_sales_agents__status__kind")
   @@index([planId], map: "ix_sales_agents__plan_id")
@@ -457,6 +463,8 @@ model SalesAgentStatement {
   /// retained 10 years (Revenue Code s.87/3), read by Finance.
   taxInvoiceFileId BigInt?                   @map("tax_invoice_file_id")
   taxInvoiceNo     String?                   @map("tax_invoice_no")
+  /// D-466: `payout_profile_missing` while a freelance agent has no verified payout profile (nothing is lost).
+  flags            String[]                  @default([])
   createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt        DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion       Int                       @default(1) @map("row_version")
@@ -538,4 +546,67 @@ model SalesAgentMarginKpi {
   computedAt       DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
 
   @@map("sales_agent_margin_kpis")
+}
+
+enum SalesAgentSalesChannel {
+  line_groups
+  facebook
+  own_network
+  agency
+  print_shop
+  design_studio
+  other
+
+  @@map("sales_agent_sales_channel")
+}
+
+enum SalesAgentPayoutProfileStatus {
+  draft
+  submitted
+  verified
+  rejected
+
+  @@map("sales_agent_payout_profile_status")
+}
+
+/// D-466 step 2: who a freelance agent is paid as and where — required before the first payout, not before approval.
+/// PDPA: legal identity, tax id, address, identity document and bank account, collected to pay commission and issue
+/// 50 ทวิ; read by the agent and Finance (`agent_payout_profiles.verify`), Sales sees the status only; the account
+/// number is encrypted with its last 4 digits (§8); kept 10 years after the last payment (Revenue Code s.87/3).
+model SalesAgentPayoutProfile {
+  id                 BigInt                        @id(map: "pk_sales_agent_payout_profiles") @default(autoincrement())
+  publicId           String                        @unique(map: "ux_sales_agent_payout_profiles__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId            BigInt                        @unique(map: "ux_sales_agent_payout_profiles__agent_id") @map("agent_id")
+  legalName          String?                       @map("legal_name")
+  taxId              String?                       @map("tax_id") @db.Char(13)
+  branchCode         String                        @default("00000") @map("branch_code") @db.Char(5)
+  isVatRegistered    Boolean                       @default(false) @map("is_vat_registered")
+  address            String?
+  postcode           String?                       @db.Char(5)
+  idDocumentFileId   BigInt?                       @map("id_document_file_id")
+  bankCode           String?                       @map("bank_code")
+  bankBranchName     String?                       @map("bank_branch_name")
+  bankAccountName    String?                       @map("bank_account_name")
+  bankAccountNoEnc   Bytes?                        @map("bank_account_no_enc")
+  bankAccountNoLast4 String?                       @map("bank_account_no_last4") @db.Char(4)
+  bankBookFileId     BigInt?                       @map("bank_book_file_id")
+  status             SalesAgentPayoutProfileStatus @default(draft)
+  submittedAt        DateTime?                     @map("submitted_at") @db.Timestamptz(6)
+  verifiedAt         DateTime?                     @map("verified_at") @db.Timestamptz(6)
+  verifiedById       BigInt?                       @map("verified_by")
+  rejectReason       String?                       @map("reject_reason")
+  createdAt          DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                           @default(1) @map("row_version")
+
+  agent          SalesAgent  @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_payout_profiles__agent_id")
+  idDocumentFile FileObject? @relation("SalesAgentPayoutProfileIdDocument", fields: [idDocumentFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_payout_profiles__id_document_file_id")
+  bankBookFile   FileObject? @relation("SalesAgentPayoutProfileBankBook", fields: [bankBookFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_payout_profiles__bank_book_file_id")
+  verifiedBy     User?       @relation("SalesAgentPayoutProfileVerifiedBy", fields: [verifiedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_payout_profiles__verified_by") // client: keep
+
+  @@index([status, submittedAt], map: "ix_sales_agent_payout_profiles__status__submitted_at")
+  @@index([idDocumentFileId], map: "ix_sales_agent_payout_profiles__id_document_file_id")
+  @@index([bankBookFileId], map: "ix_sales_agent_payout_profiles__bank_book_file_id")
+  @@index([verifiedById], map: "ix_sales_agent_payout_profiles__verified_by")
+  @@map("sales_agent_payout_profiles")
 }
