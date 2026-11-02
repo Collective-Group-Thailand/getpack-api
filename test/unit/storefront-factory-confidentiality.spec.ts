@@ -15,11 +15,7 @@ const FORBIDDEN = /factory|factories|partner|machine|plant|minFactories|coverage
  * list short; adding to it needs a decision.
  */
 const ALLOWED = new Set<string>([
-  // The agent programme's own terms (D-419): the bounty an agent earns for bringing a new factory. A rule of the
-  // programme, not an identity, count or location of any partner.
-  'AgentPlanTermsDto.factoryBountyAmount',
-  'AgentPlanTermsDto.factoryQualifyJobs',
-  'AgentPlanTermsDto.factoryQualifyDays',
+  // (empty since P-03 / D-464: the factory referral bounty left the agent programme and its store terms)
 ]);
 
 /**
@@ -29,10 +25,11 @@ const ALLOWED = new Set<string>([
 const FORBIDDEN_VALUE = /factory|capacity|โรงงาน/i;
 
 /**
- * Enums whose factory value is the sales-agent programme's own term (D-417, D-419): an agent registers a factory as a
- * lead and earns its bounty — a rule of the programme, never an existing partner's identity, count or location.
+ * Enums whose factory value is the sales-agent programme's own term: `AgentCommissionKind.factory_bounty` stays for the
+ * history of entries earned before P-03 / D-464 (no new ones). Agents register customer leads only
+ * (`StoreAgentLeadKind`), so `AgentLeadKind` is staff-only now.
  */
-const ALLOWED_ENUMS = new Set(['AgentLeadKind', 'AgentCommissionKind']);
+const ALLOWED_ENUMS = new Set(['AgentCommissionKind']);
 
 /** Operations removed by D-435; they must not come back. */
 const REMOVED_PATHS = ['/v1/store/network/stats'];
@@ -205,8 +202,8 @@ describe('storefront responses never carry factory data (D-435, GLOBAL-RULES §1
       for (const [status, response] of Object.entries(operation.responses ?? {})) {
         if (!status.startsWith('2')) continue;
         for (const text of exampleStringsOf(response))
-          // The agent programme's lead kind `factory` is its own term (ALLOWED_ENUMS).
-          if (FORBIDDEN_VALUE.test(text) && text !== 'factory' && text !== 'factory_bounty')
+          // The retired bounty's commission kind is history (ALLOWED_ENUMS).
+          if (FORBIDDEN_VALUE.test(text) && text !== 'factory_bounty')
             leaks.push(`${operation.operationId} ${status}: ${text}`);
       }
     }
@@ -237,5 +234,40 @@ describe('storefront responses never carry factory data (D-435, GLOBAL-RULES §1
     expect(exampleStringsOf({ example: { statusLabelAdminTh: 'รอโรงงานรับงาน' } })).toContain(
       'รอโรงงานรับงาน',
     );
+  });
+});
+
+/**
+ * D-464 (owner 2026-11-01): no profit / margin wording anywhere an agent or a visitor can see, and no commission cap.
+ * The margin alert is internal; the agent's terms say "ไม่จำกัดรายได้".
+ */
+describe('agent-facing responses carry no profit, margin or cap (D-464)', () => {
+  const agentOperations = storeOperations.filter(({ path }) => path.startsWith('/v1/store/agent'));
+  const WORDING = /margin|profit|กำไร|cap(Amount|Pct)?$|maxCommission/i;
+
+  it('covers the agent surface', () => {
+    expect(agentOperations.length).toBeGreaterThan(10);
+  });
+
+  it('has no margin, profit or cap field in any agent response schema or example', () => {
+    const leaks: string[] = [];
+    for (const { operation } of agentOperations)
+      for (const [status, response] of Object.entries(operation.responses ?? {})) {
+        for (const field of fieldsOf(response))
+          if (WORDING.test(field.split('.').pop()!)) leaks.push(`${operation.operationId} ${status}: ${field}`);
+        if (!status.startsWith('2')) continue;
+        for (const key of exampleKeysOf(response))
+          if (WORDING.test(key)) leaks.push(`${operation.operationId} ${status}: ${key}`);
+        for (const text of exampleStringsOf(response))
+          if (/กำไร|profit|margin/i.test(text)) leaks.push(`${operation.operationId} ${status}: ${text}`);
+      }
+    expect([...new Set(leaks)]).toEqual([]);
+  });
+
+  it('accepts customer leads only (P-03)', () => {
+    const op = contract.paths['/v1/store/agent/leads']?.['post'] as Node | undefined;
+    expect(JSON.stringify(op)).toContain('agents.lead_kind_unsupported');
+    const kinds = contract.components.schemas['StoreAgentLeadKind'] as { enum?: string[] } | undefined;
+    expect(kinds?.enum).toEqual(['customer']);
   });
 });

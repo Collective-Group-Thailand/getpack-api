@@ -62,6 +62,18 @@ export function termsOf(v: SalesAgentPlanVersion | null) {
   };
 }
 
+/** D-464: what an agent or a visitor sees of a plan version — rates and months, no cap, margin or bounty. */
+export function storeTermsOf(v: SalesAgentPlanVersion | null) {
+  if (!v) return null;
+  return {
+    firstOrderPct: D(v.firstOrderPct).toString(),
+    repeatOrderPct: D(v.repeatOrderPct).toString(),
+    attributionMonths: v.attributionMonths,
+    minBaseAmount: v.minBaseAmount.toFixed(2),
+    uncapped: true as const,
+  };
+}
+
 export function invalid(path: string, message: string, code = 'invalid'): never {
   throw new DomainException('validation.failed', { errors: [{ path, code, message }] });
 }

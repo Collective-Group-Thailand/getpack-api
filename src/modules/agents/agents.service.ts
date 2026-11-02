@@ -17,7 +17,16 @@ import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
-import { D, invalid, newAgentCode, planVersionAt, recordAgentEvent, termsOf, ZERO } from './agent-shared';
+import {
+  D,
+  invalid,
+  newAgentCode,
+  planVersionAt,
+  recordAgentEvent,
+  storeTermsOf,
+  termsOf,
+  ZERO,
+} from './agent-shared';
 import { type SubmitAgentApplicationDto } from './agents.dto';
 
 export const AGREEMENT_KEY = 'sales_agent_agreement';
@@ -113,7 +122,7 @@ export class AgentsService {
             textEn: agreement.textEn,
           }
         : null,
-      plan: plan ? termsOf(await planVersionAt(this.prisma, plan.id, now)) : null,
+      plan: plan ? storeTermsOf(await planVersionAt(this.prisma, plan.id, now)) : null,
       linkCookieDays: rules.value.linkCookieDays,
       leadProtectionDays: rules.value.leadProtectionDays,
       paymentTermsDays: rules.value.paymentTermsDays,
@@ -423,6 +432,16 @@ export class AgentsService {
   /** The terms of an agent's plan in force now. */
   async termsNow(planId: bigint) {
     return termsOf(await planVersionAt(this.prisma, planId, new Date()));
+  }
+
+  /** D-465: the personal allowance used without an accepted ล.ย.01. */
+  async personalAllowance(): Promise<string> {
+    return (await this.settings.at('tax.wht_40_2.personal_allowance', { at: new Date() })).value;
+  }
+
+  /** D-464: the terms an agent sees (no cap, margin or bounty). */
+  async storeTermsNow(planId: bigint) {
+    return storeTermsOf(await planVersionAt(this.prisma, planId, new Date()));
   }
 
   /** The money and counts an agent's pages lead with. */
@@ -862,8 +881,9 @@ export class AgentsService {
       if (D(t[key]).gt(100)) invalid(key, 'at most 100', 'max');
     if (D(t.repeatOrderPct).gt(t.firstOrderPct))
       invalid('repeatOrderPct', 'not more than the first-order rate', 'order');
-    if (D(t.factoryBountyAmount).gt(0) && (t.factoryQualifyJobs < 1 || t.factoryQualifyDays < 1))
-      invalid('factoryQualifyJobs', 'a bounty needs qualifying jobs and days', 'bounty');
+    // P-03 / D-464: the factory referral bounty is retired; new versions carry none.
+    if (D(t.factoryBountyAmount).gt(0) || t.factoryQualifyJobs > 0 || t.factoryQualifyDays > 0)
+      throw new DomainException('agent_plans.bounty_retired');
   }
 
   private termsData(t: TermsInput) {
