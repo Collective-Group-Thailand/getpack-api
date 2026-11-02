@@ -1,10 +1,12 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
+import { StoreFaqDto } from '@modules/catalog/store/store-catalog.dto';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
+  ArrayMinSize,
   IsArray,
   IsBoolean,
   IsEmail,
@@ -68,6 +70,7 @@ export const AGENT_IDS = {
   invoice: '0192f3a0-7c1e-7d2a-9b1f-0000000a6017',
   agreement: '0192f3a0-7c1e-7d2a-9b1f-0000000a6018',
   declaration: '0192f3a0-7c1e-7d2a-9b1f-0000000a6019',
+  payoutProfile: '0192f3a0-7c1e-7d2a-9b1f-0000000a6020',
 };
 
 // --- plans ------------------------------------------------------------------------------------------------
@@ -403,44 +406,65 @@ export const AGENT_PROGRAMME_EXAMPLE: AgentProgrammeDto = {
   state: 'none',
 };
 
+export const SALES_CHANNELS = [
+  'line_groups',
+  'facebook',
+  'own_network',
+  'agency',
+  'print_shop',
+  'design_studio',
+  'other',
+] as const;
+
+/**
+ * D-466 step 1 — apply: who you are, how to reach you, how you sell, and the agreement. Tax id, address, identity
+ * document and bank account come later in the payout profile, before the first payout.
+ */
 export class SubmitAgentApplicationDto {
   @ApiProperty({ enum: JURISTIC_TYPES, enumName: 'JuristicType', example: 'individual' })
   @IsIn(JURISTIC_TYPES)
   juristicType!: (typeof JURISTIC_TYPES)[number];
 
-  @ApiProperty({ example: 'สมชาย ขายเก่ง', description: 'As on the ID card or company certificate' })
+  @ApiProperty({
+    example: 'สมชาย ขายเก่ง',
+    description: 'Your name (an individual) or the registered name (a company or partnership)',
+  })
   @IsString()
   @MinLength(2)
   @MaxLength(200)
-  legalName!: string;
+  displayName!: string;
 
   @ApiProperty({
-    example: '0000000000127',
-    pattern: TAX_ID.source,
-    description: 'Citizen id or company tax id',
+    example: '+66810005678',
+    pattern: E164.source,
+    description: 'Must be the verified phone of the signed-in account, else `agents.phone_unverified` (run OTP)',
   })
-  @Matches(TAX_ID)
-  taxId!: string;
+  @Matches(E164)
+  phone!: string;
 
-  @ApiPropertyOptional({ example: '00000', pattern: '^\\d{5}$' })
+  @ApiProperty({ example: 'somchai@example.invalid' })
+  @IsEmail()
+  @MaxLength(200)
+  email!: string;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'somchai.sales' })
   @IsOptional()
-  @Matches(/^\d{5}$/)
-  branchCode?: string;
-
-  @ApiPropertyOptional({ example: false, description: 'VAT registered (juristic agents)' })
-  @IsOptional()
-  @IsBoolean()
-  isVatRegistered?: boolean;
-
-  @ApiProperty({ example: '99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ' })
   @IsString()
-  @MinLength(10)
-  @MaxLength(500)
-  address!: string;
+  @MaxLength(60)
+  lineId?: string | null;
 
-  @ApiProperty({ example: '10310', pattern: '^\\d{5}$' })
-  @Matches(/^\d{5}$/)
-  postcode!: string;
+  @ApiProperty({
+    enum: SALES_CHANNELS,
+    enumName: 'AgentSalesChannel',
+    isArray: true,
+    example: ['line_groups', 'own_network'],
+    description: 'How you sell (at least one)',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(7)
+  @IsIn(SALES_CHANNELS, { each: true })
+  salesChannels!: (typeof SALES_CHANNELS)[number][];
 
   @ApiPropertyOptional({
     type: String,
@@ -451,39 +475,6 @@ export class SubmitAgentApplicationDto {
   @IsString()
   @MaxLength(1000)
   pitch?: string | null;
-
-  @ApiProperty({
-    format: 'uuid',
-    example: AGENT_IDS.file,
-    description: 'ID card or company certificate (uploaded)',
-  })
-  @IsUUID()
-  idDocumentFileId!: string;
-
-  @ApiProperty({ example: '014', description: 'Bank code' })
-  @Matches(/^\d{3}$/)
-  bankCode!: string;
-
-  @ApiPropertyOptional({ type: String, nullable: true, example: 'สาขาลาดพร้าว' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
-  bankBranchName?: string | null;
-
-  @ApiProperty({ example: 'สมชาย ขายเก่ง', description: 'Must match the legal name' })
-  @IsString()
-  @MinLength(2)
-  @MaxLength(200)
-  bankAccountName!: string;
-
-  @ApiProperty({ example: '1234567890', description: 'Digits only; stored encrypted' })
-  @Matches(/^[0-9 -]{6,20}$/)
-  bankAccountNo!: string;
-
-  @ApiPropertyOptional({ type: String, format: 'uuid', nullable: true, example: null })
-  @IsOptional()
-  @IsUUID()
-  bankBookFileId?: string | null;
 
   @ApiProperty({ type: 'integer', example: 1, description: 'The agreement version read and accepted' })
   @Type(() => Number)
@@ -513,8 +504,8 @@ export class AgentApplicationDto {
   @ApiProperty({ example: 'สมชาย ขายเก่ง' })
   legalName!: string;
 
-  @ApiProperty({ example: '0000000000127' })
-  taxId!: string;
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Before D-466 only (now in the payout profile)' })
+  taxId!: string | null;
 
   @ApiProperty({ example: '00000' })
   branchCode!: string;
@@ -522,29 +513,41 @@ export class AgentApplicationDto {
   @ApiProperty({ example: false })
   isVatRegistered!: boolean;
 
-  @ApiProperty({ example: '99/1 ถนนพระราม 9 …' })
-  address!: string;
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Before D-466 only' })
+  address!: string | null;
 
-  @ApiProperty({ example: '10310' })
-  postcode!: string;
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Before D-466 only' })
+  postcode!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '+66810005678' })
+  phone!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'somchai@example.invalid' })
+  email!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'somchai.sales' })
+  lineId!: string | null;
+
+  @ApiProperty({ enum: SALES_CHANNELS, enumName: 'AgentSalesChannel', isArray: true, example: ['line_groups'] })
+  salesChannels!: string[];
 
   @ApiProperty({ type: String, nullable: true, example: null })
   pitch!: string | null;
 
-  @ApiProperty({ example: '014' })
-  bankCode!: string;
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Before D-466 only' })
+  bankCode!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: null })
   bankBranchName!: string | null;
 
-  @ApiProperty({ example: 'สมชาย ขายเก่ง' })
-  bankAccountName!: string;
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Before D-466 only' })
+  bankAccountName!: string | null;
 
-  @ApiProperty({ example: '7890', description: 'Last 4 digits only (PDPA)' })
-  bankAccountNoLast4!: string;
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Last 4 digits only (PDPA); before D-466 only' })
+  bankAccountNoLast4!: string | null;
 
-  @ApiProperty({ type: AgentFileRefDto })
-  idDocument!: AgentFileRefDto;
+  @ApiProperty({ type: AgentFileRefDto, nullable: true, description: 'Before D-466 only' })
+  idDocument!: AgentFileRefDto | null;
 
   @ApiProperty({ type: AgentFileRefDto, nullable: true })
   bankBook!: AgentFileRefDto | null;
@@ -568,12 +571,6 @@ export class AgentApplicationDto {
 export class AdminAgentApplicationDto extends AgentApplicationDto {
   @ApiProperty({ type: UserRefDto, description: 'The customer account' })
   user!: UserRefDto;
-
-  @ApiProperty({ type: String, nullable: true, example: '+66810005678' })
-  phone!: string | null;
-
-  @ApiProperty({ type: String, nullable: true, example: 'somchai@example.invalid' })
-  email!: string | null;
 
   @ApiProperty({ type: UserRefDto, nullable: true })
   decidedBy!: UserRefDto | null;
@@ -601,17 +598,21 @@ export const APPLICATION_EXAMPLE: AgentApplicationDto = {
   status: 'submitted',
   juristicType: 'individual',
   legalName: 'สมชาย ขายเก่ง',
-  taxId: '0000000000127',
+  taxId: null,
   branchCode: '00000',
   isVatRegistered: false,
-  address: '99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ',
-  postcode: '10310',
+  address: null,
+  postcode: null,
+  phone: '+66810005678',
+  email: 'somchai@example.invalid',
+  lineId: 'somchai.sales',
+  salesChannels: ['line_groups', 'own_network'],
   pitch: null,
-  bankCode: '014',
+  bankCode: null,
   bankBranchName: null,
-  bankAccountName: 'สมชาย ขายเก่ง',
-  bankAccountNoLast4: '7890',
-  idDocument: { id: AGENT_IDS.file, originalName: 'id-card.jpg' },
+  bankAccountName: null,
+  bankAccountNoLast4: null,
+  idDocument: null,
   bankBook: null,
   agreementVersionNo: 1,
   agreementAcceptedAt: '2026-10-16T10:00:00+07:00',
@@ -623,8 +624,6 @@ export const APPLICATION_EXAMPLE: AgentApplicationDto = {
 export const ADMIN_APPLICATION_EXAMPLE: AdminAgentApplicationDto = {
   ...APPLICATION_EXAMPLE,
   user: { id: AGENT_IDS.user, displayName: 'สมชาย ขายเก่ง' },
-  phone: '+66810005678',
-  email: null,
   decidedBy: null,
   agentId: null,
   checks: [],
@@ -1868,3 +1867,274 @@ export class AttachAgentTaxInvoiceDto {
 
 export const isMonth = (v: string) => MONTH.test(v);
 export const isTaxId = (v: string) => TAX_ID.test(v);
+
+// --- D-466 payout profile (step 2) ---------------------------------------------------------------------------
+
+export const PAYOUT_PROFILE_STATUSES = ['draft', 'submitted', 'verified', 'rejected'] as const;
+
+export class UpsertAgentPayoutProfileDto {
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'สมชาย ขายเก่ง', description: 'As on the ID card or company certificate' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  legalName?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: '0000000000124', description: '13 digits with a valid check digit' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(17)
+  taxId?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: '00000' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5)
+  branchCode?: string | null;
+
+  @ApiPropertyOptional({ type: Boolean, nullable: true, example: false, description: 'Juristic agents only' })
+  @IsOptional()
+  @IsBoolean()
+  isVatRegistered?: boolean | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: '99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  address?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: '10310' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(5)
+  postcode?: string | null;
+
+  @ApiPropertyOptional({ type: String, format: 'uuid', nullable: true, example: AGENT_IDS.file })
+  @IsOptional()
+  @IsUUID()
+  idDocumentFileId?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: '014' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(3)
+  bankCode?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'สาขาลาดพร้าว' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  bankBranchName?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'สมชาย ขายเก่ง', description: 'Must match the legal name' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(200)
+  bankAccountName?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: '1234567890', description: 'Digits; stored encrypted' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  bankAccountNo?: string | null;
+
+  @ApiPropertyOptional({ type: String, format: 'uuid', nullable: true, example: null })
+  @IsOptional()
+  @IsUUID()
+  bankBookFileId?: string | null;
+}
+
+export class AgentPayoutProfileDto {
+  @IdField(AGENT_IDS.payoutProfile)
+  id!: string;
+
+  @ApiProperty({ enum: PAYOUT_PROFILE_STATUSES, enumName: 'AgentPayoutProfileStatus', example: 'submitted' })
+  status!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'สมชาย ขายเก่ง' })
+  legalName!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '0000000000124' })
+  taxId!: string | null;
+
+  @ApiProperty({ example: '00000' })
+  branchCode!: string;
+
+  @ApiProperty({ example: false })
+  isVatRegistered!: boolean;
+
+  @ApiProperty({ type: String, nullable: true, example: '99/1 ถนนพระราม 9 …' })
+  address!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '10310' })
+  postcode!: string | null;
+
+  @ApiProperty({ type: AgentFileRefDto, nullable: true })
+  idDocument!: AgentFileRefDto | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '014' })
+  bankCode!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  bankBranchName!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'สมชาย ขายเก่ง' })
+  bankAccountName!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: '7890', description: 'Last 4 digits only (PDPA)' })
+  bankAccountNoLast4!: string | null;
+
+  @ApiProperty({ type: AgentFileRefDto, nullable: true })
+  bankBook!: AgentFileRefDto | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-03T10:00:00+07:00' })
+  submittedAt!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  verifiedAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Why Finance rejected it' })
+  rejectReason!: string | null;
+
+  @ApiProperty({ type: 'integer', example: 2 })
+  rowVersion!: number;
+}
+
+export class MyPayoutProfileDto {
+  @ApiProperty({ example: true, description: 'Freelance agents fill it in; employees are paid through payroll' })
+  applicable!: boolean;
+
+  @ApiProperty({ example: false, description: 'Commission can be paid now (verified, or set up before D-466)' })
+  payoutReady!: boolean;
+
+  @ApiProperty({ enum: JURISTIC_TYPES, enumName: 'JuristicType', example: 'individual' })
+  juristicType!: string;
+
+  @ApiProperty({ type: AgentPayoutProfileDto, nullable: true, description: 'Null before the first save' })
+  profile!: AgentPayoutProfileDto | null;
+}
+
+export class AdminAgentPayoutProfileDto extends AgentPayoutProfileDto {
+  @ApiProperty({ type: AgentRefDto })
+  agent!: AgentRefDto;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  verifiedBy!: UserRefDto | null;
+}
+
+export const PAYOUT_PROFILE_EXAMPLE: AgentPayoutProfileDto = {
+  id: AGENT_IDS.payoutProfile,
+  status: 'submitted',
+  legalName: 'สมชาย ขายเก่ง',
+  taxId: '0000000000124',
+  branchCode: '00000',
+  isVatRegistered: false,
+  address: '99/1 ถนนพระราม 9 แขวงห้วยขวาง เขตห้วยขวาง กรุงเทพฯ',
+  postcode: '10310',
+  idDocument: { id: AGENT_IDS.file, originalName: 'id-card.jpg' },
+  bankCode: '014',
+  bankBranchName: null,
+  bankAccountName: 'สมชาย ขายเก่ง',
+  bankAccountNoLast4: '7890',
+  bankBook: null,
+  submittedAt: '2026-11-03T10:00:00+07:00',
+  verifiedAt: null,
+  rejectReason: null,
+  rowVersion: 2,
+};
+
+export const MY_PAYOUT_PROFILE_EXAMPLE: MyPayoutProfileDto = {
+  applicable: true,
+  payoutReady: false,
+  juristicType: 'individual',
+  profile: PAYOUT_PROFILE_EXAMPLE,
+};
+
+export const ADMIN_PAYOUT_PROFILE_EXAMPLE: AdminAgentPayoutProfileDto = {
+  ...PAYOUT_PROFILE_EXAMPLE,
+  agent: { id: AGENT_IDS.agent, code: 'K7QX2MAP', legalName: 'สมชาย ขายเก่ง', kind: 'freelance' },
+  verifiedBy: null,
+};
+
+export class PayoutProfileListQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: PAYOUT_PROFILE_STATUSES, enumName: 'AgentPayoutProfileStatus' })
+  @IsOptional()
+  @IsIn(PAYOUT_PROFILE_STATUSES)
+  status?: (typeof PAYOUT_PROFILE_STATUSES)[number];
+}
+
+// --- D-466 public programme (landing) ------------------------------------------------------------------------
+
+export class AgentCommissionExampleDto {
+  @ApiProperty({ example: '100000.00', description: 'Order value before VAT, excluding shipping (the base)' })
+  orderValue!: string;
+
+  @ApiProperty({ example: '5000.00', description: 'Commission when it is the customer’s first order' })
+  firstOrder!: string;
+
+  @ApiProperty({ example: '3000.00', description: 'Commission on a later order' })
+  repeatOrder!: string;
+}
+
+export class PublicAgentProgrammeDto {
+  @ApiProperty({ type: StoreAgentTermsDto, nullable: true, description: 'The standard freelance plan in force' })
+  terms!: StoreAgentTermsDto | null;
+
+  @ApiProperty({ type: 'integer', example: 90, description: 'Days a visit through an agent link is remembered' })
+  linkCookieDays!: number;
+
+  @ApiProperty({ type: 'integer', example: 60, description: 'Days a registered lead is protected' })
+  leadProtectionDays!: number;
+
+  @ApiProperty({
+    type: 'integer',
+    example: 15,
+    description: 'Statements are made on the 1st; payment within this many days of approval (`agents.rules`)',
+  })
+  paymentTermsDays!: number;
+
+  @ApiProperty({ example: true, description: 'Applying is open (feature flag `agents.programme`); else a waiting list' })
+  applyOpen!: boolean;
+
+  @ApiProperty({ type: AgentAgreementTextDto, nullable: true, description: 'The agreement in force (public text)' })
+  agreement!: AgentAgreementTextDto | null;
+
+  @ApiProperty({ type: [AgentCommissionExampleDto], description: 'Worked examples at fixed order values' })
+  examples!: AgentCommissionExampleDto[];
+
+  @ApiProperty({ type: [StoreFaqDto], description: 'Published FAQs of the CMS category `agent_programme`' })
+  faqs!: StoreFaqDto[];
+}
+
+export const PUBLIC_PROGRAMME_EXAMPLE: PublicAgentProgrammeDto = {
+  terms: STORE_TERMS_EXAMPLE,
+  linkCookieDays: 90,
+  leadProtectionDays: 60,
+  paymentTermsDays: 15,
+  applyOpen: false,
+  agreement: {
+    key: 'sales_agent_agreement',
+    versionNo: 1,
+    effectiveFrom: '2026-01-01T00:00:00+07:00',
+    textTh: 'ข้อตกลงตัวแทนขาย getpack (ฉบับที่ 1) …',
+    textEn: null,
+  },
+  examples: [
+    { orderValue: '20000.00', firstOrder: '1000.00', repeatOrder: '600.00' },
+    { orderValue: '100000.00', firstOrder: '5000.00', repeatOrder: '3000.00' },
+    { orderValue: '1000000.00', firstOrder: '50000.00', repeatOrder: '30000.00' },
+  ],
+  faqs: [
+    {
+      questionTh: 'ได้ค่าคอมเมื่อไร',
+      questionEn: 'When am I paid?',
+      answerTh: 'สรุปทุกต้นเดือน แล้วโอนภายใน 15 วันหลังทีมบัญชีอนุมัติ',
+      answerEn: null,
+    },
+  ],
+};
+
+export class AgentCommissionExampleQuery {
+  @ApiProperty({ example: '250000', description: 'Order value before VAT (baht, up to 2 decimals)' })
+  @Matches(/^\d{1,10}(\.\d{1,2})?$/)
+  orderValue!: string;
+}
