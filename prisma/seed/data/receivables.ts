@@ -77,6 +77,15 @@ export const CREDIT_NOTE_REASONS = [
   },
 ] as const;
 
+/** D-466 (agent portal pack): FEATURE_AGENT_PROGRAMME — applying to the agent programme; off until the owner opens it. */
+export const AGENT_FEATURE_FLAGS = [
+  {
+    key: 'agents.programme',
+    description:
+      'D-466 sales agents can apply (FEATURE_AGENT_PROGRAMME); off until the agreement v2 is approved and published (S-04). A pilot list goes in the rules (userIds); the public landing shows a waiting list while off',
+  },
+] as const;
+
 export const FINANCE_FEATURE_FLAGS = [
   {
     key: 'e_tax.sending',
