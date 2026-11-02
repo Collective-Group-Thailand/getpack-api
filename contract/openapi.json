@@ -20887,6 +20887,14 @@
         ],
         "type": "object"
       },
+      "AuthClient": {
+        "description": "The surface signing in (D-467): `agent` from the agent zone (agent.getpack.co), else `storefront`. The session is recorded with it and listed / revoked per surface.",
+        "enum": [
+          "storefront",
+          "agent"
+        ],
+        "type": "string"
+      },
       "B2bCompanyDto": {
         "properties": {
           "id": {
@@ -38379,6 +38387,35 @@
           "cancelled"
         ],
         "type": "string"
+      },
+      "CustomerOtpVerifyDto": {
+        "properties": {
+          "challengeId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+            "format": "uuid",
+            "type": "string"
+          },
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthClient"
+              }
+            ],
+            "default": "storefront",
+            "description": "The surface signing in (D-467): `agent` from the agent zone (agent.getpack.co), else `storefront`. The session is recorded with it and listed / revoked per surface.",
+            "example": "agent"
+          },
+          "code": {
+            "example": "123456",
+            "pattern": "^\\d{4,8}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challengeId",
+          "code"
+        ],
+        "type": "object"
       },
       "CustomerProfileDto": {
         "properties": {
@@ -68673,6 +68710,16 @@
       },
       "FirebaseLoginDto": {
         "properties": {
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthClient"
+              }
+            ],
+            "default": "storefront",
+            "description": "The surface signing in (D-467): `agent` from the agent zone (agent.getpack.co), else `storefront`. The session is recorded with it and listed / revoked per surface.",
+            "example": "agent"
+          },
           "idToken": {
             "description": "Firebase Auth ID token (Google or Apple)",
             "example": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImV4YW1wbGUifQ.eyJzdWIiOiJleGFtcGxlIn0.c2ln",
@@ -75696,6 +75743,16 @@
       },
       "LineLoginDto": {
         "properties": {
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthClient"
+              }
+            ],
+            "default": "storefront",
+            "description": "The surface signing in (D-467): `agent` from the agent zone (agent.getpack.co), else `storefront`. The session is recorded with it and listed / revoked per surface.",
+            "example": "agent"
+          },
           "idToken": {
             "description": "LINE Login ID token (web)",
             "example": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJleGFtcGxlIn0.c2ln",
@@ -75936,6 +75993,18 @@
           "en"
         ],
         "type": "object"
+      },
+      "LoginMethod": {
+        "enum": [
+          "password",
+          "phone_otp",
+          "firebase_google",
+          "firebase_apple",
+          "line",
+          "line_liff",
+          "device_pin"
+        ],
+        "type": "string"
       },
       "LoyaltySummaryDto": {
         "properties": {
@@ -77220,6 +77289,87 @@
           "status",
           "joinedAt",
           "rewardPoints"
+        ],
+        "type": "object"
+      },
+      "MySessionDto": {
+        "properties": {
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthClient"
+              }
+            ],
+            "example": "agent"
+          },
+          "current": {
+            "description": "The session making this request",
+            "example": false,
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "description": "Idle expiry",
+            "example": "2026-11-10T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "description": "The session (its refresh-token family; the access token’s `sid`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000a5e5",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lastActiveAt": {
+            "description": "Last refresh (or sign-in)",
+            "example": "2026-11-03T14:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "loginMethod": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LoginMethod"
+              }
+            ],
+            "example": "line"
+          },
+          "signedInAt": {
+            "example": "2026-11-03T09:15:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "userAgent": {
+            "description": "Browser as reported at the last refresh",
+            "example": "Mozilla/5.0 (fake test agent)",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "client",
+          "loginMethod",
+          "signedInAt",
+          "lastActiveAt",
+          "expiresAt",
+          "userAgent",
+          "current"
+        ],
+        "type": "object"
+      },
+      "MySessionListDto": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/MySessionDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
         ],
         "type": "object"
       },
@@ -96345,6 +96495,41 @@
           "productTypeCode",
           "count",
           "averageRating"
+        ],
+        "type": "object"
+      },
+      "RevokeMySessionsDto": {
+        "properties": {
+          "client": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AuthClient"
+              }
+            ],
+            "example": "agent"
+          },
+          "includeCurrent": {
+            "default": false,
+            "description": "Also end the session making this request (it is kept by default)",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "client"
+        ],
+        "type": "object"
+      },
+      "RevokedSessionsDto": {
+        "properties": {
+          "revoked": {
+            "description": "Sessions signed out",
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "revoked"
         ],
         "type": "object"
       },
@@ -367646,7 +367831,7 @@
     },
     "/v1/auth/customer/firebase": {
       "post": {
-        "description": "Exchanges a Firebase Auth ID token. A known identity signs in its customer; a new one is linked to the signed-in customer when a customer bearer token is sent, otherwise a new customer is created. Accounts are never linked by e-mail alone.\n\nImplements: ADR-0004.",
+        "description": "Exchanges a Firebase Auth ID token. A known identity signs in its customer; a new one is linked to the signed-in customer when a customer bearer token is sent, otherwise a new customer is created. Accounts are never linked by e-mail alone. `client: agent` opens an agent-zone session (D-467).\n\nImplements: ADR-0004, D-467.",
         "operationId": "auth.customer.firebase",
         "parameters": [
           {
@@ -367657,6 +367842,12 @@
           "content": {
             "application/json": {
               "examples": {
+                "agentZone": {
+                  "value": {
+                    "client": "agent",
+                    "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImV4YW1wbGUifQ.eyJzdWIiOiJleGFtcGxlIn0.c2ln"
+                  }
+                },
                 "default": {
                   "value": {
                     "idToken": "eyJhbGciOiJSUzI1NiIsImtpZCI6ImV4YW1wbGUifQ.eyJzdWIiOiJleGFtcGxlIn0.c2ln"
@@ -367895,7 +368086,7 @@
     },
     "/v1/auth/customer/line": {
       "post": {
-        "description": "Send a LINE Login `idToken` (web) or a `liffAccessToken` (inside LINE, D-151). A known LINE account signs in its customer. A new one is linked: to the signed-in customer (bearer token), else to the customer of a verified `link_phone` OTP (`otpChallengeId` + `otpCode`, account created if new), else a new customer is created.\n\nImplements: ADR-0004, D-151.",
+        "description": "Send a LINE Login `idToken` (web) or a `liffAccessToken` (inside LINE, D-151). A known LINE account signs in its customer. A new one is linked: to the signed-in customer (bearer token), else to the customer of a verified `link_phone` OTP (`otpChallengeId` + `otpCode`, account created if new), else a new customer is created. `client: agent` opens an agent-zone session (D-467).\n\nImplements: ADR-0004, D-151, D-467.",
         "operationId": "auth.customer.line",
         "parameters": [
           {
@@ -367906,6 +368097,12 @@
           "content": {
             "application/json": {
               "examples": {
+                "agentZone": {
+                  "value": {
+                    "client": "agent",
+                    "idToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJleGFtcGxlIn0.c2ln"
+                  }
+                },
                 "liff": {
                   "value": {
                     "liffAccessToken": "liff-access-token-example"
@@ -368333,7 +368530,7 @@
     },
     "/v1/auth/customer/otp/verify": {
       "post": {
-        "description": "Checks the code (limited attempts per challenge; a code works once). Signs in the customer with that phone, creating the account on first use (`customer.registered` event).\n\nImplements: ADR-0004.",
+        "description": "Checks the code (limited attempts per challenge; a code works once). Signs in the customer with that phone, creating the account on first use (`customer.registered` event). `client: agent` opens an agent-zone session (agent.getpack.co), separate from storefront sessions (D-467).\n\nImplements: ADR-0004, D-467.",
         "operationId": "auth.customer.verifyOtp",
         "parameters": [
           {
@@ -368344,6 +368541,13 @@
           "content": {
             "application/json": {
               "examples": {
+                "agentZone": {
+                  "value": {
+                    "challengeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
+                    "client": "agent",
+                    "code": "123456"
+                  }
+                },
                 "default": {
                   "value": {
                     "challengeId": "0192f3a0-7c1e-7d2a-9b1f-00000000c0de",
@@ -368352,7 +368556,7 @@
                 }
               },
               "schema": {
-                "$ref": "#/components/schemas/OtpVerifyDto"
+                "$ref": "#/components/schemas/CustomerOtpVerifyDto"
               }
             }
           },
@@ -552541,6 +552745,362 @@
           }
         ],
         "summary": "Ask for an export or the deletion of my data",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
+    "/v1/store/me/sessions": {
+      "get": {
+        "description": "Open sessions of the signed-in customer with the surface each was opened from (`storefront` or `agent` — the agent zone agent.getpack.co), newest activity first (D-467). One row per session (refresh-token family).\n\nImplements: ADR-0004, D-467.",
+        "operationId": "store.me.sessions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "client": "agent",
+                      "current": false,
+                      "expiresAt": "2026-11-10T14:05:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-00000000a5e5",
+                      "lastActiveAt": "2026-11-03T14:05:00+07:00",
+                      "loginMethod": "line",
+                      "signedInAt": "2026-11-03T09:15:00+07:00",
+                      "userAgent": "Mozilla/5.0 (fake test agent)"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/MySessionListDto"
+                }
+              }
+            },
+            "description": "Sessions",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.session_revoked": {
+                    "$ref": "#/components/examples/problem.auth.session_revoked"
+                  },
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.session_revoked`, `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my signed-in sessions",
+        "tags": [
+          "store.me"
+        ]
+      }
+    },
+    "/v1/store/me/sessions/actions/revoke": {
+      "post": {
+        "description": "Ends the open sessions of the signed-in customer opened from `client` (`storefront` or `agent`, D-467), including access tokens already issued for them. The session making the request is kept unless `includeCurrent` is true. Audited (`auth.sessions_revoked`) and evented (`customer.sessions_revoked`).\n\nImplements: ADR-0004, D-467.",
+        "operationId": "store.me.revokeSessions",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "client": "agent"
+                  }
+                },
+                "everywhere": {
+                  "value": {
+                    "client": "storefront",
+                    "includeCurrent": true
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RevokeMySessionsDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "revoked": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/RevokedSessionsDto"
+                }
+              }
+            },
+            "description": "Signed out",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Sign out every session of one surface",
         "tags": [
           "store.me"
         ]

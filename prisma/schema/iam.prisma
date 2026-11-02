@@ -52,6 +52,15 @@ enum TokenAudience {
   @@map("token_audience")
 }
 
+/// D-467: the web surface a customer session was opened from. Agent-zone sign-ins (agent.getpack.co) are their own
+/// session families, listed and revoked separately. Staff and partner sessions keep the default (no meaning there).
+enum AuthClient {
+  storefront
+  agent
+
+  @@map("auth_client")
+}
+
 enum SessionRevokeReason {
   logout
   reuse_detected
@@ -957,6 +966,8 @@ model AuthSession {
   refreshTokenHash Bytes                @unique(map: "ux_auth_sessions__refresh_token_hash") @map("refresh_token_hash")
   parentSessionId  BigInt?              @map("parent_session_id")
   loginMethod      LoginMethod          @map("login_method")
+  /// D-467: surface of the session (carried through rotation).
+  client           AuthClient           @default(storefront)
   issuedAt         DateTime             @default(now()) @map("issued_at") @db.Timestamptz(6)
   expiresAt        DateTime             @map("expires_at") @db.Timestamptz(6)
   idleExpiresAt    DateTime             @map("idle_expires_at") @db.Timestamptz(6)

@@ -11,11 +11,11 @@ import { Throttle } from '@nestjs/throttler';
 
 import {
   CUSTOMER_TOKEN_PAIR_EXAMPLE,
+  CustomerOtpVerifyDto,
   FirebaseLoginDto,
   LineLoginDto,
   OtpChallengeDto,
   OtpRequestDto,
-  OtpVerifyDto,
   TokenPairDto,
 } from '../auth.dto';
 import { CustomerLoginService } from '../login/customer-login.service';
@@ -90,12 +90,16 @@ export class CustomerAuthController {
     summary: 'Sign in with the SMS code',
     description:
       'Checks the code (limited attempts per challenge; a code works once). Signs in the customer with that ' +
-      'phone, creating the account on first use (`customer.registered` event).',
-    implements: ['ADR-0004'],
+      'phone, creating the account on first use (`customer.registered` event). `client: agent` opens an ' +
+      'agent-zone session (agent.getpack.co), separate from storefront sessions (D-467).',
+    implements: ['ADR-0004', 'D-467'],
   })
   @ApiBody({
-    type: OtpVerifyDto,
-    examples: { default: { value: { challengeId: OTP_EXAMPLE.challengeId, code: '123456' } } },
+    type: CustomerOtpVerifyDto,
+    examples: {
+      default: { value: { challengeId: OTP_EXAMPLE.challengeId, code: '123456' } },
+      agentZone: { value: { challengeId: OTP_EXAMPLE.challengeId, code: '123456', client: 'agent' } },
+    },
   })
   @ApiSuccess(200, { description: 'Signed in', type: TokenPairDto, example: CUSTOMER_TOKEN_PAIR_EXAMPLE })
   @ApiStandardErrors(
@@ -106,8 +110,8 @@ export class CustomerAuthController {
     'auth.otp_expired',
     'auth.account_inactive',
   )
-  async verifyOtp(@Body() body: OtpVerifyDto): Promise<TokenPairDto> {
-    return toTokenPairDto(await this.logins.withOtp(body.challengeId, body.code));
+  async verifyOtp(@Body() body: CustomerOtpVerifyDto): Promise<TokenPairDto> {
+    return toTokenPairDto(await this.logins.withOtp(body.challengeId, body.code, body.client));
   }
 
   @Post('firebase')
@@ -119,14 +123,20 @@ export class CustomerAuthController {
     description:
       'Exchanges a Firebase Auth ID token. A known identity signs in its customer; a new one is linked to the ' +
       'signed-in customer when a customer bearer token is sent, otherwise a new customer is created. Accounts ' +
-      'are never linked by e-mail alone.',
-    implements: ['ADR-0004'],
+      'are never linked by e-mail alone. `client: agent` opens an agent-zone session (D-467).',
+    implements: ['ADR-0004', 'D-467'],
   })
   @ApiBody({
     type: FirebaseLoginDto,
     examples: {
       default: {
         value: { idToken: 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImV4YW1wbGUifQ.eyJzdWIiOiJleGFtcGxlIn0.c2ln' },
+      },
+      agentZone: {
+        value: {
+          idToken: 'eyJhbGciOiJSUzI1NiIsImtpZCI6ImV4YW1wbGUifQ.eyJzdWIiOiJleGFtcGxlIn0.c2ln',
+          client: 'agent',
+        },
       },
     },
   })
@@ -143,7 +153,7 @@ export class CustomerAuthController {
     'provider.unavailable',
   )
   async firebase(@Body() body: FirebaseLoginDto, @OptionalActor() actor?: Actor): Promise<TokenPairDto> {
-    return toTokenPairDto(await this.logins.withFirebase(body.idToken, signedInCustomer(actor)));
+    return toTokenPairDto(await this.logins.withFirebase(body.idToken, signedInCustomer(actor), body.client));
   }
 
   @Post('line')
@@ -155,13 +165,15 @@ export class CustomerAuthController {
     description:
       'Send a LINE Login `idToken` (web) or a `liffAccessToken` (inside LINE, D-151). A known LINE account signs ' +
       'in its customer. A new one is linked: to the signed-in customer (bearer token), else to the customer of a ' +
-      'verified `link_phone` OTP (`otpChallengeId` + `otpCode`, account created if new), else a new customer is created.',
-    implements: ['ADR-0004', 'D-151'],
+      'verified `link_phone` OTP (`otpChallengeId` + `otpCode`, account created if new), else a new customer is created. ' +
+      '`client: agent` opens an agent-zone session (D-467).',
+    implements: ['ADR-0004', 'D-151', 'D-467'],
   })
   @ApiBody({
     type: LineLoginDto,
     examples: {
       liff: { value: { liffAccessToken: 'liff-access-token-example' } },
+      agentZone: { value: { idToken: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJleGFtcGxlIn0.c2ln', client: 'agent' } },
       linkPhone: {
         value: {
           idToken: 'eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJleGFtcGxlIn0.c2ln',
@@ -193,6 +205,6 @@ export class CustomerAuthController {
         ],
       });
     }
-    return toTokenPairDto(await this.logins.withLine(body, signedInCustomer(actor)));
+    return toTokenPairDto(await this.logins.withLine(body, signedInCustomer(actor), body.client));
   }
 }

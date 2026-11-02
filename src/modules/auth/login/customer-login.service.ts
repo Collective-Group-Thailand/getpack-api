@@ -1,7 +1,7 @@
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type LoginMethod, type User } from '@generated/prisma/client';
+import { type AuthClient, type LoginMethod, type User } from '@generated/prisma/client';
 import { ProviderUnavailableError } from '@integrations/http/resilient-http';
 import {
   FIREBASE_VERIFIER,
@@ -40,23 +40,29 @@ export class CustomerLoginService {
     @Inject(LINE_VERIFIER) private readonly line: LineVerifier,
   ) {}
 
-  async withOtp(challengeId: string, code: string): Promise<TokenPair> {
+  /** `client` (D-467): the surface signing in; its session is listed and revoked separately. */
+  async withOtp(challengeId: string, code: string, client: AuthClient = 'storefront'): Promise<TokenPair> {
     const phone = await this.otp.verify(challengeId, code, 'login');
     return this.prisma.withTx(async (tx) => {
       const user = await this.customerByPhone(tx, phone);
       await this.ensureIdentity(tx, user, { provider: 'phone_otp', subject: phone });
-      return this.login(tx, user, 'phone_otp');
+      return this.login(tx, user, 'phone_otp', client);
     });
   }
 
-  async withFirebase(idToken: string, signedIn?: UserActor): Promise<TokenPair> {
+  async withFirebase(
+    idToken: string,
+    signedIn?: UserActor,
+    client: AuthClient = 'storefront',
+  ): Promise<TokenPair> {
     const identity = await this.verify(() => this.firebase.verifyIdToken(idToken));
-    return this.withIdentity(identity, identity.provider, signedIn);
+    return this.withIdentity(identity, identity.provider, client, signedIn);
   }
 
   async withLine(
     input: { idToken?: string; liffAccessToken?: string; otpChallengeId?: string; otpCode?: string },
     signedIn?: UserActor,
+    client: AuthClient = 'storefront',
   ): Promise<TokenPair> {
     const identity = await this.verify(() =>
       input.liffAccessToken
@@ -67,12 +73,13 @@ export class CustomerLoginService {
       input.otpChallengeId && input.otpCode
         ? await this.otp.verify(input.otpChallengeId, input.otpCode, 'link_phone')
         : undefined;
-    return this.withIdentity(identity, input.liffAccessToken ? 'line_liff' : 'line', signedIn, phone);
+    return this.withIdentity(identity, input.liffAccessToken ? 'line_liff' : 'line', client, signedIn, phone);
   }
 
   private async withIdentity(
     identity: VerifiedIdentity,
     method: LoginMethod,
+    client: AuthClient,
     signedIn?: UserActor,
     verifiedPhone?: string,
   ): Promise<TokenPair> {
@@ -85,7 +92,7 @@ export class CustomerLoginService {
         if (signedIn && linked.userId !== signedIn.userId)
           throw new DomainException('auth.identity_linked_elsewhere');
         await tx.userIdentity.update({ where: { id: linked.id }, data: { lastUsedAt: new Date() } });
-        return this.login(tx, linked.user, method);
+        return this.login(tx, linked.user, method, client);
       }
 
       let user: User;
@@ -93,7 +100,7 @@ export class CustomerLoginService {
       else if (verifiedPhone) user = await this.customerByPhone(tx, verifiedPhone);
       else user = await this.createCustomer(tx, identity);
       await this.ensureIdentity(tx, user, identity);
-      return this.login(tx, user, method);
+      return this.login(tx, user, method, client);
     });
   }
 
@@ -201,7 +208,7 @@ export class CustomerLoginService {
     );
   }
 
-  private async login(tx: Tx, user: User, method: LoginMethod): Promise<TokenPair> {
+  private async login(tx: Tx, user: User, method: LoginMethod, client: AuthClient): Promise<TokenPair> {
     if (user.kind !== 'customer') throw new DomainException('auth.invalid_credentials');
     if (user.status !== 'active' || user.anonymisedAt) throw new DomainException('auth.account_inactive');
     await tx.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
@@ -211,9 +218,9 @@ export class CustomerLoginService {
       actor: { type: 'user', userId: user.id, publicId: user.publicId, audience: 'customer', scopes: [] },
       resourceType: 'user',
       resourcePublicId: user.publicId,
-      data: { method },
+      data: { method, client },
     });
-    return this.tokens.issue(tx, user, 'customer', method);
+    return this.tokens.issue(tx, user, 'customer', method, undefined, client);
   }
 
   private async verify(call: () => Promise<VerifiedIdentity>): Promise<VerifiedIdentity> {

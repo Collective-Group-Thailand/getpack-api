@@ -1,5 +1,8 @@
 import { EnumField } from '@modules/catalog/crud/dto-fields';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsBoolean, IsIn, IsOptional } from 'class-validator';
+
+import { AUTH_CLIENTS, type AuthClientValue } from './auth.dto';
 
 export const LOCALES = ['th', 'en'] as const;
 /** D-183: the unit the web shows sizes in; every size in the API is millimetres. */
@@ -186,3 +189,93 @@ export class UpdatePreferencesDto {
   })
   editorMode?: (typeof EDITOR_MODES)[number];
 }
+
+// --- my sessions per surface (D-467) -------------------------------------------------------------------------------
+export const LOGIN_METHODS = [
+  'password',
+  'phone_otp',
+  'firebase_google',
+  'firebase_apple',
+  'line',
+  'line_liff',
+  'device_pin',
+] as const;
+
+export class MySessionDto {
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000a5e5',
+    description: 'The session (its refresh-token family; the access token’s `sid`)',
+  })
+  id!: string;
+
+  @ApiProperty({ enum: AUTH_CLIENTS, enumName: 'AuthClient', example: 'agent' })
+  client!: AuthClientValue;
+
+  @ApiProperty({ enum: LOGIN_METHODS, enumName: 'LoginMethod', example: 'line' })
+  loginMethod!: (typeof LOGIN_METHODS)[number];
+
+  @ApiProperty({ format: 'date-time', example: '2026-11-03T09:15:00+07:00' })
+  signedInAt!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-11-03T14:05:00+07:00',
+    description: 'Last refresh (or sign-in)',
+  })
+  lastActiveAt!: string;
+
+  @ApiProperty({ format: 'date-time', example: '2026-11-10T14:05:00+07:00', description: 'Idle expiry' })
+  expiresAt!: string;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: 'Mozilla/5.0 (fake test agent)',
+    description: 'Browser as reported at the last refresh',
+  })
+  userAgent!: string | null;
+
+  @ApiProperty({ example: false, description: 'The session making this request' })
+  current!: boolean;
+}
+
+export class MySessionListDto {
+  @ApiProperty({ type: [MySessionDto] })
+  data!: MySessionDto[];
+}
+
+export class RevokeMySessionsDto {
+  @ApiProperty({ enum: AUTH_CLIENTS, enumName: 'AuthClient', example: 'agent' })
+  @IsIn(AUTH_CLIENTS)
+  client!: AuthClientValue;
+
+  @ApiPropertyOptional({
+    default: false,
+    example: false,
+    description: 'Also end the session making this request (it is kept by default)',
+  })
+  @IsOptional()
+  @IsBoolean()
+  includeCurrent?: boolean;
+}
+
+export class RevokedSessionsDto {
+  @ApiProperty({ type: 'integer', example: 2, description: 'Sessions signed out' })
+  revoked!: number;
+}
+
+export const MY_SESSIONS_EXAMPLE: MySessionListDto = {
+  data: [
+    {
+      id: '0192f3a0-7c1e-7d2a-9b1f-00000000a5e5',
+      client: 'agent',
+      loginMethod: 'line',
+      signedInAt: '2026-11-03T09:15:00+07:00',
+      lastActiveAt: '2026-11-03T14:05:00+07:00',
+      expiresAt: '2026-11-10T14:05:00+07:00',
+      userAgent: 'Mozilla/5.0 (fake test agent)',
+      current: false,
+    },
+  ],
+};

@@ -1,6 +1,6 @@
 import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type LoginMethod, type TokenAudience } from '@generated/prisma/client';
+import { type AuthClient, type LoginMethod, type TokenAudience } from '@generated/prisma/client';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { scopeClaim, ScopeDirectory } from '@modules/iam/scope-directory';
 import { Injectable } from '@nestjs/common';
@@ -77,9 +77,16 @@ export class AuthTokensService {
     audience: TokenAudience,
     loginMethod: LoginMethod,
     deviceId?: string,
+    client?: AuthClient,
   ): Promise<TokenPair> {
     const subject = await this.scopesFor(user.id, audience);
-    const session = await this.sessions.create(tx, { userId: user.id, audience, loginMethod, deviceId });
+    const session = await this.sessions.create(tx, {
+      userId: user.id,
+      audience,
+      loginMethod,
+      ...(deviceId !== undefined && { deviceId }),
+      ...(client !== undefined && { client }),
+    });
     return this.sign(user.publicId, audience, subject, session);
   }
 
