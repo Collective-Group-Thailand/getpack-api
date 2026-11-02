@@ -44,6 +44,7 @@
     "styles:photos": "pnpm build:fast && node dist/scripts/styles-photos.js",
     "files:rethumb": "pnpm build:fast && node dist/scripts/files-rethumb.js",
     "shipments:reissue-legacy-docs": "pnpm build:fast && node dist/scripts/reissue-legacy-shipment-docs.js",
+    "agents:retire-bounty": "pnpm build:fast && node dist/scripts/agents-retire-bounty.js",
     "dieline:vendor": "bash scripts/dieline-vendor.sh",
     "styles:recipes-from-engine": "pnpm build:fast && node dist/scripts/styles-recipes-from-engine.js",
     "uat:styles": "pnpm build:fast && node dist/scripts/uat-style-fixture.js",

@@ -60,6 +60,9 @@ type SkipReason = 'not_new_customer' | 'already_linked' | 'own_code' | 'agent_in
  * factory, and staff assignments, transfers and ends with a reason. One active link per customer and per
  * company (partial unique indexes); a company inherits its applicant's link when it is activated.
  */
+/** P-03 / D-464 (owner 2026-11-01): the factory referral bounty and its links are retired. */
+const FACTORY_REFERRAL_RETIRED = true;
+
 @Injectable()
 export class AgentAttributionService {
   private readonly logger = new Logger(AgentAttributionService.name);
@@ -99,7 +102,7 @@ export class AgentAttributionService {
     actor: UserActor,
     agent: SalesAgent,
     input: {
-      kind: 'customer' | 'factory';
+      kind: string;
       contactName: string;
       organisationName?: string | null;
       phone?: string | null;
@@ -110,6 +113,8 @@ export class AgentAttributionService {
     },
   ): Promise<LeadRow> {
     if (agent.status !== 'active') throw new DomainException('agents.agent_inactive');
+    // P-03 / D-464: customers only; the neutral store wording points factories to /partner-with-us.
+    if (input.kind !== 'customer') throw new DomainException('agents.lead_kind_unsupported');
     if (!input.consentConfirmed)
       invalid('consentConfirmed', 'the lead must agree to be contacted', 'required');
     const phone = normalisePhone(input.phone);
@@ -122,32 +127,18 @@ export class AgentAttributionService {
       const open = await tx.salesAgentLead.count({ where: { agentId: agent.id, status: 'registered' } });
       if (open >= rules.maxOpenLeads)
         throw new DomainException('agents.too_many_leads', { params: { max: rules.maxOpenLeads } });
-      // Existing customers, companies and factories are not leads (D-417).
-      if (input.kind === 'customer') {
-        const existing =
-          (phone || email
-            ? await tx.user.findFirst({
-                where: {
-                  kind: 'customer',
-                  deletedAt: null,
-                  OR: [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : [])],
-                },
-              })
-            : null) ?? (taxId ? await tx.company.findFirst({ where: { taxId } }) : null);
-        if (existing) throw new DomainException('agents.lead_existing_customer');
-      } else {
-        const existing = await tx.factory.findFirst({
-          where: {
-            OR: [
-              ...(taxId ? [{ taxId }] : []),
-              ...(phone ? [{ contacts: { some: { phone } } }] : []),
-              ...(email ? [{ contacts: { some: { email } } }] : []),
-            ],
-          },
-        });
-        // D-440: one neutral refusal — never tells an agent that a phone / tax id belongs to a factory.
-        if (existing) throw new DomainException('agents.lead_unavailable');
-      }
+      // Existing customers and companies are not leads (D-417).
+      const existing =
+        (phone || email
+          ? await tx.user.findFirst({
+              where: {
+                kind: 'customer',
+                deletedAt: null,
+                OR: [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : [])],
+              },
+            })
+          : null) ?? (taxId ? await tx.company.findFirst({ where: { taxId } }) : null);
+      if (existing) throw new DomainException('agents.lead_existing_customer');
       const taken = await tx.salesAgentLead.findFirst({
         where: {
           status: 'registered',
@@ -165,7 +156,7 @@ export class AgentAttributionService {
       const lead = await tx.salesAgentLead.create({
         data: {
           agentId: agent.id,
-          kind: input.kind,
+          kind: 'customer',
           contactName: input.contactName.trim(),
           organisationName: input.organisationName?.trim() || null,
           phone,
@@ -327,6 +318,8 @@ export class AgentAttributionService {
       include: { contacts: { select: { phone: true, email: true } } },
     });
     if (!factory) return;
+    // P-03 / D-464: factory referral is retired; no new factory links are made.
+    if (FACTORY_REFERRAL_RETIRED) return;
     if (await tx.salesAgentFactoryLink.findUnique({ where: { factoryId: factory.id } })) return;
     let lead = await this.matchLead(tx, 'factory', { taxId: factory.taxId });
     for (const c of factory.contacts) {
