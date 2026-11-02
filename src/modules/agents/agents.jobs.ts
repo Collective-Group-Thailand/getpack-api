@@ -20,10 +20,19 @@ export class AgentsJobs {
     return this.commissions.earnDue();
   }
 
-  /** Factory links: bounty earned on the qualifying jobs, or expired after the window (D-419). */
-  @ScheduledJob({ name: 'agents.factory_bounties', every: 86_400_000 })
-  factoryBounties(): Promise<number> {
-    return this.commissions.settleFactoryLinks();
+  /**
+   * D-464 / P-03: the factory referral bounty is retired — the factory-qualification job no longer runs
+   * (`agents.factory_bounties` removed). Pending links were ended once by `pnpm agents:retire-bounty`.
+   */
+
+  /** D-464: commission ÷ gross margin KPI of last month and this month, daily 03:30 (worker timezone). */
+  @ScheduledJob({ name: 'agents.margin_kpi', cron: '30 3 * * *' })
+  async marginKpi(): Promise<number> {
+    const now = new Date();
+    const thisMonth = new Date(now.getTime() + 7 * 3_600_000).toISOString().slice(0, 7);
+    await this.commissions.computeMarginKpi(this.statements.previousPeriod(now));
+    await this.commissions.computeMarginKpi(thisMonth);
+    return 2;
   }
 
   /** Leads past their protection expire; links past their attribution months end (D-417). */
