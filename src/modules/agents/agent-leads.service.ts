@@ -19,6 +19,7 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { SettingsService } from '@platform/settings/settings.service';
 
 import { AgentAttributionService, cleanTags, LEAD_INCLUDE, type LeadRow } from './agent-attribution.service';
+import { AgentDealsService } from './agent-deals.service';
 import {
   type AGENT_ACTIVITY_KINDS,
   type AGENT_STAGE_TARGETS,
@@ -62,6 +63,7 @@ export class AgentLeadsService {
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
+    private readonly deals: AgentDealsService,
   ) {}
 
   // --- reads ------------------------------------------------------------------------------------------------------
@@ -233,9 +235,9 @@ export class AgentLeadsService {
     return this.mine(agent, publicId);
   }
 
-  /** Item 4 hook: a lost lead's deal registrations end (protection released). */
-  protected async onLost(_tx: Tx, _lead: SalesAgentLead, _actor: Actor): Promise<void> {
-    // Filled by deal registration (D-468 item 4).
+  /** D-468: a lost lead's deal registration ends (protection released). */
+  private onLost(tx: Tx, lead: SalesAgentLead, actor: Actor): Promise<void> {
+    return this.deals.endForLead(tx, lead.id, 'lost', actor);
   }
 
   async addActivity(
@@ -375,9 +377,9 @@ export class AgentLeadsService {
     }
   }
 
-  /** Item 4 hook: the lead's deal registration is won. */
-  protected async onWon(_tx: Tx, _lead: SalesAgentLead, _actor: Actor): Promise<void> {
-    // Filled by deal registration (D-468 item 4).
+  /** D-468: the lead's deal registration is won (its lock stays for its quotes). */
+  private onWon(tx: Tx, lead: SalesAgentLead, actor: Actor): Promise<void> {
+    return this.deals.endForLead(tx, lead.id, 'won', actor);
   }
 
   // --- follow-up reminders --------------------------------------------------------------------------------------------

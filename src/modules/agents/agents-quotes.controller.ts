@@ -35,6 +35,7 @@ import {
   AgentQuoteListQuery,
   CompetitorSpecDto,
   CreateAgentQuoteDto,
+  DEAL_EXAMPLE,
   DISCOUNT_OPTION_EXAMPLE,
   DISCOUNT_REQUEST_EXAMPLE,
   RequestAgentDiscountDto,
@@ -66,6 +67,18 @@ export function agentQuoteDto(
     openedAt: r.openedAt ? toBangkokIso(r.openedAt) : null,
     acceptedAt: r.acceptedAt ? toBangkokIso(r.acceptedAt) : null,
     withdrawnAt: r.withdrawnAt ? toBangkokIso(r.withdrawnAt) : null,
+    dealRegistration: r.dealRegistration
+      ? {
+          id: r.dealRegistration.publicId,
+          status: r.dealRegistration.status,
+          scope: r.dealRegistration.scope,
+          origin: r.dealRegistration.origin,
+          protectedUntil: toBangkokIso(r.dealRegistration.protectedUntil),
+          lockedFirstRatePct: r.dealRegistration.lockedFirstRatePct.toFixed(4),
+          lockedRepeatRatePct: r.dealRegistration.lockedRepeatRatePct.toFixed(4),
+          registeredAt: toBangkokIso(r.dealRegistration.registeredAt),
+        }
+      : null,
     // The store's own customer view of the quotation: sell prices only, no cost, margin or factory (D-050, D-435).
     quote: quoteDto(r.quote, now),
   };
@@ -244,6 +257,45 @@ export class StoreAgentQuotesController {
     return agentQuoteDto(
       this.quotes,
       await this.quotes.withdraw(me, await this.agents.mine(me.userId), id, body.reason),
+    );
+  }
+
+  @Post('quotes/:agentQuoteId/actions/register-deal')
+  @HttpCode(200)
+  @Can('agent.self')
+  @ApiParam({ name: 'agentQuoteId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.agentQuotes.registerDeal',
+    summary: 'Register the deal of a quotation I sent',
+    description:
+      'Protection + rate lock, never a rate cut, no approval: for `agent.deal_protection_days` (90) nobody else can ' +
+      'take this lead or its customer, and orders from its quotations keep the rates in force now (or the option I ' +
+      'accepted); later plan changes never touch it. Quotations whose base reaches ' +
+      '`agent.deal_registration_threshold` (฿500,000.00) and call-off agreements register automatically. A ' +
+      'quotation of a lead with a registration joins it (D-468, PLAN A-11).',
+    implements: [...DECISIONS, 'D-464'],
+  })
+  @ApiSuccess(200, {
+    description: 'Registered',
+    type: AgentQuoteDto,
+    example: { ...AGENT_QUOTE_EXAMPLE, dealRegistration: { ...DEAL_EXAMPLE, origin: 'requested' } },
+  })
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    ...AGENT_ERRORS,
+    'agents.agent_inactive',
+    'agents.quote_closed',
+    'agents.plan_not_in_force',
+  )
+  async registerDeal(
+    @CurrentActor() actor: Actor,
+    @Param('agentQuoteId', ParseUUIDPipe) id: string,
+  ): Promise<AgentQuoteDto> {
+    const me = customer(actor);
+    return agentQuoteDto(
+      this.quotes,
+      await this.quotes.registerDeal(me, await this.agents.mine(me.userId), id),
     );
   }
 

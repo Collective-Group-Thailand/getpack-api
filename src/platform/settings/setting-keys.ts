@@ -107,6 +107,10 @@ export interface SettingValues {
   };
   /** D-464 internal alert (C-Level) when commission ÷ the order's gross margin exceeds this %. Never cuts pay. */
   'agent.margin_alert_pct': string;
+  /** D-468 days a deal registration protects the lead and its rate lock (PLAN A-11). */
+  'agent.deal_protection_days': number;
+  /** D-468 commission base (THB) from which a quote registers its deal automatically (PLAN A-11). */
+  'agent.deal_registration_threshold': string;
   /** D-467 years after `endedAt` an ended agent still reads their statements and 50 ทวิ (tax record retention). */
   'agents.ended_record_access_years': number;
   /** D-468 follow-up reminders wait outside this Bangkok window (from 21:00 to 08:00). */

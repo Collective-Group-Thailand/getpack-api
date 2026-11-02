@@ -248,6 +248,8 @@ export const ERROR_CODES = {
   'agents.lead_import_closed': HttpStatus.CONFLICT,
   /** D-468: the agent's quotation was withdrawn, accepted or expired. */
   'agents.quote_closed': HttpStatus.CONFLICT,
+  /** D-468: another agent's registered deal protects this customer (neutral, staff assignment). */
+  'agents.deal_registered': HttpStatus.CONFLICT,
   /** D-468: the option is no longer offered (accepted, lapsed or past its validity). */
   'agents.discount_option_unavailable': HttpStatus.CONFLICT,
   /** D-468: the discount request was answered or closed already (Phase 4 desk). */

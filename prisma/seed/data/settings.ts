@@ -505,6 +505,27 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'finance_manager',
   },
   {
+    key: 'agent.deal_protection_days',
+    valueType: 'integer',
+    value: 90,
+    valueSchema: { minimum: 30, maximum: 365 },
+    description:
+      'D-468 (PLAN A-11) days a deal registration protects the lead from other agents and staff assignment and keeps ' +
+      'its rate lock open for new orders; never a rate cut',
+    decisions: ['D-468'],
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'agent.deal_registration_threshold',
+    valueType: 'money',
+    value: '500000.00',
+    description:
+      'D-468 (PLAN A-11) a quote whose commission base (before VAT, excl. shipping) reaches this registers its deal ' +
+      'automatically; smaller ones on the agent’s request; call-off agreements always',
+    decisions: ['D-468'],
+    ownerRole: 'sales_manager',
+  },
+  {
     key: 'agents.follow_up_quiet_hours',
     valueType: 'time_of_day_window',
     value: { from: '21:00', to: '08:00', timezone: 'Asia/Bangkok' },

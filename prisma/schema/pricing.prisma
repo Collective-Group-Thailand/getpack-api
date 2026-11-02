@@ -1337,6 +1337,9 @@ model CallOffAgreement {
   respondedBy User?            @relation("CallOffRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__responded_by")
   releases    CallOffRelease[]
 
+  /// D-468: the agent deal registration that keeps its rate lock for every call-off.
+  agentDealRegistrations SalesAgentDealRegistration[] @relation("SalesAgentDealCallOff")
+
   @@index([customerUserId], map: "ix_call_off_agreements__customer_user_id")
   @@index([quoteId], map: "ix_call_off_agreements__quote_id")
   @@index([quoteOptionId], map: "ix_call_off_agreements__quote_option_id")

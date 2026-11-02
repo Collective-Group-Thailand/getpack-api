@@ -62,6 +62,53 @@ export class AgentQuoteLeadRefDto {
   organisationName!: string | null;
 }
 
+export const DEAL_STATUSES = ['registered', 'won', 'lost', 'expired'] as const;
+export const DEAL_SCOPES = ['quote', 'call_off_agreement'] as const;
+export const DEAL_ORIGINS = ['automatic', 'requested'] as const;
+
+/** D-468 (PLAN A-11): protection + rate lock of a deal — never a rate cut. */
+export class AgentDealRegistrationDto {
+  @IdField(P3_IDS.dealRegistration)
+  id!: string;
+
+  @ApiProperty({ enum: DEAL_STATUSES, enumName: 'AgentDealStatus', example: 'registered' })
+  status!: string;
+
+  @ApiProperty({ enum: DEAL_SCOPES, enumName: 'AgentDealScope', example: 'quote' })
+  scope!: string;
+
+  @ApiProperty({
+    enum: DEAL_ORIGINS,
+    enumName: 'AgentDealOrigin',
+    example: 'automatic',
+    description: '`automatic` a big quote or a call-off agreement · `requested` by me',
+  })
+  origin!: string;
+
+  @TimestampField('2027-01-16T10:00:00+07:00')
+  protectedUntil!: string;
+
+  @ApiProperty({ example: '5.0000', description: 'My locked first-order rate, %' })
+  lockedFirstRatePct!: string;
+
+  @ApiProperty({ example: '3.0000', description: 'My locked repeat-order rate, %' })
+  lockedRepeatRatePct!: string;
+
+  @TimestampField('2026-10-18T10:00:00+07:00')
+  registeredAt!: string;
+}
+
+export const DEAL_EXAMPLE: AgentDealRegistrationDto = {
+  id: P3_IDS.dealRegistration,
+  status: 'registered',
+  scope: 'quote',
+  origin: 'automatic',
+  protectedUntil: '2027-01-16T10:00:00+07:00',
+  lockedFirstRatePct: '5.0000',
+  lockedRepeatRatePct: '3.0000',
+  registeredAt: '2026-10-18T10:00:00+07:00',
+};
+
 export class AgentQuoteDto {
   @IdField(P3_IDS.agentQuote)
   id!: string;
@@ -102,6 +149,13 @@ export class AgentQuoteDto {
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
   withdrawnAt!: string | null;
 
+  @ApiProperty({
+    type: AgentDealRegistrationDto,
+    nullable: true,
+    description: 'The deal registration protecting this quotation (D-468), if any',
+  })
+  dealRegistration!: AgentDealRegistrationDto | null;
+
   @ApiProperty({ type: SavedQuoteDto, description: 'The quotation the customer sees (sell prices only)' })
   quote!: SavedQuoteDto;
 }
@@ -116,6 +170,7 @@ export const AGENT_QUOTE_EXAMPLE: AgentQuoteDto = {
   openedAt: '2026-10-18T13:20:00+07:00',
   acceptedAt: null,
   withdrawnAt: null,
+  dealRegistration: DEAL_EXAMPLE,
   quote: { ...QUOTE_EXAMPLE, status: 'shared', quoteCode: 'QT-2026-000042' },
 };
 

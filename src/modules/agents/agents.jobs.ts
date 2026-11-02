@@ -3,6 +3,7 @@ import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
 import { AgentAttributionService } from './agent-attribution.service';
 import { AgentCommissionsService } from './agent-commissions.service';
+import { AgentDealsService } from './agent-deals.service';
 import { AgentLeadsService } from './agent-leads.service';
 import { AgentStatementsService } from './agent-statements.service';
 
@@ -14,6 +15,7 @@ export class AgentsJobs {
     private readonly commissions: AgentCommissionsService,
     private readonly statements: AgentStatementsService,
     private readonly leads: AgentLeadsService,
+    private readonly deals: AgentDealsService,
   ) {}
 
   /** Pending commission past the claim window, with the group paid, becomes earned (D-418). */
@@ -59,6 +61,12 @@ export class AgentsJobs {
   @ScheduledJob({ name: 'agents.lead_imports', every: 3_600_000 })
   leadImports(): Promise<number> {
     return this.leads.expireImports();
+  }
+
+  /** D-468: deal registrations past their protection expire (the locks of orders already placed stay). */
+  @ScheduledJob({ name: 'agents.deal_expiry', every: 3_600_000 })
+  dealExpiry(): Promise<number> {
+    return this.deals.expireDue();
   }
 
   /** On the 1st, 03:00 Bangkok: last month's statements (D-420). */

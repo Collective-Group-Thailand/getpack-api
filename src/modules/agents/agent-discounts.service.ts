@@ -13,6 +13,7 @@ import { AuditService } from '@platform/audit/audit.service';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { AgentDealsService } from './agent-deals.service';
 import {
   buildOptions,
   type COMMITMENTS,
@@ -76,6 +77,7 @@ export class AgentDiscountsService {
     private readonly audit: AuditService,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
+    private readonly deals: AgentDealsService,
   ) {}
 
   async requests(agent: SalesAgent, agentQuoteId: string): Promise<DiscountRequestRow[]> {
@@ -212,12 +214,12 @@ export class AgentDiscountsService {
     };
   }
 
-  /** Item 4 hook: the rates a registered deal locked for this agent quote. */
-  protected lockFor(
-    _tx: Tx,
-    _agentQuoteId: bigint,
+  /** The rates a registered deal locked for this agent quote (D-468 item 4). */
+  private lockFor(
+    tx: Tx,
+    agentQuoteId: bigint,
   ): Promise<{ firstOrderPct: string; repeatOrderPct: string } | null> {
-    return Promise.resolve(null);
+    return this.deals.lockFor(tx, agentQuoteId);
   }
 
   /**

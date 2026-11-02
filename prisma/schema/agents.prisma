@@ -244,6 +244,8 @@ model SalesAgentPlanVersion {
   plan        SalesAgentPlan         @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_plan_versions__plan_id")
   commissions SalesAgentCommission[]
 
+  dealRegistrations SalesAgentDealRegistration[] @relation("SalesAgentDealPlanVersion")
+
   @@unique([planId, versionNo], map: "ux_sales_agent_plan_versions__plan_id__version_no")
   @@index([planId, status, effectiveFrom], map: "ix_sales_agent_plan_versions__plan_id__status__effective_from")
   @@map("sales_agent_plan_versions")
@@ -351,6 +353,7 @@ model SalesAgent {
   leadImports             SalesAgentLeadImport[]
   quotes                  SalesAgentQuote[]
   discountRequests        SalesAgentDiscountRequest[]
+  dealRegistrations       SalesAgentDealRegistration[]
 
   @@index([status, kind], map: "ix_sales_agents__status__kind")
   @@index([planId], map: "ix_sales_agents__plan_id")
@@ -441,14 +444,15 @@ model SalesAgentLead {
   updatedAt              DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion             Int                       @default(1) @map("row_version")
 
-  activities       SalesAgentLeadActivity[]
-  agentQuotes      SalesAgentQuote[]
-  agent            SalesAgent               @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__agent_id")
-  convertedUser    User?                    @relation("SalesAgentLeadConvertedUser", fields: [convertedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_user_id")
-  convertedCompany Company?                 @relation("SalesAgentLeadConvertedCompany", fields: [convertedCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_company_id")
-  convertedFactory Factory?                 @relation("SalesAgentLeadConvertedFactory", fields: [convertedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_factory_id")
-  links            SalesAgentLink[]
-  factoryLinks     SalesAgentFactoryLink[]
+  activities        SalesAgentLeadActivity[]
+  agentQuotes       SalesAgentQuote[]
+  dealRegistrations SalesAgentDealRegistration[]
+  agent             SalesAgent                   @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__agent_id")
+  convertedUser     User?                        @relation("SalesAgentLeadConvertedUser", fields: [convertedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_user_id")
+  convertedCompany  Company?                     @relation("SalesAgentLeadConvertedCompany", fields: [convertedCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_company_id")
+  convertedFactory  Factory?                     @relation("SalesAgentLeadConvertedFactory", fields: [convertedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_factory_id")
+  links             SalesAgentLink[]
+  factoryLinks      SalesAgentFactoryLink[]
 
   @@index([agentId, status], map: "ix_sales_agent_leads__agent_id__status")
   @@index([phone], map: "ix_sales_agent_leads__phone__registered", where: raw("(status = 'registered'::sales_agent_lead_status)"))
@@ -797,33 +801,37 @@ model SalesAgentNotificationPreference {
 /// owned by getpack — no customer until the lead signs up). The share token is kept encrypted so the agent can copy
 /// the link again; only its hash is on the quote. PDPA: no personal data of its own (the lead's).
 model SalesAgentQuote {
-  id              BigInt                @id(map: "pk_sales_agent_quotes") @default(autoincrement())
-  publicId        String                @unique(map: "ux_sales_agent_quotes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  agentId         BigInt                @map("agent_id")
-  leadId          BigInt                @map("lead_id")
-  quoteId         BigInt                @unique(map: "ux_sales_agent_quotes__quote_id") @map("quote_id")
+  id                 BigInt                @id(map: "pk_sales_agent_quotes") @default(autoincrement())
+  publicId           String                @unique(map: "ux_sales_agent_quotes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId            BigInt                @map("agent_id")
+  leadId             BigInt                @map("lead_id")
+  quoteId            BigInt                @unique(map: "ux_sales_agent_quotes__quote_id") @map("quote_id")
   /// The store session the quote was saved under (anonymous owner, store rules — D-441).
-  anonymousId     String                @map("anonymous_id") @db.Uuid
-  status          SalesAgentQuoteStatus @default(sent)
-  shareTokenEnc   Bytes?                @map("share_token_enc")
-  sentAt          DateTime              @map("sent_at") @db.Timestamptz(6)
-  sendCount       Int                   @default(1) @map("send_count")
-  openedAt        DateTime?             @map("opened_at") @db.Timestamptz(6)
-  acceptedAt      DateTime?             @map("accepted_at") @db.Timestamptz(6)
-  withdrawnAt     DateTime?             @map("withdrawn_at") @db.Timestamptz(6)
-  withdrawnReason String?               @map("withdrawn_reason")
-  createdAt       DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion      Int                   @default(1) @map("row_version")
+  anonymousId        String                @map("anonymous_id") @db.Uuid
+  status             SalesAgentQuoteStatus @default(sent)
+  shareTokenEnc      Bytes?                @map("share_token_enc")
+  sentAt             DateTime              @map("sent_at") @db.Timestamptz(6)
+  sendCount          Int                   @default(1) @map("send_count")
+  openedAt           DateTime?             @map("opened_at") @db.Timestamptz(6)
+  acceptedAt         DateTime?             @map("accepted_at") @db.Timestamptz(6)
+  withdrawnAt        DateTime?             @map("withdrawn_at") @db.Timestamptz(6)
+  withdrawnReason    String?               @map("withdrawn_reason")
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                   @default(1) @map("row_version")
+  /// D-468: the deal registration that protects and locks this quote.
+  dealRegistrationId BigInt?               @map("deal_registration_id")
 
-  agent SalesAgent     @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__agent_id")
-  lead  SalesAgentLead @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__lead_id")
-  quote Quote          @relation("SalesAgentQuoteQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__quote_id")
+  dealRegistration SalesAgentDealRegistration? @relation(fields: [dealRegistrationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__deal_registration_id")
+  agent            SalesAgent                  @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__agent_id")
+  lead             SalesAgentLead              @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__lead_id")
+  quote            Quote                       @relation("SalesAgentQuoteQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__quote_id")
 
   discountRequests SalesAgentDiscountRequest[]
 
   @@index([agentId, createdAt], map: "ix_sales_agent_quotes__agent_id__created_at")
   @@index([leadId], map: "ix_sales_agent_quotes__lead_id")
+  @@index([dealRegistrationId], map: "ix_sales_agent_quotes__deal_registration_id")
   @@map("sales_agent_quotes")
 }
 
@@ -974,13 +982,83 @@ model SalesAgentDiscountOption {
   acceptedSha256    Bytes?                         @map("accepted_sha256")
   rowVersion        Int                            @default(1) @map("row_version")
 
-  request    SalesAgentDiscountRequest @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__request_id")
-  offeredBy  User?                     @relation("SalesAgentDiscountOptionOfferedBy", fields: [offeredById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__offered_by")
-  acceptedBy User?                     @relation("SalesAgentDiscountOptionAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__accepted_by")
+  request          SalesAgentDiscountRequest   @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__request_id")
+  offeredBy        User?                       @relation("SalesAgentDiscountOptionOfferedBy", fields: [offeredById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__offered_by")
+  dealRegistration SalesAgentDealRegistration? @relation("SalesAgentDealApprovedOption")
+  acceptedBy       User?                       @relation("SalesAgentDiscountOptionAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__accepted_by")
 
   @@unique([requestId, position], map: "ux_sales_agent_discount_options__request_id__position")
   @@unique([requestId], map: "ux_sales_agent_discount_options__request_id__accepted", where: raw("(status = 'accepted'::sales_agent_discount_option_status)"))
   @@index([offeredById], map: "ix_sales_agent_discount_options__offered_by")
   @@index([acceptedById], map: "ix_sales_agent_discount_options__accepted_by")
   @@map("sales_agent_discount_options")
+}
+
+/// D-468 (PLAN A-11): what a deal registration protects and locks.
+enum SalesAgentDealScope {
+  quote
+  call_off_agreement
+
+  @@map("sales_agent_deal_scope")
+}
+
+enum SalesAgentDealStatus {
+  registered
+  won
+  lost
+  expired
+
+  @@map("sales_agent_deal_status")
+}
+
+enum SalesAgentDealOrigin {
+  /// The quote's commission base reached `agent.deal_registration_threshold`, or a call-off agreement was accepted.
+  automatic
+  /// The agent asked for it (smaller quotes); no approval.
+  requested
+
+  @@map("sales_agent_deal_origin")
+}
+
+/// D-468 (PLAN A-11): deal registration = protection + rate lock, never a rate cut. Locks the standard rates in force
+/// (or the rate of the option the agent accepted) for orders from its quotes; later plan versions never change it; a
+/// call-off agreement keeps the lock for every call-off. While `registered` and protected, other agents and staff
+/// assignment cannot take the lead / its customer (neutral refusal). One active registration per lead. No personal
+/// data of its own.
+model SalesAgentDealRegistration {
+  id                  BigInt               @id(map: "pk_sales_agent_deal_registrations") @default(autoincrement())
+  publicId            String               @unique(map: "ux_sales_agent_deal_registrations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId             BigInt               @map("agent_id")
+  leadId              BigInt               @map("lead_id")
+  scope               SalesAgentDealScope  @default(quote)
+  callOffAgreementId  BigInt?              @map("call_off_agreement_id")
+  origin              SalesAgentDealOrigin
+  status              SalesAgentDealStatus @default(registered)
+  lockedFirstRatePct  Decimal              @map("locked_first_rate_pct") @db.Decimal(7, 4)
+  lockedRepeatRatePct Decimal              @map("locked_repeat_rate_pct") @db.Decimal(7, 4)
+  planVersionId       BigInt               @map("plan_version_id")
+  approvedOptionId    BigInt?              @unique(map: "ux_sales_agent_deal_registrations__approved_option_id") @map("approved_option_id")
+  protectedUntil      DateTime             @map("protected_until") @db.Timestamptz(6)
+  /// The threshold, protection days and commission base in force when registered.
+  thresholdSnapshot   Json                 @map("threshold_snapshot")
+  registeredAt        DateTime             @default(now()) @map("registered_at") @db.Timestamptz(6)
+  endedAt             DateTime?            @map("ended_at") @db.Timestamptz(6)
+  endedReason         String?              @map("ended_reason")
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion          Int                  @default(1) @map("row_version")
+
+  agent            SalesAgent                @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__agent_id")
+  lead             SalesAgentLead            @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__lead_id")
+  callOffAgreement CallOffAgreement?         @relation("SalesAgentDealCallOff", fields: [callOffAgreementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__call_off_agreement_id")
+  planVersion      SalesAgentPlanVersion     @relation("SalesAgentDealPlanVersion", fields: [planVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__plan_version_id")
+  approvedOption   SalesAgentDiscountOption? @relation("SalesAgentDealApprovedOption", fields: [approvedOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__approved_option_id")
+  quotes           SalesAgentQuote[]
+
+  @@unique([leadId], map: "ux_sales_agent_deal_registrations__lead_id__registered", where: raw("(status = 'registered'::sales_agent_deal_status)"))
+  @@index([agentId, status], map: "ix_sales_agent_deal_registrations__agent_id__status")
+  @@index([status, protectedUntil], map: "ix_sales_agent_deal_registrations__status__protected_until")
+  @@index([callOffAgreementId], map: "ix_sales_agent_deal_registrations__call_off_agreement_id")
+  @@index([planVersionId], map: "ix_sales_agent_deal_registrations__plan_version_id")
+  @@map("sales_agent_deal_registrations")
 }

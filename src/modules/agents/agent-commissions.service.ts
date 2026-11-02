@@ -11,7 +11,8 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { SettingsService } from '@platform/settings/settings.service';
 
-import { commissionFor, type RateLock, remainingAfterRefund } from './agent-commission-rules';
+import { commissionFor, remainingAfterRefund } from './agent-commission-rules';
+import { AgentDealsService } from './agent-deals.service';
 import { AGENT_REF_SELECT, D, DAY_MS, invalid, planVersionAt, recordAgentEvent, ZERO } from './agent-shared';
 
 export const COMMISSION_INCLUDE = {
@@ -50,6 +51,7 @@ export class AgentCommissionsService {
     private readonly settings: SettingsService,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
+    private readonly deals: AgentDealsService,
   ) {}
 
   // --- accrual on completion -----------------------------------------------------------------------------
@@ -110,7 +112,7 @@ export class AgentCommissionsService {
         firstOrderPct: version.firstOrderPct.toString(),
         repeatOrderPct: version.repeatOrderPct.toString(),
       },
-      lock: await this.rateLockFor(tx, order.id),
+      lock: await this.deals.rateLockForOrder(tx, order.id, agent.id),
       grossMargin: margin === null ? null : formatMoney(margin),
       alertPct,
     });
@@ -172,14 +174,6 @@ export class AgentCommissionsService {
       actor,
     });
     return entry;
-  }
-
-  /**
-   * A rate locked for this order on its quote (Phase 3 deal registration / an agent-accepted option, D-468).
-   * None yet: the plan version in force when the group was placed applies (D-464).
-   */
-  protected rateLockFor(_tx: Tx, _orderId: bigint): Promise<RateLock | null> {
-    return Promise.resolve(null);
   }
 
   /** Phone, address, card or device shared by agent and customer (identity fingerprints, D-136, D-417). */

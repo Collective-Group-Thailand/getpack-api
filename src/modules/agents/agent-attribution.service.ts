@@ -11,6 +11,7 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { SettingsService } from '@platform/settings/settings.service';
 
+import { AgentDealsService } from './agent-deals.service';
 import {
   addMonths,
   AGENT_REF_SELECT,
@@ -100,6 +101,7 @@ export class AgentAttributionService {
     private readonly audit: AuditService,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
+    private readonly deals: AgentDealsService,
   ) {}
 
   // --- the agent link (D-417 a) -------------------------------------------------------------------------
@@ -175,13 +177,13 @@ export class AgentAttributionService {
   }
 
   /** D-468 deal registration (item 4): another agent's active registration on a lead with these keys. */
-  protected registeredElsewhere(
-    _db: Tx,
-    _agentId: bigint,
-    _or: Prisma.SalesAgentLeadWhereInput[],
-    _now: Date,
+  private registeredElsewhere(
+    db: Tx,
+    agentId: bigint,
+    or: Prisma.SalesAgentLeadWhereInput[],
+    now: Date,
   ): Promise<boolean> {
-    return Promise.resolve(false);
+    return this.deals.registeredElsewhere(db, agentId, or, now);
   }
 
   async registerLead(
@@ -487,6 +489,9 @@ export class AgentAttributionService {
         if (await this.isMember(tx, agent.userId, company.id)) throw new DomainException('agents.self_link');
         subject = { companyId: company.id };
       }
+      // D-468: another agent's registered deal protects this customer / company (neutral refusal).
+      if (await this.deals.blocksAssignment(tx, agent.id, subject))
+        throw new DomainException('agents.deal_registered');
       const current = await tx.salesAgentLink.findFirst({ where: { ...subject, status: 'active' } });
       if (current) {
         if (current.agentId === agent.id) throw new DomainException('agents.already_linked');

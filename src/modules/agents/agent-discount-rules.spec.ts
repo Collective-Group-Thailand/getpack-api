@@ -1,3 +1,4 @@
+import * as deals from './agent-deals.service';
 import {
   buildOptions,
   commissionAt,
@@ -155,5 +156,37 @@ describe('commission at a discounted price (decimal.js)', () => {
     expect(line.en).toBe(
       'This price is for 8,000 pieces · a 50% deposit · payment within 7 days · order by 2026-10-25',
     );
+  });
+});
+
+describe('deal registration (D-468, PLAN A-11)', () => {
+  it('registers automatically from the threshold on the largest quantity’s base', () => {
+    const options = [
+      { netAmount: { toFixed: () => '300000.00' }, result: { shippingNetAmount: '1000.00' } },
+      { netAmount: { toFixed: () => '501000.00' }, result: { shippingNetAmount: '1000.00' } },
+    ];
+    expect(deals.largestBase(options).toFixed(2)).toBe('500000.00');
+    expect(deals.reachesThreshold('500000.00', '500000.00')).toBe(true);
+    expect(deals.reachesThreshold('499999.99', '500000.00')).toBe(false);
+  });
+
+  it('locks the accepted option first, then a live registration, never an ended one', () => {
+    const reg = { status: 'registered', lockedFirstRatePct: '5.0000', lockedRepeatRatePct: '3.0000' };
+    expect(deals.lockOf({ acceptedOption: { ratePct: '4.5000' }, registration: reg })).toEqual({
+      firstOrderPct: '4.5000',
+      repeatOrderPct: '4.5000',
+      source: 'accepted_option',
+    });
+    expect(deals.lockOf({ acceptedOption: null, registration: reg })).toEqual({
+      firstOrderPct: '5.0000',
+      repeatOrderPct: '3.0000',
+      source: 'deal_registration',
+    });
+    expect(deals.lockOf({ acceptedOption: null, registration: { ...reg, status: 'won' } })?.source).toBe(
+      'deal_registration',
+    );
+    for (const status of ['lost', 'expired'])
+      expect(deals.lockOf({ acceptedOption: null, registration: { ...reg, status } })).toBeNull();
+    expect(deals.lockOf({ acceptedOption: null, registration: null })).toBeNull();
   });
 });

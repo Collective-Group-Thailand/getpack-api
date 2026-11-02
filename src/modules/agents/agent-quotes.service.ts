@@ -13,6 +13,7 @@ import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 
+import { AgentDealsService } from './agent-deals.service';
 import { AgentLeadsService } from './agent-leads.service';
 import { appendLeadActivity, recordAgentEvent } from './agent-shared';
 
@@ -20,6 +21,7 @@ export const AGENT_QUOTE_INCLUDE = {
   quote: { include: QUOTE_INCLUDE },
   lead: { select: { publicId: true, contactName: true, organisationName: true } },
   agent: { select: { code: true, status: true } },
+  dealRegistration: true,
 } as const satisfies Prisma.SalesAgentQuoteInclude;
 export type AgentQuoteRow = Prisma.SalesAgentQuoteGetPayload<{ include: typeof AGENT_QUOTE_INCLUDE }>;
 
@@ -61,6 +63,7 @@ export class AgentQuotesService {
     private readonly config: AppConfig,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
+    private readonly deals: AgentDealsService,
   ) {}
 
   shareUrl(token: string): string {
@@ -127,9 +130,21 @@ export class AgentQuotesService {
     return this.get(agent, id);
   }
 
-  /** Item 4 hook: deal registration of a big quote (D-468). */
-  protected async afterCreate(_tx: Tx, _agentQuoteId: bigint, _actor: UserActor): Promise<void> {
-    // Filled by deal registration.
+  /** D-468 item 4: a big quote registers its deal (or joins the lead's active registration). */
+  private afterCreate(tx: Tx, agentQuoteId: bigint, actor: UserActor): Promise<void> {
+    return this.deals.autoRegister(tx, agentQuoteId, actor);
+  }
+
+  /** D-468 item 4: the agent registers a smaller quote's deal (no approval — protection and rate lock only). */
+  async registerDeal(actor: UserActor, agent: SalesAgent, publicId: string): Promise<AgentQuoteRow> {
+    if (agent.status !== 'active') throw new DomainException('agents.agent_inactive');
+    const row = await this.get(agent, publicId);
+    const status = agentQuoteStatus(row);
+    if (status !== 'sent' && status !== 'opened')
+      throw new DomainException('agents.quote_closed', { params: { status } });
+    if (row.dealRegistration?.status === 'registered') return row;
+    await this.prisma.withTx((tx) => this.deals.register(tx, row.id, 'requested', actor));
+    return this.get(agent, publicId);
   }
 
   async get(agent: SalesAgent, publicId: string, db: Tx = this.prisma): Promise<AgentQuoteRow> {
