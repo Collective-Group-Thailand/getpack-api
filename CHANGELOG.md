@@ -3,6 +3,21 @@
 Contract-facing changes per release. The contract itself is `contract/openapi.json`; mappings for `getpack-web` are in
 `docs/contract-requests-triage.md`.
 
+## Unreleased — Agent portal Phase 0: no commission cap, factory referral retired, progressive withholding
+
+D-464, D-465. Details and the web checklist: `docs/design/agent-portal/API-CHANGES-P0.md`.
+
+- **Breaking (store, agent pages):** `AgentProgrammeDto.plan` / `AgentDto.terms` are `StoreAgentTermsDto` (rates, months,
+  `uncapped`) — no margin cap or factory bounty fields; `AgentCommissionDto.capAmount` removed; leads are
+  `StoreAgentLeadKind` (`customer` only, else `agents.lead_kind_unsupported`). `AgentStatementDto.whtMethod` added.
+- **Admin:** `AdminAgentDto.planTerms`; `AdminAgentCommissionDto.capAmount` (history) and `marginAlert`;
+  `AdminAgentStatementDto.whtWorking`, `taxInvoiceNo`, `hasTaxInvoice`; plan versions refuse a bounty
+  (`agent_plans.bounty_retired`); factory-link endpoints deprecated, `admin.agents.linkFactory` 410.
+- **New:** `store.agentTaxDeclaration.get|submit`, `admin.agentTaxDeclarations.list|get|decide` (permission
+  `agent_tax_declarations.review`), `admin.agents.attachStatementTaxInvoice`.
+- Settings `agent.margin_alert_pct`, `tax.pit_brackets`, `tax.wht_40_2.expense_rate|expense_cap|personal_allowance`;
+  data job `pnpm agents:retire-bounty`.
+
 ## v0.75.0 — Document branding, e-Tax by Email, tax-invoice corrections, factory invoices from the ERP
 
 Additive (D-428 – D-433).

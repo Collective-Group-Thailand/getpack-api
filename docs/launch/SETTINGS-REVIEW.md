@@ -5,13 +5,14 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**132 settings** — 78 confirmed · 22 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**137 settings** — 83 confirmed · 22 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
 
 ## Settings
 
 | Key | Seeded value | Status | Owner | Decisions | What it controls |
 |---|---|---|---|---|---|
 | `advisory.rule_set` | `— (not set)` | not set | superadmin | D-188, D-237, D-239 | D-237 Structure Advisor rule set: McKee constant, ± uncertainty band %, eligible corrugate formulas, thin-margin threshold % and one factor (0 < f ≤ 1) per band of humidity, storage time, pallet pattern, pallet overhang, transport mode and fragility; not seeded — no advice until a Superadmin sets it after the D-189 sign-off |
+| `agent.margin_alert_pct` | `30.00` | confirmed | finance_manager | D-464 | D-464 C-Level is alerted when an order’s agent commission exceeds this % of its gross margin; the commission is never reduced (owner 2026-11-01) |
 | `agents.rules` | `{"linkCookieDays":90,"newCustomersOnly":true,"leadProtectionDays":60,"maxOpenLeads":50,"paymentTermsDays":15}` | proposed | sales_manager | D-417, D-420 | D-417 / D-420 sales agent programme: days the web keeps an agent link, attribution of new customers only, days a registered lead is protected, open leads per agent, payment terms of commission bills (proposed) |
 | `analytics.journey_alert_min_sessions` | `30` | confirmed | superadmin | D-303 | D-303 consented sessions at the first step a journey needs in both weeks before a week-over-week drop alerts (small samples swing) |
 | `analytics.journey_drop_alert_pct` | `15` | confirmed | superadmin | D-303, D-217 | D-303 a scorecard journey whose first-to-last conversion fell by more than this % against the week before raises ops signal journey_conversion_drops (docs/ux/competitive-scorecard.md §4) |
@@ -141,7 +142,11 @@
 | `tax.calendar` | `{"pp30":{"dayOfNextMonth":15},"pnd3":{"dayOfNextMonth":7},"pnd53":{"dayOfNextMonth":7},"reminderDaysBefore":3}` | proposed | finance_manager | D-033 | D-033 / accounting-design §6 tax calendar: filing due day of the following month per form (paper-filing days; e-filing extensions are a Finance choice) and the reminder lead time (proposed) |
 | `tax.gl_accounts` | `{"output_vat":["2210"],"input_vat":["1241"],"wht_pnd3":["2232"],"wht_pnd53":["2231"],"wht_pnd1":["2233"],"wht_receivable":["1230"]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §7 step 7: GL control accounts each tax report and working paper reconciles to (difference must be 0); follows the chart of accounts (proposed) |
 | `tax.nature_by_product_type` | `{"default":"hire_of_work","overrides":{"standard_product":"sale_of_goods"}}` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §2 nature of the sale per product type code (⚖): hire of work for made-to-order packaging, sale of goods for standard products; snapshotted on every order |
+| `tax.pit_brackets` | `[{"upTo":"150000.00","ratePct":"0"},{"upTo":"300000.00","ratePct":"5"},{"upTo":"500000.00","ratePct":"10"},{"upTo":"750000.00","ratePct":"15"},{"upTo":"1000000.00","ratePct":"20"},{"upTo":"2000000.00","ratePct":"25"},{"upTo":"5000000.00","ratePct":"30"},{"upTo":null,"ratePct":"35"}]` | confirmed | finance_manager | D-465 | D-465 personal income tax bands (Revenue Code s.48(1)) for the progressive withholding on agent commission (s.50(1)) |
 | `tax.rounding_mode` | `line` | pending_cpa | finance_manager | D-033 | D-033 / accounting-design §1.5 VAT and WHT rounding per line or per document (⚖); a document-level difference is an explicit rounding amount |
+| `tax.wht_40_2.expense_cap` | `100000.00` | confirmed | finance_manager | D-465 | D-465 cap of the s.40(2) expense deduction (combined with s.40(1)) in the progressive withholding |
+| `tax.wht_40_2.expense_rate` | `0.50` | confirmed | finance_manager | D-465 | D-465 expense deduction rate on s.40(2) income (50 %) in the progressive withholding |
+| `tax.wht_40_2.personal_allowance` | `60000.00` | confirmed | finance_manager | D-465 | D-465 personal allowance used for an agent without an accepted ล.ย.01 |
 | `tooling.reuse_months` | `12` | confirmed | superadmin | D-205, D-289 | D-205 / D-289 months after its last use that a registered plate set or die block is reused (the reorder waives it) |
 
 ## Legal entity data (D-092)
