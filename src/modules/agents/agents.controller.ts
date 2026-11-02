@@ -15,6 +15,7 @@ import { type Request } from 'express';
 import { AgentAttributionService } from './agent-attribution.service';
 import { AgentCommissionsService } from './agent-commissions.service';
 import { AgentStatementsService } from './agent-statements.service';
+import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
 import {
   AGENT_EXAMPLE,
   AGENT_IDS,
@@ -28,22 +29,35 @@ import {
   AgentProgrammeDto,
   AgentStatementDetailDto,
   AgentStatementDto,
+  AgentTaxDeclarationDto,
   APPLICATION_EXAMPLE,
   ClaimedAgentLinkDto,
   COMMISSION_EXAMPLE,
   LEAD_EXAMPLE,
+  MY_TAX_DECLARATION_EXAMPLE,
   MyCommissionListQuery,
   MyLeadListQuery,
   MyLinkListQuery,
+  MyTaxDeclarationDto,
   RegisterAgentLeadDto,
   STATEMENT_DETAIL_EXAMPLE,
   STATEMENT_EXAMPLE,
   SubmitAgentApplicationDto,
+  SubmitAgentTaxDeclarationDto,
+  TAX_DECLARATION_EXAMPLE,
 } from './agents.dto';
 import { AgentsService } from './agents.service';
-import { agentDto, agentLinkDto, applicationDto, commissionDto, leadDto, statementDto } from './agents-views';
+import {
+  agentDto,
+  agentLinkDto,
+  applicationDto,
+  commissionDto,
+  leadDto,
+  statementDto,
+  taxDeclarationDto,
+} from './agents-views';
 
-const DECISIONS = ['D-416', 'D-417', 'D-418', 'D-420', 'D-422'];
+const DECISIONS = ['D-416', 'D-417', 'D-418', 'D-420', 'D-422', 'D-464'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'validation.failed'] as const;
 
 function customer(actor: Actor): UserActor {
@@ -65,6 +79,7 @@ export class StoreAgentController {
     private readonly attribution: AgentAttributionService,
     private readonly commissions: AgentCommissionsService,
     private readonly statements: AgentStatementsService,
+    private readonly declarations: AgentTaxDeclarationsService,
   ) {}
 
   @Get('programme')
@@ -203,7 +218,7 @@ export class StoreAgentController {
     return agentDto(
       row,
       this.agents.linkFor(row.code),
-      await this.agents.termsNow(row.planId),
+      await this.agents.storeTermsNow(row.planId),
       await this.agents.totals(row.id),
     );
   }
@@ -238,7 +253,7 @@ export class StoreAgentController {
   @ApiEndpoint({
     id: 'store.agent.leads',
     summary: 'List my leads',
-    description: 'Customer and factory prospects I registered, with their protection (D-417, D-419).',
+    description: 'Customer prospects I registered, with their protection (D-417, D-464).',
     implements: DECISIONS,
   })
   @ApiPaginated(AgentLeadDto, { example: LEAD_EXAMPLE })
@@ -246,7 +261,8 @@ export class StoreAgentController {
   async leads(@CurrentActor() actor: Actor, @Query() q: MyLeadListQuery) {
     const agent = await this.agents.mine(customer(actor).userId);
     const [rows, total] = await this.attribution.leads(
-      { agentId: agent.id, ...(q.status && { status: q.status }) },
+      // P-03 / D-464: factory leads are history, kept for staff only.
+      { agentId: agent.id, kind: 'customer', ...(q.status && { status: q.status }) },
       q.page,
       q.perPage,
     );
@@ -259,9 +275,10 @@ export class StoreAgentController {
     id: 'store.agent.registerLead',
     summary: 'Register a lead',
     description:
-      'A customer or factory prospect with a phone, e-mail or tax id, who agreed to be contacted (PDPA). ' +
-      'Protected for `agents.rules.leadProtectionDays`; refused when it is already a customer, company or ' +
-      'factory, or another agent’s protected lead (D-417, D-419).',
+      'A customer prospect with a phone, e-mail or tax id, who agreed to be contacted (PDPA). Protected for ' +
+      '`agents.rules.leadProtectionDays`; refused when it is already a customer or company, or another agent’s ' +
+      'protected lead (D-417). Kind `customer` only — anything else is `agents.lead_kind_unsupported` (P-03, ' +
+      'D-464): factories apply at /partner-with-us.',
     implements: DECISIONS,
   })
   @ApiBody({
@@ -283,6 +300,7 @@ export class StoreAgentController {
     ...WRITE,
     'agents.not_agent',
     'agents.agent_inactive',
+    'agents.lead_kind_unsupported',
     'agents.too_many_leads',
     'agents.lead_existing_customer',
     'agents.lead_unavailable',
@@ -327,8 +345,8 @@ export class StoreAgentController {
     id: 'store.agent.commissions',
     summary: 'List my commission',
     description:
-      'Every entry, newest first: completed orders (pending until the claim window and payment), bounties, ' +
-      'adjustments and refund reversals (D-418, D-419).',
+      'Every entry, newest first: completed orders at the full rate with no cap (pending until the claim ' +
+      'window and payment), adjustments and refund reversals (D-418, D-464).',
     implements: DECISIONS,
   })
   @ApiPaginated(AgentCommissionDto, { example: COMMISSION_EXAMPLE })
@@ -421,5 +439,70 @@ export class StoreAgentController {
     const row = await this.statements.get(id);
     if (row.agentId !== agent.id) throw new DomainException('http.not_found');
     return this.statements.certificateUrl(row);
+  }
+
+  // --- ล.ย.01 (D-465) --------------------------------------------------------------------------------------
+
+  @Get('tax-declaration')
+  @Can('agent.self')
+  @ApiEndpoint({
+    id: 'store.agentTaxDeclaration.get',
+    summary: 'Get my ล.ย.01 for this tax year',
+    description:
+      'Whether I need one (individual freelance agents), the personal allowance used without one, and my latest ' +
+      'declaration of the current tax year with its status. Without an accepted ล.ย.01 only the personal ' +
+      'allowance is used (D-465).',
+    implements: ['D-465'],
+  })
+  @ApiSuccess(200, { description: 'Declaration', type: MyTaxDeclarationDto, example: MY_TAX_DECLARATION_EXAMPLE })
+  @ApiStandardErrors('validation.failed', 'agents.not_agent')
+  async taxDeclaration(@CurrentActor() actor: Actor): Promise<MyTaxDeclarationDto> {
+    const agent = await this.agents.mine(customer(actor).userId);
+    const taxYear = this.declarations.currentTaxYear();
+    const latest = await this.declarations.latest(agent.id, taxYear);
+    return {
+      taxYear,
+      applicable: agent.kind === 'freelance' && agent.juristicType === 'individual',
+      personalAllowance: await this.agents.personalAllowance(),
+      declaration: latest ? taxDeclarationDto(latest) : null,
+    };
+  }
+
+  @Post('tax-declaration')
+  @Can('agent.self')
+  @ApiEndpoint({
+    id: 'store.agentTaxDeclaration.submit',
+    summary: 'Submit my ล.ย.01 for this tax year',
+    description:
+      'Allowance amounts by group (family, insurance and savings, housing, donations) with my uploaded evidence. ' +
+      'One waiting declaration at a time; Finance accepts or rejects it. A later accepted one replaces an earlier ' +
+      'one for the next statements (D-465).',
+    implements: ['D-465'],
+  })
+  @ApiBody({
+    type: SubmitAgentTaxDeclarationDto,
+    examples: {
+      default: {
+        value: {
+          allowances: { spouse: '60000.00', lifeInsurance: '30000.00' },
+          evidenceFileIds: [AGENT_IDS.file],
+        },
+      },
+    },
+  })
+  @ApiSuccess(201, { description: 'Declaration', type: AgentTaxDeclarationDto, example: TAX_DECLARATION_EXAMPLE })
+  @ApiStandardErrors(
+    ...WRITE,
+    'agents.not_agent',
+    'agents.tax_declaration_open',
+    'agents.tax_declaration_not_applicable',
+  )
+  async submitTaxDeclaration(
+    @CurrentActor() actor: Actor,
+    @Body() body: SubmitAgentTaxDeclarationDto,
+  ): Promise<AgentTaxDeclarationDto> {
+    const me = customer(actor);
+    const agent = await this.agents.mine(me.userId);
+    return taxDeclarationDto(await this.declarations.submit(me, agent, body));
   }
 }

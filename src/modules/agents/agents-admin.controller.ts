@@ -36,6 +36,7 @@ import { type FactoryLinkRow } from './agent-attribution.service';
 import { AgentCommissionsService } from './agent-commissions.service';
 import { AgentStatementsService, periodBounds, statementEtag } from './agent-statements.service';
 import { type StatementRow } from './agent-statements.service';
+import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
 import {
   AdjustAgentCommissionDto,
   ADMIN_AGENT_EXAMPLE,
@@ -45,6 +46,7 @@ import {
   ADMIN_LEAD_EXAMPLE,
   ADMIN_STATEMENT_DETAIL_EXAMPLE,
   ADMIN_STATEMENT_EXAMPLE,
+  ADMIN_TAX_DECLARATION_EXAMPLE,
   AdminAgentApplicationDto,
   AdminAgentCommissionDto,
   AdminAgentDto,
@@ -52,6 +54,8 @@ import {
   AdminAgentLinkDto,
   AdminAgentStatementDetailDto,
   AdminAgentStatementDto,
+  AdminAgentTaxDeclarationDetailDto,
+  AdminAgentTaxDeclarationDto,
   AGENT_IDS,
   AgentFactoryLinkDto,
   AgentListQuery,
@@ -62,9 +66,11 @@ import {
   ApplicationListQuery,
   ApproveAgentApplicationDto,
   AssignAgentLinkDto,
+  AttachAgentTaxInvoiceDto,
   CommissionListQuery,
   CreateAgentPlanDto,
   CreateEmployeeAgentDto,
+  DecideAgentTaxDeclarationDto,
   DecideHeldAgentCommissionDto,
   DraftAgentPlanVersionDto,
   FACTORY_LINK_EXAMPLE,
@@ -74,6 +80,7 @@ import {
   LinkListQuery,
   PLAN_EXAMPLE,
   StatementListQuery,
+  TaxDeclarationListQuery,
   UpdateAgentDto,
 } from './agents.dto';
 import { agentEtag, AgentsService } from './agents.service';
@@ -85,6 +92,7 @@ import {
   adminCommissionDto,
   adminLeadDto,
   adminStatementDto,
+  adminTaxDeclarationDto,
   factoryLinkDto,
   planDto,
 } from './agents-views';
@@ -582,9 +590,12 @@ export class AdminAgentsController {
   @Can('agents.read')
   @ApiEndpoint({
     id: 'admin.agents.listFactoryLinks',
-    summary: 'List factories brought by agents',
-    description: 'With the factory’s status and qualifying jobs so far (D-419).',
-    implements: DECISIONS,
+    summary: 'List factories brought by agents (history)',
+    description:
+      'History of the retired factory referral (D-419, retired by P-03 / D-464): links with the factory’s status ' +
+      'and qualifying jobs. Read-only; no new links are made.',
+    implements: [...DECISIONS, 'D-464'],
+    deprecated: { since: '2026-11-02' },
   })
   @ApiPaginated(AgentFactoryLinkDto, { example: FACTORY_LINK_EXAMPLE })
   @ApiStandardErrors('validation.failed')
@@ -606,9 +617,10 @@ export class AdminAgentsController {
     id: 'admin.agents.linkFactory',
     summary: 'Link a factory to the agent who brought it',
     description:
-      'Partner management records which agent brought a factory when no lead matched it automatically; one ' +
-      'agent per factory (D-419).',
-    implements: DECISIONS,
+      'Retired (P-03 / D-464): factory referral is no longer part of the agent programme; always ' +
+      '`agents.factory_links_retired` (410). The list stays readable for history.',
+    implements: [...DECISIONS, 'D-464'],
+    deprecated: { since: '2026-11-02' },
   })
   @ApiBody({
     type: LinkAgentFactoryDto,
@@ -619,12 +631,10 @@ export class AdminAgentsController {
     },
   })
   @ApiSuccess(201, { description: 'Factory link', type: AgentFactoryLinkDto, example: FACTORY_LINK_EXAMPLE })
-  @ApiStandardErrors(...WRITE, 'agents.agent_inactive', 'agents.factory_linked')
-  async linkFactory(
-    @CurrentActor() actor: Actor,
-    @Body() body: LinkAgentFactoryDto,
-  ): Promise<AgentFactoryLinkDto> {
-    return this.factoryLinkView(await this.attribution.linkFactory(staff(actor), body));
+  @ApiStandardErrors(...WRITE, 'agents.factory_links_retired')
+  linkFactory(@CurrentActor() actor: Actor, @Body() _body: LinkAgentFactoryDto): Promise<AgentFactoryLinkDto> {
+    staff(actor);
+    throw new DomainException('agents.factory_links_retired');
   }
 
   @Post('agent-factory-links/:factoryLinkId/actions/end')
@@ -634,8 +644,11 @@ export class AdminAgentsController {
   @ApiEndpoint({
     id: 'admin.agents.endFactoryLink',
     summary: 'End a pending factory link',
-    description: 'No bounty will be earned for it (D-419).',
-    implements: DECISIONS,
+    description:
+      'No bounty will be earned for it (D-419). History tool only since P-03 / D-464: pending links were ended ' +
+      'by the data job `agents:retire-bounty`.',
+    implements: [...DECISIONS, 'D-464'],
+    deprecated: { since: '2026-11-02' },
   })
   @ApiBody({ type: ReasonDto, examples: REASON_EXAMPLE })
   @ApiSuccess(200, {
@@ -823,10 +836,13 @@ export class AdminAgentsController {
     id: 'admin.agents.approveStatement',
     summary: 'Approve an agent statement',
     description:
-      'Freelance: records the agent vendor’s bill (account 6160; withholding: commission ภ.ง.ด.1 for an ' +
-      'individual, service ภ.ง.ด.53 for a juristic person; VAT when VAT registered) for payout runs to pay. ' +
-      'Employee: accrued for payroll. Guarded by `If-Match`; requires `Idempotency-Key` (D-420, D-421).',
-    implements: [...DECISIONS, 'D-421'],
+      'Freelance: records the agent vendor’s bill (account 6160) for payout runs to pay. Withholding (D-465): an ' +
+      'individual — progressive s.50(1), cumulative over the calendar year with the personal allowance or the ' +
+      'accepted ล.ย.01 (ภ.ง.ด.1), decided here and withheld as is by the payout run; a juristic person — service ' +
+      '3 % from ฿1,000 (ภ.ง.ด.53), VAT on top when VAT registered, and then its tax invoice must be attached ' +
+      'first (`agent_statements.tax_invoice_required`). Employee: accrued for payroll. Guarded by `If-Match`; ' +
+      'requires `Idempotency-Key` (D-420, D-465).',
+    implements: [...DECISIONS, 'D-421', 'D-465'],
   })
   @ApiSuccess(200, {
     description: 'Statement',
@@ -838,6 +854,7 @@ export class AdminAgentsController {
     'http.not_found',
     'validation.failed',
     'agents.statement_invalid_status',
+    'agent_statements.tax_invoice_required',
     'payables.invoice_duplicate',
   )
   async approveStatement(
@@ -872,6 +889,39 @@ export class AdminAgentsController {
     @Body() body: ReasonDto,
   ): Promise<AdminAgentStatementDto> {
     return this.statementView(await this.statements.void(staff(actor), id, body.reason));
+  }
+
+  @Post('agent-statements/:statementId/actions/attach-tax-invoice')
+  @HttpCode(200)
+  @Can('agent_statements.approve')
+  @ApiParam({ name: 'statementId', format: 'uuid' })
+  @ApiConcurrency()
+  @ApiEndpoint({
+    id: 'admin.agents.attachStatementTaxInvoice',
+    summary: 'Attach a juristic agent’s tax invoice to a draft statement',
+    description:
+      'A VAT-registered juristic agent bills with its own tax invoice (number + uploaded file) before Finance ' +
+      'approves; the bill then claims input VAT. Guarded by `If-Match` (D-465).',
+    implements: [...DECISIONS, 'D-465'],
+  })
+  @ApiBody({
+    type: AttachAgentTaxInvoiceDto,
+    examples: { default: { value: { fileId: AGENT_IDS.file, taxInvoiceNo: 'INV-2611-0012' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Statement',
+    type: AdminAgentStatementDto,
+    example: { ...ADMIN_STATEMENT_EXAMPLE, status: 'draft', taxInvoiceNo: 'INV-2611-0012', hasTaxInvoice: true },
+  })
+  @ApiStandardErrors(...WRITE, 'agents.statement_invalid_status')
+  async attachTaxInvoice(
+    @CurrentActor() actor: Actor,
+    @Param('statementId', ParseUUIDPipe) id: string,
+    @Body() body: AttachAgentTaxInvoiceDto,
+    @IfMatch() ifMatch: string | undefined,
+    @Res({ passthrough: true }) res: Response,
+  ): Promise<AdminAgentStatementDto> {
+    return this.statementView(await this.statements.attachTaxInvoice(staff(actor), id, body, ifMatch), res);
   }
 
   @Post('agent-statements/actions/export-payroll')
@@ -1119,5 +1169,84 @@ export class AdminAgentPlansController {
     @Body() body: ReasonDto,
   ) {
     return this.planView(await this.agents.retirePlan(staff(actor), id, body.reason));
+  }
+}
+
+/** D-465: Finance reviews agents' ล.ย.01 allowance declarations. */
+@ApiSurface('admin', 'agentTaxDeclarations')
+@Controller('agent-tax-declarations')
+export class AdminAgentTaxDeclarationsController {
+  constructor(private readonly declarations: AgentTaxDeclarationsService) {}
+
+  @Get()
+  @Can('agent_tax_declarations.review')
+  @ApiEndpoint({
+    id: 'admin.agentTaxDeclarations.list',
+    summary: 'List agents’ ล.ย.01 declarations',
+    description: 'Newest first; filter by status and tax year (D-465).',
+    implements: ['D-465'],
+  })
+  @ApiPaginated(AdminAgentTaxDeclarationDto, { example: ADMIN_TAX_DECLARATION_EXAMPLE })
+  @ApiStandardErrors('validation.failed')
+  async list(@Query() q: TaxDeclarationListQuery) {
+    const [rows, total] = await this.declarations.list(
+      { ...(q.status && { status: q.status }), ...(q.taxYear && { taxYear: q.taxYear }) },
+      q.page,
+      q.perPage,
+    );
+    return { data: rows.map(adminTaxDeclarationDto), meta: { page: q.page, perPage: q.perPage, total } };
+  }
+
+  @Get(':declarationId')
+  @Can('agent_tax_declarations.review')
+  @ApiParam({ name: 'declarationId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.agentTaxDeclarations.get',
+    summary: 'Get a ล.ย.01 with its evidence',
+    description: 'Short-lived links to the evidence the agent uploaded (D-465).',
+    implements: ['D-465'],
+  })
+  @ApiSuccess(200, {
+    description: 'Declaration',
+    type: AdminAgentTaxDeclarationDetailDto,
+    example: {
+      ...ADMIN_TAX_DECLARATION_EXAMPLE,
+      evidence: [{ fileId: AGENT_IDS.file, fileName: 'ใบเสร็จประกันชีวิต.pdf', url: null }],
+    },
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed')
+  async get(@Param('declarationId', ParseUUIDPipe) id: string): Promise<AdminAgentTaxDeclarationDetailDto> {
+    const row = await this.declarations.get(id);
+    return { ...adminTaxDeclarationDto(row), evidence: await this.declarations.evidence(row) };
+  }
+
+  @Post(':declarationId/actions/decide')
+  @HttpCode(200)
+  @Can('agent_tax_declarations.review')
+  @ApiParam({ name: 'declarationId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.agentTaxDeclarations.decide',
+    summary: 'Accept or reject a ล.ย.01',
+    description:
+      'Accepted allowances are used by the next statement’s progressive withholding of that tax year; a ' +
+      'rejection needs a reason the agent sees (D-465).',
+    implements: ['D-465'],
+  })
+  @ApiBody({
+    type: DecideAgentTaxDeclarationDto,
+    examples: { default: { value: { decision: 'accepted' } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Declaration',
+    type: AdminAgentTaxDeclarationDto,
+    example: { ...ADMIN_TAX_DECLARATION_EXAMPLE, status: 'accepted' },
+  })
+  @ApiStandardErrors(...WRITE, 'agents.tax_declaration_decided')
+  async decide(
+    @CurrentActor() actor: Actor,
+    @Param('declarationId', ParseUUIDPipe) id: string,
+    @Body() body: DecideAgentTaxDeclarationDto,
+  ): Promise<AdminAgentTaxDeclarationDto> {
+    return adminTaxDeclarationDto(await this.declarations.decide(staff(actor), id, body));
   }
 }

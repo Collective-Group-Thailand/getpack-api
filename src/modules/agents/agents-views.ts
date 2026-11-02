@@ -2,8 +2,9 @@ import { toBangkokIso } from '@common/time/bangkok';
 
 import { type FactoryLinkRow, type LeadRow, type LinkRow } from './agent-attribution.service';
 import { type CommissionRow } from './agent-commissions.service';
-import { agentRef, D, maskName, termsOf, userRef } from './agent-shared';
+import { agentRef, D, maskName, storeTermsOf, termsOf, userRef } from './agent-shared';
 import { type StatementRow } from './agent-statements.service';
+import { type TaxDeclarationRow } from './agent-tax-declarations.service';
 import {
   type AdminAgentApplicationDto,
   type AdminAgentCommissionDto,
@@ -11,6 +12,7 @@ import {
   type AdminAgentLeadDto,
   type AdminAgentLinkDto,
   type AdminAgentStatementDto,
+  type AdminAgentTaxDeclarationDto,
   type AdminAgentTotalsDto,
   type AgentApplicationDto,
   type AgentCommissionDto,
@@ -21,6 +23,7 @@ import {
   type AgentPlanDto,
   type AgentPlanVersionDto,
   type AgentStatementDto,
+  type AgentTaxDeclarationDto,
   type AgentTotalsDto,
 } from './agents.dto';
 import { type AgentRow, type ApplicationRow, type PlanRow } from './agents.service';
@@ -71,7 +74,7 @@ export function adminApplicationDto(r: ApplicationRow, checks: string[]): AdminA
 export function agentDto(
   r: AgentRow,
   link: string,
-  terms: ReturnType<typeof termsOf>,
+  terms: ReturnType<typeof storeTermsOf>,
   all: AdminAgentTotalsDto,
 ): AgentDto {
   // D-435: the factory count stays with staff (adminAgentDto); an agent never learns about factories.
@@ -107,7 +110,9 @@ export function adminAgentDto(
 ): AdminAgentDto {
   const accounts = r.vendor?.bankAccounts ?? [];
   return {
-    ...agentDto(r, link, terms, totals),
+    ...agentDto(r, link, null, totals),
+    terms: terms ? { ...storeTermsFromFull(terms) } : null,
+    planTerms: terms,
     totals,
     user: { id: r.user.publicId, displayName: r.user.displayName },
     phone: r.user.phone,
@@ -229,7 +234,6 @@ export function commissionDto(r: CommissionRow, forAgent = true): AgentCommissio
     isFirstOrder: r.isFirstOrder,
     baseAmount: r.baseAmount.toFixed(2),
     ratePct: r.ratePct === null ? null : D(r.ratePct).toString(),
-    capAmount: r.capAmount?.toFixed(2) ?? null,
     amount: r.amount.toFixed(2),
     availableAt: iso(r.availableAt),
     earnedAt: iso(r.earnedAt),
@@ -246,6 +250,8 @@ export function adminCommissionDto(r: CommissionRow): AdminAgentCommissionDto {
     factoryName: r.factoryLink ? (r.factoryLink.factory.tradeName ?? r.factoryLink.factory.legalName) : null,
     orderId: r.order?.publicId ?? null,
     marginAmount: r.marginAmount?.toFixed(2) ?? null,
+    capAmount: r.capAmount?.toFixed(2) ?? null,
+    marginAlert: r.marginAlert,
     holdFlags: r.holdFlags,
   };
 }
@@ -262,7 +268,9 @@ export function statementDto(
     status: r.status,
     entryCount: r.entryCount,
     totalAmount: r.totalAmount.toFixed(2),
-    whtAmount: payment.wht,
+    // D-465: what the payment withheld once paid; before that what approval decided.
+    whtAmount: payment.wht ?? r.whtAmount?.toFixed(2) ?? null,
+    whtMethod: r.whtMethod,
     paidAmount: payment.paid,
     approvedAt: iso(r.approvedAt),
     paidAt: iso(r.paidAt),
@@ -282,6 +290,17 @@ export function adminStatementDto(
     exportedAt: iso(r.exportedAt),
     voidedAt: iso(r.voidedAt),
     voidReason: r.voidReason,
+    whtWorking:
+      r.whtMethod === 'progressive_40_2' && r.whtYtdPaid && r.whtProjected && r.whtAllowances && r.whtAnnualTax
+        ? {
+            ytdPaid: r.whtYtdPaid.toFixed(2),
+            projected: r.whtProjected.toFixed(2),
+            allowances: r.whtAllowances.toFixed(2),
+            annualTax: r.whtAnnualTax.toFixed(2),
+          }
+        : null,
+    taxInvoiceNo: r.taxInvoiceNo,
+    hasTaxInvoice: r.taxInvoiceFileId !== null,
     rowVersion: r.rowVersion,
   };
 }
@@ -320,4 +339,36 @@ export function planDto(
       inForce: inForce?.id === v.id,
     })),
   };
+}
+
+function storeTermsFromFull(t: NonNullable<ReturnType<typeof termsOf>>) {
+  return {
+    firstOrderPct: t.firstOrderPct,
+    repeatOrderPct: t.repeatOrderPct,
+    attributionMonths: t.attributionMonths,
+    minBaseAmount: t.minBaseAmount,
+    uncapped: true as const,
+  };
+}
+
+/** D-465 ล.ย.01 as the agent sees it. */
+export function taxDeclarationDto(r: TaxDeclarationRow): AgentTaxDeclarationDto {
+  const allowances = (r.allowances ?? {}) as Record<string, string>;
+  return {
+    id: r.publicId,
+    taxYear: r.taxYear,
+    allowances,
+    allowancesTotal: Object.values(allowances)
+      .reduce((a, v) => a.add(v), D(0))
+      .toFixed(2),
+    evidenceCount: r.evidenceFileIds.length,
+    status: r.status,
+    submittedAt: toBangkokIso(r.submittedAt),
+    decidedAt: iso(r.decidedAt),
+    decisionReason: r.decisionReason,
+  };
+}
+
+export function adminTaxDeclarationDto(r: TaxDeclarationRow): AdminAgentTaxDeclarationDto {
+  return { ...taxDeclarationDto(r), agent: agentRef(r.agent), decidedBy: userRef(r.decidedBy) };
 }

@@ -89,6 +89,17 @@
           "type": "https://errors.getpack/advisory.option_unknown"
         }
       },
+      "problem.agent_statements.tax_invoice_required": {
+        "summary": "agent_statements.tax_invoice_required",
+        "value": {
+          "code": "agent_statements.tax_invoice_required",
+          "detail": "ตัวแทนนิติบุคคลที่จด VAT ต้องแนบใบกำกับภาษีของตัวแทนก่อนอนุมัติ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ต้องแนบใบกำกับภาษีก่อน",
+          "type": "https://errors.getpack/agent_statements.tax_invoice_required"
+        }
+      },
       "problem.agents.agent_inactive": {
         "summary": "agents.agent_inactive",
         "value": {
@@ -199,15 +210,15 @@
           "type": "https://errors.getpack/agents.commission_not_held"
         }
       },
-      "problem.agents.factory_linked": {
-        "summary": "agents.factory_linked",
+      "problem.agents.factory_links_retired": {
+        "summary": "agents.factory_links_retired",
         "value": {
-          "code": "agents.factory_linked",
-          "detail": "โรงงานนี้ผูกกับตัวแทนอยู่แล้ว",
+          "code": "agents.factory_links_retired",
+          "detail": "การผูกโรงงานกับตัวแทนยกเลิกแล้ว ดูประวัติได้อย่างเดียว (P-03)",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
-          "status": 409,
-          "title": "โรงงานมีตัวแทนแล้ว",
-          "type": "https://errors.getpack/agents.factory_linked"
+          "status": 410,
+          "title": "ยกเลิกแล้ว",
+          "type": "https://errors.getpack/agents.factory_links_retired"
         }
       },
       "problem.agents.invalid_status": {
@@ -252,6 +263,17 @@
           "status": 409,
           "title": "เป็นลูกค้าอยู่แล้ว",
           "type": "https://errors.getpack/agents.lead_existing_customer"
+        }
+      },
+      "problem.agents.lead_kind_unsupported": {
+        "summary": "agents.lead_kind_unsupported",
+        "value": {
+          "code": "agents.lead_kind_unsupported",
+          "detail": "แนะนำโรงงานได้ที่ getpack.co/partner-with-us",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ลงทะเบียนได้เฉพาะลูกค้า",
+          "type": "https://errors.getpack/agents.lead_kind_unsupported"
         }
       },
       "problem.agents.lead_taken": {
@@ -417,6 +439,39 @@
           "status": 409,
           "title": "จ่ายผ่านรอบจ่ายเงิน",
           "type": "https://errors.getpack/agents.statement_paid_by_payout"
+        }
+      },
+      "problem.agents.tax_declaration_decided": {
+        "summary": "agents.tax_declaration_decided",
+        "value": {
+          "code": "agents.tax_declaration_decided",
+          "detail": "แบบ ล.ย.01 นี้ได้รับการตรวจแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตรวจแล้ว",
+          "type": "https://errors.getpack/agents.tax_declaration_decided"
+        }
+      },
+      "problem.agents.tax_declaration_not_applicable": {
+        "summary": "agents.tax_declaration_not_applicable",
+        "value": {
+          "code": "agents.tax_declaration_not_applicable",
+          "detail": "แบบ ล.ย.01 ใช้กับตัวแทนบุคคลธรรมดาเท่านั้น",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ไม่ต้องส่ง ล.ย.01",
+          "type": "https://errors.getpack/agents.tax_declaration_not_applicable"
+        }
+      },
+      "problem.agents.tax_declaration_open": {
+        "summary": "agents.tax_declaration_open",
+        "value": {
+          "code": "agents.tax_declaration_open",
+          "detail": "ส่งแบบ ล.ย.01 ของปีภาษี {taxYear} ไว้แล้ว รอทีมบัญชีตรวจ",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีแบบ ล.ย.01 รอตรวจอยู่แล้ว",
+          "type": "https://errors.getpack/agents.tax_declaration_open"
         }
       },
       "problem.agents.too_many_leads": {
@@ -7167,7 +7222,7 @@
             "$ref": "#/components/schemas/AgentRefDto"
           },
           "amount": {
-            "description": "Signed",
+            "description": "Signed; the full rate, no cap (D-464)",
             "example": "600.00",
             "type": "string"
           },
@@ -7185,8 +7240,8 @@
             "type": "string"
           },
           "capAmount": {
-            "description": "30 % of the order’s margin",
-            "example": "1080.00",
+            "description": "History: the margin cap applied before D-464 (null since)",
+            "example": null,
             "type": [
               "string",
               "null"
@@ -7245,6 +7300,11 @@
               }
             ],
             "example": "order"
+          },
+          "marginAlert": {
+            "description": "D-464: commission ÷ gross margin exceeded `agent.margin_alert_pct` (internal; amount unchanged)",
+            "example": false,
+            "type": "boolean"
           },
           "marginAmount": {
             "description": "The order’s margin (staff only)",
@@ -7310,7 +7370,6 @@
           "isFirstOrder",
           "baseAmount",
           "ratePct",
-          "capAmount",
           "amount",
           "availableAt",
           "earnedAt",
@@ -7318,6 +7377,8 @@
           "note",
           "createdAt",
           "agent",
+          "capAmount",
+          "marginAlert",
           "factoryName",
           "orderId",
           "marginAmount",
@@ -7408,6 +7469,17 @@
           "plan": {
             "$ref": "#/components/schemas/AgentPlanRefDto"
           },
+          "planTerms": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentPlanTermsDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Staff: the full plan version in force (history fields such as the retired margin cap included)"
+          },
           "rowVersion": {
             "example": 1,
             "type": "integer"
@@ -7449,13 +7521,13 @@
           "terms": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/AgentPlanTermsDto"
+                "$ref": "#/components/schemas/StoreAgentTermsDto"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "The plan’s terms in force"
+            "description": "The plan’s terms in force (D-464: no cap)"
           },
           "totals": {
             "$ref": "#/components/schemas/AdminAgentTotalsDto"
@@ -7489,6 +7561,7 @@
           "joinedAt",
           "statusReason",
           "totals",
+          "planTerms",
           "user",
           "phone",
           "juristicType",
@@ -7808,6 +7881,11 @@
               "null"
             ]
           },
+          "hasTaxInvoice": {
+            "description": "D-465 a tax invoice file is attached",
+            "example": false,
+            "type": "boolean"
+          },
           "hasWhtCertificate": {
             "description": "A 50 ทวิ is available to download",
             "example": false,
@@ -7860,6 +7938,14 @@
             ],
             "example": "approved"
           },
+          "taxInvoiceNo": {
+            "description": "D-465 juristic agent’s tax invoice no.",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "totalAmount": {
             "description": "Before withholding",
             "example": "2350.00",
@@ -7889,12 +7975,35 @@
             ]
           },
           "whtAmount": {
-            "description": "Withheld at payment (freelance)",
+            "description": "Withholding: what the payment withheld once paid, before that what approval decided (D-465); null for employees (payroll) and drafts",
             "example": "70.50",
             "type": [
               "string",
               "null"
             ]
+          },
+          "whtMethod": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentWhtMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-465: individual — progressive s.50(1) (ภ.ง.ด.1); juristic — 3 % service from ฿1,000 (ภ.ง.ด.53); employee — payroll. Null before approval",
+            "example": "progressive_40_2"
+          },
+          "whtWorking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentWhtWorkingDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-465 progressive working (individual agents, after approval)"
           }
         },
         "required": [
@@ -7906,6 +8015,7 @@
           "entryCount",
           "totalAmount",
           "whtAmount",
+          "whtMethod",
           "paidAmount",
           "approvedAt",
           "paidAt",
@@ -7916,6 +8026,9 @@
           "exportedAt",
           "voidedAt",
           "voidReason",
+          "whtWorking",
+          "taxInvoiceNo",
+          "hasTaxInvoice",
           "rowVersion",
           "entries"
         ],
@@ -7956,6 +8069,11 @@
               "null"
             ]
           },
+          "hasTaxInvoice": {
+            "description": "D-465 a tax invoice file is attached",
+            "example": false,
+            "type": "boolean"
+          },
           "hasWhtCertificate": {
             "description": "A 50 ทวิ is available to download",
             "example": false,
@@ -8008,6 +8126,14 @@
             ],
             "example": "approved"
           },
+          "taxInvoiceNo": {
+            "description": "D-465 juristic agent’s tax invoice no.",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "totalAmount": {
             "description": "Before withholding",
             "example": "2350.00",
@@ -8037,12 +8163,35 @@
             ]
           },
           "whtAmount": {
-            "description": "Withheld at payment (freelance)",
+            "description": "Withholding: what the payment withheld once paid, before that what approval decided (D-465); null for employees (payroll) and drafts",
             "example": "70.50",
             "type": [
               "string",
               "null"
             ]
+          },
+          "whtMethod": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentWhtMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-465: individual — progressive s.50(1) (ภ.ง.ด.1); juristic — 3 % service from ฿1,000 (ภ.ง.ด.53); employee — payroll. Null before approval",
+            "example": "progressive_40_2"
+          },
+          "whtWorking": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentWhtWorkingDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-465 progressive working (individual agents, after approval)"
           }
         },
         "required": [
@@ -8054,6 +8203,7 @@
           "entryCount",
           "totalAmount",
           "whtAmount",
+          "whtMethod",
           "paidAmount",
           "approvedAt",
           "paidAt",
@@ -8064,7 +8214,203 @@
           "exportedAt",
           "voidedAt",
           "voidReason",
+          "whtWorking",
+          "taxInvoiceNo",
+          "hasTaxInvoice",
           "rowVersion"
+        ],
+        "type": "object"
+      },
+      "AdminAgentTaxDeclarationDetailDto": {
+        "properties": {
+          "agent": {
+            "$ref": "#/components/schemas/AgentRefDto"
+          },
+          "allowances": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxAllowancesDto"
+              }
+            ],
+            "example": {
+              "lifeInsurance": "30000.00",
+              "socialSecurity": "9000.00",
+              "spouse": "60000.00"
+            }
+          },
+          "allowancesTotal": {
+            "description": "Sum of the declared allowances",
+            "example": "99000.00",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decisionReason": {
+            "description": "Why it was rejected",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/AgentEvidenceFileDto"
+            },
+            "type": "array"
+          },
+          "evidenceCount": {
+            "example": 1,
+            "type": "integer"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6019",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxDeclarationStatus"
+              }
+            ],
+            "example": "submitted"
+          },
+          "submittedAt": {
+            "example": "2026-11-02T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "taxYear": {
+            "example": 2026,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "taxYear",
+          "allowances",
+          "allowancesTotal",
+          "evidenceCount",
+          "status",
+          "submittedAt",
+          "decidedAt",
+          "decisionReason",
+          "agent",
+          "decidedBy",
+          "evidence"
+        ],
+        "type": "object"
+      },
+      "AdminAgentTaxDeclarationDto": {
+        "properties": {
+          "agent": {
+            "$ref": "#/components/schemas/AgentRefDto"
+          },
+          "allowances": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxAllowancesDto"
+              }
+            ],
+            "example": {
+              "lifeInsurance": "30000.00",
+              "socialSecurity": "9000.00",
+              "spouse": "60000.00"
+            }
+          },
+          "allowancesTotal": {
+            "description": "Sum of the declared allowances",
+            "example": "99000.00",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decisionReason": {
+            "description": "Why it was rejected",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidenceCount": {
+            "example": 1,
+            "type": "integer"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6019",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxDeclarationStatus"
+              }
+            ],
+            "example": "submitted"
+          },
+          "submittedAt": {
+            "example": "2026-11-02T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "taxYear": {
+            "example": 2026,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "taxYear",
+          "allowances",
+          "allowancesTotal",
+          "evidenceCount",
+          "status",
+          "submittedAt",
+          "decidedAt",
+          "decisionReason",
+          "agent",
+          "decidedBy"
         ],
         "type": "object"
       },
@@ -15262,7 +15608,7 @@
       "AgentCommissionDto": {
         "properties": {
           "amount": {
-            "description": "Signed",
+            "description": "Signed; the full rate, no cap (D-464)",
             "example": "600.00",
             "type": "string"
           },
@@ -15278,14 +15624,6 @@
             "description": "Lines before VAT, no shipping, after discounts",
             "example": "12000.00",
             "type": "string"
-          },
-          "capAmount": {
-            "description": "30 % of the order’s margin",
-            "example": "1080.00",
-            "type": [
-              "string",
-              "null"
-            ]
           },
           "createdAt": {
             "example": "2026-10-31T10:00:00+07:00",
@@ -15373,7 +15711,6 @@
           "isFirstOrder",
           "baseAmount",
           "ratePct",
-          "capAmount",
           "amount",
           "availableAt",
           "earnedAt",
@@ -15458,13 +15795,13 @@
           "terms": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/AgentPlanTermsDto"
+                "$ref": "#/components/schemas/StoreAgentTermsDto"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "The plan’s terms in force"
+            "description": "The plan’s terms in force (D-464: no cap)"
           },
           "totals": {
             "$ref": "#/components/schemas/AgentTotalsDto"
@@ -15482,6 +15819,32 @@
           "joinedAt",
           "statusReason",
           "totals"
+        ],
+        "type": "object"
+      },
+      "AgentEvidenceFileDto": {
+        "properties": {
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+            "format": "uuid",
+            "type": "string"
+          },
+          "fileName": {
+            "example": "ใบเสร็จประกันชีวิต.pdf",
+            "type": "string"
+          },
+          "url": {
+            "example": "https://getpack-files.s3.example.com/…",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "fileId",
+          "fileName",
+          "url"
         ],
         "type": "object"
       },
@@ -15645,7 +16008,7 @@
           "kind": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/AgentLeadKind"
+                "$ref": "#/components/schemas/StoreAgentLeadKind"
               }
             ],
             "example": "customer"
@@ -16214,13 +16577,13 @@
           "plan": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/AgentPlanTermsDto"
+                "$ref": "#/components/schemas/StoreAgentTermsDto"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "The standard freelance plan in force"
+            "description": "The standard freelance plan in force (D-464: no cap)"
           },
           "state": {
             "allOf": [
@@ -16359,12 +16722,24 @@
             "type": "string"
           },
           "whtAmount": {
-            "description": "Withheld at payment (freelance)",
+            "description": "Withholding: what the payment withheld once paid, before that what approval decided (D-465); null for employees (payroll) and drafts",
             "example": "70.50",
             "type": [
               "string",
               "null"
             ]
+          },
+          "whtMethod": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentWhtMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-465: individual — progressive s.50(1) (ภ.ง.ด.1); juristic — 3 % service from ฿1,000 (ภ.ง.ด.53); employee — payroll. Null before approval",
+            "example": "progressive_40_2"
           }
         },
         "required": [
@@ -16376,6 +16751,7 @@
           "entryCount",
           "totalAmount",
           "whtAmount",
+          "whtMethod",
           "paidAmount",
           "approvedAt",
           "paidAt",
@@ -16452,12 +16828,24 @@
             "type": "string"
           },
           "whtAmount": {
-            "description": "Withheld at payment (freelance)",
+            "description": "Withholding: what the payment withheld once paid, before that what approval decided (D-465); null for employees (payroll) and drafts",
             "example": "70.50",
             "type": [
               "string",
               "null"
             ]
+          },
+          "whtMethod": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentWhtMethod"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "D-465: individual — progressive s.50(1) (ภ.ง.ด.1); juristic — 3 % service from ฿1,000 (ภ.ง.ด.53); employee — payroll. Null before approval",
+            "example": "progressive_40_2"
           }
         },
         "required": [
@@ -16469,6 +16857,7 @@
           "entryCount",
           "totalAmount",
           "whtAmount",
+          "whtMethod",
           "paidAmount",
           "approvedAt",
           "paidAt",
@@ -16510,6 +16899,184 @@
           "active",
           "suspended",
           "ended"
+        ],
+        "type": "string"
+      },
+      "AgentTaxAllowancesDto": {
+        "properties": {
+          "children": {
+            "description": "บุตร",
+            "example": "30000.00",
+            "type": "string"
+          },
+          "disabledDependants": {
+            "description": "อุปการะคนพิการหรือทุพพลภาพ",
+            "example": "60000.00",
+            "type": "string"
+          },
+          "donations": {
+            "description": "เงินบริจาค",
+            "example": "0.00",
+            "type": "string"
+          },
+          "educationDonations": {
+            "description": "เงินบริจาคเพื่อการศึกษา",
+            "example": "0.00",
+            "type": "string"
+          },
+          "healthInsurance": {
+            "description": "เบี้ยประกันสุขภาพตนเอง",
+            "example": "25000.00",
+            "type": "string"
+          },
+          "homeLoanInterest": {
+            "description": "ดอกเบี้ยเงินกู้ยืมเพื่อที่อยู่อาศัย",
+            "example": "0.00",
+            "type": "string"
+          },
+          "lifeInsurance": {
+            "description": "เบี้ยประกันชีวิต",
+            "example": "30000.00",
+            "type": "string"
+          },
+          "parents": {
+            "description": "อุปการะเลี้ยงดูบิดามารดา",
+            "example": "30000.00",
+            "type": "string"
+          },
+          "parentsHealthInsurance": {
+            "description": "เบี้ยประกันสุขภาพบิดามารดา",
+            "example": "15000.00",
+            "type": "string"
+          },
+          "pensionInsurance": {
+            "description": "เบี้ยประกันชีวิตแบบบำนาญ",
+            "example": "0.00",
+            "type": "string"
+          },
+          "providentFund": {
+            "description": "กองทุนสำรองเลี้ยงชีพ",
+            "example": "0.00",
+            "type": "string"
+          },
+          "rmf": {
+            "description": "RMF",
+            "example": "0.00",
+            "type": "string"
+          },
+          "socialSecurity": {
+            "description": "เงินสมทบประกันสังคม",
+            "example": "9000.00",
+            "type": "string"
+          },
+          "spouse": {
+            "description": "คู่สมรสไม่มีเงินได้",
+            "example": "60000.00",
+            "type": "string"
+          },
+          "ssf": {
+            "description": "SSF",
+            "example": "0.00",
+            "type": "string"
+          },
+          "thaiEsg": {
+            "description": "Thai ESG",
+            "example": "0.00",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "AgentTaxDeclarationDecision": {
+        "enum": [
+          "accepted",
+          "rejected"
+        ],
+        "type": "string"
+      },
+      "AgentTaxDeclarationDto": {
+        "properties": {
+          "allowances": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxAllowancesDto"
+              }
+            ],
+            "example": {
+              "lifeInsurance": "30000.00",
+              "socialSecurity": "9000.00",
+              "spouse": "60000.00"
+            }
+          },
+          "allowancesTotal": {
+            "description": "Sum of the declared allowances",
+            "example": "99000.00",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionReason": {
+            "description": "Why it was rejected",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidenceCount": {
+            "example": 1,
+            "type": "integer"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6019",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxDeclarationStatus"
+              }
+            ],
+            "example": "submitted"
+          },
+          "submittedAt": {
+            "example": "2026-11-02T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "taxYear": {
+            "example": 2026,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "taxYear",
+          "allowances",
+          "allowancesTotal",
+          "evidenceCount",
+          "status",
+          "submittedAt",
+          "decidedAt",
+          "decisionReason"
+        ],
+        "type": "object"
+      },
+      "AgentTaxDeclarationStatus": {
+        "enum": [
+          "submitted",
+          "accepted",
+          "rejected"
         ],
         "type": "string"
       },
@@ -16559,6 +17126,46 @@
           "paidThisYear",
           "activeLinks",
           "openLeads"
+        ],
+        "type": "object"
+      },
+      "AgentWhtMethod": {
+        "description": "D-465: individual — progressive s.50(1) (ภ.ง.ด.1); juristic — 3 % service from ฿1,000 (ภ.ง.ด.53); employee — payroll. Null before approval",
+        "enum": [
+          "progressive_40_2",
+          "juristic_service",
+          "payroll"
+        ],
+        "type": "string"
+      },
+      "AgentWhtWorkingDto": {
+        "properties": {
+          "allowances": {
+            "description": "Personal allowance + accepted ล.ย.01 allowances",
+            "example": "60000.00",
+            "type": "string"
+          },
+          "annualTax": {
+            "description": "Annual tax on the projected net income",
+            "example": "7000.00",
+            "type": "string"
+          },
+          "projected": {
+            "description": "YTD + this statement × months left in the year",
+            "example": "460000.00",
+            "type": "string"
+          },
+          "ytdPaid": {
+            "description": "Commission approved this year incl. this statement",
+            "example": "100000.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ytdPaid",
+          "projected",
+          "allowances",
+          "annualTax"
         ],
         "type": "object"
       },
@@ -19306,6 +19913,26 @@
           "failed"
         ],
         "type": "string"
+      },
+      "AttachAgentTaxInvoiceDto": {
+        "properties": {
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+            "format": "uuid",
+            "type": "string"
+          },
+          "taxInvoiceNo": {
+            "example": "INV-2611-0012",
+            "maxLength": 40,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "fileId",
+          "taxInvoiceNo"
+        ],
+        "type": "object"
       },
       "AttachedFileDto": {
         "properties": {
@@ -37677,6 +38304,31 @@
         "required": [
           "from",
           "to"
+        ],
+        "type": "object"
+      },
+      "DecideAgentTaxDeclarationDto": {
+        "properties": {
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxDeclarationDecision"
+              }
+            ],
+            "example": "accepted"
+          },
+          "reason": {
+            "description": "Required to reject",
+            "example": null,
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "decision"
         ],
         "type": "object"
       },
@@ -75989,6 +76641,43 @@
         ],
         "type": "object"
       },
+      "MyTaxDeclarationDto": {
+        "properties": {
+          "applicable": {
+            "description": "Individual freelance agents declare; others do not need to",
+            "example": true,
+            "type": "boolean"
+          },
+          "declaration": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxDeclarationDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "My latest declaration this year"
+          },
+          "personalAllowance": {
+            "description": "Used when no declaration is accepted",
+            "example": "60000.00",
+            "type": "string"
+          },
+          "taxYear": {
+            "description": "The current tax year (Asia/Bangkok)",
+            "example": 2026,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "taxYear",
+          "applicable",
+          "personalAllowance",
+          "declaration"
+        ],
+        "type": "object"
+      },
       "NationalDayKind": {
         "enum": [
           "holiday",
@@ -92173,9 +92862,10 @@
           "kind": {
             "allOf": [
               {
-                "$ref": "#/components/schemas/AgentLeadKind"
+                "$ref": "#/components/schemas/StoreAgentLeadKind"
               }
             ],
+            "description": "Customers only (P-03 / D-464); any other value is `agents.lead_kind_unsupported`",
             "example": "customer"
           },
           "note": {
@@ -105303,6 +105993,49 @@
         ],
         "type": "object"
       },
+      "StoreAgentLeadKind": {
+        "enum": [
+          "customer"
+        ],
+        "type": "string"
+      },
+      "StoreAgentTermsDto": {
+        "properties": {
+          "attributionMonths": {
+            "description": "Months a customer stays linked to the agent",
+            "example": 12,
+            "type": "integer"
+          },
+          "firstOrderPct": {
+            "description": "Commission on a customer’s first order, % of the base",
+            "example": "5",
+            "type": "string"
+          },
+          "minBaseAmount": {
+            "description": "Orders with a smaller base earn nothing",
+            "example": "0.00",
+            "type": "string"
+          },
+          "repeatOrderPct": {
+            "description": "Commission on later orders, % of the base",
+            "example": "3",
+            "type": "string"
+          },
+          "uncapped": {
+            "description": "Always true (D-464): the full rate at every order size, no commission cap",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "firstOrderPct",
+          "repeatOrderPct",
+          "attributionMonths",
+          "minBaseAmount",
+          "uncapped"
+        ],
+        "type": "object"
+      },
       "StoreArticleCardDto": {
         "properties": {
           "categorySlugs": {
@@ -113329,6 +114062,42 @@
           "bankAccountName",
           "bankAccountNo",
           "agreementVersionNo"
+        ],
+        "type": "object"
+      },
+      "SubmitAgentTaxDeclarationDto": {
+        "properties": {
+          "allowances": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentTaxAllowancesDto"
+              }
+            ],
+            "example": {
+              "lifeInsurance": "30000.00",
+              "socialSecurity": "9000.00",
+              "spouse": "60000.00"
+            }
+          },
+          "evidenceFileIds": {
+            "description": "My uploaded evidence",
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000a6015"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 20,
+            "type": "array"
+          }
+        },
+        "required": [
+          "allowances",
+          "evidenceFileIds"
         ],
         "type": "object"
       },
@@ -123917,6 +124686,16 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6003",
                     "nameTh": "ตัวแทนอิสระ — มาตรฐาน"
                   },
+                  "planTerms": {
+                    "attributionMonths": 12,
+                    "factoryBountyAmount": "0.00",
+                    "factoryQualifyDays": 0,
+                    "factoryQualifyJobs": 0,
+                    "firstOrderPct": "5",
+                    "marginCapPct": "30",
+                    "minBaseAmount": "0.00",
+                    "repeatOrderPct": "3"
+                  },
                   "rowVersion": 1,
                   "staffUser": null,
                   "status": "active",
@@ -123924,13 +124703,10 @@
                   "taxId": "0000000000127",
                   "terms": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "totals": {
                     "activeLinks": 6,
@@ -124541,7 +125317,7 @@
                       "amount": "600.00",
                       "availableAt": "2026-11-08T00:00:00+07:00",
                       "baseAmount": "12000.00",
-                      "capAmount": "1080.00",
+                      "capAmount": null,
                       "createdAt": "2026-10-31T10:00:00+07:00",
                       "customerName": "สมหญิง ทดสอบ",
                       "earnedAt": null,
@@ -124550,6 +125326,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6008",
                       "isFirstOrder": true,
                       "kind": "order",
+                      "marginAlert": false,
                       "marginAmount": "3600.00",
                       "note": null,
                       "orderCode": "PK-2610-00042",
@@ -124765,7 +125542,7 @@
                   "amount": "-150.00",
                   "availableAt": "2026-11-08T00:00:00+07:00",
                   "baseAmount": "12000.00",
-                  "capAmount": "1080.00",
+                  "capAmount": null,
                   "createdAt": "2026-10-31T10:00:00+07:00",
                   "customerName": "สมหญิง ทดสอบ",
                   "earnedAt": null,
@@ -124774,6 +125551,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6008",
                   "isFirstOrder": true,
                   "kind": "adjustment",
+                  "marginAlert": false,
                   "marginAmount": "3600.00",
                   "note": null,
                   "orderCode": "PK-2610-00042",
@@ -125049,7 +125827,7 @@
                   "amount": "600.00",
                   "availableAt": "2026-11-08T00:00:00+07:00",
                   "baseAmount": "12000.00",
-                  "capAmount": "1080.00",
+                  "capAmount": null,
                   "createdAt": "2026-10-31T10:00:00+07:00",
                   "customerName": "สมหญิง ทดสอบ",
                   "earnedAt": null,
@@ -125058,6 +125836,7 @@
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6008",
                   "isFirstOrder": true,
                   "kind": "order",
+                  "marginAlert": false,
                   "marginAmount": "3600.00",
                   "note": null,
                   "orderCode": "PK-2610-00042",
@@ -125273,7 +126052,8 @@
     },
     "/v1/admin/agent-factory-links": {
       "get": {
-        "description": "With the factory’s status and qualifying jobs so far (D-419).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423.",
+        "deprecated": true,
+        "description": "History of the retired factory referral (D-419, retired by P-03 / D-464): links with the factory’s status and qualifying jobs. Read-only; no new links are made.\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423, D-464.",
         "operationId": "admin.agents.listFactoryLinks",
         "parameters": [
           {
@@ -125400,6 +126180,9 @@
             },
             "description": "One page of results",
             "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -125526,7 +126309,7 @@
             "staff": []
           }
         ],
-        "summary": "List factories brought by agents",
+        "summary": "List factories brought by agents (history)",
         "tags": [
           "admin.agents"
         ],
@@ -125535,7 +126318,8 @@
         ]
       },
       "post": {
-        "description": "Partner management records which agent brought a factory when no lead matched it automatically; one agent per factory (D-419).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423.",
+        "deprecated": true,
+        "description": "Retired (P-03 / D-464): factory referral is no longer part of the agent programme; always `agents.factory_links_retired` (410). The list stays readable for history.\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423, D-464.",
         "operationId": "admin.agents.linkFactory",
         "parameters": [
           {
@@ -125590,6 +126374,9 @@
             },
             "description": "Factory link",
             "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -125690,15 +126477,12 @@
               }
             }
           },
-          "409": {
+          "410": {
             "content": {
               "application/problem+json": {
                 "examples": {
-                  "agents.agent_inactive": {
-                    "$ref": "#/components/examples/problem.agents.agent_inactive"
-                  },
-                  "agents.factory_linked": {
-                    "$ref": "#/components/examples/problem.agents.factory_linked"
+                  "agents.factory_links_retired": {
+                    "$ref": "#/components/examples/problem.agents.factory_links_retired"
                   }
                 },
                 "schema": {
@@ -125706,7 +126490,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.agent_inactive`, `agents.factory_linked`",
+            "description": "Problem: `agents.factory_links_retired`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -125793,7 +126577,8 @@
     },
     "/v1/admin/agent-factory-links/{factoryLinkId}/actions/end": {
       "post": {
-        "description": "No bounty will be earned for it (D-419).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423.",
+        "deprecated": true,
+        "description": "No bounty will be earned for it (D-419). History tool only since P-03 / D-464: pending links were ended by the data job `agents:retire-bounty`.\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423, D-464.",
         "operationId": "admin.agents.endFactoryLink",
         "parameters": [
           {
@@ -125855,6 +126640,9 @@
             },
             "description": "Factory link",
             "headers": {
+              "Deprecation": {
+                "$ref": "#/components/headers/Deprecation"
+              },
               "X-RateLimit-Limit": {
                 "$ref": "#/components/headers/RateLimitLimit"
               },
@@ -129359,6 +130147,7 @@
                       },
                       "entryCount": 3,
                       "exportedAt": null,
+                      "hasTaxInvoice": false,
                       "hasWhtCertificate": false,
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6009",
                       "paidAmount": null,
@@ -129368,11 +130157,19 @@
                       "rowVersion": 2,
                       "statementNo": "AG2610-K7QX2MAP",
                       "status": "approved",
+                      "taxInvoiceNo": null,
                       "totalAmount": "2350.00",
                       "vendorInvoiceId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6017",
                       "voidReason": null,
                       "voidedAt": null,
-                      "whtAmount": null
+                      "whtAmount": "0.00",
+                      "whtMethod": "progressive_40_2",
+                      "whtWorking": {
+                        "allowances": "60000.00",
+                        "annualTax": "0.00",
+                        "projected": "4700.00",
+                        "ytdPaid": "2350.00"
+                      }
                     }
                   ],
                   "meta": {
@@ -130029,7 +130826,7 @@
                       "amount": "600.00",
                       "availableAt": "2026-11-08T00:00:00+07:00",
                       "baseAmount": "12000.00",
-                      "capAmount": "1080.00",
+                      "capAmount": null,
                       "createdAt": "2026-10-31T10:00:00+07:00",
                       "customerName": "สมหญิง ทดสอบ",
                       "earnedAt": null,
@@ -130038,6 +130835,7 @@
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6008",
                       "isFirstOrder": true,
                       "kind": "order",
+                      "marginAlert": false,
                       "marginAmount": "3600.00",
                       "note": null,
                       "orderCode": "PK-2610-00042",
@@ -130049,6 +130847,7 @@
                   ],
                   "entryCount": 3,
                   "exportedAt": null,
+                  "hasTaxInvoice": false,
                   "hasWhtCertificate": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6009",
                   "paidAmount": null,
@@ -130058,11 +130857,19 @@
                   "rowVersion": 2,
                   "statementNo": "AG2610-K7QX2MAP",
                   "status": "approved",
+                  "taxInvoiceNo": null,
                   "totalAmount": "2350.00",
                   "vendorInvoiceId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6017",
                   "voidReason": null,
                   "voidedAt": null,
-                  "whtAmount": null
+                  "whtAmount": "0.00",
+                  "whtMethod": "progressive_40_2",
+                  "whtWorking": {
+                    "allowances": "60000.00",
+                    "annualTax": "0.00",
+                    "projected": "4700.00",
+                    "ytdPaid": "2350.00"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminAgentStatementDetailDto"
@@ -130231,7 +131038,7 @@
     },
     "/v1/admin/agent-statements/{statementId}/actions/approve": {
       "post": {
-        "description": "Freelance: records the agent vendor’s bill (account 6160; withholding: commission ภ.ง.ด.1 for an individual, service ภ.ง.ด.53 for a juristic person; VAT when VAT registered) for payout runs to pay. Employee: accrued for payroll. Guarded by `If-Match`; requires `Idempotency-Key` (D-420, D-421).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423, D-421.",
+        "description": "Freelance: records the agent vendor’s bill (account 6160) for payout runs to pay. Withholding (D-465): an individual — progressive s.50(1), cumulative over the calendar year with the personal allowance or the accepted ล.ย.01 (ภ.ง.ด.1), decided here and withheld as is by the payout run; a juristic person — service 3 % from ฿1,000 (ภ.ง.ด.53), VAT on top when VAT registered, and then its tax invoice must be attached first (`agent_statements.tax_invoice_required`). Employee: accrued for payroll. Guarded by `If-Match`; requires `Idempotency-Key` (D-420, D-465).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423, D-421, D-465.",
         "operationId": "admin.agents.approveStatement",
         "parameters": [
           {
@@ -130271,6 +131078,7 @@
                   },
                   "entryCount": 3,
                   "exportedAt": null,
+                  "hasTaxInvoice": false,
                   "hasWhtCertificate": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6009",
                   "paidAmount": null,
@@ -130280,11 +131088,19 @@
                   "rowVersion": 2,
                   "statementNo": "AG2610-K7QX2MAP",
                   "status": "approved",
+                  "taxInvoiceNo": null,
                   "totalAmount": "2350.00",
                   "vendorInvoiceId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6017",
                   "voidReason": null,
                   "voidedAt": null,
-                  "whtAmount": null
+                  "whtAmount": "0.00",
+                  "whtMethod": "progressive_40_2",
+                  "whtWorking": {
+                    "allowances": "60000.00",
+                    "annualTax": "0.00",
+                    "projected": "4700.00",
+                    "ytdPaid": "2350.00"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminAgentStatementDto"
@@ -130406,6 +131222,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agent_statements.tax_invoice_required": {
+                    "$ref": "#/components/examples/problem.agent_statements.tax_invoice_required"
+                  },
                   "agents.statement_invalid_status": {
                     "$ref": "#/components/examples/problem.agents.statement_invalid_status"
                   },
@@ -130421,7 +131240,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.statement_invalid_status`, `idempotency.in_progress`, `payables.invoice_duplicate`",
+            "description": "Problem: `agent_statements.tax_invoice_required`, `agents.statement_invalid_status`, `idempotency.in_progress`, `payables.invoice_duplicate`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -130549,6 +131368,335 @@
         ]
       }
     },
+    "/v1/admin/agent-statements/{statementId}/actions/attach-tax-invoice": {
+      "post": {
+        "description": "A VAT-registered juristic agent bills with its own tax invoice (number + uploaded file) before Finance approves; the bill then claims input VAT. Guarded by `If-Match` (D-465).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423, D-465.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "admin.agents.attachStatementTaxInvoice",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "statementId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                    "taxInvoiceNo": "INV-2611-0012"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AttachAgentTaxInvoiceDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "approvedAt": "2026-11-01T09:00:00+07:00",
+                  "approvedBy": {
+                    "displayName": "Dev Finance Manager",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6010"
+                  },
+                  "entryCount": 3,
+                  "exportedAt": null,
+                  "hasTaxInvoice": true,
+                  "hasWhtCertificate": false,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6009",
+                  "paidAmount": null,
+                  "paidAt": null,
+                  "periodEnd": "2026-10-31",
+                  "periodStart": "2026-10-01",
+                  "rowVersion": 2,
+                  "statementNo": "AG2610-K7QX2MAP",
+                  "status": "draft",
+                  "taxInvoiceNo": "INV-2611-0012",
+                  "totalAmount": "2350.00",
+                  "vendorInvoiceId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6017",
+                  "voidReason": null,
+                  "voidedAt": null,
+                  "whtAmount": "0.00",
+                  "whtMethod": "progressive_40_2",
+                  "whtWorking": {
+                    "allowances": "60000.00",
+                    "annualTax": "0.00",
+                    "projected": "4700.00",
+                    "ytdPaid": "2350.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAgentStatementDto"
+                }
+              }
+            },
+            "description": "Statement",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.statement_invalid_status": {
+                    "$ref": "#/components/examples/problem.agents.statement_invalid_status"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.statement_invalid_status`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Attach a juristic agent’s tax invoice to a draft statement",
+        "tags": [
+          "admin.agents"
+        ],
+        "x-required-permissions": [
+          "agent_statements.approve"
+        ]
+      }
+    },
     "/v1/admin/agent-statements/{statementId}/actions/mark-paid": {
       "post": {
         "description": "For exported employee statements; freelance statements are paid by payout runs (D-420).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423.",
@@ -130602,6 +131750,7 @@
                   },
                   "entryCount": 3,
                   "exportedAt": null,
+                  "hasTaxInvoice": false,
                   "hasWhtCertificate": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6009",
                   "paidAmount": null,
@@ -130611,11 +131760,19 @@
                   "rowVersion": 2,
                   "statementNo": "AG2610-K7QX2MAP",
                   "status": "paid",
+                  "taxInvoiceNo": null,
                   "totalAmount": "2350.00",
                   "vendorInvoiceId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6017",
                   "voidReason": null,
                   "voidedAt": null,
-                  "whtAmount": null
+                  "whtAmount": "0.00",
+                  "whtMethod": "progressive_40_2",
+                  "whtWorking": {
+                    "allowances": "60000.00",
+                    "annualTax": "0.00",
+                    "projected": "4700.00",
+                    "ytdPaid": "2350.00"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminAgentStatementDto"
@@ -130878,6 +132035,7 @@
                   },
                   "entryCount": 3,
                   "exportedAt": null,
+                  "hasTaxInvoice": false,
                   "hasWhtCertificate": false,
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6009",
                   "paidAmount": null,
@@ -130887,11 +132045,19 @@
                   "rowVersion": 2,
                   "statementNo": "AG2610-K7QX2MAP",
                   "status": "voided",
+                  "taxInvoiceNo": null,
                   "totalAmount": "2350.00",
                   "vendorInvoiceId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6017",
                   "voidReason": null,
                   "voidedAt": null,
-                  "whtAmount": null
+                  "whtAmount": "0.00",
+                  "whtMethod": "progressive_40_2",
+                  "whtWorking": {
+                    "allowances": "60000.00",
+                    "annualTax": "0.00",
+                    "projected": "4700.00",
+                    "ytdPaid": "2350.00"
+                  }
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminAgentStatementDto"
@@ -131098,6 +132264,755 @@
         ]
       }
     },
+    "/v1/admin/agent-tax-declarations": {
+      "get": {
+        "description": "Newest first; filter by status and tax year (D-465).\n\nImplements: D-465.",
+        "operationId": "admin.agentTaxDeclarations.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AgentTaxDeclarationStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "taxYear",
+            "required": false,
+            "schema": {
+              "example": 2026,
+              "maximum": 2100,
+              "minimum": 2026,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "agent": {
+                        "code": "K7QX2MAP",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                        "kind": "freelance",
+                        "legalName": "สมชาย ขายเก่ง"
+                      },
+                      "allowances": {
+                        "lifeInsurance": "30000.00",
+                        "socialSecurity": "9000.00",
+                        "spouse": "60000.00"
+                      },
+                      "allowancesTotal": "99000.00",
+                      "decidedAt": null,
+                      "decidedBy": null,
+                      "decisionReason": null,
+                      "evidenceCount": 1,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6019",
+                      "status": "submitted",
+                      "submittedAt": "2026-11-02T10:00:00+07:00",
+                      "taxYear": 2026
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminAgentTaxDeclarationDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List agents’ ล.ย.01 declarations",
+        "tags": [
+          "admin.agentTaxDeclarations"
+        ],
+        "x-required-permissions": [
+          "agent_tax_declarations.review"
+        ]
+      }
+    },
+    "/v1/admin/agent-tax-declarations/{declarationId}": {
+      "get": {
+        "description": "Short-lived links to the evidence the agent uploaded (D-465).\n\nImplements: D-465.",
+        "operationId": "admin.agentTaxDeclarations.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "declarationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "allowances": {
+                    "lifeInsurance": "30000.00",
+                    "socialSecurity": "9000.00",
+                    "spouse": "60000.00"
+                  },
+                  "allowancesTotal": "99000.00",
+                  "decidedAt": null,
+                  "decidedBy": null,
+                  "decisionReason": null,
+                  "evidence": [
+                    {
+                      "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6015",
+                      "fileName": "ใบเสร็จประกันชีวิต.pdf",
+                      "url": null
+                    }
+                  ],
+                  "evidenceCount": 1,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6019",
+                  "status": "submitted",
+                  "submittedAt": "2026-11-02T10:00:00+07:00",
+                  "taxYear": 2026
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAgentTaxDeclarationDetailDto"
+                }
+              }
+            },
+            "description": "Declaration",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a ล.ย.01 with its evidence",
+        "tags": [
+          "admin.agentTaxDeclarations"
+        ],
+        "x-required-permissions": [
+          "agent_tax_declarations.review"
+        ]
+      }
+    },
+    "/v1/admin/agent-tax-declarations/{declarationId}/actions/decide": {
+      "post": {
+        "description": "Accepted allowances are used by the next statement’s progressive withholding of that tax year; a rejection needs a reason the agent sees (D-465).\n\nImplements: D-465.",
+        "operationId": "admin.agentTaxDeclarations.decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "declarationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "decision": "accepted"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DecideAgentTaxDeclarationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "allowances": {
+                    "lifeInsurance": "30000.00",
+                    "socialSecurity": "9000.00",
+                    "spouse": "60000.00"
+                  },
+                  "allowancesTotal": "99000.00",
+                  "decidedAt": null,
+                  "decidedBy": null,
+                  "decisionReason": null,
+                  "evidenceCount": 1,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6019",
+                  "status": "accepted",
+                  "submittedAt": "2026-11-02T10:00:00+07:00",
+                  "taxYear": 2026
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAgentTaxDeclarationDto"
+                }
+              }
+            },
+            "description": "Declaration",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.tax_declaration_decided": {
+                    "$ref": "#/components/examples/problem.agents.tax_declaration_decided"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.tax_declaration_decided`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Accept or reject a ล.ย.01",
+        "tags": [
+          "admin.agentTaxDeclarations"
+        ],
+        "x-required-permissions": [
+          "agent_tax_declarations.review"
+        ]
+      }
+    },
     "/v1/admin/agents": {
       "get": {
         "description": "Newest first, with totals by commission status; `q` searches the name, code and employee code.\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423.",
@@ -131197,6 +133112,16 @@
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6003",
                         "nameTh": "ตัวแทนอิสระ — มาตรฐาน"
                       },
+                      "planTerms": {
+                        "attributionMonths": 12,
+                        "factoryBountyAmount": "0.00",
+                        "factoryQualifyDays": 0,
+                        "factoryQualifyJobs": 0,
+                        "firstOrderPct": "5",
+                        "marginCapPct": "30",
+                        "minBaseAmount": "0.00",
+                        "repeatOrderPct": "3"
+                      },
                       "rowVersion": 1,
                       "staffUser": null,
                       "status": "active",
@@ -131204,13 +133129,10 @@
                       "taxId": "0000000000127",
                       "terms": {
                         "attributionMonths": 12,
-                        "factoryBountyAmount": "3000.00",
-                        "factoryQualifyDays": 120,
-                        "factoryQualifyJobs": 3,
                         "firstOrderPct": "5",
-                        "marginCapPct": "30",
                         "minBaseAmount": "0.00",
-                        "repeatOrderPct": "3"
+                        "repeatOrderPct": "3",
+                        "uncapped": true
                       },
                       "totals": {
                         "activeLinks": 6,
@@ -131441,6 +133363,16 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6003",
                     "nameTh": "ตัวแทนอิสระ — มาตรฐาน"
                   },
+                  "planTerms": {
+                    "attributionMonths": 12,
+                    "factoryBountyAmount": "0.00",
+                    "factoryQualifyDays": 0,
+                    "factoryQualifyJobs": 0,
+                    "firstOrderPct": "5",
+                    "marginCapPct": "30",
+                    "minBaseAmount": "0.00",
+                    "repeatOrderPct": "3"
+                  },
                   "rowVersion": 1,
                   "staffUser": null,
                   "status": "active",
@@ -131448,13 +133380,10 @@
                   "taxId": "0000000000127",
                   "terms": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "totals": {
                     "activeLinks": 6,
@@ -131720,6 +133649,16 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6003",
                     "nameTh": "ตัวแทนอิสระ — มาตรฐาน"
                   },
+                  "planTerms": {
+                    "attributionMonths": 12,
+                    "factoryBountyAmount": "0.00",
+                    "factoryQualifyDays": 0,
+                    "factoryQualifyJobs": 0,
+                    "firstOrderPct": "5",
+                    "marginCapPct": "30",
+                    "minBaseAmount": "0.00",
+                    "repeatOrderPct": "3"
+                  },
                   "rowVersion": 1,
                   "staffUser": null,
                   "status": "active",
@@ -131727,13 +133666,10 @@
                   "taxId": "0000000000127",
                   "terms": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "totals": {
                     "activeLinks": 6,
@@ -131975,6 +133911,16 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6003",
                     "nameTh": "ตัวแทนอิสระ — มาตรฐาน"
                   },
+                  "planTerms": {
+                    "attributionMonths": 12,
+                    "factoryBountyAmount": "0.00",
+                    "factoryQualifyDays": 0,
+                    "factoryQualifyJobs": 0,
+                    "firstOrderPct": "5",
+                    "marginCapPct": "30",
+                    "minBaseAmount": "0.00",
+                    "repeatOrderPct": "3"
+                  },
                   "rowVersion": 1,
                   "staffUser": null,
                   "status": "active",
@@ -131982,13 +133928,10 @@
                   "taxId": "0000000000127",
                   "terms": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "totals": {
                     "activeLinks": 6,
@@ -132294,6 +134237,16 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6003",
                     "nameTh": "ตัวแทนอิสระ — มาตรฐาน"
                   },
+                  "planTerms": {
+                    "attributionMonths": 12,
+                    "factoryBountyAmount": "0.00",
+                    "factoryQualifyDays": 0,
+                    "factoryQualifyJobs": 0,
+                    "firstOrderPct": "5",
+                    "marginCapPct": "30",
+                    "minBaseAmount": "0.00",
+                    "repeatOrderPct": "3"
+                  },
                   "rowVersion": 1,
                   "staffUser": null,
                   "status": "ended",
@@ -132301,13 +134254,10 @@
                   "taxId": "0000000000127",
                   "terms": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "totals": {
                     "activeLinks": 6,
@@ -132587,6 +134537,16 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6003",
                     "nameTh": "ตัวแทนอิสระ — มาตรฐาน"
                   },
+                  "planTerms": {
+                    "attributionMonths": 12,
+                    "factoryBountyAmount": "0.00",
+                    "factoryQualifyDays": 0,
+                    "factoryQualifyJobs": 0,
+                    "firstOrderPct": "5",
+                    "marginCapPct": "30",
+                    "minBaseAmount": "0.00",
+                    "repeatOrderPct": "3"
+                  },
                   "rowVersion": 1,
                   "staffUser": null,
                   "status": "active",
@@ -132594,13 +134554,10 @@
                   "taxId": "0000000000127",
                   "terms": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "totals": {
                     "activeLinks": 6,
@@ -132880,6 +134837,16 @@
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6003",
                     "nameTh": "ตัวแทนอิสระ — มาตรฐาน"
                   },
+                  "planTerms": {
+                    "attributionMonths": 12,
+                    "factoryBountyAmount": "0.00",
+                    "factoryQualifyDays": 0,
+                    "factoryQualifyJobs": 0,
+                    "firstOrderPct": "5",
+                    "marginCapPct": "30",
+                    "minBaseAmount": "0.00",
+                    "repeatOrderPct": "3"
+                  },
                   "rowVersion": 1,
                   "staffUser": null,
                   "status": "suspended",
@@ -132887,13 +134854,10 @@
                   "taxId": "0000000000127",
                   "terms": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "totals": {
                     "activeLinks": 6,
@@ -500785,7 +502749,7 @@
     },
     "/v1/store/agent": {
       "get": {
-        "description": "My code and link, plan terms in force and totals by commission status (D-416, D-418).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "My code and link, plan terms in force and totals by commission status (D-416, D-418).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.me",
         "parameters": [
           {
@@ -500812,13 +502776,10 @@
                   "statusReason": null,
                   "terms": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "totals": {
                     "activeLinks": 6,
@@ -500977,7 +502938,7 @@
     },
     "/v1/store/agent/application": {
       "get": {
-        "description": "With its status and, when rejected, the reason (D-416). The account number shows its last 4 digits.\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "With its status and, when rejected, the reason (D-416). The account number shows its last 4 digits.\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.getApplication",
         "parameters": [
           {
@@ -501173,7 +503134,7 @@
         ]
       },
       "post": {
-        "description": "Legal name, Thai tax id, address, an identity document and a bank account (uploaded files of mine), and acceptance of the agent agreement version in force — recorded with its evidence (D-416). One open application at a time; Sales decides.\n\nImplements: D-416, D-417, D-418, D-420, D-422.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "description": "Legal name, Thai tax id, address, an identity document and a bank account (uploaded files of mine), and acceptance of the agent agreement version in force — recorded with its evidence (D-416). One open application at a time; Sales decides.\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.agent.apply",
         "parameters": [
           {
@@ -501429,7 +503390,7 @@
     },
     "/v1/store/agent/application/actions/withdraw": {
       "post": {
-        "description": "Before Sales decides (D-416).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "Before Sales decides (D-416).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.withdrawApplication",
         "parameters": [
           {
@@ -501627,7 +503588,7 @@
     },
     "/v1/store/agent/claims": {
       "post": {
-        "description": "The web calls this once a customer who arrived through `/a/{code}` is signed in (D-417). A new customer is linked to the agent; otherwise `linked` is false with the reason (already linked, not a new customer, own code, agent not active). An unknown code is `agents.code_invalid`.\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "The web calls this once a customer who arrived through `/a/{code}` is signed in (D-417). A new customer is linked to the agent; otherwise `linked` is false with the reason (already linked, not a new customer, own code, agent not active). An unknown code is `agents.code_invalid`.\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.claimLink",
         "parameters": [
           {
@@ -501826,7 +503787,7 @@
     },
     "/v1/store/agent/commissions": {
       "get": {
-        "description": "Every entry, newest first: completed orders (pending until the claim window and payment), bounties, adjustments and refund reversals (D-418, D-419).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "Every entry, newest first: completed orders at the full rate with no cap (pending until the claim window and payment), adjustments and refund reversals (D-418, D-464).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.commissions",
         "parameters": [
           {
@@ -501901,7 +503862,6 @@
                       "amount": "600.00",
                       "availableAt": "2026-11-08T00:00:00+07:00",
                       "baseAmount": "12000.00",
-                      "capAmount": "1080.00",
                       "createdAt": "2026-10-31T10:00:00+07:00",
                       "customerName": "ส•••",
                       "earnedAt": null,
@@ -502083,7 +504043,7 @@
     },
     "/v1/store/agent/customers": {
       "get": {
-        "description": "Customers and companies linked to me, newest first, with orders commissioned and commission. A person who came through my link shows by first letter only (D-422).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "Customers and companies linked to me, newest first, with orders commissioned and commission. A person who came through my link shows by first letter only (D-422).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.customers",
         "parameters": [
           {
@@ -502335,7 +504295,7 @@
     },
     "/v1/store/agent/leads": {
       "get": {
-        "description": "Customer and factory prospects I registered, with their protection (D-417, D-419).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "Customer prospects I registered, with their protection (D-417, D-464).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.leads",
         "parameters": [
           {
@@ -502588,7 +504548,7 @@
         ]
       },
       "post": {
-        "description": "A customer or factory prospect with a phone, e-mail or tax id, who agreed to be contacted (PDPA). Protected for `agents.rules.leadProtectionDays`; refused when it is already a customer, company or factory, or another agent’s protected lead (D-417, D-419).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "A customer prospect with a phone, e-mail or tax id, who agreed to be contacted (PDPA). Protected for `agents.rules.leadProtectionDays`; refused when it is already a customer or company, or another agent’s protected lead (D-417). Kind `customer` only — anything else is `agents.lead_kind_unsupported` (P-03, D-464): factories apply at /partner-with-us.\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.registerLead",
         "parameters": [
           {
@@ -502761,6 +504721,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.lead_kind_unsupported": {
+                    "$ref": "#/components/examples/problem.agents.lead_kind_unsupported"
+                  },
                   "agents.too_many_leads": {
                     "$ref": "#/components/examples/problem.agents.too_many_leads"
                   },
@@ -502773,7 +504736,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.too_many_leads`, `validation.failed`",
+            "description": "Problem: `agents.lead_kind_unsupported`, `agents.too_many_leads`, `validation.failed`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -502840,7 +504803,7 @@
     },
     "/v1/store/agent/leads/{leadId}/actions/withdraw": {
       "post": {
-        "description": "The contact is free for anyone again (D-417).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "The contact is free for anyone again (D-417).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.withdrawLead",
         "parameters": [
           {
@@ -503062,7 +505025,7 @@
     },
     "/v1/store/agent/programme": {
       "get": {
-        "description": "The agent agreement in force, the standard freelance plan’s terms, the programme rules and where the signed-in customer stands (none, applied, rejected, withdrawn, agent) (D-416, D-418).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "The agent agreement in force, the standard freelance plan’s terms, the programme rules and where the signed-in customer stands (none, applied, rejected, withdrawn, agent) (D-416, D-418).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.programme",
         "parameters": [
           {
@@ -503086,13 +505049,10 @@
                   "paymentTermsDays": 15,
                   "plan": {
                     "attributionMonths": 12,
-                    "factoryBountyAmount": "3000.00",
-                    "factoryQualifyDays": 120,
-                    "factoryQualifyJobs": 3,
                     "firstOrderPct": "5",
-                    "marginCapPct": "30",
                     "minBaseAmount": "0.00",
-                    "repeatOrderPct": "3"
+                    "repeatOrderPct": "3",
+                    "uncapped": true
                   },
                   "state": "none"
                 },
@@ -503237,7 +505197,7 @@
     },
     "/v1/store/agent/statements": {
       "get": {
-        "description": "Monthly statements, newest first, with withholding and the amount transferred once paid (D-420).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "Monthly statements, newest first, with withholding and the amount transferred once paid (D-420).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.statements",
         "parameters": [
           {
@@ -503312,7 +505272,8 @@
                       "statementNo": "AG2610-K7QX2MAP",
                       "status": "approved",
                       "totalAmount": "2350.00",
-                      "whtAmount": null
+                      "whtAmount": "0.00",
+                      "whtMethod": "progressive_40_2"
                     }
                   ],
                   "meta": {
@@ -503483,7 +505444,7 @@
     },
     "/v1/store/agent/statements/{statementId}": {
       "get": {
-        "description": "With its entries (D-420).\n\nImplements: D-416, D-417, D-418, D-420, D-422.",
+        "description": "With its entries (D-420).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
         "operationId": "store.agent.statement",
         "parameters": [
           {
@@ -503510,7 +505471,6 @@
                       "amount": "600.00",
                       "availableAt": "2026-11-08T00:00:00+07:00",
                       "baseAmount": "12000.00",
-                      "capAmount": "1080.00",
                       "createdAt": "2026-10-31T10:00:00+07:00",
                       "customerName": "ส•••",
                       "earnedAt": null,
@@ -503534,7 +505494,8 @@
                   "statementNo": "AG2610-K7QX2MAP",
                   "status": "approved",
                   "totalAmount": "2350.00",
-                  "whtAmount": null
+                  "whtAmount": "0.00",
+                  "whtMethod": "progressive_40_2"
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AgentStatementDetailDto"
@@ -503703,7 +505664,7 @@
     },
     "/v1/store/agent/statements/{statementId}/wht-certificate": {
       "get": {
-        "description": "A short-lived link to the withholding certificate issued when it was paid (D-421).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-421.",
+        "description": "A short-lived link to the withholding certificate issued when it was paid (D-421).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464, D-421.",
         "operationId": "store.agent.whtCertificate",
         "parameters": [
           {
@@ -503884,6 +505845,424 @@
           }
         ],
         "summary": "Download the 50 ทวิ of a paid statement",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/tax-declaration": {
+      "get": {
+        "description": "Whether I need one (individual freelance agents), the personal allowance used without one, and my latest declaration of the current tax year with its status. Without an accepted ล.ย.01 only the personal allowance is used (D-465).\n\nImplements: D-465.",
+        "operationId": "store.agentTaxDeclaration.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "applicable": true,
+                  "declaration": {
+                    "allowances": {
+                      "lifeInsurance": "30000.00",
+                      "socialSecurity": "9000.00",
+                      "spouse": "60000.00"
+                    },
+                    "allowancesTotal": "99000.00",
+                    "decidedAt": null,
+                    "decisionReason": null,
+                    "evidenceCount": 1,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6019",
+                    "status": "submitted",
+                    "submittedAt": "2026-11-02T10:00:00+07:00",
+                    "taxYear": 2026
+                  },
+                  "personalAllowance": "60000.00",
+                  "taxYear": 2026
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/MyTaxDeclarationDto"
+                }
+              }
+            },
+            "description": "Declaration",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get my ล.ย.01 for this tax year",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      },
+      "post": {
+        "description": "Allowance amounts by group (family, insurance and savings, housing, donations) with my uploaded evidence. One waiting declaration at a time; Finance accepts or rejects it. A later accepted one replaces an earlier one for the next statements (D-465).\n\nImplements: D-465.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "store.agentTaxDeclaration.submit",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "allowances": {
+                      "lifeInsurance": "30000.00",
+                      "spouse": "60000.00"
+                    },
+                    "evidenceFileIds": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000a6015"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SubmitAgentTaxDeclarationDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "allowances": {
+                    "lifeInsurance": "30000.00",
+                    "socialSecurity": "9000.00",
+                    "spouse": "60000.00"
+                  },
+                  "allowancesTotal": "99000.00",
+                  "decidedAt": null,
+                  "decisionReason": null,
+                  "evidenceCount": 1,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6019",
+                  "status": "submitted",
+                  "submittedAt": "2026-11-02T10:00:00+07:00",
+                  "taxYear": 2026
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentTaxDeclarationDto"
+                }
+              }
+            },
+            "description": "Declaration",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.tax_declaration_open": {
+                    "$ref": "#/components/examples/problem.agents.tax_declaration_open"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.tax_declaration_open`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.tax_declaration_not_applicable": {
+                    "$ref": "#/components/examples/problem.agents.tax_declaration_not_applicable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.tax_declaration_not_applicable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Submit my ล.ย.01 for this tax year",
         "tags": [
           "store.agent"
         ],
@@ -588382,6 +590761,10 @@
     {
       "description": "Commission plans and their maker-checked versions (D-418).",
       "name": "admin.agentPlans"
+    },
+    {
+      "description": "Agents’ ล.ย.01 allowance declarations, reviewed by Finance (D-465).",
+      "name": "admin.agentTaxDeclarations"
     },
     {
       "description": "Sales agents and their applications, customer and factory links, leads, commission and statements (D-416 – D-420).",

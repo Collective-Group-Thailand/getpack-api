@@ -2079,6 +2079,26 @@
     "statement_paid_by_payout": {
       "title": "Paid by payout runs",
       "detail": "Freelance statements are paid by payout runs"
+    },
+    "lead_kind_unsupported": {
+      "title": "Customer leads only",
+      "detail": "Factories can apply at getpack.co/partner-with-us"
+    },
+    "factory_links_retired": {
+      "title": "Retired",
+      "detail": "Factory links of agents are retired and read-only (P-03)"
+    },
+    "tax_declaration_open": {
+      "title": "A ล.ย.01 is waiting",
+      "detail": "Your ล.ย.01 for tax year {taxYear} is waiting for Finance"
+    },
+    "tax_declaration_not_applicable": {
+      "title": "Not needed",
+      "detail": "Only individual agents submit a ล.ย.01"
+    },
+    "tax_declaration_decided": {
+      "title": "Already decided",
+      "detail": "This ล.ย.01 has been decided"
     }
   },
   "documents": {
@@ -2121,6 +2141,18 @@
     "in_cart": {
       "title": "This file is already in the cart",
       "detail": "Remove the cart line first to change the file or the spec"
+    }
+  },
+  "agent_plans": {
+    "bounty_retired": {
+      "title": "No factory bounty",
+      "detail": "Plans carry no factory bounty since P-03 / D-464; use 0"
+    }
+  },
+  "agent_statements": {
+    "tax_invoice_required": {
+      "title": "Tax invoice needed",
+      "detail": "A VAT-registered juristic agent’s tax invoice must be attached before approval"
     }
   }
 }

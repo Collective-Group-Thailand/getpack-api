@@ -246,7 +246,12 @@ export class PayoutsService {
                       .add(round(D(p.whtBaseHire).mul(rates.hire).div(100)))
                       .add(round(D(p.whtBaseTransport).mul(rates.transport).div(100)))
                       .add(round(D(p.whtBaseService).mul(rates.service).div(100)))
-                      .add(round(D(p.whtBaseCommission).mul(rates.commission).div(100))),
+                      // D-465: progressive withholding decided on the agent statement, used as is.
+                      .add(
+                        p.whtCommissionFixed !== null
+                          ? D(p.whtCommissionFixed)
+                          : round(D(p.whtBaseCommission).mul(rates.commission).div(100)),
+                      ),
                   ZERO(),
                 );
           const retention =

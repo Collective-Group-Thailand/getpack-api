@@ -243,6 +243,18 @@ export const ERROR_CODES = {
   'agents.statement_invalid_status': HttpStatus.CONFLICT,
   'agents.nothing_to_export': HttpStatus.UNPROCESSABLE_ENTITY,
   'agents.statement_paid_by_payout': HttpStatus.CONFLICT,
+  /** D-464 / P-03: agents register customer leads only; factories apply at /partner-with-us. */
+  'agents.lead_kind_unsupported': HttpStatus.UNPROCESSABLE_ENTITY,
+  /** D-464 / P-03: plan versions carry no factory bounty. */
+  'agent_plans.bounty_retired': HttpStatus.UNPROCESSABLE_ENTITY,
+  /** D-464 / P-03: factory links are history only. */
+  'agents.factory_links_retired': HttpStatus.GONE,
+  /** D-465: a VAT-registered juristic agent's tax invoice must be attached before approval. */
+  'agent_statements.tax_invoice_required': HttpStatus.CONFLICT,
+  /** D-465: one open ล.ย.01 per agent and tax year; only individual freelance agents declare. */
+  'agents.tax_declaration_open': HttpStatus.CONFLICT,
+  'agents.tax_declaration_not_applicable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'agents.tax_declaration_decided': HttpStatus.CONFLICT,
   'referrals.code_invalid': HttpStatus.UNPROCESSABLE_ENTITY,
   'referrals.self_referral': HttpStatus.UNPROCESSABLE_ENTITY,
   'referrals.already_attributed': HttpStatus.CONFLICT,

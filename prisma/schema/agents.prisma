@@ -245,16 +245,17 @@ model SalesAgent {
   updatedAt     DateTime         @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion    Int              @default(1) @map("row_version")
 
-  user         User                    @relation("SalesAgentUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__user_id")
-  plan         SalesAgentPlan          @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__plan_id")
-  vendor       Vendor?                 @relation("SalesAgentVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__vendor_id")
-  staffUser    User?                   @relation("SalesAgentStaffUser", fields: [staffUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__staff_user_id")
-  application  SalesAgentApplication?  @relation(fields: [applicationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__application_id")
-  links        SalesAgentLink[]
-  leads        SalesAgentLead[]
-  factoryLinks SalesAgentFactoryLink[]
-  commissions  SalesAgentCommission[]
-  statements   SalesAgentStatement[]
+  user            User                       @relation("SalesAgentUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__user_id")
+  plan            SalesAgentPlan             @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__plan_id")
+  vendor          Vendor?                    @relation("SalesAgentVendor", fields: [vendorId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__vendor_id")
+  staffUser       User?                      @relation("SalesAgentStaffUser", fields: [staffUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__staff_user_id")
+  application     SalesAgentApplication?     @relation(fields: [applicationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agents__application_id")
+  links           SalesAgentLink[]
+  leads           SalesAgentLead[]
+  factoryLinks    SalesAgentFactoryLink[]
+  commissions     SalesAgentCommission[]
+  statements      SalesAgentStatement[]
+  taxDeclarations SalesAgentTaxDeclaration[]
 
   @@index([status, kind], map: "ix_sales_agents__status__kind")
   @@index([planId], map: "ix_sales_agents__plan_id")
@@ -389,6 +390,9 @@ model SalesAgentCommission {
   statementId          BigInt?                    @map("statement_id")
   reversesCommissionId BigInt?                    @map("reverses_commission_id")
   holdFlags            String[]                   @default([]) @map("hold_flags")
+  /// D-464: commission ÷ the order's gross margin exceeded `agent.margin_alert_pct` (internal alert only; the
+  /// amount is never reduced). `cap_amount` / `margin_cap_pct` are history from before D-464.
+  marginAlert          Boolean                    @default(false) @map("margin_alert")
   note                 String?
   createdAt            DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt            DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -420,38 +424,118 @@ model SalesAgentCommission {
 
 /// A month's commission for one agent (D-420).
 model SalesAgentStatement {
-  id              BigInt                    @id(map: "pk_sales_agent_statements") @default(autoincrement())
-  publicId        String                    @unique(map: "ux_sales_agent_statements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  entityId        BigInt                    @map("entity_id")
-  statementNo     String                    @unique(map: "ux_sales_agent_statements__statement_no") @map("statement_no")
-  agentId         BigInt                    @map("agent_id")
-  periodStart     DateTime                  @map("period_start") @db.Date
-  periodEnd       DateTime                  @map("period_end") @db.Date
-  status          SalesAgentStatementStatus @default(draft)
-  entryCount      Int                       @map("entry_count")
-  totalAmount     Decimal                   @map("total_amount") @db.Decimal(14, 2)
+  id               BigInt                    @id(map: "pk_sales_agent_statements") @default(autoincrement())
+  publicId         String                    @unique(map: "ux_sales_agent_statements__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId         BigInt                    @map("entity_id")
+  statementNo      String                    @unique(map: "ux_sales_agent_statements__statement_no") @map("statement_no")
+  agentId          BigInt                    @map("agent_id")
+  periodStart      DateTime                  @map("period_start") @db.Date
+  periodEnd        DateTime                  @map("period_end") @db.Date
+  status           SalesAgentStatementStatus @default(draft)
+  entryCount       Int                       @map("entry_count")
+  totalAmount      Decimal                   @map("total_amount") @db.Decimal(14, 2)
   /// The vendor bill a freelance statement became on approval.
-  vendorInvoiceId BigInt?                   @unique(map: "ux_sales_agent_statements__vendor_invoice_id") @map("vendor_invoice_id")
-  approvedAt      DateTime?                 @map("approved_at") @db.Timestamptz(6)
-  approvedById    BigInt?                   @map("approved_by")
-  exportedAt      DateTime?                 @map("exported_at") @db.Timestamptz(6)
-  paidAt          DateTime?                 @map("paid_at") @db.Timestamptz(6)
-  voidedAt        DateTime?                 @map("voided_at") @db.Timestamptz(6)
-  voidReason      String?                   @map("void_reason")
-  createdAt       DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt       DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion      Int                       @default(1) @map("row_version")
+  vendorInvoiceId  BigInt?                   @unique(map: "ux_sales_agent_statements__vendor_invoice_id") @map("vendor_invoice_id")
+  approvedAt       DateTime?                 @map("approved_at") @db.Timestamptz(6)
+  approvedById     BigInt?                   @map("approved_by")
+  exportedAt       DateTime?                 @map("exported_at") @db.Timestamptz(6)
+  paidAt           DateTime?                 @map("paid_at") @db.Timestamptz(6)
+  voidedAt         DateTime?                 @map("voided_at") @db.Timestamptz(6)
+  voidReason       String?                   @map("void_reason")
+  /// D-465: how withholding was decided on approval (`progressive_40_2` individual, `juristic_service` 3 %,
+  /// `payroll` employee). Null before approval and on statements approved before D-465.
+  whtMethod        SalesAgentWhtMethod?      @map("wht_method")
+  /// D-465: withheld from this statement's payment (decided on approval, used as is by the payout run).
+  whtAmount        Decimal?                  @map("wht_amount") @db.Decimal(14, 2)
+  /// D-465 progressive working, kept for the agent's 50 ทวิ and audit: YTD paid incl. this statement,
+  /// projected year, allowances used, annual tax.
+  whtYtdPaid       Decimal?                  @map("wht_ytd_paid") @db.Decimal(14, 2)
+  whtProjected     Decimal?                  @map("wht_projected") @db.Decimal(14, 2)
+  whtAllowances    Decimal?                  @map("wht_allowances") @db.Decimal(14, 2)
+  whtAnnualTax     Decimal?                  @map("wht_annual_tax") @db.Decimal(14, 2)
+  /// D-465: a VAT-registered juristic agent's tax invoice, required before approval. PDPA: financial record,
+  /// retained 10 years (Revenue Code s.87/3), read by Finance.
+  taxInvoiceFileId BigInt?                   @map("tax_invoice_file_id")
+  taxInvoiceNo     String?                   @map("tax_invoice_no")
+  createdAt        DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int                       @default(1) @map("row_version")
 
-  entity        Entity                 @relation("SalesAgentStatementEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__entity_id")
-  agent         SalesAgent             @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__agent_id")
-  vendorInvoice VendorInvoice?         @relation("SalesAgentStatementVendorInvoice", fields: [vendorInvoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__vendor_invoice_id")
-  approvedBy    User?                  @relation("SalesAgentStatementApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__approved_by") // client: keep
-  entries       SalesAgentCommission[]
+  taxInvoiceFile FileObject?            @relation("SalesAgentStatementTaxInvoice", fields: [taxInvoiceFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__tax_invoice_file_id")
+  entity         Entity                 @relation("SalesAgentStatementEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__entity_id")
+  agent          SalesAgent             @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__agent_id")
+  vendorInvoice  VendorInvoice?         @relation("SalesAgentStatementVendorInvoice", fields: [vendorInvoiceId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__vendor_invoice_id")
+  approvedBy     User?                  @relation("SalesAgentStatementApprovedBy", fields: [approvedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_statements__approved_by") // client: keep
+  entries        SalesAgentCommission[]
 
   @@unique([agentId, periodStart], map: "ux_sales_agent_statements__agent_id__period_start__live", where: raw("(status <> 'voided'::sales_agent_statement_status)"))
   @@index([agentId, periodStart], map: "ix_sales_agent_statements__agent_id__period_start")
   @@index([status, periodStart], map: "ix_sales_agent_statements__status__period_start")
   @@index([entityId], map: "ix_sales_agent_statements__entity_id")
   @@index([approvedById], map: "ix_sales_agent_statements__approved_by")
+  @@index([taxInvoiceFileId], map: "ix_sales_agent_statements__tax_invoice_file_id")
   @@map("sales_agent_statements")
+}
+
+enum SalesAgentWhtMethod {
+  progressive_40_2
+  juristic_service
+  payroll
+
+  @@map("sales_agent_wht_method")
+}
+
+enum SalesAgentTaxDeclarationStatus {
+  submitted
+  accepted
+  rejected
+
+  @@map("sales_agent_tax_declaration_status")
+}
+
+/// ล.ย.01 — an individual agent's allowances for one tax year (D-465). Only an accepted declaration changes the
+/// allowances of the progressive withholding; without one the personal allowance applies. PDPA: family and
+/// financial data given by the agent for withholding only; read by the agent and Finance
+/// (`agent_tax_declarations.review`); retained 10 years after the tax year (Revenue Code s.87/3).
+model SalesAgentTaxDeclaration {
+  id              BigInt                         @id(map: "pk_sales_agent_tax_declarations") @default(autoincrement())
+  publicId        String                         @unique(map: "ux_sales_agent_tax_declarations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId         BigInt                         @map("agent_id")
+  taxYear         Int                            @map("tax_year") @db.SmallInt
+  /// `{ spouse, children, parents, … }` decimal strings (agent-wht.ts DECLARATION_ALLOWANCE_KEYS).
+  allowances      Json
+  /// File public ids are resolved to ids on submit; the agent's own uploads.
+  evidenceFileIds BigInt[]                       @default([]) @map("evidence_file_ids")
+  status          SalesAgentTaxDeclarationStatus @default(submitted)
+  submittedAt     DateTime                       @default(now()) @map("submitted_at") @db.Timestamptz(6)
+  decidedAt       DateTime?                      @map("decided_at") @db.Timestamptz(6)
+  decidedById     BigInt?                        @map("decided_by")
+  decisionReason  String?                        @map("decision_reason")
+  createdAt       DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime                       @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int                            @default(1) @map("row_version")
+
+  agent     SalesAgent @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_tax_declarations__agent_id")
+  decidedBy User?      @relation("SalesAgentTaxDeclarationDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_tax_declarations__decided_by") // client: keep
+
+  @@index([agentId, taxYear, status], map: "ix_sales_agent_tax_declarations__agent_id__tax_year__status")
+  @@index([status, submittedAt], map: "ix_sales_agent_tax_declarations__status__submitted_at")
+  @@index([decidedById], map: "ix_sales_agent_tax_declarations__decided_by")
+  @@map("sales_agent_tax_declarations")
+}
+
+/// D-464 monthly KPI (internal, Phase 4 dashboards): commission accrued ÷ the gross margin of the same orders.
+model SalesAgentMarginKpi {
+  id               BigInt   @id(map: "pk_sales_agent_margin_kpis") @default(autoincrement())
+  /// First day of the Bangkok month.
+  period           DateTime @unique(map: "ux_sales_agent_margin_kpis__period") @db.Date
+  orderCount       Int      @map("order_count")
+  commissionAmount Decimal  @map("commission_amount") @db.Decimal(14, 2)
+  grossMargin      Decimal  @map("gross_margin") @db.Decimal(14, 2)
+  /// commission ÷ gross margin × 100; null when the margin is 0 or unknown.
+  ratioPct         Decimal? @map("ratio_pct") @db.Decimal(9, 4)
+  alertCount       Int      @map("alert_count")
+  computedAt       DateTime @default(now()) @map("computed_at") @db.Timestamptz(6)
+
+  @@map("sales_agent_margin_kpis")
 }

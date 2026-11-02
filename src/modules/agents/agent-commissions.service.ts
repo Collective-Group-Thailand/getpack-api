@@ -9,7 +9,9 @@ import { AuditService } from '@platform/audit/audit.service';
 import { type DomainEventEnvelope } from '@platform/domain-events/domain-event';
 import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
+import { SettingsService } from '@platform/settings/settings.service';
 
+import { commissionFor, type RateLock, remainingAfterRefund } from './agent-commission-rules';
 import { AGENT_REF_SELECT, D, DAY_MS, invalid, planVersionAt, recordAgentEvent, ZERO } from './agent-shared';
 
 export const COMMISSION_INCLUDE = {
@@ -30,15 +32,14 @@ export type CommissionRow = Prisma.SalesAgentCommissionGetPayload<{ include: typ
 /** Instalment statuses that still leave something to pay (the loyalty credit rule, D-132). */
 const OPEN_INSTALMENTS = ['pending', 'due', 'overdue', 'partially_paid'] as const;
 
-/** Round half up to satang. */
-const round = (v: MoneyValue) => v.toDecimalPlaces(2);
 
 /**
- * The commission ledger (D-418, D-419): an entry when an attributed order completes — first or repeat
- * rate of the plan version in force when the group was placed, capped at the plan's share of the order's
- * margin — earned once the claim window has passed and the group is paid; refunds bring it down with a
- * reversal; a shared identity between agent and customer holds it for Sales. Factory bounties are earned
- * when a linked factory completes its qualifying jobs after activation. Staff add signed adjustments.
+ * The commission ledger (D-418, D-464): an entry when an attributed order completes — first or repeat rate
+ * LOCKED for the order (the plan version in force when the group was placed, or a quote's locked rate), with no
+ * cap; a commission above `agent.margin_alert_pct` of the order's gross margin alerts C-Level and is never cut —
+ * earned once the claim window has passed and the group is paid; refunds bring it down with a reversal; a
+ * shared identity between agent and customer holds it for Sales. Staff add signed adjustments. Factory bounties
+ * (D-419) are retired by P-03 / D-464: the settlement job no longer runs; history stays readable.
  */
 @Injectable()
 export class AgentCommissionsService {
@@ -47,6 +48,7 @@ export class AgentCommissionsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly audit: AuditService,
+    private readonly settings: SettingsService,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
   ) {}
@@ -99,18 +101,18 @@ export class AgentCommissionsService {
     if (base.lte(0) || base.lt(version.minBaseAmount.toString())) return null;
     const isFirstOrder =
       (await tx.salesAgentCommission.count({ where: { linkId: link.id, kind: 'order' } })) === 0;
-    const rate = D(isFirstOrder ? version.firstOrderPct : version.repeatOrderPct);
-    const byRate = round(base.mul(rate).div(100));
+    // D-464: the rate locked for this order, no cap; the margin only raises an internal alert.
     const margin = order.marginAmount === null ? null : D(order.marginAmount);
-    const cap =
-      margin === null
-        ? null
-        : round(
-            D(margin.gt(0) ? margin : 0)
-              .mul(version.marginCapPct.toString())
-              .div(100),
-          );
-    const amount = cap !== null && cap.lt(byRate) ? cap : byRate;
+    const alertPct = (await this.settings.at('agent.margin_alert_pct', { at: placedAt, tx })).value;
+    const result = commissionFor({
+      base: formatMoney(base),
+      isFirstOrder,
+      plan: { firstOrderPct: version.firstOrderPct.toString(), repeatOrderPct: version.repeatOrderPct.toString() },
+      lock: await this.rateLockFor(tx, order.id),
+      grossMargin: margin === null ? null : formatMoney(margin),
+      alertPct,
+    });
+    const amount = D(result.amount);
     const flags = await this.sharedIdentity(tx, agent.userId, order.customerUserId);
     const actor = systemActor('agents.accrue');
     const entry = await tx.salesAgentCommission.create({
@@ -124,15 +126,36 @@ export class AgentCommissionsService {
         planVersionId: version.id,
         isFirstOrder,
         baseAmount: formatMoney(base),
-        ratePct: rate.toFixed(4),
+        ratePct: result.ratePct,
         marginAmount: margin === null ? null : formatMoney(margin),
-        capAmount: cap === null ? null : formatMoney(cap),
+        capAmount: null,
+        marginAlert: result.marginAlert,
         amount: formatMoney(amount),
         availableAt:
           order.claimWindowEndsAt ?? new Date((order.completedAt ?? new Date()).getTime() + 7 * DAY_MS),
         holdFlags: flags,
+        note: result.rateSource === 'plan' ? null : `rate_locked:${result.rateSource}`,
       },
     });
+    if (result.marginAlert)
+      await recordAgentEvent(this, tx, {
+        // D-464: internal only (C-Level, management team); the commission stays as accrued.
+        type: 'sales_agent_commission.margin_alert',
+        aggregateType: 'sales_agent_commission',
+        aggregateId: entry.publicId,
+        payload: {
+          commissionId: entry.publicId,
+          agentId: agent.publicId,
+          agentCode: agent.code,
+          orderId: order.publicId,
+          orderCode: order.orderCode,
+          amount: formatMoney(amount),
+          grossMargin: margin === null ? null : formatMoney(margin),
+          ratioPct: result.marginRatioPct,
+          alertPct,
+        },
+        actor: systemActor('agents.accrue'),
+      });
     await recordAgentEvent(this, tx, {
       type: flags.length ? 'sales_agent_commission.held' : 'sales_agent_commission.accrued',
       aggregateType: 'sales_agent_commission',
@@ -147,6 +170,14 @@ export class AgentCommissionsService {
       actor,
     });
     return entry;
+  }
+
+  /**
+   * A rate locked for this order on its quote (Phase 3 deal registration / an agent-accepted option, D-468).
+   * None yet: the plan version in force when the group was placed applies (D-464).
+   */
+  protected rateLockFor(_tx: Tx, _orderId: bigint): Promise<RateLock | null> {
+    return Promise.resolve(null);
   }
 
   /** Phone, address, card or device shared by agent and customer (identity fingerprints, D-136, D-417). */
@@ -253,9 +284,9 @@ export class AgentCommissionsService {
         ),
       ZERO(),
     );
-    const gross = D(order.grossAmount);
-    const share = gross.gt(0) ? MoneyMin(refundedGross.div(gross), D(1)) : D(0);
-    const target = round(D(entry.amount).mul(D(1).sub(share)));
+    const target = D(
+      remainingAfterRefund(entry.amount.toFixed(2), formatMoney(refundedGross), order.grossAmount.toFixed(2)),
+    );
     const reversed = await tx.salesAgentCommission.aggregate({
       where: { reversesCommissionId: entry.id, kind: 'reversal' },
       _sum: { amount: true },
@@ -398,7 +429,38 @@ export class AgentCommissionsService {
     ]);
   }
 
-  // --- factory bounty (D-419) ----------------------------------------------------------------------------
+  // --- D-464 monthly KPI: commission ÷ gross margin (internal) -----------------------------------------------
+
+  /** Upserts the KPI of a Bangkok month (`YYYY-MM`) from the order commissions accrued in it. Idempotent. */
+  async computeMarginKpi(period: string): Promise<{ period: string; ratioPct: string | null }> {
+    const [y, m] = period.split('-').map(Number) as [number, number];
+    const from = new Date(Date.UTC(y, m - 1, 1) - 7 * 3_600_000);
+    const to = new Date(Date.UTC(y, m, 1) - 7 * 3_600_000);
+    const rows = await this.prisma.salesAgentCommission.findMany({
+      where: { kind: 'order', status: { not: 'cancelled' }, createdAt: { gte: from, lt: to } },
+      select: { amount: true, marginAmount: true, marginAlert: true },
+    });
+    const commission = rows.reduce((a, r) => a.add(r.amount.toString()), ZERO());
+    const margin = rows.reduce((a, r) => a.add(r.marginAmount?.toString() ?? '0'), ZERO());
+    const ratio = margin.gt(0) ? commission.div(margin).mul(100).toDecimalPlaces(4).toFixed(4) : null;
+    const data = {
+      orderCount: rows.length,
+      commissionAmount: formatMoney(commission),
+      grossMargin: formatMoney(margin),
+      ratioPct: ratio,
+      alertCount: rows.filter((r) => r.marginAlert).length,
+      computedAt: new Date(),
+    };
+    const day = new Date(`${period}-01T00:00:00Z`);
+    await this.prisma.salesAgentMarginKpi.upsert({
+      where: { period: day },
+      create: { period: day, ...data },
+      update: data,
+    });
+    return { period, ratioPct: ratio };
+  }
+
+  // --- factory bounty (D-419, retired by D-464 / P-03; history only) ----------------------------------------------------------------------------
 
   /** Scheduled: pending factory links are qualified (bounty earned) or expired by the agent's plan. */
   async settleFactoryLinks(now = new Date()): Promise<number> {
@@ -498,8 +560,4 @@ export class AgentCommissionsService {
     }
     return false;
   }
-}
-
-function MoneyMin(a: MoneyValue, b: MoneyValue): MoneyValue {
-  return a.lt(b) ? a : b;
 }

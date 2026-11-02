@@ -39,6 +39,7 @@ export const API_TAGS: Record<string, string> = {
   'admin.agents':
     'Sales agents and their applications, customer and factory links, leads, commission and statements (D-416 – D-420).',
   'admin.agentPlans': 'Commission plans and their maker-checked versions (D-418).',
+  'admin.agentTaxDeclarations': 'Agents’ ล.ย.01 allowance declarations, reviewed by Finance (D-465).',
   'store.loyalty':
     'My points, tier and points history (D-130…D-134); redeem at checkout with `redeemPoints` (D-133).',
   'store.reviews': 'Review a delivered order and earn the review reward (D-135).',

@@ -857,13 +857,14 @@ model User {
   erpGlTaxFilingCreatedBy          ErpGlTaxFiling[]          @relation("ErpGlTaxFilingCreatedBy")
 
   // --- Sales agents D-416 (generated back-relations)
-  salesAgentApplications        SalesAgentApplication[] @relation("SalesAgentApplicationUser")
-  salesAgentApplicationsDecided SalesAgentApplication[] @relation("SalesAgentApplicationDecidedBy")
-  salesAgent                    SalesAgent?             @relation("SalesAgentUser")
-  salesAgentsAsStaff            SalesAgent[]            @relation("SalesAgentStaffUser")
-  salesAgentLinks               SalesAgentLink[]        @relation("SalesAgentLinkCustomer")
-  salesAgentLeadsConverted      SalesAgentLead[]        @relation("SalesAgentLeadConvertedUser")
-  salesAgentStatementsApproved  SalesAgentStatement[]   @relation("SalesAgentStatementApprovedBy")
+  salesAgentApplications           SalesAgentApplication[]    @relation("SalesAgentApplicationUser")
+  salesAgentApplicationsDecided    SalesAgentApplication[]    @relation("SalesAgentApplicationDecidedBy")
+  salesAgentTaxDeclarationsDecided SalesAgentTaxDeclaration[] @relation("SalesAgentTaxDeclarationDecidedBy")
+  salesAgent                       SalesAgent?                @relation("SalesAgentUser")
+  salesAgentsAsStaff               SalesAgent[]               @relation("SalesAgentStaffUser")
+  salesAgentLinks                  SalesAgentLink[]           @relation("SalesAgentLinkCustomer")
+  salesAgentLeadsConverted         SalesAgentLead[]           @relation("SalesAgentLeadConvertedUser")
+  salesAgentStatementsApproved     SalesAgentStatement[]      @relation("SalesAgentStatementApprovedBy")
   // --- end Sales agents
 
   // --- Documents D-428 – D-431 (back-relations)

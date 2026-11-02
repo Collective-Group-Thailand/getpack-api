@@ -1551,6 +1551,14 @@ export const PERMISSIONS = [
     decisionRefs: ['D-420'],
   },
   {
+    key: 'agent_tax_declarations.review',
+    audience: 'staff',
+    description:
+      'Read agents’ ล.ย.01 allowance declarations with their evidence and accept or reject them (progressive withholding)',
+    sensitive: true,
+    decisionRefs: ['D-465'],
+  },
+  {
     key: 'agent_plans.manage',
     audience: 'staff',
     description: 'Create commission plans and draft their versions',

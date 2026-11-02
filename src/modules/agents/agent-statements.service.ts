@@ -6,7 +6,7 @@ import { formatMoney } from '@common/money/money';
 import { bangkokDate, startOfBangkokDay, startOfBangkokMonth, toBangkokIso } from '@common/time/bangkok';
 import { PrismaService, type Tx } from '@database/prisma.service';
 import { type Prisma } from '@generated/prisma/client';
-import { TaxRatesReader } from '@modules/ledger/tax-rates.reader';
+import { TaxRatesReader, WHT_RATE_CODE } from '@modules/ledger/tax-rates.reader';
 import { VendorInvoicesService } from '@modules/payables/vendor-invoices.service';
 import { Injectable, Logger } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
@@ -16,9 +16,27 @@ import { DomainEvents } from '@platform/domain-events/domain-events.service';
 import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator';
 import { EntitiesService } from '@platform/entities/entities.service';
 import { FilesService } from '@platform/files/files.service';
+import { SettingsService } from '@platform/settings/settings.service';
 
 import { COMMISSION_INCLUDE } from './agent-commissions.service';
 import { AGENT_REF_SELECT, D, invalid, recordAgentEvent, ZERO } from './agent-shared';
+import {
+  type DeclarationAllowanceKey,
+  juristicWht,
+  progressiveWht,
+  remainingMonthsAfter,
+  totalAllowances,
+} from './agent-wht';
+
+/** D-465: what is withheld from a statement, decided on approval. */
+interface StatementWht {
+  whtMethod: 'progressive_40_2' | 'juristic_service' | 'payroll';
+  whtAmount: string | null;
+  whtYtdPaid?: string;
+  whtProjected?: string;
+  whtAllowances?: string;
+  whtAnnualTax?: string;
+}
 
 /** Excel opens a UTF-8 CSV with Thai names correctly only with a byte-order mark. */
 const BOM = String.fromCharCode(0xfeff);
@@ -81,6 +99,7 @@ export class AgentStatementsService {
     private readonly prisma: PrismaService,
     private readonly invoices: VendorInvoicesService,
     private readonly rates: TaxRatesReader,
+    private readonly settings: SettingsService,
     private readonly entities: EntitiesService,
     private readonly files: FilesService,
     private readonly audit: AuditService,
@@ -179,9 +198,23 @@ export class AgentStatementsService {
       });
       const now = new Date();
       let vendorInvoiceId: bigint | null = null;
+      let wht: StatementWht = { whtMethod: 'payroll', whtAmount: null };
       if (agent.kind === 'freelance') {
         const vendor = agent.vendor!;
         const net = D(s.totalAmount);
+        // D-465: a VAT-registered juristic agent bills with its own tax invoice, attached before approval.
+        if (vendor.juristicType !== 'individual' && vendor.isVatRegistered && !s.taxInvoiceFileId)
+          throw new DomainException('agent_statements.tax_invoice_required');
+        wht =
+          vendor.juristicType === 'individual'
+            ? await this.progressive(tx, agent.id, s.id, formatMoney(net), now)
+            : {
+                whtMethod: 'juristic_service',
+                whtAmount: juristicWht(
+                  formatMoney(net),
+                  (await this.rates.rate(WHT_RATE_CODE.service, now, tx)).pct.toString(),
+                ),
+              };
         const vat = vendor.isVatRegistered
           ? net
               .mul((await this.rates.rate('vat_standard', now, tx)).pct)
@@ -193,9 +226,10 @@ export class AgentStatementsService {
           actor,
           vendor.publicId,
           {
-            vendorInvoiceNo: s.statementNo,
+            vendorInvoiceNo: s.taxInvoiceNo ?? s.statementNo,
             invoiceDate: bangkokDate(now),
-            isTaxInvoice: false,
+            isTaxInvoice: s.taxInvoiceFileId !== null,
+            fileId: s.taxInvoiceFileId ? await this.filePublicId(tx, s.taxInvoiceFileId) : null,
             lines: [
               {
                 description: `ค่านายหน้า ${s.statementNo}`,
@@ -210,6 +244,12 @@ export class AgentStatementsService {
         );
         vendorInvoiceId = (await tx.vendorInvoice.findUniqueOrThrow({ where: { publicId: invoicePublicId } }))
           .id;
+        if (wht.whtMethod === 'progressive_40_2')
+          // D-465: the payout run withholds exactly this on the commission base, not a flat rate.
+          await tx.payableItem.updateMany({
+            where: { vendorInvoiceId },
+            data: { whtCommissionFixed: wht.whtAmount },
+          });
       }
       await tx.salesAgentStatement.update({
         where: { id: s.id },
@@ -218,6 +258,7 @@ export class AgentStatementsService {
           approvedAt: now,
           approvedById: actor.userId,
           vendorInvoiceId,
+          ...wht,
           rowVersion: { increment: 1 },
         },
       });
@@ -228,7 +269,12 @@ export class AgentStatementsService {
         resourceType: 'sales_agent_statement',
         resourcePublicId: s.publicId,
         entityId: s.entityId,
-        data: { total: s.totalAmount.toFixed(2), kind: agent.kind },
+        data: {
+          total: s.totalAmount.toFixed(2),
+          kind: agent.kind,
+          whtMethod: wht.whtMethod,
+          whtAmount: wht.whtAmount,
+        },
       });
       await recordAgentEvent(this, tx, {
         type: 'sales_agent_statement.approved',
@@ -248,6 +294,107 @@ export class AgentStatementsService {
       });
     });
     return this.get(publicId);
+  }
+
+  /**
+   * D-465 (PLAN §5): progressive s.50(1) withholding for an individual agent, cumulative over the Bangkok calendar
+   * year of the payment (approval). YTD = commission approved this year incl. this statement; allowances = personal
+   * allowance + the latest accepted ล.ย.01 of the year; December trues up (no projection).
+   */
+  private async progressive(
+    tx: Tx,
+    agentId: bigint,
+    statementId: bigint,
+    amount: string,
+    now: Date,
+  ): Promise<StatementWht> {
+    const today = bangkokDate(now);
+    const year = Number(today.slice(0, 4));
+    const month = Number(today.slice(5, 7));
+    const yearStart = startOfBangkokDay(`${year}-01-01`);
+    const earlier = await tx.salesAgentStatement.findMany({
+      where: {
+        agentId,
+        id: { not: statementId },
+        status: { in: ['approved', 'exported', 'paid'] },
+        approvedAt: { gte: yearStart, lte: now },
+      },
+      select: { totalAmount: true, whtAmount: true },
+    });
+    const ytd = earlier.reduce((a, e) => a.add(e.totalAmount.toString()), D(amount));
+    const withheld = earlier.reduce((a, e) => a.add(e.whtAmount?.toString() ?? '0'), ZERO());
+    const at = { at: now, tx };
+    const declaration = await tx.salesAgentTaxDeclaration.findFirst({
+      where: { agentId, taxYear: year, status: 'accepted' },
+      orderBy: { decidedAt: 'desc' },
+    });
+    const allowances = totalAllowances(
+      (await this.settings.at('tax.wht_40_2.personal_allowance', at)).value,
+      (declaration?.allowances ?? null) as Partial<Record<DeclarationAllowanceKey, string>> | null,
+    );
+    const r = progressiveWht({
+      ytdPaid: formatMoney(ytd),
+      thisStatement: amount,
+      remainingMonths: remainingMonthsAfter(month),
+      whtWithheldYtd: formatMoney(withheld),
+      expenseRate: (await this.settings.at('tax.wht_40_2.expense_rate', at)).value,
+      expenseCap: (await this.settings.at('tax.wht_40_2.expense_cap', at)).value,
+      allowances,
+      brackets: (await this.settings.at('tax.pit_brackets', at)).value,
+    });
+    return {
+      whtMethod: 'progressive_40_2',
+      whtAmount: r.whtNow,
+      whtYtdPaid: formatMoney(ytd),
+      whtProjected: r.projected,
+      whtAllowances: allowances,
+      whtAnnualTax: r.annualTax,
+    };
+  }
+
+  /** D-465: Finance attaches a juristic agent's tax invoice (number + file) to a draft statement. */
+  async attachTaxInvoice(
+    actor: UserActor,
+    publicId: string,
+    input: { fileId: string; taxInvoiceNo: string },
+    ifMatch: string | undefined,
+  ): Promise<StatementRow> {
+    await this.prisma.withTx(async (tx) => {
+      const s = await this.lock(tx, publicId, ['draft']);
+      assertIfMatch(ifMatch, statementEtag(s), { required: true });
+      const file = await tx.fileObject.findUnique({ where: { publicId: input.fileId } });
+      if (!file || file.uploadStatus !== 'uploaded' || file.scanStatus === 'infected')
+        invalid('fileId', 'an uploaded file', 'fileReady');
+      await tx.salesAgentStatement.update({
+        where: { id: s.id },
+        data: {
+          taxInvoiceFileId: file.id,
+          taxInvoiceNo: input.taxInvoiceNo.trim(),
+          rowVersion: { increment: 1 },
+        },
+      });
+      await this.audit.record(tx, {
+        category: 'finance',
+        action: 'sales_agent_statement.attach_tax_invoice',
+        actor,
+        resourceType: 'sales_agent_statement',
+        resourcePublicId: s.publicId,
+        entityId: s.entityId,
+        data: { taxInvoiceNo: input.taxInvoiceNo, fileId: input.fileId },
+      });
+      await recordAgentEvent(this, tx, {
+        type: 'sales_agent_statement.tax_invoice_attached',
+        aggregateType: 'sales_agent_statement',
+        aggregateId: s.publicId,
+        payload: { statementId: s.publicId, taxInvoiceNo: input.taxInvoiceNo },
+        actor,
+      });
+    });
+    return this.get(publicId);
+  }
+
+  private async filePublicId(tx: Tx, id: bigint): Promise<string> {
+    return (await tx.fileObject.findUniqueOrThrow({ where: { id }, select: { publicId: true } })).publicId;
   }
 
   async void(actor: UserActor, publicId: string, reason: string): Promise<StatementRow> {

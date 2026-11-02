@@ -4,10 +4,13 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsEmail,
   IsIn,
   IsInt,
+  IsObject,
   IsOptional,
   IsString,
   IsUUID,
@@ -27,6 +30,8 @@ export const JURISTIC_TYPES = ['individual', 'company', 'partnership'] as const;
 export const LINK_SOURCES = ['link', 'lead', 'staff', 'company'] as const;
 export const LINK_STATUSES = ['active', 'ended'] as const;
 export const LEAD_KINDS = ['customer', 'factory'] as const;
+/** D-464 / P-03: agents register customer leads only (factory leads are history, staff only). */
+export const STORE_LEAD_KINDS = ['customer'] as const;
 export const LEAD_STATUSES = ['registered', 'converted', 'expired', 'rejected', 'withdrawn'] as const;
 export const FACTORY_LINK_STATUSES = ['pending', 'qualified', 'expired', 'ended'] as const;
 export const COMMISSION_KINDS = ['order', 'factory_bounty', 'adjustment', 'reversal'] as const;
@@ -62,6 +67,7 @@ export const AGENT_IDS = {
   vendor: '0192f3a0-7c1e-7d2a-9b1f-0000000a6016',
   invoice: '0192f3a0-7c1e-7d2a-9b1f-0000000a6017',
   agreement: '0192f3a0-7c1e-7d2a-9b1f-0000000a6018',
+  declaration: '0192f3a0-7c1e-7d2a-9b1f-0000000a6019',
 };
 
 // --- plans ------------------------------------------------------------------------------------------------
@@ -106,6 +112,38 @@ const TERMS_EXAMPLE: AgentPlanTermsDto = {
   factoryBountyAmount: '3000.00',
   factoryQualifyJobs: 3,
   factoryQualifyDays: 120,
+};
+
+/**
+ * The programme terms an agent or a visitor sees (D-464): rates and months only — no cap ("ไม่จำกัดรายได้"), no
+ * margin, no factory bounty (P-03). Staff read the full plan version (`AgentPlanTermsDto`).
+ */
+export class StoreAgentTermsDto {
+  @ApiProperty({ example: '5', description: 'Commission on a customer’s first order, % of the base' })
+  firstOrderPct!: string;
+
+  @ApiProperty({ example: '3', description: 'Commission on later orders, % of the base' })
+  repeatOrderPct!: string;
+
+  @ApiProperty({ type: 'integer', example: 12, description: 'Months a customer stays linked to the agent' })
+  attributionMonths!: number;
+
+  @ApiProperty({ example: '0.00', description: 'Orders with a smaller base earn nothing' })
+  minBaseAmount!: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Always true (D-464): the full rate at every order size, no commission cap',
+  })
+  uncapped!: boolean;
+}
+
+export const STORE_TERMS_EXAMPLE: StoreAgentTermsDto = {
+  firstOrderPct: '5',
+  repeatOrderPct: '3',
+  attributionMonths: 12,
+  minBaseAmount: '0.00',
+  uncapped: true,
 };
 
 export class AgentPlanVersionDto extends AgentPlanTermsDto {
@@ -318,11 +356,11 @@ export class AgentProgrammeDto {
   agreement!: AgentAgreementTextDto | null;
 
   @ApiProperty({
-    type: AgentPlanTermsDto,
+    type: StoreAgentTermsDto,
     nullable: true,
-    description: 'The standard freelance plan in force',
+    description: 'The standard freelance plan in force (D-464: no cap)',
   })
-  plan!: AgentPlanTermsDto | null;
+  plan!: StoreAgentTermsDto | null;
 
   @ApiProperty({
     type: 'integer',
@@ -358,7 +396,7 @@ export const AGENT_PROGRAMME_EXAMPLE: AgentProgrammeDto = {
     textTh: 'ข้อตกลงตัวแทนขาย getpack (ฉบับที่ 1) …',
     textEn: null,
   },
-  plan: TERMS_EXAMPLE,
+  plan: STORE_TERMS_EXAMPLE,
   linkCookieDays: 90,
   leadProtectionDays: 60,
   paymentTermsDays: 15,
@@ -679,8 +717,12 @@ export class AgentDto {
   @ApiProperty({ type: AgentPlanRefDto })
   plan!: AgentPlanRefDto;
 
-  @ApiProperty({ type: AgentPlanTermsDto, nullable: true, description: 'The plan’s terms in force' })
-  terms!: AgentPlanTermsDto | null;
+  @ApiProperty({
+    type: StoreAgentTermsDto,
+    nullable: true,
+    description: 'The plan’s terms in force (D-464: no cap)',
+  })
+  terms!: StoreAgentTermsDto | null;
 
   @TimestampField('2026-10-16T10:00:00+07:00')
   joinedAt!: string;
@@ -695,6 +737,13 @@ export class AgentDto {
 export class AdminAgentDto extends AgentDto {
   @ApiProperty({ type: AdminAgentTotalsDto })
   declare totals: AdminAgentTotalsDto;
+
+  @ApiProperty({
+    type: AgentPlanTermsDto,
+    nullable: true,
+    description: 'Staff: the full plan version in force (history fields such as the retired margin cap included)',
+  })
+  planTerms!: AgentPlanTermsDto | null;
 
   @ApiProperty({ type: UserRefDto, description: 'The customer account the agent signs in with' })
   user!: UserRefDto;
@@ -753,7 +802,7 @@ export const AGENT_EXAMPLE: AgentDto = {
   link: 'https://www.getpack.invalid/a/K7QX2MAP',
   legalName: 'สมชาย ขายเก่ง',
   plan: { id: AGENT_IDS.plan, code: 'freelance_standard', nameTh: 'ตัวแทนอิสระ — มาตรฐาน' },
-  terms: TERMS_EXAMPLE,
+  terms: STORE_TERMS_EXAMPLE,
   joinedAt: '2026-10-16T10:00:00+07:00',
   statusReason: null,
   totals: TOTALS_EXAMPLE,
@@ -762,6 +811,7 @@ export const AGENT_EXAMPLE: AgentDto = {
 export const ADMIN_AGENT_EXAMPLE: AdminAgentDto = {
   ...AGENT_EXAMPLE,
   totals: { ...TOTALS_EXAMPLE, factories: 1 },
+  planTerms: { ...TERMS_EXAMPLE, factoryBountyAmount: '0.00', factoryQualifyJobs: 0, factoryQualifyDays: 0 },
   user: { id: AGENT_IDS.user, displayName: 'สมชาย ขายเก่ง' },
   phone: '+66810005678',
   juristicType: 'individual',
@@ -1005,9 +1055,14 @@ export class MyLinkListQuery extends PageQuery {
 // --- leads ------------------------------------------------------------------------------------------------
 
 export class RegisterAgentLeadDto {
-  @ApiProperty({ enum: LEAD_KINDS, enumName: 'AgentLeadKind', example: 'customer' })
-  @IsIn(LEAD_KINDS)
-  kind!: (typeof LEAD_KINDS)[number];
+  @ApiProperty({
+    enum: STORE_LEAD_KINDS,
+    enumName: 'StoreAgentLeadKind',
+    example: 'customer',
+    description: 'Customers only (P-03 / D-464); any other value is `agents.lead_kind_unsupported`',
+  })
+  @IsString()
+  kind!: string;
 
   @ApiProperty({ example: 'คุณมานี ใจดี' })
   @IsString()
@@ -1055,7 +1110,7 @@ export class AgentLeadDto {
   @IdField(AGENT_IDS.lead)
   id!: string;
 
-  @ApiProperty({ enum: LEAD_KINDS, enumName: 'AgentLeadKind', example: 'customer' })
+  @ApiProperty({ enum: STORE_LEAD_KINDS, enumName: 'StoreAgentLeadKind', example: 'customer' })
   kind!: string;
 
   @ApiProperty({ enum: LEAD_STATUSES, enumName: 'AgentLeadStatus', example: 'registered' })
@@ -1093,6 +1148,9 @@ export class AgentLeadDto {
 }
 
 export class AdminAgentLeadDto extends AgentLeadDto {
+  @ApiProperty({ enum: LEAD_KINDS, enumName: 'AgentLeadKind', example: 'customer' })
+  declare kind: string;
+
   @ApiProperty({ type: AgentRefDto })
   agent!: AgentRefDto;
 
@@ -1265,15 +1323,7 @@ export class AgentCommissionDto {
   @ApiProperty({ type: String, nullable: true, example: '5' })
   ratePct!: string | null;
 
-  @ApiProperty({
-    type: String,
-    nullable: true,
-    example: '1080.00',
-    description: '30 % of the order’s margin',
-  })
-  capAmount!: string | null;
-
-  @ApiProperty({ example: '600.00', description: 'Signed' })
+  @ApiProperty({ example: '600.00', description: 'Signed; the full rate, no cap (D-464)' })
   amount!: string;
 
   @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-08T00:00:00+07:00' })
@@ -1295,6 +1345,20 @@ export class AgentCommissionDto {
 export class AdminAgentCommissionDto extends AgentCommissionDto {
   @ApiProperty({ type: AgentRefDto })
   agent!: AgentRefDto;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: null,
+    description: 'History: the margin cap applied before D-464 (null since)',
+  })
+  capAmount!: string | null;
+
+  @ApiProperty({
+    example: false,
+    description: 'D-464: commission ÷ gross margin exceeded `agent.margin_alert_pct` (internal; amount unchanged)',
+  })
+  marginAlert!: boolean;
 
   @ApiProperty({
     type: String,
@@ -1328,7 +1392,6 @@ export const COMMISSION_EXAMPLE: AgentCommissionDto = {
   isFirstOrder: true,
   baseAmount: '12000.00',
   ratePct: '5',
-  capAmount: '1080.00',
   amount: '600.00',
   availableAt: '2026-11-08T00:00:00+07:00',
   earnedAt: null,
@@ -1344,6 +1407,8 @@ export const ADMIN_COMMISSION_EXAMPLE: AdminAgentCommissionDto = {
   factoryName: null,
   orderId: AGENT_IDS.order,
   marginAmount: '3600.00',
+  capAmount: null,
+  marginAlert: false,
   holdFlags: [],
 };
 
@@ -1427,9 +1492,22 @@ export class AgentStatementDto {
     type: String,
     nullable: true,
     example: '70.50',
-    description: 'Withheld at payment (freelance)',
+    description:
+      'Withholding: what the payment withheld once paid, before that what approval decided (D-465); null for ' +
+      'employees (payroll) and drafts',
   })
   whtAmount!: string | null;
+
+  @ApiProperty({
+    enum: ['progressive_40_2', 'juristic_service', 'payroll'],
+    enumName: 'AgentWhtMethod',
+    nullable: true,
+    example: 'progressive_40_2',
+    description:
+      'D-465: individual — progressive s.50(1) (ภ.ง.ด.1); juristic — 3 % service from ฿1,000 (ภ.ง.ด.53); ' +
+      'employee — payroll. Null before approval',
+  })
+  whtMethod!: string | null;
 
   @ApiProperty({ type: String, nullable: true, example: '2279.50', description: 'Transferred (freelance)' })
   paidAmount!: string | null;
@@ -1442,6 +1520,21 @@ export class AgentStatementDto {
 
   @ApiProperty({ example: false, description: 'A 50 ทวิ is available to download' })
   hasWhtCertificate!: boolean;
+}
+
+/** D-465: how the progressive withholding of a statement was worked out (staff). */
+export class AgentWhtWorkingDto {
+  @ApiProperty({ example: '100000.00', description: 'Commission approved this year incl. this statement' })
+  ytdPaid!: string;
+
+  @ApiProperty({ example: '460000.00', description: 'YTD + this statement × months left in the year' })
+  projected!: string;
+
+  @ApiProperty({ example: '60000.00', description: 'Personal allowance + accepted ล.ย.01 allowances' })
+  allowances!: string;
+
+  @ApiProperty({ example: '7000.00', description: 'Annual tax on the projected net income' })
+  annualTax!: string;
 }
 
 export class AgentStatementDetailDto extends AgentStatementDto {
@@ -1468,6 +1561,19 @@ export class AdminAgentStatementDto extends AgentStatementDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   voidReason!: string | null;
 
+  @ApiProperty({
+    type: AgentWhtWorkingDto,
+    nullable: true,
+    description: 'D-465 progressive working (individual agents, after approval)',
+  })
+  whtWorking!: AgentWhtWorkingDto | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'D-465 juristic agent’s tax invoice no.' })
+  taxInvoiceNo!: string | null;
+
+  @ApiProperty({ example: false, description: 'D-465 a tax invoice file is attached' })
+  hasTaxInvoice!: boolean;
+
   @ApiProperty({ type: 'integer', example: 1 })
   rowVersion!: number;
 }
@@ -1485,7 +1591,8 @@ export const STATEMENT_EXAMPLE: AgentStatementDto = {
   status: 'approved',
   entryCount: 3,
   totalAmount: '2350.00',
-  whtAmount: null,
+  whtAmount: '0.00',
+  whtMethod: 'progressive_40_2',
   paidAmount: null,
   approvedAt: '2026-11-01T09:00:00+07:00',
   paidAt: null,
@@ -1505,6 +1612,9 @@ export const ADMIN_STATEMENT_EXAMPLE: AdminAgentStatementDto = {
   exportedAt: null,
   voidedAt: null,
   voidReason: null,
+  whtWorking: { ytdPaid: '2350.00', projected: '4700.00', allowances: '60000.00', annualTax: '0.00' },
+  taxInvoiceNo: null,
+  hasTaxInvoice: false,
   rowVersion: 2,
 };
 
@@ -1565,6 +1675,193 @@ export class AgentPayrollExportDto {
 
   @ApiProperty({ type: 'integer', example: 3, description: 'Employee statements in the file (now exported)' })
   statements!: number;
+}
+
+// --- ล.ย.01 tax declarations (D-465) -----------------------------------------------------------------------
+
+const ALLOWANCE_EXAMPLE = { spouse: '60000.00', lifeInsurance: '30000.00', socialSecurity: '9000.00' };
+
+/** Allowance amounts by key (decimal strings, baht per tax year); omitted keys are 0. */
+export class AgentTaxAllowancesDto {
+  @ApiPropertyOptional({ example: '60000.00', description: 'คู่สมรสไม่มีเงินได้' })
+  spouse?: string;
+  @ApiPropertyOptional({ example: '30000.00', description: 'บุตร' })
+  children?: string;
+  @ApiPropertyOptional({ example: '30000.00', description: 'อุปการะเลี้ยงดูบิดามารดา' })
+  parents?: string;
+  @ApiPropertyOptional({ example: '60000.00', description: 'อุปการะคนพิการหรือทุพพลภาพ' })
+  disabledDependants?: string;
+  @ApiPropertyOptional({ example: '30000.00', description: 'เบี้ยประกันชีวิต' })
+  lifeInsurance?: string;
+  @ApiPropertyOptional({ example: '25000.00', description: 'เบี้ยประกันสุขภาพตนเอง' })
+  healthInsurance?: string;
+  @ApiPropertyOptional({ example: '15000.00', description: 'เบี้ยประกันสุขภาพบิดามารดา' })
+  parentsHealthInsurance?: string;
+  @ApiPropertyOptional({ example: '0.00', description: 'เบี้ยประกันชีวิตแบบบำนาญ' })
+  pensionInsurance?: string;
+  @ApiPropertyOptional({ example: '0.00', description: 'กองทุนสำรองเลี้ยงชีพ' })
+  providentFund?: string;
+  @ApiPropertyOptional({ example: '0.00', description: 'RMF' })
+  rmf?: string;
+  @ApiPropertyOptional({ example: '0.00', description: 'SSF' })
+  ssf?: string;
+  @ApiPropertyOptional({ example: '0.00', description: 'Thai ESG' })
+  thaiEsg?: string;
+  @ApiPropertyOptional({ example: '9000.00', description: 'เงินสมทบประกันสังคม' })
+  socialSecurity?: string;
+  @ApiPropertyOptional({ example: '0.00', description: 'ดอกเบี้ยเงินกู้ยืมเพื่อที่อยู่อาศัย' })
+  homeLoanInterest?: string;
+  @ApiPropertyOptional({ example: '0.00', description: 'เงินบริจาค' })
+  donations?: string;
+  @ApiPropertyOptional({ example: '0.00', description: 'เงินบริจาคเพื่อการศึกษา' })
+  educationDonations?: string;
+}
+
+export class SubmitAgentTaxDeclarationDto {
+  @ApiProperty({ type: AgentTaxAllowancesDto, example: ALLOWANCE_EXAMPLE })
+  @IsObject()
+  allowances!: Record<string, string>;
+
+  @ApiProperty({ type: [String], format: 'uuid', example: [AGENT_IDS.file], description: 'My uploaded evidence' })
+  @IsArray()
+  @ArrayMaxSize(20)
+  @IsUUID('all', { each: true })
+  evidenceFileIds!: string[];
+}
+
+export class AgentTaxDeclarationDto {
+  @IdField(AGENT_IDS.declaration)
+  id!: string;
+
+  @ApiProperty({ type: 'integer', example: 2026 })
+  taxYear!: number;
+
+  @ApiProperty({ type: AgentTaxAllowancesDto, example: ALLOWANCE_EXAMPLE })
+  allowances!: Record<string, string>;
+
+  @ApiProperty({ example: '99000.00', description: 'Sum of the declared allowances' })
+  allowancesTotal!: string;
+
+  @ApiProperty({ type: 'integer', example: 1 })
+  evidenceCount!: number;
+
+  @ApiProperty({
+    enum: ['submitted', 'accepted', 'rejected'],
+    enumName: 'AgentTaxDeclarationStatus',
+    example: 'submitted',
+  })
+  status!: string;
+
+  @TimestampField('2026-11-02T10:00:00+07:00')
+  submittedAt!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  decidedAt!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null, description: 'Why it was rejected' })
+  decisionReason!: string | null;
+}
+
+export class MyTaxDeclarationDto {
+  @ApiProperty({ type: 'integer', example: 2026, description: 'The current tax year (Asia/Bangkok)' })
+  taxYear!: number;
+
+  @ApiProperty({ example: true, description: 'Individual freelance agents declare; others do not need to' })
+  applicable!: boolean;
+
+  @ApiProperty({ example: '60000.00', description: 'Used when no declaration is accepted' })
+  personalAllowance!: string;
+
+  @ApiProperty({ type: AgentTaxDeclarationDto, nullable: true, description: 'My latest declaration this year' })
+  declaration!: AgentTaxDeclarationDto | null;
+}
+
+export class AgentEvidenceFileDto {
+  @IdField(AGENT_IDS.file)
+  fileId!: string;
+
+  @ApiProperty({ example: 'ใบเสร็จประกันชีวิต.pdf' })
+  fileName!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'https://getpack-files.s3.example.com/…' })
+  url!: string | null;
+}
+
+export class AdminAgentTaxDeclarationDto extends AgentTaxDeclarationDto {
+  @ApiProperty({ type: AgentRefDto })
+  agent!: AgentRefDto;
+
+  @ApiProperty({ type: UserRefDto, nullable: true })
+  decidedBy!: UserRefDto | null;
+}
+
+export class AdminAgentTaxDeclarationDetailDto extends AdminAgentTaxDeclarationDto {
+  @ApiProperty({ type: [AgentEvidenceFileDto] })
+  evidence!: AgentEvidenceFileDto[];
+}
+
+export const TAX_DECLARATION_EXAMPLE: AgentTaxDeclarationDto = {
+  id: AGENT_IDS.declaration,
+  taxYear: 2026,
+  allowances: ALLOWANCE_EXAMPLE,
+  allowancesTotal: '99000.00',
+  evidenceCount: 1,
+  status: 'submitted',
+  submittedAt: '2026-11-02T10:00:00+07:00',
+  decidedAt: null,
+  decisionReason: null,
+};
+
+export const MY_TAX_DECLARATION_EXAMPLE: MyTaxDeclarationDto = {
+  taxYear: 2026,
+  applicable: true,
+  personalAllowance: '60000.00',
+  declaration: TAX_DECLARATION_EXAMPLE,
+};
+
+export const ADMIN_TAX_DECLARATION_EXAMPLE: AdminAgentTaxDeclarationDto = {
+  ...TAX_DECLARATION_EXAMPLE,
+  agent: { id: AGENT_IDS.agent, code: 'K7QX2MAP', legalName: 'สมชาย ขายเก่ง', kind: 'freelance' },
+  decidedBy: null,
+};
+
+export class DecideAgentTaxDeclarationDto {
+  @ApiProperty({ enum: ['accepted', 'rejected'], enumName: 'AgentTaxDeclarationDecision', example: 'accepted' })
+  @IsIn(['accepted', 'rejected'])
+  decision!: 'accepted' | 'rejected';
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: null, description: 'Required to reject' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  reason?: string | null;
+}
+
+export class TaxDeclarationListQuery extends PageQuery {
+  @ApiPropertyOptional({ enum: ['submitted', 'accepted', 'rejected'], enumName: 'AgentTaxDeclarationStatus' })
+  @IsOptional()
+  @IsIn(['submitted', 'accepted', 'rejected'])
+  status?: 'submitted' | 'accepted' | 'rejected';
+
+  @ApiPropertyOptional({ type: 'integer', example: 2026 })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(2026)
+  @Max(2100)
+  taxYear?: number;
+}
+
+export class AttachAgentTaxInvoiceDto {
+  @IdField(AGENT_IDS.file)
+  @IsUUID()
+  fileId!: string;
+
+  @ApiProperty({ example: 'INV-2611-0012' })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(40)
+  taxInvoiceNo!: string;
 }
 
 // --- shared refs ------------------------------------------------------------------------------------------
