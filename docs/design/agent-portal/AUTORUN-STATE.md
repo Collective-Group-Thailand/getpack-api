@@ -5,8 +5,8 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 ## Status
 
 - Started: 2026-11-02 22:18 Asia/Bangkok
-- Current phase: P1
-- Step: api
+- Current phase: P2
+- Step: plan
 - Overall: RUNNING
 
 ## Environment (pre-flight, 2026-11-02)
@@ -30,11 +30,12 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 |---|---|---|---|
 | docs | main | c868f281 | b3a2e015 |
 | P0 | feat/agent-p0-rules → main | merge fbaceab4 | merge e0176433 |
+| P1 | feat/agent-p1-entry → main | merge e28f4962 | merge 6a01d784 |
 
 ## Last commit per repo
 
-- getpack-api: fbaceab4 (main, P0 merged)
-- getpack-web: e0176433 (main, P0 merged)
+- getpack-api: e28f4962 (main, P1 merged)
+- getpack-web: 6a01d784 (main, P1 merged)
 
 ## BLOCKED
 
@@ -47,7 +48,11 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 ## Open questions
 
 1. Agreement v2 draft not exported from Claude Docs → Phase 1 keeps the published agreement; seed when the file lands.
+2. Landing benefits for quote-on-behalf and the agent app depend on P3 / P2 → re-check at P7.
+3. Lighthouse perf on /agent is VM-limited here (64; /partner-with-us 67) → CI lhci decides.
+- Note: the shell's default Node became 22 after a session restart; gates run with /opt/node24/bin first on PATH.
 
 ## Decisions recorded
 
 - D-464, D-465 (P0)
+- D-466 (P1)
