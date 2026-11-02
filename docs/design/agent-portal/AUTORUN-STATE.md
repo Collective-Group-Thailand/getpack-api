@@ -5,7 +5,7 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 ## Status
 
 - Started: 2026-11-02 22:18 Asia/Bangkok
-- Current phase: P2
+- Current phase: P3
 - Step: plan
 - Overall: RUNNING
 
@@ -31,11 +31,12 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 | docs | main | c868f281 | b3a2e015 |
 | P0 | feat/agent-p0-rules → main | merge fbaceab4 | merge e0176433 |
 | P1 | feat/agent-p1-entry → main | merge e28f4962 | merge 6a01d784 |
+| P2 | feat/agent-p2-zone → main | merge 16211925 | merge ee7c593f |
 
 ## Last commit per repo
 
-- getpack-api: e28f4962 (main, P1 merged)
-- getpack-web: 6a01d784 (main, P1 merged)
+- getpack-api: 16211925 (main, P2 merged)
+- getpack-web: ee7c593f (main, P2 merged)
 
 ## BLOCKED
 
@@ -50,9 +51,11 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 1. Agreement v2 draft not exported from Claude Docs → Phase 1 keeps the published agreement; seed when the file lands.
 2. Landing benefits for quote-on-behalf and the agent app depend on P3 / P2 → re-check at P7.
 3. Lighthouse perf on /agent is VM-limited here (64; /partner-with-us 67) → CI lhci decides.
+4. Ops: LINE Login callback + Firebase authorised domains must include agent.getpack.co.
 - Note: the shell's default Node became 22 after a session restart; gates run with /opt/node24/bin first on PATH.
 
 ## Decisions recorded
 
 - D-464, D-465 (P0)
 - D-466 (P1)
+- D-467 (P2)
