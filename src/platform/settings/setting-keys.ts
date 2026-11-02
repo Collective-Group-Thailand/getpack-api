@@ -101,6 +101,15 @@ export interface SettingValues {
     maxOpenLeads: number;
     paymentTermsDays: number;
   };
+  /** D-464 internal alert (C-Level) when commission ÷ the order's gross margin exceeds this %. Never cuts pay. */
+  'agent.margin_alert_pct': string;
+  /** D-465 personal income tax table (net income bands, s.48(1)). */
+  'tax.pit_brackets': { upTo: string | null; ratePct: string }[];
+  /** D-465 s.40(2) expense deduction for the progressive withholding: rate (0.50) and cap. */
+  'tax.wht_40_2.expense_rate': string;
+  'tax.wht_40_2.expense_cap': string;
+  /** D-465 personal allowance used when the agent has no accepted ล.ย.01. */
+  'tax.wht_40_2.personal_allowance': string;
   /** B6.3 alert threshold per operational signal (proposed). */
   'ops.alert_thresholds': Partial<Record<string, number>>;
   /** D-160 minimum contributors per prospectus figure. */

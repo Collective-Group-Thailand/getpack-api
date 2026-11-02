@@ -5,6 +5,7 @@
  * Money and percentages are decimal strings (CLAUDE.md); percentages are in percent (10 = 10 %).
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
+import { PIT_BRACKETS_SEED } from '../../../src/modules/agents/agent-wht';
 import { STYLE_LIBRARY_CONTENT_SCHEMA } from '../../../src/modules/styles/style-library-content';
 import { HERO_PRESETS, heroPresetsAmendment } from './hero-presets';
 import { INTAKE_TERMS_V1 } from './intake-terms';
@@ -470,6 +471,48 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-417', 'D-420'],
     confirmation: 'proposed',
     ownerRole: 'sales_manager',
+  },
+  {
+    key: 'agent.margin_alert_pct',
+    valueType: 'percent',
+    value: '30.00',
+    description:
+      'D-464 C-Level is alerted when an order’s agent commission exceeds this % of its gross margin; the commission is never reduced (owner 2026-11-01)',
+    decisions: ['D-464'],
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'tax.pit_brackets',
+    valueType: 'json',
+    value: PIT_BRACKETS_SEED,
+    description:
+      'D-465 personal income tax bands (Revenue Code s.48(1)) for the progressive withholding on agent commission (s.50(1))',
+    decisions: ['D-465'],
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'tax.wht_40_2.expense_rate',
+    valueType: 'decimal',
+    value: '0.50',
+    description: 'D-465 expense deduction rate on s.40(2) income (50 %) in the progressive withholding',
+    decisions: ['D-465'],
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'tax.wht_40_2.expense_cap',
+    valueType: 'money',
+    value: '100000.00',
+    description: 'D-465 cap of the s.40(2) expense deduction (combined with s.40(1)) in the progressive withholding',
+    decisions: ['D-465'],
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'tax.wht_40_2.personal_allowance',
+    valueType: 'money',
+    value: '60000.00',
+    description: 'D-465 personal allowance used for an agent without an accepted ล.ย.01',
+    decisions: ['D-465'],
+    ownerRole: 'finance_manager',
   },
 
   // --- B2B (D-121, D-122)
