@@ -105,14 +105,23 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
   inApp(
     'sales_agent_tax_declaration.submitted:staff_team',
     'Finance: an agent sent a ล.ย.01 to check (D-465)',
-    { subject: 'มี ล.ย.01 รอตรวจ', body: 'ตัวแทน {{payload.agentCode}} ส่ง ล.ย.01 ปีภาษี {{payload.taxYear}}' },
-    { subject: 'A ล.ย.01 to check', body: 'Agent {{payload.agentCode}} sent a ล.ย.01 for tax year {{payload.taxYear}}' },
+    {
+      subject: 'มี ล.ย.01 รอตรวจ',
+      body: 'ตัวแทน {{payload.agentCode}} ส่ง ล.ย.01 ปีภาษี {{payload.taxYear}}',
+    },
+    {
+      subject: 'A ล.ย.01 to check',
+      body: 'Agent {{payload.agentCode}} sent a ล.ย.01 for tax year {{payload.taxYear}}',
+    },
   ),
   inApp(
     'sales_agent_tax_declaration.accepted:customer',
     'Agent: the ล.ย.01 was accepted (D-465)',
     { subject: 'ล.ย.01 ใช้ได้แล้ว', body: 'ค่าลดหย่อนปีภาษี {{payload.taxYear}} ใช้กับการหักภาษีครั้งถัดไป' },
-    { subject: 'ล.ย.01 accepted', body: 'Your allowances for tax year {{payload.taxYear}} apply from the next statement' },
+    {
+      subject: 'ล.ย.01 accepted',
+      body: 'Your allowances for tax year {{payload.taxYear}} apply from the next statement',
+    },
   ),
   inApp(
     'sales_agent_tax_declaration.rejected:customer',
@@ -124,7 +133,10 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
     'sales_agent_payout_profile.submitted:staff_team',
     'Finance: an agent sent payout details to verify (D-466)',
     { subject: 'มีข้อมูลรับเงินของตัวแทนรอตรวจ', body: 'ตัวแทน {{payload.agentCode}} ส่งข้อมูลรับเงินแล้ว' },
-    { subject: 'Agent payout details to verify', body: 'Agent {{payload.agentCode}} sent their payout details' },
+    {
+      subject: 'Agent payout details to verify',
+      body: 'Agent {{payload.agentCode}} sent their payout details',
+    },
   ),
   inApp(
     'sales_agent_payout_profile.verified:customer',
@@ -148,6 +160,31 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
     {
       subject: 'Add your payout details to be paid',
       body: 'A commission statement is waiting. Add your payout details and send them to Finance; nothing is lost.',
+    },
+  ),
+  // --- agent portal pack: P2 (D-467) ---
+  inApp(
+    'sales_agent_commission.earned:customer',
+    'Agent: a commission is confirmed (D-467)',
+    {
+      subject: 'ค่าคอมได้รับการยืนยันแล้ว',
+      body: 'ค่าคอม {{payload.amount}} บาท ยืนยันแล้ว รวมในสรุปค่าคอมรอบถัดไป',
+    },
+    {
+      subject: 'Commission confirmed',
+      body: 'Commission of {{payload.amount}} baht is confirmed for your next statement',
+    },
+  ),
+  inApp(
+    'sales_agent_lead.protection_expiring:customer',
+    'Agent: a lead’s protection ends in 7 days / 1 day (D-467)',
+    {
+      subject: 'สิทธิ์ดูแลลูกค้ามุ่งหวังใกล้หมด',
+      body: '{{payload.contactName}} อยู่ในความดูแลของคุณถึง {{payload.protectedUntilDate}} (เหลือไม่เกิน {{payload.daysLeft}} วัน)',
+    },
+    {
+      subject: 'Lead protection ending',
+      body: '{{payload.contactName}} stays yours until {{payload.protectedUntilDate}} (within {{payload.daysLeft}} days)',
     },
   ),
 ];
@@ -210,6 +247,20 @@ const EMAILS: readonly [string, string, string, string, string][] = [
     'A commission statement is waiting. Add your payout details (tax id, address, bank account) on your agent pages; nothing is lost.',
   ],
   [
+    'sales_agent_commission.earned',
+    'ค่าคอมได้รับการยืนยันแล้ว',
+    'ค่าคอม {{payload.amount}} บาท ได้รับการยืนยันแล้ว และจะรวมในสรุปค่าคอมรอบถัดไป ดูรายละเอียดได้ใน getpack Agent',
+    'Commission confirmed',
+    'Commission of {{payload.amount}} baht is confirmed and goes into your next statement; details are in getpack Agent.',
+  ],
+  [
+    'sales_agent_lead.protection_expiring',
+    'สิทธิ์ดูแลลูกค้ามุ่งหวังใกล้หมด',
+    '{{payload.contactName}} อยู่ในความดูแลของคุณถึง {{payload.protectedUntilDate}} (เหลือไม่เกิน {{payload.daysLeft}} วัน) ติดต่อให้ลูกค้าสมัครหรือสั่งซื้อก่อนวันนั้น',
+    'Lead protection ending',
+    '{{payload.contactName}} stays yours until {{payload.protectedUntilDate}} (within {{payload.daysLeft}} days). Get them to sign up or order before then.',
+  ],
+  [
     'sales_agent_statement.paid',
     'โอนค่าตอบแทนแล้ว',
     'สรุปค่าตอบแทน {{payload.statementNo}} โอนแล้ว ดาวน์โหลดหนังสือรับรองการหักภาษีได้ในหน้าตัวแทน',
@@ -229,6 +280,94 @@ export const AGENT_EMAIL_TEMPLATES: readonly NotificationTemplateSeed[] = EMAILS
       en: { subject: subjectEn, body: mjml(bodyEn) },
     },
   }),
+);
+
+/**
+ * D-467: the six agent events the agent chooses channels for, on push (getpack Agent PWA) and LINE OA. Plain text;
+ * customer words only (no profit / margin wording, D-464).
+ */
+const AGENT_ZONE_MESSAGES: readonly [
+  string,
+  { subject: string; body: string },
+  { subject: string; body: string },
+][] = [
+  [
+    'sales_agent_lead.converted',
+    {
+      subject: 'ลูกค้ามุ่งหวังสมัครแล้ว',
+      body: '{{payload.contactName}} สมัครใช้งาน getpack แล้ว และผูกกับคุณ',
+    },
+    { subject: 'Your lead signed up', body: '{{payload.contactName}} joined getpack and is linked to you' },
+  ],
+  [
+    'sales_agent_lead.protection_expiring',
+    {
+      subject: 'สิทธิ์ดูแลลูกค้ามุ่งหวังใกล้หมด',
+      body: '{{payload.contactName}} อยู่ในความดูแลของคุณถึง {{payload.protectedUntilDate}} (เหลือไม่เกิน {{payload.daysLeft}} วัน)',
+    },
+    {
+      subject: 'Lead protection ending',
+      body: '{{payload.contactName}} stays yours until {{payload.protectedUntilDate}} (within {{payload.daysLeft}} days)',
+    },
+  ],
+  [
+    'sales_agent_commission.earned',
+    {
+      subject: 'ค่าคอมได้รับการยืนยันแล้ว',
+      body: 'ค่าคอม {{payload.amount}} บาท ยืนยันแล้ว รวมในสรุปค่าคอมรอบถัดไป',
+    },
+    {
+      subject: 'Commission confirmed',
+      body: 'Commission of {{payload.amount}} baht is confirmed for your next statement',
+    },
+  ],
+  [
+    'sales_agent_statement.approved',
+    {
+      subject: 'สรุปค่าคอมพร้อมแล้ว',
+      body: 'สรุปค่าคอม {{payload.statementNo}} ยอด {{payload.totalAmount}} บาท อนุมัติแล้ว รอโอน',
+    },
+    {
+      subject: 'Commission statement ready',
+      body: 'Statement {{payload.statementNo}} of {{payload.totalAmount}} baht is approved for payment',
+    },
+  ],
+  [
+    'sales_agent_statement.paid',
+    {
+      subject: 'โอนค่าคอมแล้ว',
+      body: 'สรุปค่าคอม {{payload.statementNo}} โอนแล้ว ดาวน์โหลดหนังสือรับรองการหักภาษีได้ใน getpack Agent',
+    },
+    {
+      subject: 'Commission paid',
+      body: 'Statement {{payload.statementNo}} has been paid; the withholding certificate is in getpack Agent',
+    },
+  ],
+  [
+    'sales_agent_statement.payout_profile_needed',
+    {
+      subject: 'กรอกข้อมูลรับเงินเพื่อรับค่าคอม',
+      body: 'มีสรุปค่าคอมรอโอน กรอกข้อมูลรับเงินใน getpack Agent แล้วส่งให้ทีมบัญชีตรวจ ค่าคอมไม่สูญหาย',
+    },
+    {
+      subject: 'Add your payout details to be paid',
+      body: 'A commission statement is waiting. Add your payout details in getpack Agent; nothing is lost.',
+    },
+  ],
+];
+
+export const AGENT_ZONE_TEMPLATES: readonly NotificationTemplateSeed[] = AGENT_ZONE_MESSAGES.flatMap(
+  ([event, th, en]) =>
+    (['web_push', 'line'] as const).map((channel): NotificationTemplateSeed => ({
+      key: `${event}:customer`,
+      channel,
+      category: 'transactional',
+      description: `Agent (${channel === 'line' ? 'LINE OA' : 'getpack Agent push'}): ${event} (D-467)`,
+      versions:
+        channel === 'line'
+          ? { th: { body: `${th.subject}\n${th.body}` }, en: { body: `${en.subject}\n${en.body}` } }
+          : { th, en },
+    })),
 );
 
 export const AGENT_NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
@@ -274,6 +413,12 @@ export const AGENT_NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
       ['sales_agent_statement.approved', 'email'],
       ['sales_agent_statement.paid', 'in_app'],
       ['sales_agent_statement.paid', 'email'],
+      // D-467: the agent zone's events on every channel the agent chooses from
+      ['sales_agent_commission.earned', 'in_app'],
+      ['sales_agent_commission.earned', 'email'],
+      ['sales_agent_lead.protection_expiring', 'in_app'],
+      ['sales_agent_lead.protection_expiring', 'email'],
+      ...AGENT_ZONE_MESSAGES.flatMap(([event]) => [[event, 'web_push'] as const, [event, 'line'] as const]),
     ] as const
   ).map(([eventType, channel]): NotificationRouteSeed => ({
     eventType,

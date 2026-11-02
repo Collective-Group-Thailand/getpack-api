@@ -21,6 +21,7 @@ import {
   MaxLength,
   Min,
   MinLength,
+  ValidateNested,
 } from 'class-validator';
 
 /** The sales agent programme (D-416 – D-423). Money: decimal strings, THB. */
@@ -2233,3 +2234,112 @@ export class AgentPhoneVerifiedDto {
   @ApiProperty({ example: '+66810005678', description: 'Now the account’s verified phone' })
   phone!: string;
 }
+
+// --- agent zone: notification preferences (D-467) -----------------------------------------------------------------
+export const AGENT_NOTIFICATION_EVENT_VALUES = [
+  'lead_converted',
+  'lead_protection_expiring',
+  'commission_earned',
+  'statement_ready',
+  'payout_paid',
+  'payout_profile_needed',
+] as const;
+export const AGENT_NOTIFICATION_CHANNEL_VALUES = ['web_push', 'line', 'email'] as const;
+type AgentNotificationEventValue = (typeof AGENT_NOTIFICATION_EVENT_VALUES)[number];
+type AgentNotificationChannelValue = (typeof AGENT_NOTIFICATION_CHANNEL_VALUES)[number];
+
+const EVENT_DOC =
+  '`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · ' +
+  '`commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · ' +
+  '`payout_profile_needed` a statement waits for payout details';
+const CHANNEL_DOC = '`web_push` push to the agent zone (getpack Agent) · `line` LINE OA · `email`';
+
+export class SetAgentNotificationPreferenceDto {
+  @ApiProperty({
+    enum: AGENT_NOTIFICATION_EVENT_VALUES,
+    enumName: 'AgentNotificationEvent',
+    example: 'commission_earned',
+    description: EVENT_DOC,
+  })
+  @IsIn(AGENT_NOTIFICATION_EVENT_VALUES)
+  event!: AgentNotificationEventValue;
+
+  @ApiProperty({
+    enum: AGENT_NOTIFICATION_CHANNEL_VALUES,
+    // Same values as the partner zone's channels; one component (no duplicate schema shapes in the contract).
+    enumName: 'PartnerNotificationChannel',
+    example: 'line',
+    description: CHANNEL_DOC,
+  })
+  @IsIn(AGENT_NOTIFICATION_CHANNEL_VALUES)
+  channel!: AgentNotificationChannelValue;
+
+  @ApiProperty({ example: false })
+  @IsBoolean()
+  enabled!: boolean;
+}
+
+export class AgentNotificationPreferenceDto extends SetAgentNotificationPreferenceDto {
+  @ApiProperty({
+    example: false,
+    description:
+      'Cannot be switched off: e-mail of payment and tax records (statement_ready, payout_paid, payout_profile_needed; D-144)',
+  })
+  locked!: boolean;
+}
+
+export class SetAgentNotificationPreferencesDto {
+  @ApiProperty({
+    type: [SetAgentNotificationPreferenceDto],
+    minItems: 1,
+    maxItems: 18,
+    description: 'The choices to change; what is not listed keeps its value',
+  })
+  @IsArray()
+  @ArrayMinSize(1)
+  @ArrayMaxSize(18)
+  @ValidateNested({ each: true })
+  @Type(() => SetAgentNotificationPreferenceDto)
+  items!: SetAgentNotificationPreferenceDto[];
+}
+
+export class AgentNotificationReachDto {
+  @ApiProperty({ example: true, description: 'At least one agent-zone browser accepts push' })
+  webPush!: boolean;
+
+  @ApiProperty({
+    example: true,
+    description: 'A LINE account is linked to this person (LINE OA messages need it)',
+  })
+  line!: boolean;
+
+  @ApiProperty({ example: true, description: 'The account has an e-mail address' })
+  email!: boolean;
+}
+
+export class AgentNotificationPreferencesDto {
+  @ApiProperty({
+    type: [AgentNotificationPreferenceDto],
+    description: 'Every event × channel (18 rows); default on',
+  })
+  items!: AgentNotificationPreferenceDto[];
+
+  @ApiProperty({ type: AgentNotificationReachDto })
+  reachable!: AgentNotificationReachDto;
+}
+
+export const AGENT_NOTIFICATION_PREFERENCES_EXAMPLE: AgentNotificationPreferencesDto = {
+  items: AGENT_NOTIFICATION_EVENT_VALUES.flatMap((event) =>
+    AGENT_NOTIFICATION_CHANNEL_VALUES.map((channel) => {
+      const locked =
+        channel === 'email' && ['statement_ready', 'payout_paid', 'payout_profile_needed'].includes(event);
+      return {
+        event,
+        channel,
+        enabled: locked || !(event === 'commission_earned' && channel === 'line'),
+        locked,
+      };
+    }),
+  ),
+  reachable: { webPush: true, line: true, email: true },
+};

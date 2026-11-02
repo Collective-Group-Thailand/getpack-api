@@ -230,7 +230,17 @@ export class AgentCommissionsService {
       type: 'sales_agent_commission.earned',
       aggregateType: 'sales_agent_commission',
       aggregateId: entry.publicId,
-      payload: { commissionId: entry.publicId, amount: entry.amount.toFixed(2) },
+      // `customerId` addresses the agent's notification (D-467: commission_earned).
+      payload: {
+        commissionId: entry.publicId,
+        amount: entry.amount.toFixed(2),
+        customerId: (
+          await tx.salesAgent.findUniqueOrThrow({
+            where: { id: entry.agentId },
+            select: { user: { select: { publicId: true } } },
+          })
+        ).user.publicId,
+      },
       actor: systemActor('agents.earn'),
     });
     return true;

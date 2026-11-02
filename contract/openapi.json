@@ -16641,6 +16641,100 @@
         ],
         "type": "object"
       },
+      "AgentNotificationEvent": {
+        "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details",
+        "enum": [
+          "lead_converted",
+          "lead_protection_expiring",
+          "commission_earned",
+          "statement_ready",
+          "payout_paid",
+          "payout_profile_needed"
+        ],
+        "type": "string"
+      },
+      "AgentNotificationPreferenceDto": {
+        "properties": {
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerNotificationChannel"
+              }
+            ],
+            "description": "`web_push` push to the agent zone (getpack Agent) · `line` LINE OA · `email`",
+            "example": "line"
+          },
+          "enabled": {
+            "example": false,
+            "type": "boolean"
+          },
+          "event": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentNotificationEvent"
+              }
+            ],
+            "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details",
+            "example": "commission_earned"
+          },
+          "locked": {
+            "description": "Cannot be switched off: e-mail of payment and tax records (statement_ready, payout_paid, payout_profile_needed; D-144)",
+            "example": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "event",
+          "channel",
+          "enabled",
+          "locked"
+        ],
+        "type": "object"
+      },
+      "AgentNotificationPreferencesDto": {
+        "properties": {
+          "items": {
+            "description": "Every event × channel (18 rows); default on",
+            "items": {
+              "$ref": "#/components/schemas/AgentNotificationPreferenceDto"
+            },
+            "type": "array"
+          },
+          "reachable": {
+            "$ref": "#/components/schemas/AgentNotificationReachDto"
+          }
+        },
+        "required": [
+          "items",
+          "reachable"
+        ],
+        "type": "object"
+      },
+      "AgentNotificationReachDto": {
+        "properties": {
+          "email": {
+            "description": "The account has an e-mail address",
+            "example": true,
+            "type": "boolean"
+          },
+          "line": {
+            "description": "A LINE account is linked to this person (LINE OA messages need it)",
+            "example": true,
+            "type": "boolean"
+          },
+          "webPush": {
+            "description": "At least one agent-zone browser accepts push",
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "webPush",
+          "line",
+          "email"
+        ],
+        "type": "object"
+      },
       "AgentPayoutProfileDto": {
         "properties": {
           "address": {
@@ -80910,6 +81004,7 @@
         "type": "string"
       },
       "PartnerNotificationChannel": {
+        "description": "`web_push` push to the agent zone (getpack Agent) · `line` LINE OA · `email`",
         "enum": [
           "web_push",
           "line",
@@ -101230,6 +101325,55 @@
           "slug",
           "nameTh",
           "nameEn"
+        ],
+        "type": "object"
+      },
+      "SetAgentNotificationPreferenceDto": {
+        "properties": {
+          "channel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PartnerNotificationChannel"
+              }
+            ],
+            "description": "`web_push` push to the agent zone (getpack Agent) · `line` LINE OA · `email`",
+            "example": "line"
+          },
+          "enabled": {
+            "example": false,
+            "type": "boolean"
+          },
+          "event": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentNotificationEvent"
+              }
+            ],
+            "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details",
+            "example": "commission_earned"
+          }
+        },
+        "required": [
+          "event",
+          "channel",
+          "enabled"
+        ],
+        "type": "object"
+      },
+      "SetAgentNotificationPreferencesDto": {
+        "properties": {
+          "items": {
+            "description": "The choices to change; what is not listed keeps its value",
+            "items": {
+              "$ref": "#/components/schemas/SetAgentNotificationPreferenceDto"
+            },
+            "maxItems": 18,
+            "minItems": 1,
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
         ],
         "type": "object"
       },
@@ -507593,6 +507737,591 @@
         ]
       }
     },
+    "/v1/store/agent/notification-preferences": {
+      "get": {
+        "description": "Every agent event × channel (push to getpack Agent, LINE OA, e-mail) with whether it is on (default on) and whether it is locked: the e-mail of statement ready, payout paid and payout details needed cannot be switched off (payment and tax records, D-144). In-app notifications always stay. `reachable` says whether each channel can reach the agent at all (D-467).\n\nImplements: D-143, D-416, D-467, D-144.",
+        "operationId": "store.agentNotificationPreferences.get",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "lead_converted",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "lead_converted",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "lead_converted",
+                      "locked": false
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "lead_protection_expiring",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "lead_protection_expiring",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "lead_protection_expiring",
+                      "locked": false
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "commission_earned",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": false,
+                      "event": "commission_earned",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "commission_earned",
+                      "locked": false
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "statement_ready",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "statement_ready",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "statement_ready",
+                      "locked": true
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "payout_paid",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "payout_paid",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "payout_paid",
+                      "locked": true
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "payout_profile_needed",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "payout_profile_needed",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "payout_profile_needed",
+                      "locked": true
+                    }
+                  ],
+                  "reachable": {
+                    "email": true,
+                    "line": true,
+                    "webPush": true
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentNotificationPreferencesDto"
+                }
+              }
+            },
+            "description": "Choices",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "My notification choices",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      },
+      "put": {
+        "description": "Switches channels on or off per agent event; what is not listed keeps its value. A locked e-mail sent with `enabled: false` is refused (`validation.failed`, code `locked`, D-144); an event and channel listed twice too (`duplicate`). Audited and evented (`sales_agent.notification_preferences_changed`). Returns the full matrix (D-467).\n\nImplements: D-143, D-416, D-467, D-144.",
+        "operationId": "store.agentNotificationPreferences.set",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "items": [
+                      {
+                        "channel": "line",
+                        "enabled": false,
+                        "event": "commission_earned"
+                      },
+                      {
+                        "channel": "web_push",
+                        "enabled": true,
+                        "event": "lead_protection_expiring"
+                      }
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetAgentNotificationPreferencesDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "items": [
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "lead_converted",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "lead_converted",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "lead_converted",
+                      "locked": false
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "lead_protection_expiring",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "lead_protection_expiring",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "lead_protection_expiring",
+                      "locked": false
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "commission_earned",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": false,
+                      "event": "commission_earned",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "commission_earned",
+                      "locked": false
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "statement_ready",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "statement_ready",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "statement_ready",
+                      "locked": true
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "payout_paid",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "payout_paid",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "payout_paid",
+                      "locked": true
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "payout_profile_needed",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "payout_profile_needed",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "payout_profile_needed",
+                      "locked": true
+                    }
+                  ],
+                  "reachable": {
+                    "email": true,
+                    "line": true,
+                    "webPush": true
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentNotificationPreferencesDto"
+                }
+              }
+            },
+            "description": "Choices",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Change my notification choices",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
     "/v1/store/agent/payout-profile": {
       "get": {
         "description": "Step 2 of joining (D-466): who I am paid as and where. Needed before the first payout, not before approval; statements wait as drafts until Finance verifies it. The account number shows its last 4 digits.\n\nImplements: D-466.",
@@ -509317,6 +510046,542 @@
         "summary": "Read the agent programme (public landing)",
         "tags": [
           "store.agent"
+        ]
+      }
+    },
+    "/v1/store/agent/push/subscriptions": {
+      "post": {
+        "description": "Registers the agent zone’s browser (getpack Agent PWA) for web push; the auth secret is stored encrypted. Agent events (lead converted, protection ending, commission earned, statement ready, paid, payout details needed) are pushed only to agent-zone browsers, as the agent’s channel choices allow; storefront events never reach them. One subscription per endpoint: a browser registered by another zone or person moves here (D-467).\n\nImplements: D-143, D-416, D-467.",
+        "operationId": "store.agentPush.subscribe",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "endpoint": "https://push.example.com/subscription/agent-abc123",
+                    "keys": {
+                      "auth": "tBHItJI5svbpez7KI4CCXg",
+                      "p256dh": "BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM"
+                    }
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SubscribeWebPushDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000beef",
+                  "vapidPublicKey": "BFakeVapidPublicKey"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/WebPushSubscriptionDto"
+                }
+              }
+            },
+            "description": "Registered",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Register this browser for agent push",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/push/subscriptions/{subscriptionId}": {
+      "delete": {
+        "description": "Only the owner can remove one of their agent-zone subscriptions (D-467).\n\nImplements: D-143, D-416, D-467.",
+        "operationId": "store.agentPush.unsubscribe",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "subscriptionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Removed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Stop agent push to a browser",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/push/vapid-public-key": {
+      "get": {
+        "description": "The key the agent zone’s service worker subscribes with (VAPID keys come from the environment). Null when web push is not configured (D-467, D-143).\n\nImplements: D-143, D-416, D-467.",
+        "operationId": "store.agentPush.vapidPublicKey",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "vapidPublicKey": "BFakeVapidPublicKey"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/VapidKeyDto"
+                }
+              }
+            },
+            "description": "Key",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "VAPID public key for the getpack Agent app",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
         ]
       }
     },
