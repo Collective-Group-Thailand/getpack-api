@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { AgentAttributionService } from './agent-attribution.service';
 import { AgentBountyRetirementService } from './agent-bounty-retirement.service';
 import { AgentCommissionsService } from './agent-commissions.service';
+import { AgentDiscountsService } from './agent-discounts.service';
 import { AgentLeadsService } from './agent-leads.service';
 import { AgentNotificationPreferencesService } from './agent-notification-preferences.service';
 import { AgentPayoutProfilesService } from './agent-payout-profiles.service';
@@ -23,6 +24,7 @@ const SERVICES = [
   AgentNotificationPreferencesService,
   AgentLeadsService,
   AgentQuotesService,
+  AgentDiscountsService,
 ];
 
 /** The sales agent programme (D-416 – D-423): applications, agents, links, leads, commission, statements. */

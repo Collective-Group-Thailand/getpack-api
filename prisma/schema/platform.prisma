@@ -839,12 +839,14 @@ model FileObject {
   updatedAt          DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion         Int                @default(1) @map("row_version")
 
-  owner        User?        @relation("FileObjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_user_id")
-  ownerFactory Factory?     @relation("FileObjectOwnerFactory", fields: [ownerFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_factory_id")
-  createdBy    User?        @relation("FileObjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__created_by")
-  thumbnailOf  FileObject?  @relation("FileObjectThumbnail", fields: [thumbnailOfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__thumbnail_of_file_id")
-  thumbnails   FileObject[] @relation("FileObjectThumbnail")
-  attachments  Attachment[]
+  owner                 User?                       @relation("FileObjectOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_user_id")
+  ownerFactory          Factory?                    @relation("FileObjectOwnerFactory", fields: [ownerFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__owner_factory_id")
+  createdBy             User?                       @relation("FileObjectCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__created_by")
+  thumbnailOf           FileObject?                 @relation("FileObjectThumbnail", fields: [thumbnailOfFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_file_objects__thumbnail_of_file_id")
+  thumbnails            FileObject[]                @relation("FileObjectThumbnail")
+  /// D-468: competitor evidence of agent discount requests.
+  agentDiscountRequests SalesAgentDiscountRequest[] @relation("SalesAgentDiscountRequestCompetitorFile")
+  attachments           Attachment[]
 
   // --- Catalogue (generated back-relations)
   catalogProductImages         CatalogProductImage[] @relation("CatalogProductImageFile")

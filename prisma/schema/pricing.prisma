@@ -635,7 +635,8 @@ model Quote {
   callOffRelease    CallOffRelease?    @relation("CallOffReleaseQuote")
 
   /// D-468: the agent who sent this quote on behalf of getpack, if any.
-  salesAgentQuote SalesAgentQuote? @relation("SalesAgentQuoteQuote")
+  salesAgentQuote       SalesAgentQuote?            @relation("SalesAgentQuoteQuote")
+  agentDiscountRequests SalesAgentDiscountRequest[] @relation("SalesAgentDiscountRequestQuote")
 
   @@index([designDocumentVersionId], map: "ix_quotes__design_document_version_id")
   @@index([specHash], map: "ix_quotes__spec_hash")
@@ -698,6 +699,9 @@ model QuoteOption {
   orders           Order[]    @relation("OrderQuoteOption")
 
   callOffAgreements CallOffAgreement[] @relation("CallOffQuoteOption")
+
+  /// D-468: agent discount requests about this quantity.
+  agentDiscountRequests SalesAgentDiscountRequest[] @relation("SalesAgentDiscountRequestQuoteOption")
 
   @@unique([quoteId, quantity], map: "ux_quote_options__quote_id__quantity")
   @@index([selectedFactoryId], map: "ix_quote_options__selected_factory_id")

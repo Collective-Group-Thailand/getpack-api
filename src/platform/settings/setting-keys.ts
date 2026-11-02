@@ -28,6 +28,8 @@ export interface SettingValues {
   'notifications.marketing_window': { from: string; to: string; timezone?: string };
   'pricing.margin_floor_pct': string;
   'quotes.validity_days': number;
+  /** D-468 days a discounted price (an option offered for an agent's discount request) stays valid. */
+  'quotes.discounted_validity_days': number;
   /** B-API-6: what the engine can price per side today (pending business); caps every print model. */
   'catalog.print_limits': { maxSpotColoursPerSide: number; cmykSpotAddOnEnabled: boolean };
   'fulfilment.tolerance_default_pct': string;

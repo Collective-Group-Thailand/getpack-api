@@ -2,6 +2,7 @@ import { CurrentActor } from '@common/auth/auth.decorators';
 import { Can } from '@common/auth/can.decorator';
 import { type Actor, type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { Idempotent } from '@common/idempotency/idempotent.decorator';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
@@ -21,15 +22,22 @@ import {
 } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
+import { AgentDiscountsService, type DiscountRequestRow } from './agent-discounts.service';
 import { type AgentQuoteRow, AgentQuotesService, agentQuoteStatus } from './agent-quotes.service';
 import { AgentZoneGuard } from './agent-zone.guard';
 import { AGENT_IDS } from './agents.dto';
 import { AgentsService } from './agents.service';
+import { P3_IDS } from './agents-pipeline.dto';
 import {
   AGENT_QUOTE_EXAMPLE,
+  AgentDiscountRequestDto,
   AgentQuoteDto,
   AgentQuoteListQuery,
+  CompetitorSpecDto,
   CreateAgentQuoteDto,
+  DISCOUNT_OPTION_EXAMPLE,
+  DISCOUNT_REQUEST_EXAMPLE,
+  RequestAgentDiscountDto,
   WithdrawAgentQuoteDto,
 } from './agents-quotes.dto';
 
@@ -75,6 +83,7 @@ export class StoreAgentQuotesController {
   constructor(
     private readonly agents: AgentsService,
     private readonly quotes: AgentQuotesService,
+    private readonly discounts: AgentDiscountsService,
   ) {}
 
   @Post('quotes')
@@ -237,4 +246,171 @@ export class StoreAgentQuotesController {
       await this.quotes.withdraw(me, await this.agents.mine(me.userId), id, body.reason),
     );
   }
+
+  // --- discount requests (D-468 item 3) -------------------------------------------------------------------------
+
+  @Post('quotes/:agentQuoteId/discount-requests')
+  @Can('agent.self')
+  @ApiParam({ name: 'agentQuoteId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.agentQuotes.requestDiscount',
+    summary: 'Ask getpack for a better price on a quotation I sent',
+    description:
+      'Give-get first: what the customer gives in return (more quantity, a call-off of N months, a deposit or cash ' +
+      'within N days, a longer lead time, a spec change — at least one), then the reason and, for a competitor’s ' +
+      'price, their quotation (file) and a like-for-like spec. One open request per quotation; another round only ' +
+      'when the give-get changed (`quotes.discount_round_limit`). Every round is kept. getpack answers with 1–3 ' +
+      'options; the first always keeps my full rate (D-468, PLAN A-10).',
+    implements: [...DECISIONS, 'D-464'],
+  })
+  @ApiBody({
+    type: RequestAgentDiscountDto,
+    examples: {
+      default: {
+        value: {
+          requestedPct: '6.00',
+          reason: 'competitor_price',
+          quantityChange: 8000,
+          depositPct: '50.00',
+          competitorFileId: P3_IDS.file,
+          competitorSpec: { boardGrade: 'KA125/CA125', flute: 'B', quantity: 5000, vatIncluded: true },
+        },
+      },
+    },
+  })
+  @ApiSuccess(201, {
+    description: 'Requested',
+    type: AgentDiscountRequestDto,
+    example: { ...DISCOUNT_REQUEST_EXAMPLE, status: 'open', decidedAt: null, options: [] },
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    ...AGENT_ERRORS,
+    'agents.agent_inactive',
+    'agents.quote_closed',
+    'quotes.discount_request_open',
+    'quotes.discount_round_limit',
+  )
+  async requestDiscount(
+    @CurrentActor() actor: Actor,
+    @Param('agentQuoteId', ParseUUIDPipe) id: string,
+    @Body() body: RequestAgentDiscountDto,
+  ): Promise<AgentDiscountRequestDto> {
+    const me = customer(actor);
+    const row = await this.discounts.request(me, await this.agents.mine(me.userId), id, {
+      ...body,
+      competitorSpec: body.competitorSpec ? { ...body.competitorSpec } : null,
+    });
+    return discountRequestDto(row);
+  }
+
+  @Get('quotes/:agentQuoteId/discount-requests')
+  @Can('agent.self')
+  @ApiParam({ name: 'agentQuoteId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.agentQuotes.discountRequests',
+    summary: 'Read my discount requests on a quotation',
+    description:
+      'Every round, oldest first, with the options offered: the customer’s discount, the price and my commission ' +
+      'at that price (computed by getpack). Never cost or margin (D-468, D-464).',
+    implements: [...DECISIONS, 'D-464'],
+  })
+  @ApiSuccess(200, {
+    description: 'Rounds',
+    type: [AgentDiscountRequestDto],
+    example: [DISCOUNT_REQUEST_EXAMPLE],
+  })
+  @ApiStandardErrors('http.not_found', 'validation.failed', ...AGENT_ERRORS)
+  async discountRequests(
+    @CurrentActor() actor: Actor,
+    @Param('agentQuoteId', ParseUUIDPipe) id: string,
+  ): Promise<AgentDiscountRequestDto[]> {
+    const agent = await this.agents.mine(customer(actor).userId);
+    return (await this.discounts.requests(agent, id)).map(discountRequestDto);
+  }
+
+  @Post('quotes/:agentQuoteId/discount-options/:optionId/actions/accept')
+  @HttpCode(200)
+  @Can('agent.self')
+  @Idempotent()
+  @ApiParam({ name: 'agentQuoteId', format: 'uuid' })
+  @ApiParam({ name: 'optionId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'store.agentQuotes.acceptOption',
+    summary: 'Accept one of the options offered',
+    description:
+      'My own choice, recorded with its evidence (time, ip, browser, the option as shown and its SHA-256): a ' +
+      'co-fund option lowers my rate on orders from this quotation only because I accept it; a spiff raises it. ' +
+      'The other options lapse. Within the option’s validity (`quotes.discounted_validity_days`, D-468, D-464).',
+    implements: [...DECISIONS, 'D-464'],
+  })
+  @ApiSuccess(200, {
+    description: 'Accepted',
+    type: AgentDiscountRequestDto,
+    example: {
+      ...DISCOUNT_REQUEST_EXAMPLE,
+      status: 'accepted',
+      options: [{ ...DISCOUNT_OPTION_EXAMPLE, status: 'accepted', acceptedAt: '2026-10-19T09:00:00+07:00' }],
+    },
+  })
+  @ApiStandardErrors(
+    'http.not_found',
+    'validation.failed',
+    ...AGENT_ERRORS,
+    'agents.discount_option_unavailable',
+  )
+  async acceptOption(
+    @CurrentActor() actor: Actor,
+    @Param('agentQuoteId', ParseUUIDPipe) id: string,
+    @Param('optionId', ParseUUIDPipe) optionId: string,
+  ): Promise<AgentDiscountRequestDto> {
+    const me = customer(actor);
+    return discountRequestDto(
+      await this.discounts.acceptOption(me, await this.agents.mine(me.userId), id, optionId),
+    );
+  }
+}
+
+export function discountRequestDto(r: DiscountRequestRow): AgentDiscountRequestDto {
+  const iso = (d: Date | null) => (d ? toBangkokIso(d) : null);
+  return {
+    id: r.publicId,
+    round: r.round,
+    status: r.status,
+    quoteOptionId: r.quoteOption.publicId,
+    quantity: r.quoteOption.quantity,
+    requestedPct: r.requestedPct.toFixed(4),
+    reason: r.reason,
+    reasonNote: r.reasonNote,
+    quantityChange: r.quantityChange,
+    commitment: r.commitment,
+    commitmentMonths: r.commitmentMonths,
+    depositPct: r.depositPct?.toFixed(4) ?? null,
+    cashWithinDays: r.cashWithinDays,
+    leadTimeFlexDays: r.leadTimeFlexDays,
+    specChange: r.specChange,
+    competitorFile: r.competitorFile
+      ? { id: r.competitorFile.publicId, fileName: r.competitorFile.originalName }
+      : null,
+    competitorSpec: (r.competitorSpec as CompetitorSpecDto | null) ?? null,
+    decisionNote: r.decisionNote,
+    createdAt: toBangkokIso(r.createdAt),
+    decidedAt: iso(r.decidedAt),
+    options: r.options.map((o) => ({
+      id: o.publicId,
+      position: o.position,
+      kind: o.kind,
+      status: o.status,
+      discountPct: o.discountPct.toFixed(4),
+      netAmount: o.netAmount.toFixed(2),
+      ratePct: o.ratePct.toFixed(4),
+      standardRatePct: o.standardRatePct.toFixed(4),
+      commissionAmount: o.commissionAmount.toFixed(2),
+      conditionsTh: o.conditionsTh,
+      conditionsEn: o.conditionsEn,
+      validUntil: toBangkokIso(o.validUntil),
+      acceptedAt: iso(o.acceptedAt),
+    })),
+  };
 }

@@ -537,6 +537,14 @@
     "no_target": {
       "title": "No target price",
       "detail": "Levers need the quotation's target price per unit; save the quotation with one (D-248)."
+    },
+    "discount_request_open": {
+      "title": "Discount request pending",
+      "detail": "This quotation already has a discount request waiting for an answer"
+    },
+    "discount_round_limit": {
+      "title": "One round per quotation",
+      "detail": "A quotation gets one discount round unless what the customer gives in return changes (quantity, commitment, payment, lead time or spec)"
     }
   },
   "rfq": {
@@ -2155,6 +2163,14 @@
     "quote_closed": {
       "title": "Quotation closed",
       "detail": "This quotation was withdrawn, has expired or was ordered"
+    },
+    "discount_option_unavailable": {
+      "title": "Option not available",
+      "detail": "This option was taken, has lapsed or is no longer offered"
+    },
+    "discount_request_closed": {
+      "title": "Discount request closed",
+      "detail": "This discount request was answered or closed already"
     }
   },
   "documents": {

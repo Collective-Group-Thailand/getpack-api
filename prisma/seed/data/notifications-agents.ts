@@ -209,6 +209,30 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
     },
     { subject: 'Quotation opened', body: '{{payload.contactName}} opened quotation {{payload.quoteCode}}' },
   ),
+  inApp(
+    'sales_agent_discount.requested:staff_team',
+    'Sales: an agent asked for a better price on a quotation (D-468)',
+    {
+      subject: 'ตัวแทนขอส่วนลด',
+      body: 'ตัวแทน {{payload.agentCode}} ขอส่วนลด {{payload.requestedPct}}% ใบเสนอราคา {{payload.quoteCode}} (รอบที่ {{payload.round}})',
+    },
+    {
+      subject: 'Agent discount request',
+      body: 'Agent {{payload.agentCode}} asks {{payload.requestedPct}}% on quotation {{payload.quoteCode}} (round {{payload.round}})',
+    },
+  ),
+  inApp(
+    'sales_agent_discount.options_offered:customer',
+    'Agent: getpack answered a discount request with options (D-468)',
+    {
+      subject: 'มีคำตอบเรื่องส่วนลดแล้ว',
+      body: 'เลือกทางเลือกได้ใน getpack Agent ภายใน {{payload.validUntilDate}}',
+    },
+    {
+      subject: 'Your discount request was answered',
+      body: 'Choose an option in getpack Agent by {{payload.validUntilDate}}',
+    },
+  ),
 ];
 
 const EMAILS: readonly [string, string, string, string, string][] = [
@@ -295,6 +319,13 @@ const EMAILS: readonly [string, string, string, string, string][] = [
     '{{payload.contactName}} เปิดดูใบเสนอราคา {{payload.quoteCode}} แล้ว เป็นจังหวะดีที่จะติดต่อและตอบคำถาม',
     'Quotation opened',
     '{{payload.contactName}} opened quotation {{payload.quoteCode}}; a good moment to get in touch.',
+  ],
+  [
+    'sales_agent_discount.options_offered',
+    'มีคำตอบเรื่องส่วนลดแล้ว',
+    'getpack ตอบคำขอส่วนลดของคุณแล้ว เลือกทางเลือกได้ใน getpack Agent ภายใน {{payload.validUntilDate}} ทางเลือกแรกได้ค่าคอมเต็มเสมอ',
+    'Your discount request was answered',
+    'getpack answered your discount request. Choose an option in getpack Agent by {{payload.validUntilDate}}; the first option always keeps your full rate.',
   ],
   [
     'sales_agent_statement.paid',
@@ -438,6 +469,7 @@ export const AGENT_NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
       ['sales_agent_commission.margin_alert', 'management'],
       ['sales_agent_tax_declaration.submitted', 'finance'],
       ['sales_agent_payout_profile.submitted', 'finance'],
+      ['sales_agent_discount.requested', 'sales'],
     ] as const
   ).map(([eventType, team]): NotificationRouteSeed => ({
     eventType,
@@ -478,6 +510,8 @@ export const AGENT_NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
       ['sales_agent_lead.follow_up_due', 'email'],
       ['sales_agent_quote.opened', 'in_app'],
       ['sales_agent_quote.opened', 'email'],
+      ['sales_agent_discount.options_offered', 'in_app'],
+      ['sales_agent_discount.options_offered', 'email'],
       ...AGENT_ZONE_MESSAGES.flatMap(([event]) => [[event, 'web_push'] as const, [event, 'line'] as const]),
     ] as const
   ).map(([eventType, channel]): NotificationRouteSeed => ({

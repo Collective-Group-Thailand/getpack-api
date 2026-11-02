@@ -221,6 +221,17 @@
           "type": "https://errors.getpack/agents.commission_not_held"
         }
       },
+      "problem.agents.discount_option_unavailable": {
+        "summary": "agents.discount_option_unavailable",
+        "value": {
+          "code": "agents.discount_option_unavailable",
+          "detail": "ทางเลือกนี้ถูกเลือกไปแล้ว หมดอายุ หรือไม่มีให้เลือกแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "เลือกทางเลือกนี้ไม่ได้แล้ว",
+          "type": "https://errors.getpack/agents.discount_option_unavailable"
+        }
+      },
       "problem.agents.ended": {
         "summary": "agents.ended",
         "value": {
@@ -4333,6 +4344,28 @@
           "status": 503,
           "title": "ผู้ให้บริการภายนอกไม่พร้อมใช้งาน",
           "type": "https://errors.getpack/provider.unavailable"
+        }
+      },
+      "problem.quotes.discount_request_open": {
+        "summary": "quotes.discount_request_open",
+        "value": {
+          "code": "quotes.discount_request_open",
+          "detail": "ใบเสนอราคานี้มีคำขอส่วนลดที่รอคำตอบอยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีคำขอส่วนลดรออยู่",
+          "type": "https://errors.getpack/quotes.discount_request_open"
+        }
+      },
+      "problem.quotes.discount_round_limit": {
+        "summary": "quotes.discount_round_limit",
+        "value": {
+          "code": "quotes.discount_round_limit",
+          "detail": "ขอส่วนลดได้รอบเดียวต่อใบเสนอราคา ยกเว้นเงื่อนไขที่ลูกค้าให้กลับมาเปลี่ยนไป (จำนวน สัญญา การชำระ lead time หรือสเปก)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ขอส่วนลดซ้ำไม่ได้",
+          "type": "https://errors.getpack/quotes.discount_round_limit"
         }
       },
       "problem.quotes.no_target": {
@@ -16320,6 +16353,340 @@
           "statemented",
           "paid",
           "cancelled"
+        ],
+        "type": "string"
+      },
+      "AgentCommitment": {
+        "enum": [
+          "one_off",
+          "call_off"
+        ],
+        "type": "string"
+      },
+      "AgentDiscountFileDto": {
+        "properties": {
+          "fileName": {
+            "example": "quotation-other.pdf",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "fileName"
+        ],
+        "type": "object"
+      },
+      "AgentDiscountOptionDto": {
+        "properties": {
+          "acceptedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "commissionAmount": {
+            "description": "My commission at this price",
+            "example": "56400.00",
+            "type": "string"
+          },
+          "conditionsEn": {
+            "example": "This price is for 8,000 pieces · a 50% deposit · order by 2026-10-25",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "conditionsTh": {
+            "example": "ราคานี้สำหรับ 8,000 ชิ้น · มัดจำ 50% · สั่งภายใน 25/10/2569",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "discountPct": {
+            "description": "The customer’s discount, %",
+            "example": "6.0000",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6026",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountOptionKind"
+              }
+            ],
+            "description": "`standard` my full rate (always first) · `co_fund` a lower rate I may accept to give a bigger discount · `spiff` a higher rate",
+            "example": "standard"
+          },
+          "netAmount": {
+            "description": "Price before VAT, excl. shipping, after the discount",
+            "example": "940000.00",
+            "type": "string"
+          },
+          "position": {
+            "example": 1,
+            "type": "integer"
+          },
+          "ratePct": {
+            "description": "My commission rate with this option",
+            "example": "6.0000",
+            "type": "string"
+          },
+          "standardRatePct": {
+            "description": "My standard rate",
+            "example": "6.0000",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountOptionStatus"
+              }
+            ],
+            "example": "offered"
+          },
+          "validUntil": {
+            "example": "2026-10-25T23:59:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "position",
+          "kind",
+          "status",
+          "discountPct",
+          "netAmount",
+          "ratePct",
+          "standardRatePct",
+          "commissionAmount",
+          "conditionsTh",
+          "conditionsEn",
+          "validUntil",
+          "acceptedAt"
+        ],
+        "type": "object"
+      },
+      "AgentDiscountOptionKind": {
+        "description": "`standard` my full rate (always first) · `co_fund` a lower rate I may accept to give a bigger discount · `spiff` a higher rate",
+        "enum": [
+          "standard",
+          "co_fund",
+          "spiff"
+        ],
+        "type": "string"
+      },
+      "AgentDiscountOptionStatus": {
+        "enum": [
+          "offered",
+          "accepted",
+          "lapsed"
+        ],
+        "type": "string"
+      },
+      "AgentDiscountReason": {
+        "enum": [
+          "competitor_price",
+          "budget",
+          "volume",
+          "strategic_account",
+          "other"
+        ],
+        "type": "string"
+      },
+      "AgentDiscountRequestDto": {
+        "properties": {
+          "cashWithinDays": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "commitment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentCommitment"
+              }
+            ],
+            "example": "one_off"
+          },
+          "commitmentMonths": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "competitorFile": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountFileDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "competitorSpec": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CompetitorSpecDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "createdAt": {
+            "example": "2026-10-18T15:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": "2026-10-18T17:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decisionNote": {
+            "description": "getpack’s note with the answer",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "depositPct": {
+            "example": "50.0000",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+            "format": "uuid",
+            "type": "string"
+          },
+          "leadTimeFlexDays": {
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "options": {
+            "description": "1–3 options once offered; the standard one first",
+            "items": {
+              "$ref": "#/components/schemas/AgentDiscountOptionDto"
+            },
+            "type": "array"
+          },
+          "quantity": {
+            "example": 5000,
+            "type": "integer"
+          },
+          "quantityChange": {
+            "example": 8000,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "quoteOptionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6030",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountReason"
+              }
+            ],
+            "example": "competitor_price"
+          },
+          "reasonNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "requestedPct": {
+            "example": "6.0000",
+            "type": "string"
+          },
+          "round": {
+            "description": "Negotiation round on this quotation",
+            "example": 1,
+            "type": "integer"
+          },
+          "specChange": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountRequestStatus"
+              }
+            ],
+            "description": "`open` waiting for getpack · `offered` choose an option · `accepted` · `rejected` · `closed`",
+            "example": "offered"
+          }
+        },
+        "required": [
+          "id",
+          "round",
+          "status",
+          "quoteOptionId",
+          "quantity",
+          "requestedPct",
+          "reason",
+          "reasonNote",
+          "quantityChange",
+          "commitment",
+          "commitmentMonths",
+          "depositPct",
+          "cashWithinDays",
+          "leadTimeFlexDays",
+          "specChange",
+          "competitorFile",
+          "competitorSpec",
+          "decisionNote",
+          "createdAt",
+          "decidedAt",
+          "options"
+        ],
+        "type": "object"
+      },
+      "AgentDiscountRequestStatus": {
+        "description": "`open` waiting for getpack · `offered` choose an option · `accepted` · `rejected` · `closed`",
+        "enum": [
+          "open",
+          "offered",
+          "accepted",
+          "rejected",
+          "closed"
         ],
         "type": "string"
       },
@@ -30497,6 +30864,70 @@
           "closed"
         ],
         "type": "string"
+      },
+      "CompetitorSpecDto": {
+        "properties": {
+          "boardGrade": {
+            "example": "KA125/CA125",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "finish": {
+            "example": "เคลือบด้าน",
+            "maxLength": 100,
+            "type": "string"
+          },
+          "flute": {
+            "example": "B",
+            "maxLength": 20,
+            "type": "string"
+          },
+          "leadTimeDays": {
+            "example": 14,
+            "maximum": 365,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "notes": {
+            "example": "ไม่รวมการตรวจไฟล์และ proof",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "price": {
+            "description": "Their total price, THB",
+            "example": "42500.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "printColours": {
+            "description": "Colours per side",
+            "example": 2,
+            "maximum": 12,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "printSides": {
+            "description": "Printed sides",
+            "example": 1,
+            "maximum": 2,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "quantity": {
+            "example": 5000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "shippingIncluded": {
+            "example": false,
+            "type": "boolean"
+          },
+          "vatIncluded": {
+            "example": true,
+            "type": "boolean"
+          }
+        },
+        "type": "object"
       },
       "CompletePrivacyRequestDto": {
         "properties": {
@@ -96647,6 +97078,95 @@
         "required": [
           "quoteId",
           "quoteOptionId",
+          "reason"
+        ],
+        "type": "object"
+      },
+      "RequestAgentDiscountDto": {
+        "properties": {
+          "cashWithinDays": {
+            "description": "Cash within N days",
+            "example": 7,
+            "maximum": 60,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "commitment": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentCommitment"
+              }
+            ],
+            "default": "one_off"
+          },
+          "commitmentMonths": {
+            "description": "With `call_off`",
+            "example": 6,
+            "maximum": 24,
+            "minimum": 2,
+            "type": "integer"
+          },
+          "competitorFileId": {
+            "description": "Their quotation, uploaded with `store.files.presign` (purpose `evidence`)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029",
+            "format": "uuid",
+            "type": "string"
+          },
+          "competitorSpec": {
+            "$ref": "#/components/schemas/CompetitorSpecDto"
+          },
+          "depositPct": {
+            "description": "Deposit they would pay, %",
+            "example": "50.00",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "leadTimeFlexDays": {
+            "description": "Days later delivery is fine",
+            "example": 7,
+            "maximum": 90,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "quantityChange": {
+            "description": "The quantity they would order",
+            "example": 8000,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "quoteOptionId": {
+            "description": "The quantity (quote option); default the largest",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6030",
+            "format": "uuid",
+            "type": "string"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountReason"
+              }
+            ],
+            "example": "competitor_price"
+          },
+          "reasonNote": {
+            "example": "ลูกค้าได้ใบเสนอราคาจากเจ้าอื่นถูกกว่า",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "requestedPct": {
+            "description": "Discount asked, % of the price",
+            "example": "6.00",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "specChange": {
+            "example": "ลดจาก 4 สีเป็น 2 สี",
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestedPct",
           "reason"
         ],
         "type": "object"
@@ -516553,6 +517073,850 @@
           }
         ],
         "summary": "Withdraw a quotation I sent",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/quotes/{agentQuoteId}/discount-options/{optionId}/actions/accept": {
+      "post": {
+        "description": "My own choice, recorded with its evidence (time, ip, browser, the option as shown and its SHA-256): a co-fund option lowers my rate on orders from this quotation only because I accept it; a spiff raises it. The other options lapse. Within the option’s validity (`quotes.discounted_validity_days`, D-468, D-464).\n\nImplements: D-441, D-051, D-468, D-464.",
+        "operationId": "store.agentQuotes.acceptOption",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agentQuoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "optionId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cashWithinDays": null,
+                  "commitment": "one_off",
+                  "commitmentMonths": null,
+                  "competitorFile": {
+                    "fileName": "quotation-other.pdf",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029"
+                  },
+                  "competitorSpec": {
+                    "boardGrade": "KA125/CA125",
+                    "flute": "B",
+                    "price": "42500.00",
+                    "quantity": 5000,
+                    "vatIncluded": true
+                  },
+                  "createdAt": "2026-10-18T15:00:00+07:00",
+                  "decidedAt": "2026-10-18T17:00:00+07:00",
+                  "decisionNote": null,
+                  "depositPct": "50.0000",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                  "leadTimeFlexDays": null,
+                  "options": [
+                    {
+                      "acceptedAt": "2026-10-19T09:00:00+07:00",
+                      "commissionAmount": "56400.00",
+                      "conditionsEn": "This price is for 8,000 pieces · a 50% deposit · order by 2026-10-25",
+                      "conditionsTh": "ราคานี้สำหรับ 8,000 ชิ้น · มัดจำ 50% · สั่งภายใน 25/10/2569",
+                      "discountPct": "6.0000",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6026",
+                      "kind": "standard",
+                      "netAmount": "940000.00",
+                      "position": 1,
+                      "ratePct": "6.0000",
+                      "standardRatePct": "6.0000",
+                      "status": "accepted",
+                      "validUntil": "2026-10-25T17:00:00+07:00"
+                    }
+                  ],
+                  "quantity": 5000,
+                  "quantityChange": 8000,
+                  "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6030",
+                  "reason": "competitor_price",
+                  "reasonNote": null,
+                  "requestedPct": "6.0000",
+                  "round": 1,
+                  "specChange": null,
+                  "status": "accepted"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDiscountRequestDto"
+                }
+              }
+            },
+            "description": "Accepted",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.discount_option_unavailable": {
+                    "$ref": "#/components/examples/problem.agents.discount_option_unavailable"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.discount_option_unavailable`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Accept one of the options offered",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/quotes/{agentQuoteId}/discount-requests": {
+      "get": {
+        "description": "Every round, oldest first, with the options offered: the customer’s discount, the price and my commission at that price (computed by getpack). Never cost or margin (D-468, D-464).\n\nImplements: D-441, D-051, D-468, D-464.",
+        "operationId": "store.agentQuotes.discountRequests",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agentQuoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": [
+                  {
+                    "cashWithinDays": null,
+                    "commitment": "one_off",
+                    "commitmentMonths": null,
+                    "competitorFile": {
+                      "fileName": "quotation-other.pdf",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029"
+                    },
+                    "competitorSpec": {
+                      "boardGrade": "KA125/CA125",
+                      "flute": "B",
+                      "price": "42500.00",
+                      "quantity": 5000,
+                      "vatIncluded": true
+                    },
+                    "createdAt": "2026-10-18T15:00:00+07:00",
+                    "decidedAt": "2026-10-18T17:00:00+07:00",
+                    "decisionNote": null,
+                    "depositPct": "50.0000",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                    "leadTimeFlexDays": null,
+                    "options": [
+                      {
+                        "acceptedAt": null,
+                        "commissionAmount": "56400.00",
+                        "conditionsEn": "This price is for 8,000 pieces · a 50% deposit · order by 2026-10-25",
+                        "conditionsTh": "ราคานี้สำหรับ 8,000 ชิ้น · มัดจำ 50% · สั่งภายใน 25/10/2569",
+                        "discountPct": "6.0000",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6026",
+                        "kind": "standard",
+                        "netAmount": "940000.00",
+                        "position": 1,
+                        "ratePct": "6.0000",
+                        "standardRatePct": "6.0000",
+                        "status": "offered",
+                        "validUntil": "2026-10-25T17:00:00+07:00"
+                      }
+                    ],
+                    "quantity": 5000,
+                    "quantityChange": 8000,
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6030",
+                    "reason": "competitor_price",
+                    "reasonNote": null,
+                    "requestedPct": "6.0000",
+                    "round": 1,
+                    "specChange": null,
+                    "status": "offered"
+                  }
+                ],
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AgentDiscountRequestDto"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Rounds",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Read my discount requests on a quotation",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      },
+      "post": {
+        "description": "Give-get first: what the customer gives in return (more quantity, a call-off of N months, a deposit or cash within N days, a longer lead time, a spec change — at least one), then the reason and, for a competitor’s price, their quotation (file) and a like-for-like spec. One open request per quotation; another round only when the give-get changed (`quotes.discount_round_limit`). Every round is kept. getpack answers with 1–3 options; the first always keeps my full rate (D-468, PLAN A-10).\n\nImplements: D-441, D-051, D-468, D-464.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "store.agentQuotes.requestDiscount",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agentQuoteId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "competitorFileId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029",
+                    "competitorSpec": {
+                      "boardGrade": "KA125/CA125",
+                      "flute": "B",
+                      "quantity": 5000,
+                      "vatIncluded": true
+                    },
+                    "depositPct": "50.00",
+                    "quantityChange": 8000,
+                    "reason": "competitor_price",
+                    "requestedPct": "6.00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RequestAgentDiscountDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cashWithinDays": null,
+                  "commitment": "one_off",
+                  "commitmentMonths": null,
+                  "competitorFile": {
+                    "fileName": "quotation-other.pdf",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029"
+                  },
+                  "competitorSpec": {
+                    "boardGrade": "KA125/CA125",
+                    "flute": "B",
+                    "price": "42500.00",
+                    "quantity": 5000,
+                    "vatIncluded": true
+                  },
+                  "createdAt": "2026-10-18T15:00:00+07:00",
+                  "decidedAt": null,
+                  "decisionNote": null,
+                  "depositPct": "50.0000",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                  "leadTimeFlexDays": null,
+                  "options": [],
+                  "quantity": 5000,
+                  "quantityChange": 8000,
+                  "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6030",
+                  "reason": "competitor_price",
+                  "reasonNote": null,
+                  "requestedPct": "6.0000",
+                  "round": 1,
+                  "specChange": null,
+                  "status": "open"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDiscountRequestDto"
+                }
+              }
+            },
+            "description": "Requested",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.agent_inactive": {
+                    "$ref": "#/components/examples/problem.agents.agent_inactive"
+                  },
+                  "agents.quote_closed": {
+                    "$ref": "#/components/examples/problem.agents.quote_closed"
+                  },
+                  "quotes.discount_request_open": {
+                    "$ref": "#/components/examples/problem.quotes.discount_request_open"
+                  },
+                  "quotes.discount_round_limit": {
+                    "$ref": "#/components/examples/problem.quotes.discount_round_limit"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.agent_inactive`, `agents.quote_closed`, `quotes.discount_request_open`, `quotes.discount_round_limit`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Ask getpack for a better price on a quotation I sent",
         "tags": [
           "store.agent"
         ],

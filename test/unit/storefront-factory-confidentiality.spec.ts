@@ -48,6 +48,9 @@ const P3_AGENT_OPERATIONS = [
   'store.agentQuotes.get',
   'store.agentQuotes.resend',
   'store.agentQuotes.withdraw',
+  'store.agentQuotes.requestDiscount',
+  'store.agentQuotes.discountRequests',
+  'store.agentQuotes.acceptOption',
 ];
 
 /** Operations removed by D-435; they must not come back. */

@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**140 settings** — 85 confirmed · 23 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**141 settings** — 86 confirmed · 23 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -110,6 +110,7 @@
 | `promotions.code_attempt_limits` | `{"perCustomerPerHour":10,"perIpPerHour":30,"perDevicePerHour":10}` | proposed | superadmin | D-053 | D-053 abuse control: coupon code attempts allowed per customer, IP and device each hour |
 | `promotions.max_codes_per_cart` | `3` | confirmed | marketing | D-452, D-053 | D-452 coupon codes a cart may hold at once (D-053); the cart refuses one more with `promotions.code_invalid` (reason `too_many_codes`) and the storefront shows the limit from `CartDto.maxCodes` (owner C5 prompt: max 3) |
 | `qc.inspection_sampling` | `{"fullInspectionFromValue":"300000.00","sampledBandFromValue":"100000.00","sampledBandRatePct":"20","trialFactoryJobs":3,"trialFactoryRatePct":"100","highDefectRateThresholdPct":"3","highDefectWindowDays":90,"highDefectRatePct":"50","specialFinishOrFoodUpliftPp":"20","isoInspectionLevel":"II","aql":{"critical":"0","major":"2.5","minor":"4.0"}}` | confirmed | superadmin | D-076 | D-076 getpack risk-based inspection sampling (ISO 2859-1) |
+| `quotes.discounted_validity_days` | `7` | confirmed | sales_manager | D-468 | D-468 (PLAN A-10, §7) days a discounted price offered for an agent’s discount request stays valid, with its conditions printed; standard quotations keep `quotes.validity_days` |
 | `quotes.lever_quantity_multipliers` | `[2,5]` | proposed | superadmin | D-248 | D-248 quantity levers when the catalogue product has no preset quantity above the quoted: the largest quoted quantity × each multiplier |
 | `quotes.validity_days` | `15` | confirmed | superadmin | D-051 | D-051 quotation validity with price lock (days) |
 | `receivables.allowance_rates` | `— (not set)` | not set | finance_manager | D-033 | D-033 / accounting-design §10 allowance method (⚖): % of open receivables per days-overdue band for P30; not seeded — until set, Finance enters the allowance amount |

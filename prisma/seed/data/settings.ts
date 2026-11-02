@@ -172,6 +172,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-051'],
   },
   {
+    key: 'quotes.discounted_validity_days',
+    valueType: 'integer',
+    value: 7,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-468 (PLAN A-10, §7) days a discounted price offered for an agent’s discount request stays valid, with its ' +
+      'conditions printed; standard quotations keep `quotes.validity_days`',
+    decisions: ['D-468'],
+    ownerRole: 'sales_manager',
+  },
+  {
     key: 'catalog.print_limits',
     valueType: 'json',
     value: { maxSpotColoursPerSide: 1, cmykSpotAddOnEnabled: false },

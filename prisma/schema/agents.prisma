@@ -350,6 +350,7 @@ model SalesAgent {
   notificationPreferences SalesAgentNotificationPreference[]
   leadImports             SalesAgentLeadImport[]
   quotes                  SalesAgentQuote[]
+  discountRequests        SalesAgentDiscountRequest[]
 
   @@index([status, kind], map: "ix_sales_agents__status__kind")
   @@index([planId], map: "ix_sales_agents__plan_id")
@@ -819,7 +820,167 @@ model SalesAgentQuote {
   lead  SalesAgentLead @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__lead_id")
   quote Quote          @relation("SalesAgentQuoteQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__quote_id")
 
+  discountRequests SalesAgentDiscountRequest[]
+
   @@index([agentId, createdAt], map: "ix_sales_agent_quotes__agent_id__created_at")
   @@index([leadId], map: "ix_sales_agent_quotes__lead_id")
   @@map("sales_agent_quotes")
+}
+
+/// D-468: where an agent's discount request stands (the approval itself is Phase 4).
+enum SalesAgentDiscountRequestStatus {
+  /// Waiting for Sales (Phase 4 desk).
+  open
+  /// 1–3 options were offered; the agent may accept one.
+  offered
+  /// The agent accepted an option.
+  accepted
+  /// Refused by Sales.
+  rejected
+  /// Closed without an answer (quote withdrawn / expired, or the agent withdrew).
+  closed
+
+  @@map("sales_agent_discount_request_status")
+}
+
+/// D-468: why a discount is asked.
+enum SalesAgentDiscountReason {
+  competitor_price
+  budget
+  volume
+  strategic_account
+  other
+
+  @@map("sales_agent_discount_reason")
+}
+
+/// D-468 give-get: what the customer commits to.
+enum SalesAgentCommitment {
+  one_off
+  call_off
+
+  @@map("sales_agent_commitment")
+}
+
+/// D-468: an option offered for a discount request. `standard` always carries the full standard rate; `co_fund` a
+/// lower rate (effective only once the agent accepts it); `spiff` a higher one.
+enum SalesAgentDiscountOptionKind {
+  standard
+  co_fund
+  spiff
+
+  @@map("sales_agent_discount_option_kind")
+}
+
+enum SalesAgentDiscountOptionStatus {
+  offered
+  accepted
+  /// Another option was accepted, the request closed or the option's validity ended.
+  lapsed
+
+  @@map("sales_agent_discount_option_status")
+}
+
+/// D-468 (PLAN A-10, §7): one round of an agent's discount request on one quote version (a re-quote is a new
+/// version). One open round per quote (partial unique index); a further round needs a changed give-get. Every round
+/// is kept (negotiation history, Phase 4). PDPA: no personal data (competitor evidence is a document about prices).
+model SalesAgentDiscountRequest {
+  id               BigInt                          @id(map: "pk_sales_agent_discount_requests") @default(autoincrement())
+  publicId         String                          @unique(map: "ux_sales_agent_discount_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId          BigInt                          @map("agent_id")
+  agentQuoteId     BigInt                          @map("agent_quote_id")
+  quoteId          BigInt                          @map("quote_id")
+  /// The quantity the request is about.
+  quoteOptionId    BigInt                          @map("quote_option_id")
+  round            Int                             @db.SmallInt
+  status           SalesAgentDiscountRequestStatus @default(open)
+  requestedPct     Decimal                         @map("requested_pct") @db.Decimal(7, 4)
+  reason           SalesAgentDiscountReason
+  reasonNote       String?                         @map("reason_note")
+  /// Give-get: the quantity the customer would order instead (null = unchanged).
+  quantityChange   Int?                            @map("quantity_change")
+  commitment       SalesAgentCommitment            @default(one_off)
+  commitmentMonths Int?                            @map("commitment_months") @db.SmallInt
+  depositPct       Decimal?                        @map("deposit_pct") @db.Decimal(7, 4)
+  cashWithinDays   Int?                            @map("cash_within_days") @db.SmallInt
+  leadTimeFlexDays Int?                            @map("lead_time_flex_days") @db.SmallInt
+  specChange       String?                         @map("spec_change")
+  /// SHA-256 of the give-get fields (a further round must change it).
+  giveGetSha256    Bytes                           @map("give_get_sha256")
+  competitorFileId BigInt?                         @map("competitor_file_id")
+  /// Like-for-like spec of the competitor's offer (board grade, flute, print sides / colours, finish, quantity, lead
+  /// time, shipping included, VAT included, price).
+  competitorSpec   Json?                           @map("competitor_spec")
+  createdById      BigInt                          @map("created_by")
+  createdAt        DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  decidedAt        DateTime?                       @map("decided_at") @db.Timestamptz(6)
+  decidedById      BigInt?                         @map("decided_by")
+  decisionNote     String?                         @map("decision_note")
+  updatedAt        DateTime                        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int                             @default(1) @map("row_version")
+
+  agent          SalesAgent                 @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__agent_id")
+  agentQuote     SalesAgentQuote            @relation(fields: [agentQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__agent_quote_id")
+  quote          Quote                      @relation("SalesAgentDiscountRequestQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__quote_id")
+  quoteOption    QuoteOption                @relation("SalesAgentDiscountRequestQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__quote_option_id")
+  competitorFile FileObject?                @relation("SalesAgentDiscountRequestCompetitorFile", fields: [competitorFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__competitor_file_id")
+  createdBy      User                       @relation("SalesAgentDiscountRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__created_by")
+  decidedBy      User?                      @relation("SalesAgentDiscountRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__decided_by")
+  options        SalesAgentDiscountOption[]
+
+  @@unique([quoteId, round], map: "ux_sales_agent_discount_requests__quote_id__round")
+  @@unique([quoteId], map: "ux_sales_agent_discount_requests__quote_id__open", where: raw("(status = 'open'::sales_agent_discount_request_status)"))
+  @@index([agentId, createdAt], map: "ix_sales_agent_discount_requests__agent_id__created_at")
+  @@index([agentQuoteId], map: "ix_sales_agent_discount_requests__agent_quote_id")
+  @@index([quoteOptionId], map: "ix_sales_agent_discount_requests__quote_option_id")
+  @@index([competitorFileId], map: "ix_sales_agent_discount_requests__competitor_file_id")
+  @@index([createdById], map: "ix_sales_agent_discount_requests__created_by")
+  @@index([decidedById], map: "ix_sales_agent_discount_requests__decided_by")
+  @@index([status, createdAt], map: "ix_sales_agent_discount_requests__status__created_at")
+  @@map("sales_agent_discount_requests")
+}
+
+/// D-468: an option offered for a discount request (1–3, Phase 4 creates them through
+/// `AgentDiscountsService.offerOptions`). Amounts are computed by the API (decimal.js): the discounted net and the
+/// agent's commission at that price. Accepting one is the agent's own act with its evidence (ip, user agent, time,
+/// snapshot + SHA-256); a lower rate (co-fund) is never applied without it.
+model SalesAgentDiscountOption {
+  id                BigInt                         @id(map: "pk_sales_agent_discount_options") @default(autoincrement())
+  publicId          String                         @unique(map: "ux_sales_agent_discount_options__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  requestId         BigInt                         @map("request_id")
+  position          Int                            @db.SmallInt
+  kind              SalesAgentDiscountOptionKind
+  status            SalesAgentDiscountOptionStatus @default(offered)
+  discountPct       Decimal                        @map("discount_pct") @db.Decimal(7, 4)
+  /// The quantity's price before VAT, excluding shipping, before and after the discount.
+  baseAmount        Decimal                        @map("base_amount") @db.Decimal(14, 2)
+  netAmount         Decimal                        @map("net_amount") @db.Decimal(14, 2)
+  /// The agent's rate on orders from this quote with this option, and the commission at `netAmount`.
+  ratePct           Decimal                        @map("rate_pct") @db.Decimal(7, 4)
+  standardRatePct   Decimal                        @map("standard_rate_pct") @db.Decimal(7, 4)
+  commissionAmount  Decimal                        @map("commission_amount") @db.Decimal(14, 2)
+  /// Conditions printed with the price (give-get), th / en.
+  conditionsTh      String?                        @map("conditions_th")
+  conditionsEn      String?                        @map("conditions_en")
+  validUntil        DateTime                       @map("valid_until") @db.Timestamptz(6)
+  offeredById       BigInt?                        @map("offered_by")
+  offeredAt         DateTime                       @default(now()) @map("offered_at") @db.Timestamptz(6)
+  acceptedAt        DateTime?                      @map("accepted_at") @db.Timestamptz(6)
+  acceptedById      BigInt?                        @map("accepted_by")
+  /// Acceptance evidence (PDPA: the agent's own ip and user agent, kept as long as the commission records).
+  acceptedIp        String?                        @map("accepted_ip") @db.Inet
+  acceptedUserAgent String?                        @map("accepted_user_agent")
+  acceptedSnapshot  Json?                          @map("accepted_snapshot")
+  acceptedSha256    Bytes?                         @map("accepted_sha256")
+  rowVersion        Int                            @default(1) @map("row_version")
+
+  request    SalesAgentDiscountRequest @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__request_id")
+  offeredBy  User?                     @relation("SalesAgentDiscountOptionOfferedBy", fields: [offeredById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__offered_by")
+  acceptedBy User?                     @relation("SalesAgentDiscountOptionAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__accepted_by")
+
+  @@unique([requestId, position], map: "ux_sales_agent_discount_options__request_id__position")
+  @@unique([requestId], map: "ux_sales_agent_discount_options__request_id__accepted", where: raw("(status = 'accepted'::sales_agent_discount_option_status)"))
+  @@index([offeredById], map: "ix_sales_agent_discount_options__offered_by")
+  @@index([acceptedById], map: "ix_sales_agent_discount_options__accepted_by")
+  @@map("sales_agent_discount_options")
 }
