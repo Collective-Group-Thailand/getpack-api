@@ -128,3 +128,27 @@ export function agentRef(a: { publicId: string; code: string; legalName: string;
 export function userRef(u: { publicId: string; displayName: string } | null | undefined) {
   return u ? { id: u.publicId, displayName: u.displayName } : null;
 }
+
+/** D-468: one entry of a lead's timeline (append-only), written in the caller's transaction. */
+export async function appendLeadActivity(
+  tx: Tx,
+  input: {
+    leadId: bigint;
+    kind: 'call' | 'line' | 'visit' | 'email' | 'note' | 'quote_sent' | 'stage_change' | 'system';
+    body?: string | null;
+    data?: Record<string, unknown>;
+    occurredAt?: Date;
+    createdById?: bigint | null;
+  },
+) {
+  return tx.salesAgentLeadActivity.create({
+    data: {
+      leadId: input.leadId,
+      kind: input.kind,
+      body: input.body ?? null,
+      data: (input.data ?? {}) as Prisma.InputJsonValue,
+      occurredAt: input.occurredAt ?? new Date(),
+      createdById: input.createdById ?? null,
+    },
+  });
+}

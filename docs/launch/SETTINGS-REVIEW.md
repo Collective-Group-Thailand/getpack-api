@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**139 settings** — 84 confirmed · 23 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**140 settings** — 85 confirmed · 23 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -14,6 +14,7 @@
 | `advisory.rule_set` | `— (not set)` | not set | superadmin | D-188, D-237, D-239 | D-237 Structure Advisor rule set: McKee constant, ± uncertainty band %, eligible corrugate formulas, thin-margin threshold % and one factor (0 < f ≤ 1) per band of humidity, storage time, pallet pattern, pallet overhang, transport mode and fragility; not seeded — no advice until a Superadmin sets it after the D-189 sign-off |
 | `agent.margin_alert_pct` | `30.00` | confirmed | finance_manager | D-464 | D-464 C-Level is alerted when an order’s agent commission exceeds this % of its gross margin; the commission is never reduced (owner 2026-11-01) |
 | `agents.ended_record_access_years` | `5` | confirmed | finance_manager | D-467 | D-467 years after an agent ended during which they still read their commission statements and download their 50 ทวิ (withholding certificates) in the agent zone; everything else is refused. 5 = the tax record retention (Revenue Code s.87/3), 5–10 |
+| `agents.follow_up_quiet_hours` | `{"from":"21:00","to":"08:00","timezone":"Asia/Bangkok"}` | confirmed | sales_manager | D-468 | D-468 the quiet hours of the agent follow-up reminders (push / LINE / e-mail): a reminder due inside them waits until they end (PLAN Phase 3, 21:00–08:00 Asia/Bangkok) |
 | `agents.rules` | `{"linkCookieDays":90,"newCustomersOnly":true,"leadProtectionDays":60,"maxOpenLeads":50,"paymentTermsDays":15}` | proposed | sales_manager | D-417, D-420 | D-417 / D-420 sales agent programme: days the web keeps an agent link, attribution of new customers only, days a registered lead is protected, open leads per agent, payment terms of commission bills (proposed) |
 | `analytics.journey_alert_min_sessions` | `30` | confirmed | superadmin | D-303 | D-303 consented sessions at the first step a journey needs in both weeks before a week-over-week drop alerts (small samples swing) |
 | `analytics.journey_drop_alert_pct` | `15` | confirmed | superadmin | D-303, D-217 | D-303 a scorecard journey whose first-to-last conversion fell by more than this % against the week before raises ops signal journey_conversion_drops (docs/ux/competitive-scorecard.md §4) |

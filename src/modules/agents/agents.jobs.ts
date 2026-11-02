@@ -3,6 +3,7 @@ import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
 import { AgentAttributionService } from './agent-attribution.service';
 import { AgentCommissionsService } from './agent-commissions.service';
+import { AgentLeadsService } from './agent-leads.service';
 import { AgentStatementsService } from './agent-statements.service';
 
 /** The sales agent programme's housekeeping in the worker (D-417 – D-420). */
@@ -12,6 +13,7 @@ export class AgentsJobs {
     private readonly attribution: AgentAttributionService,
     private readonly commissions: AgentCommissionsService,
     private readonly statements: AgentStatementsService,
+    private readonly leads: AgentLeadsService,
   ) {}
 
   /** Pending commission past the claim window, with the group paid, becomes earned (D-418). */
@@ -45,6 +47,18 @@ export class AgentsJobs {
   @ScheduledJob({ name: 'agents.protection_reminders', every: 3_600_000 })
   protectionReminders(): Promise<number> {
     return this.attribution.remindProtectionEnding();
+  }
+
+  /** D-468: follow-up reminders at the time the agent set, never in the quiet hours (21:00–08:00 Bangkok). */
+  @ScheduledJob({ name: 'agents.follow_ups', every: 600_000 })
+  followUps(): Promise<number> {
+    return this.leads.remindFollowUps();
+  }
+
+  /** D-468: CSV import dry runs older than 24 h lose their contact data (PDPA). */
+  @ScheduledJob({ name: 'agents.lead_imports', every: 3_600_000 })
+  leadImports(): Promise<number> {
+    return this.leads.expireImports();
   }
 
   /** On the 1st, 03:00 Bangkok: last month's statements (D-420). */

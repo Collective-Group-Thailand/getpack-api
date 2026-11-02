@@ -14,6 +14,7 @@ import { SettingsService } from '@platform/settings/settings.service';
 import {
   addMonths,
   AGENT_REF_SELECT,
+  appendLeadActivity,
   DAY_MS,
   invalid,
   normalisePhone,
@@ -52,6 +53,31 @@ export const FACTORY_LINK_INCLUDE = {
   },
 } as const satisfies Prisma.SalesAgentFactoryLinkInclude;
 export type FactoryLinkRow = Prisma.SalesAgentFactoryLinkGetPayload<{ include: typeof FACTORY_LINK_INCLUDE }>;
+
+/** D-468: what an agent registers (the pipeline fields are optional). */
+export interface RegisterLeadInput {
+  kind: string;
+  contactName: string;
+  organisationName?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  taxId?: string | null;
+  note?: string | null;
+  consentConfirmed: boolean;
+  source?: 'manual' | 'card_scan' | 'csv_import';
+  expectedValue?: string | null;
+  nextFollowUpAt?: string | null;
+  industry?: string | null;
+  lineId?: string | null;
+  tags?: string[] | null;
+}
+
+/** At most 10 distinct tags of ≤ 32 characters (D-468). */
+export function cleanTags(tags: readonly string[] | null | undefined): string[] {
+  return [...new Set((tags ?? []).map((t) => t.trim()).filter(Boolean))]
+    .slice(0, 10)
+    .map((t) => t.slice(0, 32));
+}
 
 type SkipReason = 'not_new_customer' | 'already_linked' | 'own_code' | 'agent_inactive';
 
@@ -99,19 +125,70 @@ export class AgentAttributionService {
 
   // --- leads (D-417 b, D-419) ----------------------------------------------------------------------------
 
+  /**
+   * D-468 / D-440: may this agent register a lead with these contact keys? One neutral answer: `own_lead` (their own
+   * protected lead, with its id) or `unavailable` (an existing customer or company, another agent's protected lead
+   * or registered deal) — never which. `exceptLeadId` leaves a lead out (editing its own keys).
+   */
+  async availability(
+    db: Tx,
+    agentId: bigint,
+    keys: { phone?: string | null; email?: string | null; taxId?: string | null },
+    exceptLeadId?: bigint,
+  ): Promise<{ available: boolean; reason: 'own_lead' | 'unavailable' | null; leadId: string | null }> {
+    const phone = keys.phone ?? null;
+    const email = keys.email?.toLowerCase() ?? null;
+    const taxId = keys.taxId ?? null;
+    const or = [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : []), ...(taxId ? [{ taxId }] : [])];
+    if (or.length === 0) return { available: true, reason: null, leadId: null };
+    const now = new Date();
+    // Existing customers and companies are not leads (D-417).
+    const existing =
+      (phone || email
+        ? await db.user.findFirst({
+            where: {
+              kind: 'customer',
+              deletedAt: null,
+              OR: [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : [])],
+            },
+            select: { id: true },
+          })
+        : null) ?? (taxId ? await db.company.findFirst({ where: { taxId }, select: { id: true } }) : null);
+    if (existing) return { available: false, reason: 'unavailable', leadId: null };
+    const taken = await db.salesAgentLead.findFirst({
+      where: {
+        status: 'registered',
+        protectedUntil: { gt: now },
+        OR: or,
+        ...(exceptLeadId !== undefined && { id: { not: exceptLeadId } }),
+      },
+      orderBy: { createdAt: 'asc' },
+      select: { agentId: true, publicId: true },
+    });
+    if (taken)
+      return taken.agentId === agentId
+        ? { available: false, reason: 'own_lead', leadId: taken.publicId }
+        : { available: false, reason: 'unavailable', leadId: null };
+    if (await this.registeredElsewhere(db, agentId, or, now))
+      return { available: false, reason: 'unavailable', leadId: null };
+    return { available: true, reason: null, leadId: null };
+  }
+
+  /** D-468 deal registration (item 4): another agent's active registration on a lead with these keys. */
+  protected registeredElsewhere(
+    _db: Tx,
+    _agentId: bigint,
+    _or: Prisma.SalesAgentLeadWhereInput[],
+    _now: Date,
+  ): Promise<boolean> {
+    return Promise.resolve(false);
+  }
+
   async registerLead(
     actor: UserActor,
     agent: SalesAgent,
-    input: {
-      kind: string;
-      contactName: string;
-      organisationName?: string | null;
-      phone?: string | null;
-      email?: string | null;
-      taxId?: string | null;
-      note?: string | null;
-      consentConfirmed: boolean;
-    },
+    input: RegisterLeadInput,
+    options: { tx?: Tx } = {},
   ): Promise<LeadRow> {
     if (agent.status !== 'active') throw new DomainException('agents.agent_inactive');
     // P-03 / D-464: customers only; the neutral store wording points factories to /partner-with-us.
@@ -122,38 +199,16 @@ export class AgentAttributionService {
     const email = input.email?.trim().toLowerCase() || null;
     const taxId = input.taxId?.trim() || null;
     if (!phone && !email && !taxId) invalid('phone', 'a phone number, e-mail or tax id', 'contact');
-    const id = await this.prisma.withTx(async (tx) => {
+    const run = async (tx: Tx) => {
       const now = new Date();
       const rules = (await this.settings.at('agents.rules', { at: now, tx })).value;
       const open = await tx.salesAgentLead.count({ where: { agentId: agent.id, status: 'registered' } });
       if (open >= rules.maxOpenLeads)
         throw new DomainException('agents.too_many_leads', { params: { max: rules.maxOpenLeads } });
-      // Existing customers and companies are not leads (D-417).
-      const existing =
-        (phone || email
-          ? await tx.user.findFirst({
-              where: {
-                kind: 'customer',
-                deletedAt: null,
-                OR: [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : [])],
-              },
-            })
-          : null) ?? (taxId ? await tx.company.findFirst({ where: { taxId } }) : null);
-      if (existing) throw new DomainException('agents.lead_existing_customer');
-      const taken = await tx.salesAgentLead.findFirst({
-        where: {
-          status: 'registered',
-          protectedUntil: { gt: now },
-          OR: [...(phone ? [{ phone }] : []), ...(email ? [{ email }] : []), ...(taxId ? [{ taxId }] : [])],
-        },
-      });
-      if (taken)
-        throw new DomainException(
-          taken.agentId === agent.id ? 'agents.lead_duplicate' : 'agents.lead_taken',
-          {
-            params: { until: taken.protectedUntil.toISOString() },
-          },
-        );
+      // D-468 / D-440: one neutral refusal — never says whether a customer or another agent holds the contact.
+      const check = await this.availability(tx, agent.id, { phone, email, taxId });
+      if (check.reason === 'own_lead') throw new DomainException('agents.lead_duplicate');
+      if (!check.available) throw new DomainException('agents.lead_unavailable');
       const lead = await tx.salesAgentLead.create({
         data: {
           agentId: agent.id,
@@ -165,18 +220,25 @@ export class AgentAttributionService {
           taxId,
           note: input.note?.trim() || null,
           protectedUntil: new Date(now.getTime() + rules.leadProtectionDays * DAY_MS),
+          source: input.source ?? 'manual',
+          expectedValue: input.expectedValue ?? null,
+          nextFollowUpAt: input.nextFollowUpAt ? new Date(input.nextFollowUpAt) : null,
+          industry: input.industry?.trim() || null,
+          lineId: input.lineId?.trim() || null,
+          tags: cleanTags(input.tags),
         },
       });
       await recordAgentEvent(this, tx, {
         type: 'sales_agent_lead.registered',
         aggregateType: 'sales_agent_lead',
         aggregateId: lead.publicId,
-        payload: { leadId: lead.publicId, agentId: agent.publicId, kind: lead.kind },
+        payload: { leadId: lead.publicId, agentId: agent.publicId, kind: lead.kind, source: lead.source },
         actor,
       });
       return lead.publicId;
-    });
-    return this.lead(id);
+    };
+    const id = options.tx ? await run(options.tx) : await this.prisma.withTx(run);
+    return this.lead(id, options.tx);
   }
 
   async withdrawLead(actor: UserActor, agent: SalesAgent, publicId: string): Promise<LeadRow> {
@@ -682,6 +744,8 @@ export class AgentAttributionService {
       where: { id: lead.id },
       data: { status: 'converted', convertedAt: new Date(), ...target, rowVersion: { increment: 1 } },
     });
+    // D-468: the timeline shows the sign-up.
+    await appendLeadActivity(tx, { leadId: lead.id, kind: 'system', data: { event: 'converted' } });
     const agentUser = await tx.salesAgent.findUniqueOrThrow({
       where: { id: lead.agentId },
       select: { user: { select: { publicId: true } } },

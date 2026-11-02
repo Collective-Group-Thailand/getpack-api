@@ -494,6 +494,16 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'finance_manager',
   },
   {
+    key: 'agents.follow_up_quiet_hours',
+    valueType: 'time_of_day_window',
+    value: { from: '21:00', to: '08:00', timezone: 'Asia/Bangkok' },
+    description:
+      'D-468 the quiet hours of the agent follow-up reminders (push / LINE / e-mail): a reminder due inside them ' +
+      'waits until they end (PLAN Phase 3, 21:00–08:00 Asia/Bangkok)',
+    decisions: ['D-468'],
+    ownerRole: 'sales_manager',
+  },
+  {
     key: 'tax.pit_brackets',
     valueType: 'json',
     value: PIT_BRACKETS_SEED,

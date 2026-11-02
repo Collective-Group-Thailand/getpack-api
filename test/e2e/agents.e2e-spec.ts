@@ -433,7 +433,8 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
         consentConfirmed: true,
       })
       .expect(409);
-    expect(taken.body.code).toBe('agents.lead_taken');
+    // D-468 / D-440: one neutral refusal, never who holds the contact.
+    expect(taken.body.code).toBe('agents.lead_unavailable');
     const existing = await as(ctx, agent.token)
       .post('/v1/store/agent/leads', {
         kind: 'customer',
@@ -442,7 +443,7 @@ describe('sales agents (e2e, D-416 – D-423)', () => {
         consentConfirmed: true,
       })
       .expect(409);
-    expect(existing.body.code).toBe('agents.lead_existing_customer');
+    expect(existing.body.code).toBe('agents.lead_unavailable');
     // P-03 / D-464: agents register customers only; factories apply at /partner-with-us.
     const known = await ctx.prisma.factory.findFirstOrThrow();
     const factoryLead = await as(ctx, agent.token)

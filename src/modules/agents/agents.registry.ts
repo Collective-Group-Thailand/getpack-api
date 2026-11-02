@@ -7,9 +7,14 @@ import {
   AdminAgentsController,
   AdminAgentTaxDeclarationsController,
 } from './agents-admin.controller';
+import { StoreAgentLeadsController } from './agents-leads.controller';
 import { StoreAgentZoneController } from './agents-zone.controller';
 
-export const AGENTS_STORE_CONTROLLERS: Type<unknown>[] = [StoreAgentController, StoreAgentZoneController];
+export const AGENTS_STORE_CONTROLLERS: Type<unknown>[] = [
+  StoreAgentController,
+  StoreAgentZoneController,
+  StoreAgentLeadsController,
+];
 export const AGENTS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminAgentsController,
   AdminAgentPlansController,

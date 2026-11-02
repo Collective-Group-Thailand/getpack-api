@@ -187,6 +187,19 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
       body: '{{payload.contactName}} stays yours until {{payload.protectedUntilDate}} (within {{payload.daysLeft}} days)',
     },
   ),
+  // --- agent portal pack: P3 (D-468) ---
+  inApp(
+    'sales_agent_lead.follow_up_due:customer',
+    'Agent: the follow-up time set on a lead has come (D-468)',
+    {
+      subject: 'ถึงเวลาติดตามลูกค้ามุ่งหวัง',
+      body: 'ติดตาม {{payload.contactName}} ตามที่นัดไว้ {{payload.followUpTime}} น.',
+    },
+    {
+      subject: 'Time to follow up',
+      body: 'Follow up {{payload.contactName}} as planned ({{payload.followUpTime}})',
+    },
+  ),
 ];
 
 const EMAILS: readonly [string, string, string, string, string][] = [
@@ -259,6 +272,13 @@ const EMAILS: readonly [string, string, string, string, string][] = [
     '{{payload.contactName}} อยู่ในความดูแลของคุณถึง {{payload.protectedUntilDate}} (เหลือไม่เกิน {{payload.daysLeft}} วัน) ติดต่อให้ลูกค้าสมัครหรือสั่งซื้อก่อนวันนั้น',
     'Lead protection ending',
     '{{payload.contactName}} stays yours until {{payload.protectedUntilDate}} (within {{payload.daysLeft}} days). Get them to sign up or order before then.',
+  ],
+  [
+    'sales_agent_lead.follow_up_due',
+    'ถึงเวลาติดตามลูกค้ามุ่งหวัง',
+    'ติดตาม {{payload.contactName}} ตามที่นัดไว้ {{payload.followUpTime}} น. บันทึกผลการติดต่อและตั้งวันติดตามครั้งถัดไปได้ใน getpack Agent',
+    'Time to follow up',
+    'Follow up {{payload.contactName}} as planned ({{payload.followUpTime}}). Log the contact and set the next follow-up in getpack Agent.',
   ],
   [
     'sales_agent_statement.paid',
@@ -344,6 +364,17 @@ const AGENT_ZONE_MESSAGES: readonly [
     },
   ],
   [
+    'sales_agent_lead.follow_up_due',
+    {
+      subject: 'ถึงเวลาติดตามลูกค้ามุ่งหวัง',
+      body: 'ติดตาม {{payload.contactName}} ตามที่นัดไว้ {{payload.followUpTime}} น.',
+    },
+    {
+      subject: 'Time to follow up',
+      body: 'Follow up {{payload.contactName}} as planned ({{payload.followUpTime}})',
+    },
+  ],
+  [
     'sales_agent_statement.payout_profile_needed',
     {
       subject: 'กรอกข้อมูลรับเงินเพื่อรับค่าคอม',
@@ -418,6 +449,9 @@ export const AGENT_NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
       ['sales_agent_commission.earned', 'email'],
       ['sales_agent_lead.protection_expiring', 'in_app'],
       ['sales_agent_lead.protection_expiring', 'email'],
+      // D-468: follow-up reminders
+      ['sales_agent_lead.follow_up_due', 'in_app'],
+      ['sales_agent_lead.follow_up_due', 'email'],
       ...AGENT_ZONE_MESSAGES.flatMap(([event]) => [[event, 'web_push'] as const, [event, 'line'] as const]),
     ] as const
   ).map(([eventType, channel]): NotificationRouteSeed => ({

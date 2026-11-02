@@ -2143,6 +2143,14 @@
     "ended": {
       "title": "Agent account ended",
       "detail": "This agent account has ended. Your commission statements and withholding certificates (50 ทวิ) stay available for the record-keeping period."
+    },
+    "lead_stage_final": {
+      "title": "Lead closed",
+      "detail": "A won or lost lead cannot change stage"
+    },
+    "lead_import_closed": {
+      "title": "Import closed",
+      "detail": "This file was imported already or its check expired (24 hours); check the file again"
     }
   },
   "documents": {

@@ -11,6 +11,8 @@ export const AGENT_NOTIFICATION_EVENTS = {
   statement_ready: 'sales_agent_statement.approved',
   payout_paid: 'sales_agent_statement.paid',
   payout_profile_needed: 'sales_agent_statement.payout_profile_needed',
+  /** D-468: a follow-up time the agent set has come (outside the quiet hours). */
+  follow_up_due: 'sales_agent_lead.follow_up_due',
 } as const satisfies Record<SalesAgentNotificationEvent, string>;
 
 export const AGENT_NOTIFICATION_EVENT_KEYS = Object.keys(

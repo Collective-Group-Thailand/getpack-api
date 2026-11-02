@@ -24,6 +24,8 @@ enum SalesAgentNotificationEvent {
   statement_ready
   payout_paid
   payout_profile_needed
+  /// D-468: a lead's follow-up time has come (outside the quiet hours).
+  follow_up_due
 
   @@map("sales_agent_notification_event")
 }
@@ -72,6 +74,64 @@ enum SalesAgentLeadStatus {
   withdrawn
 
   @@map("sales_agent_lead_status")
+}
+
+/// D-468 (PLAN A-06): where a lead is in the agent's pipeline; `won` is set by the system only.
+enum SalesAgentLeadStage {
+  new
+  contacted
+  quoted
+  negotiating
+  won
+  lost
+
+  @@map("sales_agent_lead_stage")
+}
+
+/// D-468: why a lead was lost (lost-to-price analytics in Phase 4).
+enum SalesAgentLeadLostReason {
+  price
+  lead_time
+  no_need
+  competitor
+  no_response
+  other
+
+  @@map("sales_agent_lead_lost_reason")
+}
+
+/// D-468: how a lead entered the pipeline.
+enum SalesAgentLeadSource {
+  manual
+  card_scan
+  csv_import
+  link
+  staff
+
+  @@map("sales_agent_lead_source")
+}
+
+/// D-468: what an entry of a lead's timeline records.
+enum SalesAgentLeadActivityKind {
+  call
+  line
+  visit
+  email
+  note
+  quote_sent
+  stage_change
+  system
+
+  @@map("sales_agent_lead_activity_kind")
+}
+
+/// D-468: a CSV import of leads — dry run, then commit.
+enum SalesAgentLeadImportStatus {
+  previewed
+  committed
+  expired
+
+  @@map("sales_agent_lead_import_status")
 }
 
 enum SalesAgentFactoryLinkStatus {
@@ -275,6 +335,7 @@ model SalesAgent {
   taxDeclarations         SalesAgentTaxDeclaration[]
   payoutProfile           SalesAgentPayoutProfile?
   notificationPreferences SalesAgentNotificationPreference[]
+  leadImports             SalesAgentLeadImport[]
 
   @@index([status, kind], map: "ix_sales_agents__status__kind")
   @@index([planId], map: "ix_sales_agents__plan_id")
@@ -322,35 +383,54 @@ model SalesAgentLink {
 
 /// A prospect an agent registered (D-417, D-419), protected from other agents for a while. PII.
 model SalesAgentLead {
-  id                     BigInt               @id(map: "pk_sales_agent_leads") @default(autoincrement())
-  publicId               String               @unique(map: "ux_sales_agent_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  agentId                BigInt               @map("agent_id")
+  id                     BigInt                    @id(map: "pk_sales_agent_leads") @default(autoincrement())
+  publicId               String                    @unique(map: "ux_sales_agent_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId                BigInt                    @map("agent_id")
   kind                   SalesAgentLeadKind
-  status                 SalesAgentLeadStatus @default(registered)
-  contactName            String               @map("contact_name")
-  organisationName       String?              @map("organisation_name")
+  status                 SalesAgentLeadStatus      @default(registered)
+  contactName            String                    @map("contact_name")
+  organisationName       String?                   @map("organisation_name")
   /// E.164 (+66…).
   phone                  String?
-  email                  String?              @db.Citext
-  taxId                  String?              @map("tax_id") @db.Char(13)
+  email                  String?                   @db.Citext
+  taxId                  String?                   @map("tax_id") @db.Char(13)
   note                   String?
-  protectedUntil         DateTime             @map("protected_until") @db.Timestamptz(6)
-  convertedAt            DateTime?            @map("converted_at") @db.Timestamptz(6)
-  convertedUserId        BigInt?              @map("converted_user_id")
-  convertedCompanyId     BigInt?              @map("converted_company_id")
-  convertedFactoryId     BigInt?              @map("converted_factory_id")
-  closedReason           String?              @map("closed_reason")
+  protectedUntil         DateTime                  @map("protected_until") @db.Timestamptz(6)
+  convertedAt            DateTime?                 @map("converted_at") @db.Timestamptz(6)
+  convertedUserId        BigInt?                   @map("converted_user_id")
+  convertedCompanyId     BigInt?                   @map("converted_company_id")
+  convertedFactoryId     BigInt?                   @map("converted_factory_id")
+  closedReason           String?                   @map("closed_reason")
   /// D-467: when the agent was told the protection ends in 7 days / 1 day (once each).
-  protectionReminded7dAt DateTime?            @map("protection_reminded_7d_at") @db.Timestamptz(6)
-  protectionReminded1dAt DateTime?            @map("protection_reminded_1d_at") @db.Timestamptz(6)
-  createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion             Int                  @default(1) @map("row_version")
+  protectionReminded7dAt DateTime?                 @map("protection_reminded_7d_at") @db.Timestamptz(6)
+  protectionReminded1dAt DateTime?                 @map("protection_reminded_1d_at") @db.Timestamptz(6)
+  /// D-468 pipeline (PLAN A-06). PDPA for the new personal fields (`line_id`, `industry`, `tags`, follow-up notes in
+  /// the timeline): purpose = the agent's follow-up of a prospect who agreed to be contacted; retention = while the
+  /// lead is open, then as long as the lead row (agent programme records); access = the agent who registered it and
+  /// Sales (agents.read), never other agents.
+  stage                  SalesAgentLeadStage       @default(new)
+  stageChangedAt         DateTime?                 @map("stage_changed_at") @db.Timestamptz(6)
+  expectedValue          Decimal?                  @map("expected_value") @db.Decimal(14, 2)
+  nextFollowUpAt         DateTime?                 @map("next_follow_up_at") @db.Timestamptz(6)
+  /// When the reminder for `next_follow_up_at` was sent (null = not yet; reset when the time changes).
+  followUpRemindedAt     DateTime?                 @map("follow_up_reminded_at") @db.Timestamptz(6)
+  lostReason             SalesAgentLeadLostReason? @map("lost_reason")
+  lostNote               String?                   @map("lost_note")
+  source                 SalesAgentLeadSource      @default(manual)
+  industry               String?
+  /// The prospect's LINE id (PDPA: see above).
+  lineId                 String?                   @map("line_id")
+  tags                   String[]                  @default([])
+  wonAt                  DateTime?                 @map("won_at") @db.Timestamptz(6)
+  createdAt              DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion             Int                       @default(1) @map("row_version")
 
-  agent            SalesAgent              @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__agent_id")
-  convertedUser    User?                   @relation("SalesAgentLeadConvertedUser", fields: [convertedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_user_id")
-  convertedCompany Company?                @relation("SalesAgentLeadConvertedCompany", fields: [convertedCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_company_id")
-  convertedFactory Factory?                @relation("SalesAgentLeadConvertedFactory", fields: [convertedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_factory_id")
+  activities       SalesAgentLeadActivity[]
+  agent            SalesAgent               @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__agent_id")
+  convertedUser    User?                    @relation("SalesAgentLeadConvertedUser", fields: [convertedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_user_id")
+  convertedCompany Company?                 @relation("SalesAgentLeadConvertedCompany", fields: [convertedCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_company_id")
+  convertedFactory Factory?                 @relation("SalesAgentLeadConvertedFactory", fields: [convertedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_factory_id")
   links            SalesAgentLink[]
   factoryLinks     SalesAgentFactoryLink[]
 
@@ -361,7 +441,58 @@ model SalesAgentLead {
   @@index([convertedUserId], map: "ix_sales_agent_leads__converted_user_id")
   @@index([convertedCompanyId], map: "ix_sales_agent_leads__converted_company_id")
   @@index([convertedFactoryId], map: "ix_sales_agent_leads__converted_factory_id")
+  @@index([agentId, stage], map: "ix_sales_agent_leads__agent_id__stage")
+  @@index([nextFollowUpAt], map: "ix_sales_agent_leads__next_follow_up_at__due", where: raw("(follow_up_reminded_at IS NULL AND next_follow_up_at IS NOT NULL)"))
   @@map("sales_agent_leads")
+}
+
+/// D-468: the timeline of a lead (calls, LINE, visits, notes, quotes sent, stage changes, system entries).
+/// Append-only (trigger `forbid_mutation`). PDPA: notes about a prospect; same purpose, retention and access as the
+/// lead.
+model SalesAgentLeadActivity {
+  id          BigInt                     @id(map: "pk_sales_agent_lead_activities") @default(autoincrement())
+  publicId    String                     @unique(map: "ux_sales_agent_lead_activities__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  leadId      BigInt                     @map("lead_id")
+  kind        SalesAgentLeadActivityKind
+  body        String?
+  /// Machine data of system entries (quote id, stage from / to …).
+  data        Json                       @default("{}")
+  occurredAt  DateTime                   @map("occurred_at") @db.Timestamptz(6)
+  /// The person who wrote it; null for system entries.
+  createdById BigInt?                    @map("created_by")
+  createdAt   DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  lead      SalesAgentLead @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_lead_activities__lead_id")
+  createdBy User?          @relation("SalesAgentLeadActivityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_lead_activities__created_by")
+
+  @@index([leadId, occurredAt(sort: Desc), id(sort: Desc)], map: "ix_sales_agent_lead_activities__lead_id__occurred_at")
+  @@index([createdById], map: "ix_sales_agent_lead_activities__created_by")
+  @@map("sales_agent_lead_activities")
+}
+
+/// D-468: a CSV import of leads (≤ 500 rows): the dry run keeps the parsed rows and their errors for 24 h; commit
+/// re-checks every row. PDPA: prospects' contact data, purged (rows emptied) when it expires or 7 days after commit;
+/// access = the agent only.
+model SalesAgentLeadImport {
+  id           BigInt                     @id(map: "pk_sales_agent_lead_imports") @default(autoincrement())
+  publicId     String                     @unique(map: "ux_sales_agent_lead_imports__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId      BigInt                     @map("agent_id")
+  status       SalesAgentLeadImportStatus @default(previewed)
+  rows         Json
+  rowCount     Int                        @map("row_count")
+  validCount   Int                        @map("valid_count")
+  createdCount Int?                       @map("created_count")
+  expiresAt    DateTime                   @map("expires_at") @db.Timestamptz(6)
+  committedAt  DateTime?                  @map("committed_at") @db.Timestamptz(6)
+  purgedAt     DateTime?                  @map("purged_at") @db.Timestamptz(6)
+  createdAt    DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  rowVersion   Int                        @default(1) @map("row_version")
+
+  agent SalesAgent @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_lead_imports__agent_id")
+
+  @@index([agentId, createdAt], map: "ix_sales_agent_lead_imports__agent_id__created_at")
+  @@index([status, expiresAt], map: "ix_sales_agent_lead_imports__status__expires_at")
+  @@map("sales_agent_lead_imports")
 }
 
 /// A factory an agent brought (D-419); one agent per factory.

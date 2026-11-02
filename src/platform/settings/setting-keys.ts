@@ -107,6 +107,8 @@ export interface SettingValues {
   'agent.margin_alert_pct': string;
   /** D-467 years after `endedAt` an ended agent still reads their statements and 50 ทวิ (tax record retention). */
   'agents.ended_record_access_years': number;
+  /** D-468 follow-up reminders wait outside this Bangkok window (from 21:00 to 08:00). */
+  'agents.follow_up_quiet_hours': { from: string; to: string; timezone?: string };
   /** D-465 personal income tax table (net income bands, s.48(1)). */
   'tax.pit_brackets': { upTo: string | null; ratePct: string }[];
   /** D-465 s.40(2) expense deduction for the progressive withholding: rate (0.50) and cap. */

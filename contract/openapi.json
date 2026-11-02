@@ -276,15 +276,15 @@
           "type": "https://errors.getpack/agents.lead_duplicate"
         }
       },
-      "problem.agents.lead_existing_customer": {
-        "summary": "agents.lead_existing_customer",
+      "problem.agents.lead_import_closed": {
+        "summary": "agents.lead_import_closed",
         "value": {
-          "code": "agents.lead_existing_customer",
-          "detail": "ผู้มุ่งหวังรายนี้เป็นลูกค้า getpack อยู่แล้ว",
+          "code": "agents.lead_import_closed",
+          "detail": "ไฟล์นี้นำเข้าไปแล้ว หรือผลตรวจหมดอายุ (24 ชั่วโมง) กรุณาตรวจไฟล์อีกครั้ง",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
           "status": 409,
-          "title": "เป็นลูกค้าอยู่แล้ว",
-          "type": "https://errors.getpack/agents.lead_existing_customer"
+          "title": "นำเข้าไฟล์นี้ไม่ได้แล้ว",
+          "type": "https://errors.getpack/agents.lead_import_closed"
         }
       },
       "problem.agents.lead_kind_unsupported": {
@@ -298,15 +298,15 @@
           "type": "https://errors.getpack/agents.lead_kind_unsupported"
         }
       },
-      "problem.agents.lead_taken": {
-        "summary": "agents.lead_taken",
+      "problem.agents.lead_stage_final": {
+        "summary": "agents.lead_stage_final",
         "value": {
-          "code": "agents.lead_taken",
-          "detail": "ผู้มุ่งหวังรายนี้อยู่ในความคุ้มครองของตัวแทนอื่น",
+          "code": "agents.lead_stage_final",
+          "detail": "ลูกค้ามุ่งหวังที่ปิดการขายหรือปิดไม่สำเร็จแล้ว เปลี่ยนขั้นไม่ได้",
           "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
           "status": 409,
-          "title": "มีตัวแทนลงทะเบียนแล้ว",
-          "type": "https://errors.getpack/agents.lead_taken"
+          "title": "ปิดลูกค้ามุ่งหวังแล้ว",
+          "type": "https://errors.getpack/agents.lead_stage_final"
         }
       },
       "problem.agents.lead_unavailable": {
@@ -6064,6 +6064,44 @@
         ],
         "type": "string"
       },
+      "AddAgentLeadActivityDto": {
+        "properties": {
+          "body": {
+            "example": "โทรคุยเรื่องขนาดกล่อง ขอดูตัวอย่างก่อนสั่ง",
+            "maxLength": 2000,
+            "minLength": 1,
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadActivityEntryKind"
+              }
+            ],
+            "example": "call"
+          },
+          "nextFollowUpAt": {
+            "description": "Also set the next follow-up",
+            "example": "2026-10-21T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "occurredAt": {
+            "description": "When it happened (default now; not in the future)",
+            "example": "2026-10-18T09:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "body"
+        ],
+        "type": "object"
+      },
       "AddBasketProductDto": {
         "properties": {
           "catalogProductSlug": {
@@ -7807,10 +7845,25 @@
               "null"
             ]
           },
+          "expectedValue": {
+            "description": "Expected order value, THB",
+            "example": "45000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
             "format": "uuid",
             "type": "string"
+          },
+          "industry": {
+            "example": "ร้านกาแฟ / เบเกอรี่",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "kind": {
             "allOf": [
@@ -7819,6 +7872,39 @@
               }
             ],
             "example": "customer"
+          },
+          "lineId": {
+            "example": "manee.cafe",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lostNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lostReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadLostReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "nextFollowUpAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "note": {
             "example": null,
@@ -7846,6 +7932,31 @@
             "format": "date-time",
             "type": "string"
           },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadSource"
+              }
+            ],
+            "example": "manual"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadStage"
+              }
+            ],
+            "description": "`won` is set by the system when the converted customer first pays (a deposit counts)",
+            "example": "contacted"
+          },
+          "stageChangedAt": {
+            "example": "2026-10-18T09:30:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "status": {
             "allOf": [
               {
@@ -7854,8 +7965,31 @@
             ],
             "example": "registered"
           },
+          "tags": {
+            "example": [
+              "เบเกอรี่",
+              "รายเดือน"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "taxId": {
             "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "example": "2026-10-18T09:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "wonAt": {
+            "example": null,
+            "format": "date-time",
             "type": [
               "string",
               "null"
@@ -7876,6 +8010,18 @@
           "convertedAt",
           "closedReason",
           "createdAt",
+          "stage",
+          "stageChangedAt",
+          "expectedValue",
+          "nextFollowUpAt",
+          "lostReason",
+          "lostNote",
+          "source",
+          "industry",
+          "lineId",
+          "tags",
+          "wonAt",
+          "updatedAt",
           "agent",
           "convertedCustomerId",
           "convertedCompanyId",
@@ -16392,6 +16538,171 @@
         ],
         "type": "string"
       },
+      "AgentLeadActivityAuthor": {
+        "enum": [
+          "agent",
+          "system",
+          "getpack"
+        ],
+        "type": "string"
+      },
+      "AgentLeadActivityDto": {
+        "properties": {
+          "agentQuoteId": {
+            "description": "Agent quote",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "author": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadActivityAuthor"
+              }
+            ],
+            "example": "agent"
+          },
+          "body": {
+            "example": "โทรคุยเรื่องขนาดกล่อง ขอดูตัวอย่างก่อนสั่ง",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "event": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadSystemEvent"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What a `system` entry records",
+            "example": null
+          },
+          "fromStage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadStage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6021",
+            "format": "uuid",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadActivityKind"
+              }
+            ],
+            "example": "call"
+          },
+          "occurredAt": {
+            "example": "2026-10-18T09:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "toStage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadStage"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "body",
+          "author",
+          "event",
+          "fromStage",
+          "toStage",
+          "agentQuoteId",
+          "occurredAt"
+        ],
+        "type": "object"
+      },
+      "AgentLeadActivityEntryKind": {
+        "enum": [
+          "call",
+          "line",
+          "visit",
+          "email",
+          "note"
+        ],
+        "type": "string"
+      },
+      "AgentLeadActivityKind": {
+        "enum": [
+          "call",
+          "line",
+          "visit",
+          "email",
+          "note",
+          "quote_sent",
+          "stage_change",
+          "system"
+        ],
+        "type": "string"
+      },
+      "AgentLeadAvailabilityDto": {
+        "properties": {
+          "available": {
+            "example": false,
+            "type": "boolean"
+          },
+          "leadId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadAvailabilityReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "`own_lead`: already your protected lead (see `leadId`); `unavailable`: cannot be registered — one neutral reason, never who holds it (D-440)",
+            "example": "unavailable"
+          }
+        },
+        "required": [
+          "available",
+          "reason",
+          "leadId"
+        ],
+        "type": "object"
+      },
+      "AgentLeadAvailabilityReason": {
+        "description": "`own_lead`: already your protected lead (see `leadId`); `unavailable`: cannot be registered — one neutral reason, never who holds it (D-440)",
+        "enum": [
+          "own_lead",
+          "unavailable"
+        ],
+        "type": "string"
+      },
       "AgentLeadDto": {
         "properties": {
           "closedReason": {
@@ -16426,10 +16737,25 @@
               "null"
             ]
           },
+          "expectedValue": {
+            "description": "Expected order value, THB",
+            "example": "45000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "id": {
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
             "format": "uuid",
             "type": "string"
+          },
+          "industry": {
+            "example": "ร้านกาแฟ / เบเกอรี่",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "kind": {
             "allOf": [
@@ -16438,6 +16764,39 @@
               }
             ],
             "example": "customer"
+          },
+          "lineId": {
+            "example": "manee.cafe",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lostNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lostReason": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadLostReason"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": null
+          },
+          "nextFollowUpAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "note": {
             "example": null,
@@ -16465,6 +16824,31 @@
             "format": "date-time",
             "type": "string"
           },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadSource"
+              }
+            ],
+            "example": "manual"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadStage"
+              }
+            ],
+            "description": "`won` is set by the system when the converted customer first pays (a deposit counts)",
+            "example": "contacted"
+          },
+          "stageChangedAt": {
+            "example": "2026-10-18T09:30:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "status": {
             "allOf": [
               {
@@ -16473,8 +16857,31 @@
             ],
             "example": "registered"
           },
+          "tags": {
+            "example": [
+              "เบเกอรี่",
+              "รายเดือน"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
           "taxId": {
             "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "example": "2026-10-18T09:30:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "wonAt": {
+            "example": null,
+            "format": "date-time",
             "type": [
               "string",
               "null"
@@ -16494,14 +16901,267 @@
           "protectedUntil",
           "convertedAt",
           "closedReason",
-          "createdAt"
+          "createdAt",
+          "stage",
+          "stageChangedAt",
+          "expectedValue",
+          "nextFollowUpAt",
+          "lostReason",
+          "lostNote",
+          "source",
+          "industry",
+          "lineId",
+          "tags",
+          "wonAt",
+          "updatedAt"
         ],
         "type": "object"
+      },
+      "AgentLeadDue": {
+        "enum": [
+          "today",
+          "overdue"
+        ],
+        "type": "string"
+      },
+      "AgentLeadEntrySource": {
+        "description": "`card_scan` when the fields came from a scanned business card",
+        "enum": [
+          "manual",
+          "card_scan"
+        ],
+        "type": "string"
+      },
+      "AgentLeadImportDto": {
+        "properties": {
+          "createdCount": {
+            "description": "Leads created by the commit",
+            "example": null,
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "expiresAt": {
+            "example": "2026-10-19T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6022",
+            "format": "uuid",
+            "type": "string"
+          },
+          "rowCount": {
+            "example": 2,
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/AgentLeadImportRowDto"
+            },
+            "type": "array"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadImportStatus"
+              }
+            ],
+            "example": "previewed"
+          },
+          "validCount": {
+            "description": "Rows without errors (created at commit)",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "rowCount",
+          "validCount",
+          "createdCount",
+          "rows",
+          "expiresAt"
+        ],
+        "type": "object"
+      },
+      "AgentLeadImportErrorCode": {
+        "enum": [
+          "required",
+          "contact_missing",
+          "invalid_phone",
+          "invalid_email",
+          "invalid_tax_id",
+          "invalid_amount",
+          "invalid_date",
+          "too_long",
+          "duplicate_in_file",
+          "own_lead",
+          "unavailable",
+          "too_many_leads"
+        ],
+        "type": "string"
+      },
+      "AgentLeadImportErrorDto": {
+        "properties": {
+          "code": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadImportErrorCode"
+              }
+            ],
+            "example": "unavailable"
+          },
+          "field": {
+            "example": "phone",
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "code"
+        ],
+        "type": "object"
+      },
+      "AgentLeadImportRowDto": {
+        "properties": {
+          "contactName": {
+            "example": "คุณมานี ใจดี",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "email": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errors": {
+            "example": [],
+            "items": {
+              "$ref": "#/components/schemas/AgentLeadImportErrorDto"
+            },
+            "type": "array"
+          },
+          "leadId": {
+            "description": "Set after commit",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organisationName": {
+            "example": "ร้านกาแฟบ้านสวน",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66890001234",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rowNo": {
+            "description": "Line number in the file (the header is line 1)",
+            "example": 2,
+            "type": "integer"
+          },
+          "taxId": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "rowNo",
+          "contactName",
+          "organisationName",
+          "phone",
+          "email",
+          "taxId",
+          "errors",
+          "leadId"
+        ],
+        "type": "object"
+      },
+      "AgentLeadImportStatus": {
+        "enum": [
+          "previewed",
+          "committed",
+          "expired"
+        ],
+        "type": "string"
       },
       "AgentLeadKind": {
         "enum": [
           "customer",
           "factory"
+        ],
+        "type": "string"
+      },
+      "AgentLeadLostReason": {
+        "enum": [
+          "price",
+          "lead_time",
+          "no_need",
+          "competitor",
+          "no_response",
+          "other"
+        ],
+        "type": "string"
+      },
+      "AgentLeadSort": {
+        "enum": [
+          "createdAt",
+          "updatedAt",
+          "nextFollowUpAt",
+          "protectedUntil",
+          "expectedValue"
+        ],
+        "type": "string"
+      },
+      "AgentLeadSource": {
+        "enum": [
+          "manual",
+          "card_scan",
+          "csv_import",
+          "link",
+          "staff"
+        ],
+        "type": "string"
+      },
+      "AgentLeadStage": {
+        "description": "`won` is set by the system when the converted customer first pays (a deposit counts)",
+        "enum": [
+          "new",
+          "contacted",
+          "quoted",
+          "negotiating",
+          "won",
+          "lost"
+        ],
+        "type": "string"
+      },
+      "AgentLeadStageTarget": {
+        "description": "`won` is never set by an agent (the first payment sets it)",
+        "enum": [
+          "new",
+          "contacted",
+          "quoted",
+          "negotiating",
+          "lost"
         ],
         "type": "string"
       },
@@ -16512,6 +17172,32 @@
           "expired",
           "rejected",
           "withdrawn"
+        ],
+        "type": "string"
+      },
+      "AgentLeadSystemEvent": {
+        "description": "What a `system` entry records",
+        "enum": [
+          "converted",
+          "won",
+          "quote_opened",
+          "quote_accepted",
+          "quote_withdrawn",
+          "discount_requested",
+          "discount_options",
+          "discount_option_accepted",
+          "deal_registered",
+          "deal_ended",
+          "lost"
+        ],
+        "type": "string"
+      },
+      "AgentLeadView": {
+        "enum": [
+          "open",
+          "follow_up_today",
+          "protection_ending",
+          "closed"
         ],
         "type": "string"
       },
@@ -16642,14 +17328,15 @@
         "type": "object"
       },
       "AgentNotificationEvent": {
-        "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details",
+        "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details · `follow_up_due` a follow-up time I set has come (D-468; never in the quiet hours 21:00–08:00)",
         "enum": [
           "lead_converted",
           "lead_protection_expiring",
           "commission_earned",
           "statement_ready",
           "payout_paid",
-          "payout_profile_needed"
+          "payout_profile_needed",
+          "follow_up_due"
         ],
         "type": "string"
       },
@@ -16674,7 +17361,7 @@
                 "$ref": "#/components/schemas/AgentNotificationEvent"
               }
             ],
-            "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details",
+            "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details · `follow_up_due` a follow-up time I set has come (D-468; never in the quiet hours 21:00–08:00)",
             "example": "commission_earned"
           },
           "locked": {
@@ -26173,6 +26860,37 @@
         ],
         "type": "object"
       },
+      "ChangeAgentLeadStageDto": {
+        "properties": {
+          "lostReason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadLostReason"
+              }
+            ],
+            "description": "Required with `lost`",
+            "example": "price"
+          },
+          "note": {
+            "example": "ได้ราคาจากที่อื่นถูกกว่า 8%",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadStageTarget"
+              }
+            ],
+            "description": "`won` is never set by an agent (the first payment sets it)",
+            "example": "lost"
+          }
+        },
+        "required": [
+          "stage"
+        ],
+        "type": "object"
+      },
       "ChangeCustomerDto": {
         "properties": {
           "customerId": {
@@ -26295,6 +27013,36 @@
           "effectiveFrom",
           "reason"
         ],
+        "type": "object"
+      },
+      "CheckAgentLeadDto": {
+        "properties": {
+          "email": {
+            "example": null,
+            "format": "email",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "example": "+66890001234",
+            "pattern": "^\\+[1-9]\\d{7,14}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "taxId": {
+            "example": null,
+            "pattern": "^\\d{13}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
         "type": "object"
       },
       "CheckCodeDto": {
@@ -85017,6 +85765,27 @@
         ],
         "type": "object"
       },
+      "PreviewAgentLeadImportDto": {
+        "properties": {
+          "consentConfirmed": {
+            "description": "Every person in the file agreed to be contacted by getpack (PDPA); required",
+            "example": true,
+            "type": "boolean"
+          },
+          "csv": {
+            "description": "The CSV text (UTF-8, header row; columns contact_name, organisation_name, phone, email, tax_id, line_id, industry, tags, expected_value, next_follow_up_at, note); at most 500 rows",
+            "example": "contact_name,phone,organisation_name\nคุณมานี ใจดี,0890001234,ร้านกาแฟบ้านสวน\n",
+            "maxLength": 400000,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "csv",
+          "consentConfirmed"
+        ],
+        "type": "object"
+      },
       "PreviewDestinationDto": {
         "properties": {
           "postcode": {
@@ -93921,6 +94690,22 @@
               "null"
             ]
           },
+          "expectedValue": {
+            "example": "45000.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "industry": {
+            "example": "ร้านกาแฟ / เบเกอรี่",
+            "maxLength": 100,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "kind": {
             "allOf": [
               {
@@ -93929,6 +94714,22 @@
             ],
             "description": "Customers only (P-03 / D-464); any other value is `agents.lead_kind_unsupported`",
             "example": "customer"
+          },
+          "lineId": {
+            "example": "manee.cafe",
+            "maxLength": 64,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nextFollowUpAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "note": {
             "example": "สนใจกล่องเบเกอรี่ 1,000 ใบ/เดือน",
@@ -93953,6 +94754,26 @@
               "string",
               "null"
             ]
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadEntrySource"
+              }
+            ],
+            "default": "manual",
+            "description": "`card_scan` when the fields came from a scanned business card"
+          },
+          "tags": {
+            "example": [
+              "เบเกอรี่"
+            ],
+            "items": {
+              "maxLength": 32,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
           },
           "taxId": {
             "example": null,
@@ -101349,7 +102170,7 @@
                 "$ref": "#/components/schemas/AgentNotificationEvent"
               }
             ],
-            "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details",
+            "description": "`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · `commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · `payout_profile_needed` a statement waits for payout details · `follow_up_due` a follow-up time I set has come (D-468; never in the quiet hours 21:00–08:00)",
             "example": "commission_earned"
           }
         },
@@ -101367,7 +102188,7 @@
             "items": {
               "$ref": "#/components/schemas/SetAgentNotificationPreferenceDto"
             },
-            "maxItems": 18,
+            "maxItems": 21,
             "minItems": 1,
             "type": "array"
           }
@@ -118717,6 +119538,104 @@
         },
         "type": "object"
       },
+      "UpdateAgentLeadDto": {
+        "properties": {
+          "contactName": {
+            "example": "คุณมานี ใจดี",
+            "maxLength": 200,
+            "minLength": 2,
+            "type": "string"
+          },
+          "email": {
+            "example": null,
+            "format": "email",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expectedValue": {
+            "example": "60000.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "industry": {
+            "example": "ร้านกาแฟ / เบเกอรี่",
+            "maxLength": 100,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lineId": {
+            "example": "manee.cafe",
+            "maxLength": 64,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nextFollowUpAt": {
+            "description": "A new time re-arms the reminder (sent outside the quiet hours 21:00–08:00)",
+            "example": "2026-10-21T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "note": {
+            "example": null,
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "organisationName": {
+            "example": "ร้านกาแฟบ้านสวน",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "phone": {
+            "description": "Contact keys change only while the lead is registered, through the same check as a new lead",
+            "example": "+66890001234",
+            "pattern": "^\\+[1-9]\\d{7,14}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tags": {
+            "example": [
+              "เบเกอรี่",
+              "รายเดือน"
+            ],
+            "items": {
+              "maxLength": 32,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "type": "array"
+          },
+          "taxId": {
+            "example": null,
+            "pattern": "^\\d{13}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "type": "object"
+      },
       "UpdateArticleCategoryDto": {
         "properties": {
           "audience": {
@@ -128164,14 +129083,29 @@
                       "convertedFactoryId": null,
                       "createdAt": "2026-10-16T10:00:00+07:00",
                       "email": "manee@example.invalid",
+                      "expectedValue": "45000.00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                      "industry": "ร้านกาแฟ / เบเกอรี่",
                       "kind": "customer",
+                      "lineId": "manee.cafe",
+                      "lostNote": null,
+                      "lostReason": null,
+                      "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
                       "note": null,
                       "organisationName": "ร้านกาแฟบ้านสวน",
                       "phone": "+66890001234",
                       "protectedUntil": "2026-12-15T10:00:00+07:00",
+                      "source": "manual",
+                      "stage": "contacted",
+                      "stageChangedAt": "2026-10-18T09:30:00+07:00",
                       "status": "registered",
-                      "taxId": null
+                      "tags": [
+                        "เบเกอรี่",
+                        "รายเดือน"
+                      ],
+                      "taxId": null,
+                      "updatedAt": "2026-10-18T09:30:00+07:00",
+                      "wonAt": null
                     }
                   ],
                   "meta": {
@@ -128391,14 +129325,29 @@
                   "convertedFactoryId": null,
                   "createdAt": "2026-10-16T10:00:00+07:00",
                   "email": "manee@example.invalid",
+                  "expectedValue": "45000.00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                  "industry": "ร้านกาแฟ / เบเกอรี่",
                   "kind": "customer",
+                  "lineId": "manee.cafe",
+                  "lostNote": null,
+                  "lostReason": null,
+                  "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
                   "note": null,
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "source": "manual",
+                  "stage": "contacted",
+                  "stageChangedAt": "2026-10-18T09:30:00+07:00",
                   "status": "rejected",
-                  "taxId": null
+                  "tags": [
+                    "เบเกอรี่",
+                    "รายเดือน"
+                  ],
+                  "taxId": null,
+                  "updatedAt": "2026-10-18T09:30:00+07:00",
+                  "wonAt": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AdminAgentLeadDto"
@@ -507077,14 +508026,29 @@
                       "convertedAt": null,
                       "createdAt": "2026-10-16T10:00:00+07:00",
                       "email": "manee@example.invalid",
+                      "expectedValue": "45000.00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                      "industry": "ร้านกาแฟ / เบเกอรี่",
                       "kind": "customer",
+                      "lineId": "manee.cafe",
+                      "lostNote": null,
+                      "lostReason": null,
+                      "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
                       "note": null,
                       "organisationName": "ร้านกาแฟบ้านสวน",
                       "phone": "+66890001234",
                       "protectedUntil": "2026-12-15T10:00:00+07:00",
+                      "source": "manual",
+                      "stage": "contacted",
+                      "stageChangedAt": "2026-10-18T09:30:00+07:00",
                       "status": "registered",
-                      "taxId": null
+                      "tags": [
+                        "เบเกอรี่",
+                        "รายเดือน"
+                      ],
+                      "taxId": null,
+                      "updatedAt": "2026-10-18T09:30:00+07:00",
+                      "wonAt": null
                     }
                   ],
                   "meta": {
@@ -507256,7 +508220,7 @@
         ]
       },
       "post": {
-        "description": "A customer prospect with a phone, e-mail or tax id, who agreed to be contacted (PDPA). Protected for `agents.rules.leadProtectionDays`; refused when it is already a customer or company, or another agent’s protected lead (D-417). Kind `customer` only — anything else is `agents.lead_kind_unsupported` (P-03, D-464): factories apply at /partner-with-us.\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
+        "description": "A customer prospect with a phone, e-mail or tax id, who agreed to be contacted (PDPA). Protected for `agents.rules.leadProtectionDays`; refused with the one neutral `agents.lead_unavailable` when it is already a customer or company, another agent’s protected lead or registered deal (D-417, D-440, D-468), `agents.lead_duplicate` when it is already mine. Kind `customer` only — anything else is `agents.lead_kind_unsupported` (P-03, D-464): factories apply at /partner-with-us. D-468: optional pipeline fields (source manual | card_scan, expected value, next follow-up, industry, LINE id, tags); the lead starts at stage `new`.\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464, D-440, D-468.",
         "operationId": "store.agent.registerLead",
         "parameters": [
           {
@@ -507294,14 +508258,29 @@
                   "convertedAt": null,
                   "createdAt": "2026-10-16T10:00:00+07:00",
                   "email": "manee@example.invalid",
+                  "expectedValue": "45000.00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                  "industry": "ร้านกาแฟ / เบเกอรี่",
                   "kind": "customer",
+                  "lineId": "manee.cafe",
+                  "lostNote": null,
+                  "lostReason": null,
+                  "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
                   "note": null,
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "source": "manual",
+                  "stage": "contacted",
+                  "stageChangedAt": "2026-10-18T09:30:00+07:00",
                   "status": "registered",
-                  "taxId": null
+                  "tags": [
+                    "เบเกอรี่",
+                    "รายเดือน"
+                  ],
+                  "taxId": null,
+                  "updatedAt": "2026-10-18T09:30:00+07:00",
+                  "wonAt": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AgentLeadDto"
@@ -507406,12 +508385,6 @@
                   "agents.lead_duplicate": {
                     "$ref": "#/components/examples/problem.agents.lead_duplicate"
                   },
-                  "agents.lead_existing_customer": {
-                    "$ref": "#/components/examples/problem.agents.lead_existing_customer"
-                  },
-                  "agents.lead_taken": {
-                    "$ref": "#/components/examples/problem.agents.lead_taken"
-                  },
                   "agents.lead_unavailable": {
                     "$ref": "#/components/examples/problem.agents.lead_unavailable"
                   }
@@ -507421,7 +508394,7 @@
                 }
               }
             },
-            "description": "Problem: `agents.agent_inactive`, `agents.lead_duplicate`, `agents.lead_existing_customer`, `agents.lead_taken`, `agents.lead_unavailable`",
+            "description": "Problem: `agents.agent_inactive`, `agents.lead_duplicate`, `agents.lead_unavailable`",
             "headers": {
               "X-Request-Id": {
                 "$ref": "#/components/headers/XRequestId"
@@ -507512,6 +508485,2035 @@
         ]
       }
     },
+    "/v1/store/agent/leads/actions/check": {
+      "post": {
+        "description": "Before registering (on blur of phone, e-mail or tax id): `available`, or one neutral reason — `own_lead` (my own protected lead, with its id) or `unavailable` (cannot be registered). Never says whether a customer, another agent or a registered deal holds it (D-440, D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.check",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "phone": "+66890001234"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CheckAgentLeadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "available": false,
+                  "leadId": null,
+                  "reason": "unavailable"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentLeadAvailabilityDto"
+                }
+              }
+            },
+            "description": "Availability",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Check whether a contact can be my lead",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/leads/export": {
+      "get": {
+        "description": "All my customer leads as a UTF-8 CSV behind a 5-minute link; cells that could run as a spreadsheet formula are neutralised, Thai mobile numbers are written locally (0812345678). Audited as an export (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.export",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-10-18T10:05:00+07:00",
+                  "url": "https://getpack-files.s3.example.com/…"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Download link",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Export my leads as CSV",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/leads/imports": {
+      "post": {
+        "description": "Parses up to 500 rows and puts each through the same checks as a new lead (fields, the neutral duplicate check, the open-leads limit) — nothing is created. The result is kept 24 h for `importCommit`; its contact data is dropped afterwards (PDPA). Requires the agent’s confirmation that every lead agreed to be contacted (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.importPreview",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "consentConfirmed": true,
+                    "csv": "contact_name,phone,organisation_name\nคุณมานี ใจดี,0890001234,ร้านกาแฟบ้านสวน\n"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/PreviewAgentLeadImportDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdCount": null,
+                  "expiresAt": "2026-10-19T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6022",
+                  "rowCount": 2,
+                  "rows": [
+                    {
+                      "contactName": "คุณมานี ใจดี",
+                      "email": null,
+                      "errors": [],
+                      "leadId": null,
+                      "organisationName": "ร้านกาแฟบ้านสวน",
+                      "phone": "+66890001234",
+                      "rowNo": 2,
+                      "taxId": null
+                    },
+                    {
+                      "contactName": "คุณสมศรี ตัวอย่าง",
+                      "email": null,
+                      "errors": [
+                        {
+                          "code": "unavailable",
+                          "field": "phone"
+                        }
+                      ],
+                      "leadId": null,
+                      "organisationName": null,
+                      "phone": "+66890005678",
+                      "rowNo": 3,
+                      "taxId": null
+                    }
+                  ],
+                  "status": "previewed",
+                  "validCount": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentLeadImportDto"
+                }
+              }
+            },
+            "description": "Dry run",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.agent_inactive": {
+                    "$ref": "#/components/examples/problem.agents.agent_inactive"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.agent_inactive`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Check a CSV of leads (dry run)",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/leads/imports/{importId}/actions/commit": {
+      "post": {
+        "description": "Creates the rows of a dry run that had no errors, each checked again now (a contact taken since is skipped with its error). Leads get source `csv_import`. Only row numbers, errors and the created lead ids are kept afterwards (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.importCommit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "importId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "createdCount": 1,
+                  "expiresAt": "2026-10-19T10:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6022",
+                  "rowCount": 2,
+                  "rows": [
+                    {
+                      "contactName": null,
+                      "email": null,
+                      "errors": [],
+                      "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                      "organisationName": null,
+                      "phone": null,
+                      "rowNo": 2,
+                      "taxId": null
+                    },
+                    {
+                      "contactName": null,
+                      "email": null,
+                      "errors": [
+                        {
+                          "code": "unavailable",
+                          "field": "phone"
+                        }
+                      ],
+                      "leadId": null,
+                      "organisationName": null,
+                      "phone": null,
+                      "rowNo": 3,
+                      "taxId": null
+                    }
+                  ],
+                  "status": "committed",
+                  "validCount": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentLeadImportDto"
+                }
+              }
+            },
+            "description": "Committed",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.agent_inactive": {
+                    "$ref": "#/components/examples/problem.agents.agent_inactive"
+                  },
+                  "agents.lead_import_closed": {
+                    "$ref": "#/components/examples/problem.agents.lead_import_closed"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.agent_inactive`, `agents.lead_import_closed`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Create the leads of a checked CSV",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/leads/pipeline": {
+      "get": {
+        "description": "My customer leads with stage, value, next follow-up and protection; views for the agent zone tabs (open, follow-up today, protection ending, closed), filters by stage, source, due and text; sorted with a cursor (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "`open` registered or converted and not won / lost · `follow_up_today` open with a follow-up due by the end of today (overdue included) · `protection_ending` registered, protection ends within 7 days · `closed` won, lost, expired, withdrawn or released",
+            "in": "query",
+            "name": "view",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AgentLeadView"
+            }
+          },
+          {
+            "description": "One or more stages, comma-separated",
+            "in": "query",
+            "name": "stage",
+            "required": false,
+            "schema": {
+              "items": {
+                "$ref": "#/components/schemas/AgentLeadStage"
+              },
+              "type": "array"
+            }
+          },
+          {
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AgentLeadSource"
+            }
+          },
+          {
+            "description": "`today`: follow-up due by the end of today (Bangkok, overdue included) · `overdue`: before now",
+            "in": "query",
+            "name": "due",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AgentLeadDue"
+            }
+          },
+          {
+            "description": "Name, organisation, phone, e-mail, tax id or LINE id",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AgentLeadSort"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "closedReason": null,
+                      "contactName": "คุณมานี ใจดี",
+                      "convertedAt": null,
+                      "createdAt": "2026-10-16T10:00:00+07:00",
+                      "email": "manee@example.invalid",
+                      "expectedValue": "45000.00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                      "industry": "ร้านกาแฟ / เบเกอรี่",
+                      "kind": "customer",
+                      "lineId": "manee.cafe",
+                      "lostNote": null,
+                      "lostReason": null,
+                      "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
+                      "note": null,
+                      "organisationName": "ร้านกาแฟบ้านสวน",
+                      "phone": "+66890001234",
+                      "protectedUntil": "2026-12-15T10:00:00+07:00",
+                      "source": "manual",
+                      "stage": "contacted",
+                      "stageChangedAt": "2026-10-18T09:30:00+07:00",
+                      "status": "registered",
+                      "tags": [
+                        "เบเกอรี่",
+                        "รายเดือน"
+                      ],
+                      "taxId": null,
+                      "updatedAt": "2026-10-18T09:30:00+07:00",
+                      "wonAt": null
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AgentLeadDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "List my lead pipeline",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/leads/{leadId}": {
+      "get": {
+        "description": "With its pipeline fields and protection; `ETag` for `update` (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "leadId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "closedReason": null,
+                  "contactName": "คุณมานี ใจดี",
+                  "convertedAt": null,
+                  "createdAt": "2026-10-16T10:00:00+07:00",
+                  "email": "manee@example.invalid",
+                  "expectedValue": "45000.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                  "industry": "ร้านกาแฟ / เบเกอรี่",
+                  "kind": "customer",
+                  "lineId": "manee.cafe",
+                  "lostNote": null,
+                  "lostReason": null,
+                  "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
+                  "note": null,
+                  "organisationName": "ร้านกาแฟบ้านสวน",
+                  "phone": "+66890001234",
+                  "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "source": "manual",
+                  "stage": "contacted",
+                  "stageChangedAt": "2026-10-18T09:30:00+07:00",
+                  "status": "registered",
+                  "tags": [
+                    "เบเกอรี่",
+                    "รายเดือน"
+                  ],
+                  "taxId": null,
+                  "updatedAt": "2026-10-18T09:30:00+07:00",
+                  "wonAt": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentLeadDto"
+                }
+              }
+            },
+            "description": "Lead",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get one of my leads",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      },
+      "patch": {
+        "description": "Any subset of the fields (`If-Match` required). Phone, e-mail and tax id change only while the lead is registered and go through the same neutral check as a new lead. A new follow-up time re-arms the reminder (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "leadId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "expectedValue": "60000.00",
+                    "nextFollowUpAt": "2026-10-21T10:00:00+07:00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgentLeadDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "closedReason": null,
+                  "contactName": "คุณมานี ใจดี",
+                  "convertedAt": null,
+                  "createdAt": "2026-10-16T10:00:00+07:00",
+                  "email": "manee@example.invalid",
+                  "expectedValue": "45000.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                  "industry": "ร้านกาแฟ / เบเกอรี่",
+                  "kind": "customer",
+                  "lineId": "manee.cafe",
+                  "lostNote": null,
+                  "lostReason": null,
+                  "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
+                  "note": null,
+                  "organisationName": "ร้านกาแฟบ้านสวน",
+                  "phone": "+66890001234",
+                  "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "source": "manual",
+                  "stage": "contacted",
+                  "stageChangedAt": "2026-10-18T09:30:00+07:00",
+                  "status": "registered",
+                  "tags": [
+                    "เบเกอรี่",
+                    "รายเดือน"
+                  ],
+                  "taxId": null,
+                  "updatedAt": "2026-10-18T09:30:00+07:00",
+                  "wonAt": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentLeadDto"
+                }
+              }
+            },
+            "description": "Lead",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.lead_duplicate": {
+                    "$ref": "#/components/examples/problem.agents.lead_duplicate"
+                  },
+                  "agents.lead_unavailable": {
+                    "$ref": "#/components/examples/problem.agents.lead_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.lead_duplicate`, `agents.lead_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Edit one of my leads",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/leads/{leadId}/actions/change-stage": {
+      "post": {
+        "description": "new, contacted, quoted, negotiating or lost (with a reason). `won` is set only by the system when the converted customer first pays. `lost` releases the protection at once; won and lost are final (`agents.lead_stage_final`). The move is written to the timeline (D-468, PLAN A-06).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.changeStage",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "leadId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "stage": "negotiating"
+                  }
+                },
+                "lost": {
+                  "value": {
+                    "lostReason": "price",
+                    "note": "ได้ราคาจากที่อื่นถูกกว่า 8%",
+                    "stage": "lost"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ChangeAgentLeadStageDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "closedReason": null,
+                  "contactName": "คุณมานี ใจดี",
+                  "convertedAt": null,
+                  "createdAt": "2026-10-16T10:00:00+07:00",
+                  "email": "manee@example.invalid",
+                  "expectedValue": "45000.00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                  "industry": "ร้านกาแฟ / เบเกอรี่",
+                  "kind": "customer",
+                  "lineId": "manee.cafe",
+                  "lostNote": null,
+                  "lostReason": null,
+                  "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
+                  "note": null,
+                  "organisationName": "ร้านกาแฟบ้านสวน",
+                  "phone": "+66890001234",
+                  "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "source": "manual",
+                  "stage": "negotiating",
+                  "stageChangedAt": "2026-10-18T09:30:00+07:00",
+                  "status": "registered",
+                  "tags": [
+                    "เบเกอรี่",
+                    "รายเดือน"
+                  ],
+                  "taxId": null,
+                  "updatedAt": "2026-10-18T09:30:00+07:00",
+                  "wonAt": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentLeadDto"
+                }
+              }
+            },
+            "description": "Lead",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.lead_closed": {
+                    "$ref": "#/components/examples/problem.agents.lead_closed"
+                  },
+                  "agents.lead_stage_final": {
+                    "$ref": "#/components/examples/problem.agents.lead_stage_final"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.lead_closed`, `agents.lead_stage_final`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Move a lead to another stage",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
     "/v1/store/agent/leads/{leadId}/actions/withdraw": {
       "post": {
         "description": "The contact is free for anyone again (D-417).\n\nImplements: D-416, D-417, D-418, D-420, D-422, D-464.",
@@ -507540,14 +510542,29 @@
                   "convertedAt": null,
                   "createdAt": "2026-10-16T10:00:00+07:00",
                   "email": "manee@example.invalid",
+                  "expectedValue": "45000.00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                  "industry": "ร้านกาแฟ / เบเกอรี่",
                   "kind": "customer",
+                  "lineId": "manee.cafe",
+                  "lostNote": null,
+                  "lostReason": null,
+                  "nextFollowUpAt": "2026-10-20T10:00:00+07:00",
                   "note": null,
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "source": "manual",
+                  "stage": "contacted",
+                  "stageChangedAt": "2026-10-18T09:30:00+07:00",
                   "status": "withdrawn",
-                  "taxId": null
+                  "tags": [
+                    "เบเกอรี่",
+                    "รายเดือน"
+                  ],
+                  "taxId": null,
+                  "updatedAt": "2026-10-18T09:30:00+07:00",
+                  "wonAt": null
                 },
                 "schema": {
                   "$ref": "#/components/schemas/AgentLeadDto"
@@ -507737,6 +510754,510 @@
         ]
       }
     },
+    "/v1/store/agent/leads/{leadId}/activities": {
+      "get": {
+        "description": "Newest first: my calls, LINE chats, visits, e-mails and notes, quotes sent, stage changes and system entries (signed up, quote opened / accepted, deal registered, won) — cursor paged (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.listActivities",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "leadId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "agentQuoteId": null,
+                      "author": "agent",
+                      "body": "โทรคุยเรื่องขนาดกล่อง ขอดูตัวอย่างก่อนสั่ง",
+                      "event": null,
+                      "fromStage": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6021",
+                      "kind": "call",
+                      "occurredAt": "2026-10-18T09:30:00+07:00",
+                      "toStage": null
+                    }
+                  ],
+                  "meta": {
+                    "nextCursor": "eyJpZCI6IjEyMyJ9"
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AgentLeadActivityDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/CursorMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One slice of the feed",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Read a lead’s timeline",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      },
+      "post": {
+        "description": "A call, LINE chat, visit, e-mail or note in the lead’s timeline (append-only), optionally with the next follow-up; the first one moves a new lead to `contacted` (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "operationId": "store.agentLeads.addActivity",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "leadId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "body": "โทรคุยเรื่องขนาดกล่อง ขอดูตัวอย่างก่อนสั่ง",
+                    "kind": "call",
+                    "nextFollowUpAt": "2026-10-21T10:00:00+07:00"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AddAgentLeadActivityDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "agentQuoteId": null,
+                  "author": "agent",
+                  "body": "โทรคุยเรื่องขนาดกล่อง ขอดูตัวอย่างก่อนสั่ง",
+                  "event": null,
+                  "fromStage": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6021",
+                  "kind": "call",
+                  "occurredAt": "2026-10-18T09:30:00+07:00",
+                  "toStage": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentLeadActivityDto"
+                }
+              }
+            },
+            "description": "Timeline entry",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.lead_closed": {
+                    "$ref": "#/components/examples/problem.agents.lead_closed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.lead_closed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Log a contact with a lead",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
     "/v1/store/agent/notification-preferences": {
       "get": {
         "description": "Every agent event × channel (push to getpack Agent, LINE OA, e-mail) with whether it is on (default on) and whether it is locked: the e-mail of statement ready, payout paid and payout details needed cannot be switched off (payment and tax records, D-144). In-app notifications always stay. `reachable` says whether each channel can reach the agent at all (D-467).\n\nImplements: D-143, D-416, D-467, D-144.",
@@ -507859,6 +511380,24 @@
                       "enabled": true,
                       "event": "payout_profile_needed",
                       "locked": true
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "follow_up_due",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "follow_up_due",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "follow_up_due",
+                      "locked": false
                     }
                   ],
                   "reachable": {
@@ -508143,6 +511682,24 @@
                       "enabled": true,
                       "event": "payout_profile_needed",
                       "locked": true
+                    },
+                    {
+                      "channel": "web_push",
+                      "enabled": true,
+                      "event": "follow_up_due",
+                      "locked": false
+                    },
+                    {
+                      "channel": "line",
+                      "enabled": true,
+                      "event": "follow_up_due",
+                      "locked": false
+                    },
+                    {
+                      "channel": "email",
+                      "enabled": true,
+                      "event": "follow_up_due",
+                      "locked": false
                     }
                   ],
                   "reachable": {

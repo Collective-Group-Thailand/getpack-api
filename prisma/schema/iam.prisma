@@ -875,6 +875,7 @@ model User {
   salesAgentsAsStaff               SalesAgent[]               @relation("SalesAgentStaffUser")
   salesAgentLinks                  SalesAgentLink[]           @relation("SalesAgentLinkCustomer")
   salesAgentLeadsConverted         SalesAgentLead[]           @relation("SalesAgentLeadConvertedUser")
+  salesAgentLeadActivities         SalesAgentLeadActivity[]   @relation("SalesAgentLeadActivityCreatedBy")
   salesAgentStatementsApproved     SalesAgentStatement[]      @relation("SalesAgentStatementApprovedBy")
   // --- end Sales agents
 
