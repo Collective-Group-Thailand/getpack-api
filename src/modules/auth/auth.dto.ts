@@ -306,6 +306,66 @@ export class LineLoginDto {
   client?: AuthClientValue;
 }
 
+// --- storefront → agent zone hand-off (D-467) -------------------------------------------------------
+const FINGERPRINT_DOC =
+  'Opaque device fingerprint chosen by the web server (e.g. a hash of the agent-zone device cookie id and the ' +
+  'user agent); the same string must be sent to redeem. Only its SHA-256 is stored.';
+
+export class CreateHandoffDto {
+  @ApiProperty({ enum: HANDOFF_TARGETS, enumName: 'HandoffTarget', example: 'agent' })
+  @IsIn(HANDOFF_TARGETS)
+  target!: (typeof HANDOFF_TARGETS)[number];
+
+  @ApiProperty({
+    example: 'fp_example_7c1e9b1f3c4d5e6f',
+    minLength: 16,
+    maxLength: 512,
+    description: FINGERPRINT_DOC,
+  })
+  @IsString()
+  @MinLength(16)
+  @MaxLength(512)
+  fingerprint!: string;
+}
+
+export class HandoffCodeDto {
+  @ApiProperty({
+    example: 'hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl',
+    description:
+      'One-time code (single use, shown once); pass it to the target zone’s server, never in a URL that is logged',
+  })
+  code!: string;
+
+  @ApiProperty({
+    format: 'date-time',
+    example: '2026-11-03T14:06:00+07:00',
+    description: 'Setting `auth.handoff_code_ttl_seconds` (60 s)',
+  })
+  expiresAt!: string;
+
+  @ApiProperty({ enum: HANDOFF_TARGETS, enumName: 'HandoffTarget', example: 'agent' })
+  target!: (typeof HANDOFF_TARGETS)[number];
+}
+
+export class RedeemHandoffDto {
+  @ApiProperty({ example: 'hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl', maxLength: 128 })
+  @IsString()
+  @MinLength(1)
+  @MaxLength(128)
+  code!: string;
+
+  @ApiProperty({
+    example: 'fp_example_7c1e9b1f3c4d5e6f',
+    minLength: 16,
+    maxLength: 512,
+    description: FINGERPRINT_DOC,
+  })
+  @IsString()
+  @MinLength(16)
+  @MaxLength(512)
+  fingerprint!: string;
+}
+
 // --- tokens ---------------------------------------------------------------------------------------
 export class RefreshDto {
   @ApiProperty({ example: REFRESH_TOKEN })

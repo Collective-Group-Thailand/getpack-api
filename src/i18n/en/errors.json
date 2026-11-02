@@ -117,6 +117,10 @@
     "identity_not_unlinkable": {
       "title": "Sign-in method cannot be removed",
       "detail": "The phone number of the account cannot be unlinked."
+    },
+    "handoff_invalid": {
+      "title": "Could not open getpack Agent",
+      "detail": "This sign-in code can no longer be used. Tap “Open getpack Agent” on getpack again, or sign in in the app."
     }
   },
   "validation": {
@@ -2135,6 +2139,10 @@
     "phone_in_use": {
       "title": "Phone used by another account",
       "detail": "This number belongs to another getpack account; sign in with it instead, or use another number"
+    },
+    "ended": {
+      "title": "Agent account ended",
+      "detail": "This agent account has ended. Your commission statements and withholding certificates (50 ทวิ) stay available for the record-keeping period."
     }
   },
   "documents": {

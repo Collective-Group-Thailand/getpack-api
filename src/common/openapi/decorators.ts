@@ -21,6 +21,7 @@ export const EXT = {
   successHeaders: 'x-getpack-success-headers',
   public: 'x-getpack-public',
   optionalAuth: 'x-getpack-optional-auth',
+  requiredAuth: 'x-getpack-required-auth',
   unthrottled: 'x-getpack-unthrottled',
   async: 'x-getpack-async',
 } as const;
@@ -163,6 +164,17 @@ export function ApiPublic() {
 /** Anonymous or with a bearer token of `audience` (`security: [{}, { audience: [] }]`). */
 export function ApiOptionalAuth(audience: 'customer' | 'staff' | 'partner') {
   return ApiExtension(EXT.optionalAuth, audience);
+}
+
+/**
+ * An operation on a public surface (`/v1/auth`) that needs a bearer token of `audience`
+ * (`security: [{ audience: [] }]`, 401 documented). Pair with `@OptionalAuth(audience)` and `@CurrentActor()`.
+ */
+export function ApiRequiredAuth(audience: 'customer' | 'staff' | 'partner') {
+  return applyDecorators(
+    ApiExtension(EXT.requiredAuth, audience),
+    ext(EXT.errors, 'requiredAuth', ['auth.unauthenticated', 'auth.token_expired'] satisfies ErrorCode[]),
+  );
 }
 
 /** Operation excluded from rate limiting (pair with `@SkipThrottle()`): no 429 / rate-limit headers. */

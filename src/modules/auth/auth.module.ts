@@ -6,6 +6,7 @@ import { AuthTokensService } from './auth-tokens.service';
 import { AuthGuard } from './guards/auth.guard';
 import { ClientCredentialsService } from './login/client-credentials.service';
 import { CustomerLoginService } from './login/customer-login.service';
+import { HandoffService } from './login/handoff.service';
 import { OtpService } from './login/otp.service';
 import { PasswordLoginService } from './login/password-login.service';
 import { PasswordService } from './password.service';
@@ -24,6 +25,7 @@ const SERVICES = [
   OtpService,
   PasswordLoginService,
   CustomerLoginService,
+  HandoffService,
   ClientCredentialsService,
   AuthGuard,
 ];

@@ -1,8 +1,8 @@
-import { OptionalActor, OptionalAuth } from '@common/auth/auth.decorators';
+import { CurrentActor, OptionalActor, OptionalAuth } from '@common/auth/auth.decorators';
 import { type Actor } from '@common/context/actor';
 import { RequestContext } from '@common/context/request-context';
 import { DomainException } from '@common/errors/domain.exception';
-import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
+import { ApiEndpoint, ApiRequiredAuth, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { toBangkokIso } from '@common/time/bangkok';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
@@ -10,15 +10,19 @@ import { ApiBody } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 
 import {
+  CreateHandoffDto,
   CUSTOMER_TOKEN_PAIR_EXAMPLE,
   CustomerOtpVerifyDto,
   FirebaseLoginDto,
+  HandoffCodeDto,
   LineLoginDto,
   OtpChallengeDto,
   OtpRequestDto,
+  RedeemHandoffDto,
   TokenPairDto,
 } from '../auth.dto';
 import { CustomerLoginService } from '../login/customer-login.service';
+import { HandoffService } from '../login/handoff.service';
 import { OtpService } from '../login/otp.service';
 import { toE164 } from '../login/phone';
 import { LOGIN_THROTTLE, toTokenPairDto } from './token-pair.mapper';
@@ -40,6 +44,7 @@ export class CustomerAuthController {
   constructor(
     private readonly otp: OtpService,
     private readonly logins: CustomerLoginService,
+    private readonly handoffs: HandoffService,
   ) {}
 
   @Post('otp/request')
@@ -206,5 +211,76 @@ export class CustomerAuthController {
       });
     }
     return toTokenPairDto(await this.logins.withLine(body, signedInCustomer(actor), body.client));
+  }
+
+  // --- storefront → agent zone hand-off (D-467) ----------------------------------------------------------------
+
+  @Post('handoff')
+  @OptionalAuth('customer')
+  @ApiRequiredAuth('customer')
+  @ApiEndpoint({
+    id: 'auth.customerHandoff.create',
+    summary: 'Get a one-time code to open the agent zone',
+    description:
+      'The signed-in customer (storefront session) asks for a code that opens the agent zone (agent.getpack.co) ' +
+      'without sharing a cookie across subdomains (D-467, PLAN A-08). The code is single use, valid for the setting ' +
+      '`auth.handoff_code_ttl_seconds` (60 s), bound to `target` and to the device `fingerprint` the web server ' +
+      'sends; only SHA-256 hashes are stored. Audited (`auth.handoff_created`). Redeem it with ' +
+      '`auth.customerHandoff.redeem` from the agent zone’s server.',
+    implements: ['ADR-0004', 'D-467'],
+  })
+  @ApiBody({
+    type: CreateHandoffDto,
+    examples: { default: { value: { target: 'agent', fingerprint: 'fp_example_7c1e9b1f3c4d5e6f' } } },
+  })
+  @ApiSuccess(201, {
+    description: 'Code issued',
+    type: HandoffCodeDto,
+    example: {
+      code: 'hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl',
+      expiresAt: '2026-11-03T14:06:00+07:00',
+      target: 'agent',
+    },
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'auth.wrong_audience')
+  async createHandoff(@CurrentActor() actor: Actor, @Body() body: CreateHandoffDto): Promise<HandoffCodeDto> {
+    const me = signedInCustomer(actor);
+    if (!me) throw new DomainException('auth.unauthenticated');
+    const issued = await this.handoffs.create(me, body);
+    return { code: issued.code, expiresAt: toBangkokIso(issued.expiresAt), target: body.target };
+  }
+
+  @Post('handoff/actions/redeem')
+  @HttpCode(200)
+  @Throttle(LOGIN_THROTTLE)
+  @ApiEndpoint({
+    id: 'auth.customerHandoff.redeem',
+    summary: 'Exchange a hand-off code for an agent-zone session',
+    description:
+      'Called by the agent zone’s server with the code and the same device fingerprint (D-467). Returns a NEW token ' +
+      'pair whose session has client `agent` (its own session family, listed and revoked separately from the ' +
+      'storefront). An unknown, expired, used or other-device code, or an account no longer active, answers one ' +
+      'neutral 401 `auth.handoff_invalid`; a wrong fingerprint also uses the code up. Audited.',
+    implements: ['ADR-0004', 'D-467'],
+  })
+  @ApiBody({
+    type: RedeemHandoffDto,
+    examples: {
+      default: {
+        value: {
+          code: 'hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl',
+          fingerprint: 'fp_example_7c1e9b1f3c4d5e6f',
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Signed in to the agent zone',
+    type: TokenPairDto,
+    example: CUSTOMER_TOKEN_PAIR_EXAMPLE,
+  })
+  @ApiStandardErrors('http.bad_request', 'http.malformed_json', 'validation.failed', 'auth.handoff_invalid')
+  async redeemHandoff(@Body() body: RedeemHandoffDto): Promise<TokenPairDto> {
+    return toTokenPairDto(await this.handoffs.redeem(body.code, body.fingerprint));
   }
 }

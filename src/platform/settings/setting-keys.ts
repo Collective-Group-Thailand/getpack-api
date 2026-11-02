@@ -23,6 +23,8 @@ export interface SettingValues {
   };
   'auth.password_lockout': { maxFailedAttempts: number; lockMinutes: number };
   'auth.device_pin_policy': { length: number; maxAttempts: number; lockMinutes: number };
+  /** D-467 lifetime of a storefront → agent zone hand-off code, seconds (technical / security limit, 30–120). */
+  'auth.handoff_code_ttl_seconds': number;
   'notifications.marketing_window': { from: string; to: string; timezone?: string };
   'pricing.margin_floor_pct': string;
   'quotes.validity_days': number;
@@ -103,6 +105,8 @@ export interface SettingValues {
   };
   /** D-464 internal alert (C-Level) when commission ÷ the order's gross margin exceeds this %. Never cuts pay. */
   'agent.margin_alert_pct': string;
+  /** D-467 years after `endedAt` an ended agent still reads their statements and 50 ทวิ (tax record retention). */
+  'agents.ended_record_access_years': number;
   /** D-465 personal income tax table (net income bands, s.48(1)). */
   'tax.pit_brackets': { upTo: string | null; ratePct: string }[];
   /** D-465 s.40(2) expense deduction for the progressive withholding: rate (0.50) and cap. */

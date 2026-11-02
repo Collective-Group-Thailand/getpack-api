@@ -15,6 +15,8 @@ export interface TokenPair {
   accessTokenExpiresAt: Date;
   refreshToken: string;
   refreshTokenExpiresAt: Date;
+  /** The session family (`sid`); internal, not part of the response body. */
+  sessionFamilyId: string;
   subject: {
     id: string;
     type: TokenAudience;
@@ -116,6 +118,7 @@ export class AuthTokensService {
       accessTokenExpiresAt: access.expiresAt,
       refreshToken: session.refreshToken,
       refreshTokenExpiresAt: session.refreshTokenExpiresAt,
+      sessionFamilyId: session.familyId,
       subject: { id: publicId, type: audience, ...subject },
     };
   }

@@ -870,6 +870,17 @@
           "type": "https://errors.getpack/auth.forbidden"
         }
       },
+      "problem.auth.handoff_invalid": {
+        "summary": "auth.handoff_invalid",
+        "value": {
+          "code": "auth.handoff_invalid",
+          "detail": "รหัสเปิดแอปใช้ไม่ได้แล้ว กรุณากด “เปิด getpack Agent” จาก getpack อีกครั้ง หรือเข้าสู่ระบบในแอปโดยตรง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "เปิด getpack Agent ไม่สำเร็จ",
+          "type": "https://errors.getpack/auth.handoff_invalid"
+        }
+      },
       "problem.auth.identity_last_method": {
         "summary": "auth.identity_last_method",
         "value": {
@@ -34335,6 +34346,30 @@
         "required": [
           "termTh",
           "definitionTh"
+        ],
+        "type": "object"
+      },
+      "CreateHandoffDto": {
+        "properties": {
+          "fingerprint": {
+            "description": "Opaque device fingerprint chosen by the web server (e.g. a hash of the agent-zone device cookie id and the user agent); the same string must be sent to redeem. Only its SHA-256 is stored.",
+            "example": "fp_example_7c1e9b1f3c4d5e6f",
+            "maxLength": 512,
+            "minLength": 16,
+            "type": "string"
+          },
+          "target": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HandoffTarget"
+              }
+            ],
+            "example": "agent"
+          }
+        },
+        "required": [
+          "target",
+          "fingerprint"
         ],
         "type": "object"
       },
@@ -70963,6 +70998,41 @@
         ],
         "type": "object"
       },
+      "HandoffCodeDto": {
+        "properties": {
+          "code": {
+            "description": "One-time code (single use, shown once); pass it to the target zone’s server, never in a URL that is logged",
+            "example": "hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl",
+            "type": "string"
+          },
+          "expiresAt": {
+            "description": "Setting `auth.handoff_code_ttl_seconds` (60 s)",
+            "example": "2026-11-03T14:06:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "target": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/HandoffTarget"
+              }
+            ],
+            "example": "agent"
+          }
+        },
+        "required": [
+          "code",
+          "expiresAt",
+          "target"
+        ],
+        "type": "object"
+      },
+      "HandoffTarget": {
+        "enum": [
+          "agent"
+        ],
+        "type": "string"
+      },
       "HandoverCartonDto": {
         "properties": {
           "labelCode": {
@@ -93352,6 +93422,28 @@
           "rejected"
         ],
         "type": "string"
+      },
+      "RedeemHandoffDto": {
+        "properties": {
+          "code": {
+            "example": "hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl",
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "fingerprint": {
+            "description": "Opaque device fingerprint chosen by the web server (e.g. a hash of the agent-zone device cookie id and the user agent); the same string must be sent to redeem. Only its SHA-256 is stored.",
+            "example": "fp_example_7c1e9b1f3c4d5e6f",
+            "maxLength": 512,
+            "minLength": 16,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "fingerprint"
+        ],
+        "type": "object"
       },
       "ReferenceConfigurationDto": {
         "properties": {
@@ -368079,6 +368171,383 @@
           }
         ],
         "summary": "Sign in with Google or Apple (Firebase ID token)",
+        "tags": [
+          "auth.customer"
+        ]
+      }
+    },
+    "/v1/auth/customer/handoff": {
+      "post": {
+        "description": "The signed-in customer (storefront session) asks for a code that opens the agent zone (agent.getpack.co) without sharing a cookie across subdomains (D-467, PLAN A-08). The code is single use, valid for the setting `auth.handoff_code_ttl_seconds` (60 s), bound to `target` and to the device `fingerprint` the web server sends; only SHA-256 hashes are stored. Audited (`auth.handoff_created`). Redeem it with `auth.customerHandoff.redeem` from the agent zone’s server.\n\nImplements: ADR-0004, D-467.",
+        "operationId": "auth.customerHandoff.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fingerprint": "fp_example_7c1e9b1f3c4d5e6f",
+                    "target": "agent"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreateHandoffDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl",
+                  "expiresAt": "2026-11-03T14:06:00+07:00",
+                  "target": "agent"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HandoffCodeDto"
+                }
+              }
+            },
+            "description": "Code issued",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.token_expired": {
+                    "$ref": "#/components/examples/problem.auth.token_expired"
+                  },
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.token_expired`, `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Get a one-time code to open the agent zone",
+        "tags": [
+          "auth.customer"
+        ]
+      }
+    },
+    "/v1/auth/customer/handoff/actions/redeem": {
+      "post": {
+        "description": "Called by the agent zone’s server with the code and the same device fingerprint (D-467). Returns a NEW token pair whose session has client `agent` (its own session family, listed and revoked separately from the storefront). An unknown, expired, used or other-device code, or an account no longer active, answers one neutral 401 `auth.handoff_invalid`; a wrong fingerprint also uses the code up. Audited.\n\nImplements: ADR-0004, D-467.",
+        "operationId": "auth.customerHandoff.redeem",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "code": "hc_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdl",
+                    "fingerprint": "fp_example_7c1e9b1f3c4d5e6f"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/RedeemHandoffDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "accessToken": "eyJhbGciOiJFZERTQSIsImtpZCI6ImV4YW1wbGUiLCJ0eXAiOiJhdCtqd3QifQ.eyJzdWIiOiJleGFtcGxlIn0.c2lnbmF0dXJl",
+                  "accessTokenExpiresAt": "2026-09-23T14:15:00+07:00",
+                  "refreshToken": "rt_example_Zm9vYmFyYmF6cXV4cXV1eGNvcmdlZ3JhdWx0",
+                  "refreshTokenExpiresAt": "2026-09-23T16:05:00+07:00",
+                  "subject": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b",
+                    "permissions": [],
+                    "roles": [],
+                    "scopes": [],
+                    "type": "customer"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPairDto"
+                }
+              }
+            },
+            "description": "Signed in to the agent zone",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.handoff_invalid": {
+                    "$ref": "#/components/examples/problem.auth.handoff_invalid"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.handoff_invalid`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Exchange a hand-off code for an agent-zone session",
         "tags": [
           "auth.customer"
         ]

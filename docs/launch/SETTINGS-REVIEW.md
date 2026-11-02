@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**137 settings** — 83 confirmed · 22 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**139 settings** — 84 confirmed · 23 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -13,6 +13,7 @@
 |---|---|---|---|---|---|
 | `advisory.rule_set` | `— (not set)` | not set | superadmin | D-188, D-237, D-239 | D-237 Structure Advisor rule set: McKee constant, ± uncertainty band %, eligible corrugate formulas, thin-margin threshold % and one factor (0 < f ≤ 1) per band of humidity, storage time, pallet pattern, pallet overhang, transport mode and fragility; not seeded — no advice until a Superadmin sets it after the D-189 sign-off |
 | `agent.margin_alert_pct` | `30.00` | confirmed | finance_manager | D-464 | D-464 C-Level is alerted when an order’s agent commission exceeds this % of its gross margin; the commission is never reduced (owner 2026-11-01) |
+| `agents.ended_record_access_years` | `5` | confirmed | finance_manager | D-467 | D-467 years after an agent ended during which they still read their commission statements and download their 50 ทวิ (withholding certificates) in the agent zone; everything else is refused. 5 = the tax record retention (Revenue Code s.87/3), 5–10 |
 | `agents.rules` | `{"linkCookieDays":90,"newCustomersOnly":true,"leadProtectionDays":60,"maxOpenLeads":50,"paymentTermsDays":15}` | proposed | sales_manager | D-417, D-420 | D-417 / D-420 sales agent programme: days the web keeps an agent link, attribution of new customers only, days a registered lead is protected, open leads per agent, payment terms of commission bills (proposed) |
 | `analytics.journey_alert_min_sessions` | `30` | confirmed | superadmin | D-303 | D-303 consented sessions at the first step a journey needs in both weeks before a week-over-week drop alerts (small samples swing) |
 | `analytics.journey_drop_alert_pct` | `15` | confirmed | superadmin | D-303, D-217 | D-303 a scorecard journey whose first-to-last conversion fell by more than this % against the week before raises ops signal journey_conversion_drops (docs/ux/competitive-scorecard.md §4) |
@@ -39,6 +40,7 @@
 | `audit.business_hours` | `{"start":"08:00","end":"18:00","weekdays":[1,2,3,4,5]}` | proposed | finance_manager | D-033 | D-033 / accounting-design §8 exception report: manual journals posted outside these hours (Asia/Bangkok, ISO weekdays) are listed for the auditor (proposed) |
 | `auth.access_token_ttl_seconds` | `600` | proposed | superadmin | D-063 | D-063 / ADR-0004 access-token lifetime in seconds (contract §4: 10–15 minutes) |
 | `auth.device_pin_policy` | `{"length":6,"maxAttempts":5,"lockMinutes":15}` | proposed | superadmin | D-063 | D-063 / ADR-0004 optional partner device PIN: length and attempt limit |
+| `auth.handoff_code_ttl_seconds` | `60` | proposed | superadmin | D-467 | D-467 how long a one-time code that moves a signed-in customer from the storefront to the agent zone (agent.getpack.co) stays valid, in seconds; single use, bound to the device. A technical / security limit, not a business value: 60 (PLAN A-08), 30–120 |
 | `auth.otp_policy` | `{"codeLength":6,"expirySeconds":300,"maxAttempts":5,"resendCooldownSeconds":60,"maxPerPhonePerHour":5,"maxPerIpPerHour":20}` | proposed | superadmin | D-063 | D-063 / ADR-0004 customer phone OTP: expiry, attempts and rate limits |
 | `auth.password_lockout` | `{"maxFailedAttempts":5,"lockMinutes":15}` | proposed | superadmin | D-063 | D-063 / ADR-0004 staff and partner password lockout after failed logins |
 | `auth.refresh_token_lifetimes` | `{"staff":{"absoluteHours":12,"idleHours":2},"partner":{"absoluteHours":168,"idleHours":24},"customer":{"absoluteHours":720,"idleHours":168}}` | proposed | superadmin | D-063 | D-063 / ADR-0004 refresh-token absolute and idle lifetimes per audience (hours) |
