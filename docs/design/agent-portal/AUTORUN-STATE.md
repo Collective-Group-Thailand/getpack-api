@@ -5,7 +5,7 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 ## Status
 
 - Started: 2026-11-02 22:18 Asia/Bangkok
-- Current phase: P6
+- Current phase: P7
 - Step: plan
 - Overall: RUNNING
 
@@ -35,11 +35,12 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 | P3 | feat/agent-p3-leads → main | merge 07462222 | merge ef7e802d |
 | P4 | feat/agent-p4-sales-desk → main | merge 10ecc5f2 | merge a28f88f4 |
 | P5 | feat/agent-p5-capture → main | merge 45df1407 | merge c5dd9765 |
+| P6 | feat/agent-p6-pnl → main | merge 4830e6b4 | merge 518d028d |
 
 ## Last commit per repo
 
-- getpack-api: 45df1407 (main, P5 merged)
-- getpack-web: c5dd9765 (main, P5 merged)
+- getpack-api: 4830e6b4 (main, P6 merged)
+- getpack-web: 518d028d (main, P6 merged)
 
 ## BLOCKED
 
@@ -58,6 +59,8 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 5. Card-scan photo retention (7 days, proposed) → PDPA owner; production image needs tesseract-ocr-tha (Dockerfile updated).
 6. Bad-debt provision % and approval amount caps unset (no decision); LINE OA sales tag and partner price-lock confirmation deferred.
 7. Capture flags seeded OFF; scoring weights / idle days proposed; pricing-page scoring needs a consent purpose.
+8. P&L: five unmapped GL lines, paid-up capital, CPA check of the SME table, English tooltips.
+- Owner instruction 2026-11-04 01:07: run P7 after P6; take decisions as the relevant team lead and recommend.
 - Note: the shell's default Node became 22 after a session restart; gates run with /opt/node24/bin first on PATH.
 
 ## Decisions recorded
@@ -68,3 +71,4 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 - D-468 (P3)
 - D-469, D-470 (P4)
 - D-471 (P5)
+- D-472 (P6)
