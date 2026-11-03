@@ -1664,6 +1664,31 @@ export const PERMISSIONS = [
     description: 'Publish a submitted playbook card written or submitted by someone else (maker-checker)',
     decisionRefs: ['D-470'],
   },
+  // --- Management P&L planner (D-472, PLAN A-14)
+  {
+    key: 'pnl.read',
+    audience: 'staff',
+    description:
+      'See management P&L plans: the grid with auto, calculated, manual and override cells, tooltips, plan vs actual and the drill-down to source records (every view logged)',
+    sensitive: true,
+    decisionRefs: ['D-472', 'D-141'],
+  },
+  {
+    key: 'pnl.manage',
+    audience: 'staff',
+    description:
+      'Create, copy, recompute and lock P&L plans; enter manual values (note on the first entry) and override auto values (with a reason); write variance notes',
+    sensitive: true,
+    decisionRefs: ['D-472'],
+  },
+  {
+    key: 'pnl.export',
+    audience: 'staff',
+    description:
+      'Export a P&L plan or its plan vs actual as XLSX / PDF, watermarked with the viewer’s name and the time (logged and audited)',
+    sensitive: true,
+    decisionRefs: ['D-472'],
+  },
   // --- B6.3 launch readiness (D-113)
   {
     key: 'ops.read',

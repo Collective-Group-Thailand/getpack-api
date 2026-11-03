@@ -497,8 +497,8 @@ const TEXT_SCHEMA = {
   additionalProperties: false,
   required: ['th', 'en'],
   properties: {
-    th: { type: 'string', minLength: 1, maxLength: 1000 },
-    en: { type: ['string', 'null'], maxLength: 1000 },
+    th: { type: 'string', minLength: 1, maxLength: 500 },
+    en: { type: ['string', 'null'], minLength: 1, maxLength: 500 },
   },
 } as const;
 

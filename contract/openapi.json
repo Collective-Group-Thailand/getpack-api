@@ -4126,6 +4126,61 @@
           "type": "https://errors.getpack/payouts.run_invalid_status"
         }
       },
+      "problem.pnl.line_read_only": {
+        "summary": "pnl.line_read_only",
+        "value": {
+          "code": "pnl.line_read_only",
+          "detail": "บรรทัดนี้คำนวณจากบรรทัดอื่นหรือเป็นข้อมูลอ้างอิง จึงกรอกเองไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "บรรทัดนี้แก้ไขไม่ได้",
+          "type": "https://errors.getpack/pnl.line_read_only"
+        }
+      },
+      "problem.pnl.not_computed": {
+        "summary": "pnl.not_computed",
+        "value": {
+          "code": "pnl.not_computed",
+          "detail": "คำนวณแผนจากข้อมูลในระบบก่อนล็อก",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "แผนยังไม่ได้คำนวณ",
+          "type": "https://errors.getpack/pnl.not_computed"
+        }
+      },
+      "problem.pnl.note_required": {
+        "summary": "pnl.note_required",
+        "value": {
+          "code": "pnl.note_required",
+          "detail": "การกรอกค่าครั้งแรกในบรรทัดที่ระบบไม่มีข้อมูลต้องระบุที่มาของตัวเลข",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ต้องระบุหมายเหตุ",
+          "type": "https://errors.getpack/pnl.note_required"
+        }
+      },
+      "problem.pnl.plan_locked": {
+        "summary": "pnl.plan_locked",
+        "value": {
+          "code": "pnl.plan_locked",
+          "detail": "แผนที่ล็อกแล้วแก้ไขไม่ได้ คัดลอกเป็นฉบับใหม่เพื่อปรับแผน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "แผนถูกล็อกแล้ว",
+          "type": "https://errors.getpack/pnl.plan_locked"
+        }
+      },
+      "problem.pnl.reason_required": {
+        "summary": "pnl.reason_required",
+        "value": {
+          "code": "pnl.reason_required",
+          "detail": "การแก้ทับค่าที่ระบบคำนวณต้องระบุเหตุผลทุกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "ต้องระบุเหตุผล",
+          "type": "https://errors.getpack/pnl.reason_required"
+        }
+      },
       "problem.pricing.not_instant": {
         "summary": "pricing.not_instant",
         "value": {
@@ -33058,6 +33113,37 @@
         ],
         "type": "object"
       },
+      "CopyPnlPlanDto": {
+        "properties": {
+          "name": {
+            "description": "Defaults to the source plan’s name",
+            "example": "แผนปี 2027",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "note": {
+            "example": "กรณียอดขายลด 20 %",
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scenario": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlScenario"
+              }
+            ],
+            "example": "worst"
+          }
+        },
+        "required": [
+          "scenario"
+        ],
+        "type": "object"
+      },
       "CorrectedBuyerDto": {
         "properties": {
           "address": {
@@ -37526,6 +37612,44 @@
         },
         "required": [
           "key"
+        ],
+        "type": "object"
+      },
+      "CreatePnlPlanDto": {
+        "properties": {
+          "fiscalYear": {
+            "example": 2027,
+            "maximum": 2200,
+            "minimum": 2000,
+            "type": "integer"
+          },
+          "name": {
+            "example": "แผนปี 2027",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "note": {
+            "example": "ตามเป้าที่ประชุมผู้บริหาร",
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "scenario": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlScenario"
+              }
+            ],
+            "example": "base"
+          }
+        },
+        "required": [
+          "name",
+          "fiscalYear",
+          "scenario"
         ],
         "type": "object"
       },
@@ -68324,6 +68448,30 @@
         ],
         "type": "object"
       },
+      "ExportPnlPlanDto": {
+        "properties": {
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlExportFormat"
+              }
+            ],
+            "example": "xlsx"
+          },
+          "view": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlExportView"
+              }
+            ],
+            "default": "plan"
+          }
+        },
+        "required": [
+          "format"
+        ],
+        "type": "object"
+      },
       "FaceAnchorDto": {
         "properties": {
           "faceId": {
@@ -87299,6 +87447,1073 @@
         },
         "required": [
           "th"
+        ],
+        "type": "object"
+      },
+      "PnlActualBasis": {
+        "description": "`ledger` posted figures · `calculated` from actual lines · `includes_plan_values` a formula that used the plan value of a line with no actual source · `none` no actual source · `not_yet` a future month",
+        "enum": [
+          "ledger",
+          "calculated",
+          "includes_plan_values",
+          "none",
+          "not_yet"
+        ],
+        "type": "string"
+      },
+      "PnlCellDto": {
+        "properties": {
+          "asOf": {
+            "description": "ข้อมูลถึง",
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "autoValue": {
+            "description": "The system’s value, shown beside an override; null: no system data",
+            "example": "1000000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "drillable": {
+            "description": "Has source records (listCellSources)",
+            "example": true,
+            "type": "boolean"
+          },
+          "etag": {
+            "description": "Send as If-Match to updateCell",
+            "example": "\"q2b0m8vP1nKk7yYt3tU9Zw\"",
+            "type": "string"
+          },
+          "mode": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlCellMode"
+              }
+            ],
+            "description": "ระบบ (auto) · คำนวณ (calculated) · กรอกเอง (manual) · แก้ทับ (override)",
+            "example": "auto"
+          },
+          "month": {
+            "example": "2027-01",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          },
+          "note": {
+            "description": "Manual note or override reason",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "periodOpen": {
+            "example": false,
+            "type": "boolean"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlCellSource"
+              }
+            ],
+            "example": "gl"
+          },
+          "sourceRef": {
+            "additionalProperties": true,
+            "description": "Inputs behind the auto value (accounts, window, ratios, counts) for the tooltip",
+            "example": {
+              "accounts": [
+                "4110",
+                "4120"
+              ],
+              "lines": 42
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "updatedAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "updatedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Who entered or overrode the value"
+          },
+          "value": {
+            "description": "THB, days or percent per the line’s unit",
+            "example": "1000000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "month",
+          "value",
+          "mode",
+          "autoValue",
+          "source",
+          "sourceRef",
+          "note",
+          "periodOpen",
+          "asOf",
+          "updatedBy",
+          "updatedAt",
+          "etag",
+          "drillable"
+        ],
+        "type": "object"
+      },
+      "PnlCellMode": {
+        "description": "ระบบ (auto) · คำนวณ (calculated) · กรอกเอง (manual) · แก้ทับ (override)",
+        "enum": [
+          "auto",
+          "calculated",
+          "manual",
+          "override"
+        ],
+        "type": "string"
+      },
+      "PnlCellSource": {
+        "enum": [
+          "gl",
+          "pipeline_run_rate",
+          "trailing_ratio",
+          "trailing_average",
+          "commission_rates",
+          "fixed_assets",
+          "balances",
+          "formula",
+          "none"
+        ],
+        "type": "string"
+      },
+      "PnlExportFormat": {
+        "enum": [
+          "xlsx",
+          "pdf"
+        ],
+        "type": "string"
+      },
+      "PnlExportView": {
+        "enum": [
+          "plan",
+          "variance"
+        ],
+        "type": "string"
+      },
+      "PnlGlAccountDto": {
+        "properties": {
+          "code": {
+            "example": "4110",
+            "type": "string"
+          },
+          "excludeRules": {
+            "description": "Journal lines of these posting rules are left out",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "nameEn": {
+            "example": "Sales — made-to-order packaging",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "nameTh": {
+            "description": "null: not in the chart",
+            "example": "รายได้ — บรรจุภัณฑ์สั่งผลิต",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "onlyRules": {
+            "description": "Only journal lines of these posting rules",
+            "example": [],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "code",
+          "nameTh",
+          "nameEn",
+          "onlyRules",
+          "excludeRules"
+        ],
+        "type": "object"
+      },
+      "PnlGridDto": {
+        "properties": {
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PnlGridLineDto"
+            },
+            "type": "array"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/PnlMonthDto"
+            },
+            "type": "array"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PnlPlanDto"
+          },
+          "summary": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlSummaryDto"
+              }
+            ],
+            "description": "Year figures of the summary strip"
+          }
+        },
+        "required": [
+          "plan",
+          "currency",
+          "months",
+          "lines",
+          "summary"
+        ],
+        "type": "object"
+      },
+      "PnlGridLineDto": {
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/PnlCellDto"
+            },
+            "type": "array"
+          },
+          "line": {
+            "$ref": "#/components/schemas/PnlLineDto"
+          },
+          "total": {
+            "description": "Year column: money summed; ratios / days recomputed on the year; bad debt = the last month",
+            "example": "12000000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "line",
+          "cells",
+          "total"
+        ],
+        "type": "object"
+      },
+      "PnlLineCalc": {
+        "description": "`source`: from the system or entered; `formula`: calculated from other lines (read-only)",
+        "enum": [
+          "source",
+          "formula"
+        ],
+        "type": "string"
+      },
+      "PnlLineCatalogueDto": {
+        "properties": {
+          "effectiveFrom": {
+            "description": "The catalogue version in force since",
+            "example": "2026-11-03T00:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PnlLineDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "effectiveFrom",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "PnlLineDto": {
+        "properties": {
+          "calc": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlLineCalc"
+              }
+            ],
+            "description": "`source`: from the system or entered; `formula`: calculated from other lines (read-only)",
+            "example": "source"
+          },
+          "definition": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              }
+            ],
+            "description": "Tooltip: what the line is"
+          },
+          "editable": {
+            "description": "A person may enter (manual) or override (auto) its cells",
+            "example": true,
+            "type": "boolean"
+          },
+          "formula": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              }
+            ],
+            "description": "Tooltip: how it is calculated"
+          },
+          "glAccounts": {
+            "items": {
+              "$ref": "#/components/schemas/PnlGlAccountDto"
+            },
+            "type": "array"
+          },
+          "group": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlLineGroup"
+              }
+            ],
+            "example": "revenue"
+          },
+          "howToFill": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Tooltip for an empty manual cell (lines a person may enter)"
+          },
+          "inTotal": {
+            "description": "Part of the P&L; memo lines are not",
+            "example": true,
+            "type": "boolean"
+          },
+          "key": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlLineKey"
+              }
+            ],
+            "example": "revenue_goods"
+          },
+          "labelEn": {
+            "example": "Revenue — goods",
+            "type": "string"
+          },
+          "labelTh": {
+            "example": "รายได้จากการขายสินค้า",
+            "type": "string"
+          },
+          "mapped": {
+            "description": "Has GL accounts; an editable line without them is filled by hand",
+            "example": false,
+            "type": "boolean"
+          },
+          "source": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LocalisedTextDto"
+              }
+            ],
+            "description": "Tooltip: where the system takes it from"
+          },
+          "unit": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlLineUnit"
+              }
+            ],
+            "example": "money"
+          }
+        },
+        "required": [
+          "key",
+          "group",
+          "unit",
+          "calc",
+          "inTotal",
+          "editable",
+          "mapped",
+          "labelTh",
+          "labelEn",
+          "definition",
+          "formula",
+          "source",
+          "howToFill",
+          "glAccounts"
+        ],
+        "type": "object"
+      },
+      "PnlLineGroup": {
+        "enum": [
+          "revenue",
+          "cost_of_sales",
+          "gross_margin",
+          "selling_expenses",
+          "admin_expenses",
+          "operating_profit",
+          "finance_and_tax",
+          "net_profit",
+          "memo"
+        ],
+        "type": "string"
+      },
+      "PnlLineKey": {
+        "enum": [
+          "revenue_goods",
+          "revenue_shipping",
+          "discounts",
+          "net_revenue",
+          "factory_cost",
+          "shipping_cost",
+          "payment_fees",
+          "gross_margin",
+          "agent_commission",
+          "employee_commission",
+          "marketing",
+          "salaries",
+          "rent_utilities",
+          "software_cloud",
+          "professional_fees",
+          "depreciation",
+          "other_opex",
+          "ebit",
+          "finance_cost",
+          "cit_estimate",
+          "net_profit",
+          "memo_credit_cost",
+          "memo_bad_debt",
+          "memo_ebitda",
+          "memo_commission_ratio",
+          "memo_dso",
+          "memo_dpo",
+          "memo_ccc",
+          "memo_break_even"
+        ],
+        "type": "string"
+      },
+      "PnlLineUnit": {
+        "enum": [
+          "money",
+          "percent",
+          "days"
+        ],
+        "type": "string"
+      },
+      "PnlMonthDto": {
+        "properties": {
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlMonthKind"
+              }
+            ],
+            "example": "actual"
+          },
+          "month": {
+            "example": "2027-01",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          },
+          "periodOpen": {
+            "description": "Actual month whose period is not closed yet: show \"ยังไม่ปิดงวด\"",
+            "example": false,
+            "type": "boolean"
+          },
+          "periodStatus": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PeriodStatus"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "closed"
+          }
+        },
+        "required": [
+          "month",
+          "kind",
+          "periodOpen",
+          "periodStatus"
+        ],
+        "type": "object"
+      },
+      "PnlMonthKind": {
+        "enum": [
+          "actual",
+          "forecast"
+        ],
+        "type": "string"
+      },
+      "PnlPlanDto": {
+        "properties": {
+          "computedAt": {
+            "description": "Last refresh from the system (null: never computed)",
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "copiedFromId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-11-03T09:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "etag": {
+            "description": "Send as If-Match to update, recompute, lock, delete",
+            "example": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+            "type": "string"
+          },
+          "fiscalYear": {
+            "description": "Calendar year (months Jan–Dec, Asia/Bangkok)",
+            "example": 2027,
+            "type": "integer"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lockedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lockedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "example": "แผนปี 2027",
+            "type": "string"
+          },
+          "note": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "owner": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "scenario": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlScenario"
+              }
+            ],
+            "example": "base"
+          },
+          "snapshotSha256": {
+            "description": "SHA-256 (hex) of the cells at lock",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlPlanStatus"
+              }
+            ],
+            "example": "draft"
+          },
+          "updatedAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "description": "Next version of the same name, year and scenario on copy",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "fiscalYear",
+          "scenario",
+          "status",
+          "version",
+          "note",
+          "owner",
+          "copiedFromId",
+          "computedAt",
+          "lockedAt",
+          "lockedBy",
+          "snapshotSha256",
+          "etag",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PnlPlanStatus": {
+        "enum": [
+          "draft",
+          "locked"
+        ],
+        "type": "string"
+      },
+      "PnlScenario": {
+        "enum": [
+          "base",
+          "best",
+          "worst",
+          "custom"
+        ],
+        "type": "string"
+      },
+      "PnlSourceItemDto": {
+        "properties": {
+          "accountCode": {
+            "example": "4110",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "amount": {
+            "description": "THB on the line’s side (weighted for leads)",
+            "example": "107000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "code": {
+            "description": "Human key (entry no, asset no…)",
+            "example": "JE202701-000012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "date": {
+            "example": "2027-01-15",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "example": "ขายสินค้า TR2701-00012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "description": "gl_line: journal entry id · commission · lead · fixed_asset: their id · customer_run_rate: null",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000000e1",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlSourceKind"
+              }
+            ],
+            "example": "gl_line"
+          },
+          "orderCode": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "orderId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceDocumentId": {
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceDocumentNo": {
+            "example": "TR2701-00012",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sourceDocumentType": {
+            "example": "customer_document",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "kind",
+          "id",
+          "code",
+          "date",
+          "amount",
+          "accountCode",
+          "description",
+          "sourceDocumentType",
+          "sourceDocumentId",
+          "sourceDocumentNo",
+          "orderId",
+          "orderCode"
+        ],
+        "type": "object"
+      },
+      "PnlSourceKind": {
+        "enum": [
+          "gl_line",
+          "commission",
+          "lead",
+          "fixed_asset",
+          "customer_run_rate"
+        ],
+        "type": "string"
+      },
+      "PnlSummaryDto": {
+        "properties": {
+          "breakEvenRevenue": {
+            "example": "8400000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "cashConversionDays": {
+            "description": "Days",
+            "example": "10.67",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "citSmeApplied": {
+            "description": "The CIT estimate used the SME bands",
+            "example": false,
+            "type": "boolean"
+          },
+          "contributionAfterCommission": {
+            "description": "“กำไรหลังหักค่าคอม”",
+            "example": "2500000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contributionAfterCommissionPct": {
+            "example": "20.83",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ebitda": {
+            "example": "900000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "emptyManualCells": {
+            "description": "Editable cells without a value (กรอกค่า)",
+            "example": 24,
+            "type": "integer"
+          },
+          "grossMargin": {
+            "example": "3000000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "grossMarginPct": {
+            "description": "Percent of net revenue",
+            "example": "25.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "netProfit": {
+            "example": "700000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "netRevenue": {
+            "example": "12000000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "netRevenue",
+          "grossMargin",
+          "grossMarginPct",
+          "contributionAfterCommission",
+          "contributionAfterCommissionPct",
+          "ebitda",
+          "netProfit",
+          "cashConversionDays",
+          "breakEvenRevenue",
+          "citSmeApplied",
+          "emptyManualCells"
+        ],
+        "type": "object"
+      },
+      "PnlVarianceCellDto": {
+        "properties": {
+          "actual": {
+            "example": "1100000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "actualBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/PnlActualBasis"
+              }
+            ],
+            "description": "`ledger` posted figures · `calculated` from actual lines · `includes_plan_values` a formula that used the plan value of a line with no actual source · `none` no actual source · `not_yet` a future month",
+            "example": "ledger"
+          },
+          "month": {
+            "example": "2027-01",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "type": "string"
+          },
+          "note": {
+            "example": "ลูกค้ารายใหญ่สั่งเร็วกว่าแผน",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "noteBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "noteUpdatedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "plan": {
+            "description": "The locked (or current) plan value",
+            "example": "1000000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variance": {
+            "description": "actual − plan",
+            "example": "100000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "variancePct": {
+            "description": "variance ÷ |plan| × 100; null when plan is 0",
+            "example": "10.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "month",
+          "plan",
+          "actual",
+          "variance",
+          "variancePct",
+          "actualBasis",
+          "note",
+          "noteBy",
+          "noteUpdatedAt"
+        ],
+        "type": "object"
+      },
+      "PnlVarianceDto": {
+        "properties": {
+          "asOf": {
+            "description": "Actuals as of",
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "currency": {
+            "example": "THB",
+            "type": "string"
+          },
+          "lines": {
+            "items": {
+              "$ref": "#/components/schemas/PnlVarianceLineDto"
+            },
+            "type": "array"
+          },
+          "months": {
+            "items": {
+              "$ref": "#/components/schemas/PnlMonthDto"
+            },
+            "type": "array"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/PnlPlanDto"
+          }
+        },
+        "required": [
+          "plan",
+          "currency",
+          "asOf",
+          "months",
+          "lines"
+        ],
+        "type": "object"
+      },
+      "PnlVarianceLineDto": {
+        "properties": {
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/PnlVarianceCellDto"
+            },
+            "type": "array"
+          },
+          "line": {
+            "$ref": "#/components/schemas/PnlLineDto"
+          },
+          "totalActual": {
+            "description": "Actual of the actual months",
+            "example": "3100000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalPlan": {
+            "description": "Plan of the actual months",
+            "example": "3000000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalVariance": {
+            "example": "100000.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "totalVariancePct": {
+            "example": "3.33",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "line",
+          "cells",
+          "totalPlan",
+          "totalActual",
+          "totalVariance",
+          "totalVariancePct"
         ],
         "type": "object"
       },
@@ -107003,6 +108218,20 @@
           "claimWindowDays",
           "retentionPct",
           "retentionReleaseDays"
+        ],
+        "type": "object"
+      },
+      "SetPnlVarianceNoteDto": {
+        "properties": {
+          "note": {
+            "example": "ลูกค้ารายใหญ่สั่งเร็วกว่าแผน",
+            "maxLength": 1000,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "note"
         ],
         "type": "object"
       },
@@ -126981,6 +128210,51 @@
             "example": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
             "maxLength": 200,
             "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePnlCellDto": {
+        "properties": {
+          "note": {
+            "description": "Required (≥ 3 characters) on the first manual entry and on every override",
+            "example": "พนักงาน 5 คน × 50,000",
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "value": {
+            "description": "THB, ≤ 2 places; null reverts an override to the auto value or clears a manual value",
+            "example": "250000.00",
+            "pattern": "^-?\\d{1,12}(\\.\\d{1,2})?$",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "type": "object"
+      },
+      "UpdatePnlPlanDto": {
+        "properties": {
+          "name": {
+            "example": "แผนปี 2027 (ปรับ)",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "note": {
+            "example": "ปรับตามยอดไตรมาส 1",
+            "maxLength": 1000,
+            "type": [
+              "string",
+              "null"
+            ]
           }
         },
         "type": "object"
@@ -272646,6 +273920,4253 @@
         "summary": "Short-lived URL of a Studio render preview",
         "tags": [
           "admin.files"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/lines": {
+      "get": {
+        "description": "Every line in display order with its group, unit, whether it is calculated or entered, and the tooltip fields `definition`, `formula`, `source`, `howToFill` (lines a person may enter) and `glAccounts` from the setting `pnl.line_catalogue` in force (D-472). A line without accounts is filled by hand.\n\nImplements: D-472.",
+        "operationId": "admin.pnl.listLines",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "effectiveFrom": "2026-11-03T00:00:00+07:00",
+                  "lines": [
+                    {
+                      "calc": "source",
+                      "definition": {
+                        "en": null,
+                        "th": "มูลค่าสินค้าที่ออกใบกำกับภาษีแล้วในเดือนนั้น ก่อนหักส่วนลด"
+                      },
+                      "editable": true,
+                      "formula": {
+                        "en": null,
+                        "th": "Σ ยอดสินค้าก่อน VAT ตามใบกำกับ"
+                      },
+                      "glAccounts": [
+                        {
+                          "code": "4110",
+                          "excludeRules": [],
+                          "nameEn": "Sales — made-to-order packaging",
+                          "nameTh": "รายได้ — บรรจุภัณฑ์สั่งผลิต",
+                          "onlyRules": []
+                        }
+                      ],
+                      "group": "revenue",
+                      "howToFill": {
+                        "en": null,
+                        "th": "ใส่ยอดขายที่คาดไว้ ระบุว่ามาจากเป้าหรือดีลไหน"
+                      },
+                      "inTotal": true,
+                      "key": "revenue_goods",
+                      "labelEn": "Revenue — goods",
+                      "labelTh": "รายได้จากการขายสินค้า",
+                      "mapped": true,
+                      "source": {
+                        "en": null,
+                        "th": "GL รายได้ขายสินค้า; forecast = pipeline × ความน่าจะเป็นตามขั้น + ยอดสั่งซ้ำเฉลี่ย 3 เดือน"
+                      },
+                      "unit": "money"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlLineCatalogueDto"
+                }
+              }
+            },
+            "description": "Line catalogue",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the P&L lines with their tooltips",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.read"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans": {
+      "get": {
+        "description": "Plans by fiscal year, scenario and status, newest year first (deleted drafts excluded) (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.listPlans",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "fiscalYear",
+            "required": false,
+            "schema": {
+              "example": 2027,
+              "maximum": 2200,
+              "minimum": 2000,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PnlScenario"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PnlPlanStatus"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "computedAt": "2026-11-03T10:00:00+07:00",
+                      "copiedFromId": null,
+                      "createdAt": "2026-11-03T09:00:00+07:00",
+                      "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                      "fiscalYear": 2027,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                      "lockedAt": null,
+                      "lockedBy": null,
+                      "name": "แผนปี 2027",
+                      "note": null,
+                      "owner": {
+                        "displayName": "การเงิน ทดสอบ",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                      },
+                      "scenario": "base",
+                      "snapshotSha256": null,
+                      "status": "draft",
+                      "updatedAt": "2026-11-03T10:00:00+07:00",
+                      "version": 1
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PnlPlanDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List P&L plans",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.read"
+        ]
+      },
+      "post": {
+        "description": "A draft for a calendar year and scenario, filled at once from the system: actual months from the posted ledger, forecast months from the pipeline, run rate, trailing ratios / averages and the fixed-asset register; lines without system data are left for manual entry. The same name, year and scenario takes the next version (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.createPlan",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fiscalYear": 2027,
+                    "name": "แผนปี 2027",
+                    "scenario": "base"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreatePnlPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "computedAt": "2026-11-03T10:00:00+07:00",
+                  "copiedFromId": null,
+                  "createdAt": "2026-11-03T09:00:00+07:00",
+                  "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                  "fiscalYear": 2027,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                  "lockedAt": null,
+                  "lockedBy": null,
+                  "name": "แผนปี 2027",
+                  "note": null,
+                  "owner": {
+                    "displayName": "การเงิน ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                  },
+                  "scenario": "base",
+                  "snapshotSha256": null,
+                  "status": "draft",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlPlanDto"
+                }
+              }
+            },
+            "description": "Plan",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Create a P&L plan",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.manage"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}": {
+      "delete": {
+        "description": "Soft delete of a draft (audited); a locked plan is never deleted (`pnl.plan_locked`) (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.deletePlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pnl.plan_locked": {
+                    "$ref": "#/components/examples/problem.pnl.plan_locked"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pnl.plan_locked`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Delete a draft plan",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.manage"
+        ]
+      },
+      "get": {
+        "description": "The plan with its `ETag` (also in `etag`) for update, recompute, lock and delete (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.getPlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "computedAt": "2026-11-03T10:00:00+07:00",
+                  "copiedFromId": null,
+                  "createdAt": "2026-11-03T09:00:00+07:00",
+                  "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                  "fiscalYear": 2027,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                  "lockedAt": null,
+                  "lockedBy": null,
+                  "name": "แผนปี 2027",
+                  "note": null,
+                  "owner": {
+                    "displayName": "การเงิน ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                  },
+                  "scenario": "base",
+                  "snapshotSha256": null,
+                  "status": "draft",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlPlanDto"
+                }
+              }
+            },
+            "description": "Plan",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a P&L plan",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.read"
+        ]
+      },
+      "patch": {
+        "description": "Drafts only (`pnl.plan_locked`); a new name takes its next free version (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.updatePlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "ปรับตามยอดไตรมาส 1"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePnlPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "computedAt": "2026-11-03T10:00:00+07:00",
+                  "copiedFromId": null,
+                  "createdAt": "2026-11-03T09:00:00+07:00",
+                  "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                  "fiscalYear": 2027,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                  "lockedAt": null,
+                  "lockedBy": null,
+                  "name": "แผนปี 2027",
+                  "note": null,
+                  "owner": {
+                    "displayName": "การเงิน ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                  },
+                  "scenario": "base",
+                  "snapshotSha256": null,
+                  "status": "draft",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlPlanDto"
+                }
+              }
+            },
+            "description": "Plan",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pnl.plan_locked": {
+                    "$ref": "#/components/examples/problem.pnl.plan_locked"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pnl.plan_locked`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Rename a draft plan or change its note",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.manage"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/actions/copy": {
+      "post": {
+        "description": "Any plan (draft or locked) becomes a new draft of the chosen scenario — the next version of that name — with its manual and override values and notes, then refreshed from the system (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.copyPlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "กรณียอดขายลด 20 %",
+                    "scenario": "worst"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CopyPnlPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "computedAt": "2026-11-03T10:00:00+07:00",
+                  "copiedFromId": null,
+                  "createdAt": "2026-11-03T09:00:00+07:00",
+                  "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                  "fiscalYear": 2027,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                  "lockedAt": null,
+                  "lockedBy": null,
+                  "name": "แผนปี 2027",
+                  "note": null,
+                  "owner": {
+                    "displayName": "การเงิน ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                  },
+                  "scenario": "worst",
+                  "snapshotSha256": null,
+                  "status": "draft",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlPlanDto"
+                }
+              }
+            },
+            "description": "The new draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Copy a plan to a scenario",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.manage"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/actions/lock": {
+      "post": {
+        "description": "Final: the plan and its cells are frozen by the database (a revision is a copy) and the SHA-256 of its cells is kept. `If-Match` makes sure the plan locked is the one seen; never computed → `pnl.not_computed`. No maker-checker: a management plan is neither money-moving nor configuration (accounting-design §8) (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.lockPlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "computedAt": "2026-11-03T10:00:00+07:00",
+                  "copiedFromId": null,
+                  "createdAt": "2026-11-03T09:00:00+07:00",
+                  "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                  "fiscalYear": 2027,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                  "lockedAt": "2026-12-28T10:00:00+07:00",
+                  "lockedBy": {
+                    "displayName": "การเงิน ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                  },
+                  "name": "แผนปี 2027",
+                  "note": null,
+                  "owner": {
+                    "displayName": "การเงิน ทดสอบ",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                  },
+                  "scenario": "base",
+                  "snapshotSha256": "9f2c0d1e7a6b5c4d3e2f1a0b9c8d7e6f5a4b3c2d1e0f9a8b7c6d5e4f3a2b1c0d",
+                  "status": "locked",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 1
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlPlanDto"
+                }
+              }
+            },
+            "description": "Locked plan",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  },
+                  "pnl.not_computed": {
+                    "$ref": "#/components/examples/problem.pnl.not_computed"
+                  },
+                  "pnl.plan_locked": {
+                    "$ref": "#/components/examples/problem.pnl.plan_locked"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.in_progress`, `pnl.not_computed`, `pnl.plan_locked`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Lock a plan for plan vs actual",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.manage"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/actions/recompute": {
+      "post": {
+        "description": "Recomputes every auto value from the ledger, pipeline, commissions and fixed assets as of now; manual and override values are kept (a manual value whose line gained system data becomes an override with its note as the reason) (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.recompute",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "lines": [
+                    {
+                      "cells": [
+                        {
+                          "asOf": "2026-11-03T10:00:00+07:00",
+                          "autoValue": "1000000.00",
+                          "drillable": true,
+                          "etag": "\"q2b0m8vP1nKk7yYt3tU9Zw\"",
+                          "mode": "auto",
+                          "month": "2027-01",
+                          "note": null,
+                          "periodOpen": false,
+                          "source": "gl",
+                          "sourceRef": {
+                            "accounts": [
+                              "4110",
+                              "4120"
+                            ],
+                            "lines": 42
+                          },
+                          "updatedAt": "2026-11-03T10:00:00+07:00",
+                          "updatedBy": null,
+                          "value": "1000000.00"
+                        }
+                      ],
+                      "line": {
+                        "calc": "source",
+                        "definition": {
+                          "en": null,
+                          "th": "มูลค่าสินค้าที่ออกใบกำกับภาษีแล้วในเดือนนั้น ก่อนหักส่วนลด"
+                        },
+                        "editable": true,
+                        "formula": {
+                          "en": null,
+                          "th": "Σ ยอดสินค้าก่อน VAT ตามใบกำกับ"
+                        },
+                        "glAccounts": [
+                          {
+                            "code": "4110",
+                            "excludeRules": [],
+                            "nameEn": "Sales — made-to-order packaging",
+                            "nameTh": "รายได้ — บรรจุภัณฑ์สั่งผลิต",
+                            "onlyRules": []
+                          }
+                        ],
+                        "group": "revenue",
+                        "howToFill": {
+                          "en": null,
+                          "th": "ใส่ยอดขายที่คาดไว้ ระบุว่ามาจากเป้าหรือดีลไหน"
+                        },
+                        "inTotal": true,
+                        "key": "revenue_goods",
+                        "labelEn": "Revenue — goods",
+                        "labelTh": "รายได้จากการขายสินค้า",
+                        "mapped": true,
+                        "source": {
+                          "en": null,
+                          "th": "GL รายได้ขายสินค้า; forecast = pipeline × ความน่าจะเป็นตามขั้น + ยอดสั่งซ้ำเฉลี่ย 3 เดือน"
+                        },
+                        "unit": "money"
+                      },
+                      "total": "12000000.00"
+                    }
+                  ],
+                  "months": [
+                    {
+                      "kind": "actual",
+                      "month": "2027-01",
+                      "periodOpen": false,
+                      "periodStatus": "closed"
+                    }
+                  ],
+                  "plan": {
+                    "computedAt": "2026-11-03T10:00:00+07:00",
+                    "copiedFromId": null,
+                    "createdAt": "2026-11-03T09:00:00+07:00",
+                    "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                    "fiscalYear": 2027,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                    "lockedAt": null,
+                    "lockedBy": null,
+                    "name": "แผนปี 2027",
+                    "note": null,
+                    "owner": {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    },
+                    "scenario": "base",
+                    "snapshotSha256": null,
+                    "status": "draft",
+                    "updatedAt": "2026-11-03T10:00:00+07:00",
+                    "version": 1
+                  },
+                  "summary": {
+                    "breakEvenRevenue": "8400000.00",
+                    "cashConversionDays": "10.67",
+                    "citSmeApplied": false,
+                    "contributionAfterCommission": "2500000.00",
+                    "contributionAfterCommissionPct": "20.83",
+                    "ebitda": "900000.00",
+                    "emptyManualCells": 24,
+                    "grossMargin": "3000000.00",
+                    "grossMarginPct": "25.00",
+                    "netProfit": "700000.00",
+                    "netRevenue": "12000000.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlGridDto"
+                }
+              }
+            },
+            "description": "Grid",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pnl.plan_locked": {
+                    "$ref": "#/components/examples/problem.pnl.plan_locked"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pnl.plan_locked`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Refresh a draft plan from the system",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.manage"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/cells/{lineKey}/{month}": {
+      "put": {
+        "description": "`If-Match` = the cell’s `etag`. A line without system data takes a manual value (a note is required on the first entry, `pnl.note_required`); changing a value the system computed is an override that keeps the auto value beside it and needs a reason every time (`pnl.reason_required`); `value: null` (or the auto value) returns to auto. Formula and memo lines are read-only (`pnl.line_read_only`), locked plans too (`pnl.plan_locked`). The plan’s formulas are recomputed; audited with before / after (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.updateCell",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A `PnlLineKey`",
+            "in": "path",
+            "name": "lineKey",
+            "required": true,
+            "schema": {
+              "example": "salaries",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`YYYY-MM` of the plan year",
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "example": "2027-01",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IfMatch"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "manual": {
+                  "value": {
+                    "note": "พนักงาน 5 คน × 50,000",
+                    "value": "250000.00"
+                  }
+                },
+                "override": {
+                  "value": {
+                    "note": "งานแสดงสินค้าเดือนนี้",
+                    "value": "120000.00"
+                  }
+                },
+                "revert": {
+                  "value": {
+                    "value": null
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePnlCellDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "lines": [
+                    {
+                      "cells": [
+                        {
+                          "asOf": "2026-11-03T10:00:00+07:00",
+                          "autoValue": "1000000.00",
+                          "drillable": true,
+                          "etag": "\"q2b0m8vP1nKk7yYt3tU9Zw\"",
+                          "mode": "auto",
+                          "month": "2027-01",
+                          "note": null,
+                          "periodOpen": false,
+                          "source": "gl",
+                          "sourceRef": {
+                            "accounts": [
+                              "4110",
+                              "4120"
+                            ],
+                            "lines": 42
+                          },
+                          "updatedAt": "2026-11-03T10:00:00+07:00",
+                          "updatedBy": null,
+                          "value": "1000000.00"
+                        }
+                      ],
+                      "line": {
+                        "calc": "source",
+                        "definition": {
+                          "en": null,
+                          "th": "มูลค่าสินค้าที่ออกใบกำกับภาษีแล้วในเดือนนั้น ก่อนหักส่วนลด"
+                        },
+                        "editable": true,
+                        "formula": {
+                          "en": null,
+                          "th": "Σ ยอดสินค้าก่อน VAT ตามใบกำกับ"
+                        },
+                        "glAccounts": [
+                          {
+                            "code": "4110",
+                            "excludeRules": [],
+                            "nameEn": "Sales — made-to-order packaging",
+                            "nameTh": "รายได้ — บรรจุภัณฑ์สั่งผลิต",
+                            "onlyRules": []
+                          }
+                        ],
+                        "group": "revenue",
+                        "howToFill": {
+                          "en": null,
+                          "th": "ใส่ยอดขายที่คาดไว้ ระบุว่ามาจากเป้าหรือดีลไหน"
+                        },
+                        "inTotal": true,
+                        "key": "revenue_goods",
+                        "labelEn": "Revenue — goods",
+                        "labelTh": "รายได้จากการขายสินค้า",
+                        "mapped": true,
+                        "source": {
+                          "en": null,
+                          "th": "GL รายได้ขายสินค้า; forecast = pipeline × ความน่าจะเป็นตามขั้น + ยอดสั่งซ้ำเฉลี่ย 3 เดือน"
+                        },
+                        "unit": "money"
+                      },
+                      "total": "12000000.00"
+                    }
+                  ],
+                  "months": [
+                    {
+                      "kind": "actual",
+                      "month": "2027-01",
+                      "periodOpen": false,
+                      "periodStatus": "closed"
+                    }
+                  ],
+                  "plan": {
+                    "computedAt": "2026-11-03T10:00:00+07:00",
+                    "copiedFromId": null,
+                    "createdAt": "2026-11-03T09:00:00+07:00",
+                    "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                    "fiscalYear": 2027,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                    "lockedAt": null,
+                    "lockedBy": null,
+                    "name": "แผนปี 2027",
+                    "note": null,
+                    "owner": {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    },
+                    "scenario": "base",
+                    "snapshotSha256": null,
+                    "status": "draft",
+                    "updatedAt": "2026-11-03T10:00:00+07:00",
+                    "version": 1
+                  },
+                  "summary": {
+                    "breakEvenRevenue": "8400000.00",
+                    "cashConversionDays": "10.67",
+                    "citSmeApplied": false,
+                    "contributionAfterCommission": "2500000.00",
+                    "contributionAfterCommissionPct": "20.83",
+                    "ebitda": "900000.00",
+                    "emptyManualCells": 24,
+                    "grossMargin": "3000000.00",
+                    "grossMarginPct": "25.00",
+                    "netProfit": "700000.00",
+                    "netRevenue": "12000000.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlGridDto"
+                }
+              }
+            },
+            "description": "The plan’s grid after the edit",
+            "headers": {
+              "ETag": {
+                "$ref": "#/components/headers/ETag"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pnl.plan_locked": {
+                    "$ref": "#/components/examples/problem.pnl.plan_locked"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pnl.plan_locked`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "412": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.stale": {
+                    "$ref": "#/components/examples/problem.concurrency.stale"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.stale`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "pnl.line_read_only": {
+                    "$ref": "#/components/examples/problem.pnl.line_read_only"
+                  },
+                  "pnl.note_required": {
+                    "$ref": "#/components/examples/problem.pnl.note_required"
+                  },
+                  "pnl.reason_required": {
+                    "$ref": "#/components/examples/problem.pnl.reason_required"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `pnl.line_read_only`, `pnl.note_required`, `pnl.reason_required`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "428": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "concurrency.precondition_required": {
+                    "$ref": "#/components/examples/problem.concurrency.precondition_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `concurrency.precondition_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Enter or override a cell",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.manage"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/cells/{lineKey}/{month}/sources": {
+      "get": {
+        "description": "Paged ids and links only: posted journal lines of the mapped accounts (with source document and order) for actual months and trailing windows, open leads (weighted) behind forecast revenue and commission, fixed assets behind forecast depreciation, commission records (`kind=commission`) for the commission lines. Formula cells have none. No contact data (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.listCellSources",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A `PnlLineKey`",
+            "in": "path",
+            "name": "lineKey",
+            "required": true,
+            "schema": {
+              "example": "salaries",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`YYYY-MM` of the plan year",
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "example": "2027-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Another view of the same cell where it has one: `commission` (commission records earned in the month) for the commission lines; default: the cell’s own source",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/PnlSourceKind"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "accountCode": "4110",
+                      "amount": "107000.00",
+                      "code": "JE202701-000012",
+                      "date": "2027-01-15",
+                      "description": "ขายสินค้า TR2701-00012",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000000e1",
+                      "kind": "gl_line",
+                      "orderCode": null,
+                      "orderId": null,
+                      "sourceDocumentId": null,
+                      "sourceDocumentNo": "TR2701-00012",
+                      "sourceDocumentType": "customer_document"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PnlSourceItemDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Drill down from a cell to its source records",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.read"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/exports": {
+      "post": {
+        "description": "Finance Manager and C-Level only (`pnl.export`): the grid (or plan vs actual) with manual / override marks and notes, watermarked with the viewer’s name and the time on every page / sheet, behind a 5-minute link; logged in the access log and audited as an export (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.exportPlan",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "format": "xlsx",
+                    "view": "plan"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ExportPnlPlanDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-11-03T10:05:00+07:00",
+                  "url": "https://getpack-files.s3.example.com/…"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Download link",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export a plan as XLSX or PDF",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.export"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/grid": {
+      "get": {
+        "description": "Lines × months with each cell’s value, mode (auto · calculated · manual · override), auto value beside an override, source and its inputs, note / reason, who changed it, as-of time, `periodOpen` (\"ยังไม่ปิดงวด\") and its `etag`; the year column; the memo band (not in the total); the summary strip (net revenue, gross margin %, contribution after commission, EBITDA, net profit, cash conversion cycle, break-even revenue). Every view is written to the access log (D-472, D-444 pattern).\n\nImplements: D-472, D-444.",
+        "operationId": "admin.pnl.getGrid",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "currency": "THB",
+                  "lines": [
+                    {
+                      "cells": [
+                        {
+                          "asOf": "2026-11-03T10:00:00+07:00",
+                          "autoValue": "1000000.00",
+                          "drillable": true,
+                          "etag": "\"q2b0m8vP1nKk7yYt3tU9Zw\"",
+                          "mode": "auto",
+                          "month": "2027-01",
+                          "note": null,
+                          "periodOpen": false,
+                          "source": "gl",
+                          "sourceRef": {
+                            "accounts": [
+                              "4110",
+                              "4120"
+                            ],
+                            "lines": 42
+                          },
+                          "updatedAt": "2026-11-03T10:00:00+07:00",
+                          "updatedBy": null,
+                          "value": "1000000.00"
+                        }
+                      ],
+                      "line": {
+                        "calc": "source",
+                        "definition": {
+                          "en": null,
+                          "th": "มูลค่าสินค้าที่ออกใบกำกับภาษีแล้วในเดือนนั้น ก่อนหักส่วนลด"
+                        },
+                        "editable": true,
+                        "formula": {
+                          "en": null,
+                          "th": "Σ ยอดสินค้าก่อน VAT ตามใบกำกับ"
+                        },
+                        "glAccounts": [
+                          {
+                            "code": "4110",
+                            "excludeRules": [],
+                            "nameEn": "Sales — made-to-order packaging",
+                            "nameTh": "รายได้ — บรรจุภัณฑ์สั่งผลิต",
+                            "onlyRules": []
+                          }
+                        ],
+                        "group": "revenue",
+                        "howToFill": {
+                          "en": null,
+                          "th": "ใส่ยอดขายที่คาดไว้ ระบุว่ามาจากเป้าหรือดีลไหน"
+                        },
+                        "inTotal": true,
+                        "key": "revenue_goods",
+                        "labelEn": "Revenue — goods",
+                        "labelTh": "รายได้จากการขายสินค้า",
+                        "mapped": true,
+                        "source": {
+                          "en": null,
+                          "th": "GL รายได้ขายสินค้า; forecast = pipeline × ความน่าจะเป็นตามขั้น + ยอดสั่งซ้ำเฉลี่ย 3 เดือน"
+                        },
+                        "unit": "money"
+                      },
+                      "total": "12000000.00"
+                    }
+                  ],
+                  "months": [
+                    {
+                      "kind": "actual",
+                      "month": "2027-01",
+                      "periodOpen": false,
+                      "periodStatus": "closed"
+                    }
+                  ],
+                  "plan": {
+                    "computedAt": "2026-11-03T10:00:00+07:00",
+                    "copiedFromId": null,
+                    "createdAt": "2026-11-03T09:00:00+07:00",
+                    "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                    "fiscalYear": 2027,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                    "lockedAt": null,
+                    "lockedBy": null,
+                    "name": "แผนปี 2027",
+                    "note": null,
+                    "owner": {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    },
+                    "scenario": "base",
+                    "snapshotSha256": null,
+                    "status": "draft",
+                    "updatedAt": "2026-11-03T10:00:00+07:00",
+                    "version": 1
+                  },
+                  "summary": {
+                    "breakEvenRevenue": "8400000.00",
+                    "cashConversionDays": "10.67",
+                    "citSmeApplied": false,
+                    "contributionAfterCommission": "2500000.00",
+                    "contributionAfterCommissionPct": "20.83",
+                    "ebitda": "900000.00",
+                    "emptyManualCells": 24,
+                    "grossMargin": "3000000.00",
+                    "grossMarginPct": "25.00",
+                    "netProfit": "700000.00",
+                    "netRevenue": "12000000.00"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlGridDto"
+                }
+              }
+            },
+            "description": "Grid",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get the P&L grid of a plan",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.read"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/variance": {
+      "get": {
+        "description": "Per line and month: the plan value (frozen once locked), the actual as of now (posted ledger; formulas from actual lines, using the plan value of a line without an actual source — flagged `includes_plan_values`), variance amount and %, Finance’s note; totals over the actual months. Every view is logged (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.getVariance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "asOf": "2027-02-03T10:00:00+07:00",
+                  "currency": "THB",
+                  "lines": [
+                    {
+                      "cells": [
+                        {
+                          "actual": "1100000.00",
+                          "actualBasis": "ledger",
+                          "month": "2027-01",
+                          "note": "ลูกค้ารายใหญ่สั่งเร็วกว่าแผน",
+                          "noteBy": {
+                            "displayName": "การเงิน ทดสอบ",
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                          },
+                          "noteUpdatedAt": "2027-02-03T11:00:00+07:00",
+                          "plan": "1000000.00",
+                          "variance": "100000.00",
+                          "variancePct": "10.00"
+                        }
+                      ],
+                      "line": {
+                        "calc": "source",
+                        "definition": {
+                          "en": null,
+                          "th": "มูลค่าสินค้าที่ออกใบกำกับภาษีแล้วในเดือนนั้น ก่อนหักส่วนลด"
+                        },
+                        "editable": true,
+                        "formula": {
+                          "en": null,
+                          "th": "Σ ยอดสินค้าก่อน VAT ตามใบกำกับ"
+                        },
+                        "glAccounts": [
+                          {
+                            "code": "4110",
+                            "excludeRules": [],
+                            "nameEn": "Sales — made-to-order packaging",
+                            "nameTh": "รายได้ — บรรจุภัณฑ์สั่งผลิต",
+                            "onlyRules": []
+                          }
+                        ],
+                        "group": "revenue",
+                        "howToFill": {
+                          "en": null,
+                          "th": "ใส่ยอดขายที่คาดไว้ ระบุว่ามาจากเป้าหรือดีลไหน"
+                        },
+                        "inTotal": true,
+                        "key": "revenue_goods",
+                        "labelEn": "Revenue — goods",
+                        "labelTh": "รายได้จากการขายสินค้า",
+                        "mapped": true,
+                        "source": {
+                          "en": null,
+                          "th": "GL รายได้ขายสินค้า; forecast = pipeline × ความน่าจะเป็นตามขั้น + ยอดสั่งซ้ำเฉลี่ย 3 เดือน"
+                        },
+                        "unit": "money"
+                      },
+                      "totalActual": "1100000.00",
+                      "totalPlan": "1000000.00",
+                      "totalVariance": "100000.00",
+                      "totalVariancePct": "10.00"
+                    }
+                  ],
+                  "months": [
+                    {
+                      "kind": "actual",
+                      "month": "2027-01",
+                      "periodOpen": false,
+                      "periodStatus": "closed"
+                    }
+                  ],
+                  "plan": {
+                    "computedAt": "2026-11-03T10:00:00+07:00",
+                    "copiedFromId": null,
+                    "createdAt": "2026-11-03T09:00:00+07:00",
+                    "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                    "fiscalYear": 2027,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                    "lockedAt": "2026-12-28T10:00:00+07:00",
+                    "lockedBy": {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    },
+                    "name": "แผนปี 2027",
+                    "note": null,
+                    "owner": {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    },
+                    "scenario": "base",
+                    "snapshotSha256": null,
+                    "status": "locked",
+                    "updatedAt": "2026-11-03T10:00:00+07:00",
+                    "version": 1
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlVarianceDto"
+                }
+              }
+            },
+            "description": "Plan vs actual",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Plan vs actual",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.read"
+        ]
+      }
+    },
+    "/v1/admin/finance/pnl/plans/{planId}/variance-notes/{lineKey}/{month}": {
+      "put": {
+        "description": "Finance’s note on a line and month of plan vs actual; allowed on locked plans (cells stay frozen); audited (D-472).\n\nImplements: D-472.",
+        "operationId": "admin.pnl.setVarianceNote",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "planId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A `PnlLineKey`",
+            "in": "path",
+            "name": "lineKey",
+            "required": true,
+            "schema": {
+              "example": "salaries",
+              "type": "string"
+            }
+          },
+          {
+            "description": "`YYYY-MM` of the plan year",
+            "in": "path",
+            "name": "month",
+            "required": true,
+            "schema": {
+              "example": "2027-01",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "note": "ลูกค้ารายใหญ่สั่งเร็วกว่าแผน"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SetPnlVarianceNoteDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "asOf": "2027-02-03T10:00:00+07:00",
+                  "currency": "THB",
+                  "lines": [
+                    {
+                      "cells": [
+                        {
+                          "actual": "1100000.00",
+                          "actualBasis": "ledger",
+                          "month": "2027-01",
+                          "note": "ลูกค้ารายใหญ่สั่งเร็วกว่าแผน",
+                          "noteBy": {
+                            "displayName": "การเงิน ทดสอบ",
+                            "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                          },
+                          "noteUpdatedAt": "2027-02-03T11:00:00+07:00",
+                          "plan": "1000000.00",
+                          "variance": "100000.00",
+                          "variancePct": "10.00"
+                        }
+                      ],
+                      "line": {
+                        "calc": "source",
+                        "definition": {
+                          "en": null,
+                          "th": "มูลค่าสินค้าที่ออกใบกำกับภาษีแล้วในเดือนนั้น ก่อนหักส่วนลด"
+                        },
+                        "editable": true,
+                        "formula": {
+                          "en": null,
+                          "th": "Σ ยอดสินค้าก่อน VAT ตามใบกำกับ"
+                        },
+                        "glAccounts": [
+                          {
+                            "code": "4110",
+                            "excludeRules": [],
+                            "nameEn": "Sales — made-to-order packaging",
+                            "nameTh": "รายได้ — บรรจุภัณฑ์สั่งผลิต",
+                            "onlyRules": []
+                          }
+                        ],
+                        "group": "revenue",
+                        "howToFill": {
+                          "en": null,
+                          "th": "ใส่ยอดขายที่คาดไว้ ระบุว่ามาจากเป้าหรือดีลไหน"
+                        },
+                        "inTotal": true,
+                        "key": "revenue_goods",
+                        "labelEn": "Revenue — goods",
+                        "labelTh": "รายได้จากการขายสินค้า",
+                        "mapped": true,
+                        "source": {
+                          "en": null,
+                          "th": "GL รายได้ขายสินค้า; forecast = pipeline × ความน่าจะเป็นตามขั้น + ยอดสั่งซ้ำเฉลี่ย 3 เดือน"
+                        },
+                        "unit": "money"
+                      },
+                      "totalActual": "1100000.00",
+                      "totalPlan": "1000000.00",
+                      "totalVariance": "100000.00",
+                      "totalVariancePct": "10.00"
+                    }
+                  ],
+                  "months": [
+                    {
+                      "kind": "actual",
+                      "month": "2027-01",
+                      "periodOpen": false,
+                      "periodStatus": "closed"
+                    }
+                  ],
+                  "plan": {
+                    "computedAt": "2026-11-03T10:00:00+07:00",
+                    "copiedFromId": null,
+                    "createdAt": "2026-11-03T09:00:00+07:00",
+                    "etag": "\"pXH2c5mJ3Lr0v1QkTqv2xQ\"",
+                    "fiscalYear": 2027,
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a0472",
+                    "lockedAt": "2026-12-28T10:00:00+07:00",
+                    "lockedBy": {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    },
+                    "name": "แผนปี 2027",
+                    "note": null,
+                    "owner": {
+                      "displayName": "การเงิน ทดสอบ",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-3c4d5e6f7a8b"
+                    },
+                    "scenario": "base",
+                    "snapshotSha256": null,
+                    "status": "locked",
+                    "updatedAt": "2026-11-03T10:00:00+07:00",
+                    "version": 1
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PnlVarianceDto"
+                }
+              }
+            },
+            "description": "Plan vs actual",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Explain a variance",
+        "tags": [
+          "admin.pnl"
+        ],
+        "x-required-permissions": [
+          "pnl.manage"
         ]
       }
     },
@@ -620535,6 +626056,10 @@
     {
       "description": "Payout runs: eligible payables, WHT and retention, approval (D-166), bank files (D-093), confirmation, 50 ทวิ, exceptions.",
       "name": "admin.payouts"
+    },
+    {
+      "description": "Management P&L planner (D-472): plans by year and scenario filled from the ledger and operations, manual and override cells with notes and reasons, tooltips per line, plan vs actual, drill-down, watermarked export. Management figures only — never posted.",
+      "name": "admin.pnl"
     },
     {
       "description": "Posting rules as data: P01–P30 and supplementary rules, versioned and approved (`posting_rule_change`, ADR-0007).",

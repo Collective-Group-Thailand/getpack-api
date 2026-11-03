@@ -5,7 +5,7 @@ import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
 import { MoneyDecimal, type MoneyValue } from '@common/money/money';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type PnlPlan, type PnlPlanCell,Prisma } from '@generated/prisma/client';
+import { type PnlPlan, type PnlPlanCell, Prisma } from '@generated/prisma/client';
 import { recordAgentEvent } from '@modules/agents/agent-shared';
 import { Injectable } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
@@ -33,6 +33,8 @@ export const planEtag = (p: { publicId: string; rowVersion: number }) => etagOf(
 export const cellEtag = (planPublicId: string, lineKey: string, month: string, rowVersion: number) =>
   etagOf(planPublicId, lineKey, month, rowVersion);
 
+/** Whole-plan writes touch ~350 cells: a longer transaction timeout than Prisma's 5 s. */
+const TX = { timeout: 30_000 };
 const D = (v: { toString(): string } | null) => (v === null ? null : new MoneyDecimal(v.toString()));
 const monthDate = (month: string) => new Date(`${month}-01T00:00:00.000Z`);
 const monthOf = (d: Date) => d.toISOString().slice(0, 7);
@@ -163,9 +165,9 @@ export class PnlPlansService {
           version: plan.version,
         },
       });
-      await this.record(tx, plan, 'pnl_plan.created', actor);
+      await this.recordEvent(tx, plan, 'pnl_plan.created', actor);
       return plan.publicId;
-    });
+    }, TX);
     return this.get(id);
   }
 
@@ -196,7 +198,7 @@ export class PnlPlansService {
         resourcePublicId: plan.publicId,
         data: { before: { name: plan.name, note: plan.note }, after: input },
       });
-      await this.record(tx, plan, 'pnl_plan.updated', actor);
+      await this.recordEvent(tx, plan, 'pnl_plan.updated', actor);
     });
     return this.get(publicId);
   }
@@ -222,7 +224,7 @@ export class PnlPlansService {
           version: plan.version,
         },
       });
-      await this.record(tx, plan, 'pnl_plan.deleted', actor);
+      await this.recordEvent(tx, plan, 'pnl_plan.deleted', actor);
     });
   }
 
@@ -234,8 +236,8 @@ export class PnlPlansService {
     await this.prisma.withTx(async (tx) => {
       const plan = await this.lockDraft(tx, publicId, ifMatch);
       await this.writeAuto(tx, plan, auto);
-      await this.record(tx, plan, 'pnl_plan.recomputed', actor);
-    });
+      await this.recordEvent(tx, plan, 'pnl_plan.recomputed', actor);
+    }, TX);
     return this.get(publicId);
   }
 
@@ -296,6 +298,8 @@ export class PnlPlansService {
       months.forEach((m, i) =>
         cells.set(`${line.key}|${m}`, {
           ...calculatedCell(result.months[line.key][i] ?? null),
+          // The tax estimate tells whether the SME bands applied (shown "ประมาณการ").
+          ...(line.key === 'cit_estimate' && { sourceRef: { smeApplied: result.smeApplied } }),
           periodOpen: periodOpen(line.key, m),
         }),
       );
@@ -311,6 +315,7 @@ export class PnlPlansService {
     stampAsOf: boolean,
     edited: { key: string; userId: bigint } | null,
   ): Promise<void> {
+    const creates: Prisma.PnlPlanCellCreateManyInput[] = [];
     for (const [k, c] of cells) {
       const [lineKey, month] = k.split('|') as [string, string];
       const prior = existing.get(k);
@@ -324,15 +329,13 @@ export class PnlPlansService {
         periodOpen: c.periodOpen,
       };
       if (!prior) {
-        await tx.pnlPlanCell.create({
-          data: {
-            planId: plan.id,
-            lineKey,
-            month: monthDate(month),
-            ...data,
-            asOf,
-            updatedById: edited?.key === k ? edited.userId : null,
-          },
+        creates.push({
+          planId: plan.id,
+          lineKey,
+          month: monthDate(month),
+          ...data,
+          asOf,
+          updatedById: edited?.key === k ? edited.userId : null,
         });
         continue;
       }
@@ -357,6 +360,7 @@ export class PnlPlansService {
         },
       });
     }
+    if (creates.length) await tx.pnlPlanCell.createMany({ data: creates });
   }
 
   /** A person's edit of one cell (manual input rules), then the formulas of the plan. */
@@ -437,7 +441,7 @@ export class PnlPlansService {
         actor,
         entityId: plan.entityId,
       });
-    });
+    }, TX);
     return this.get(publicId);
   }
 
@@ -495,9 +499,9 @@ export class PnlPlansService {
         resourcePublicId: plan.publicId,
         data: { from: source.publicId, scenario: plan.scenario, version: plan.version },
       });
-      await this.record(tx, plan, 'pnl_plan.copied', actor, { from: source.publicId });
+      await this.recordEvent(tx, plan, 'pnl_plan.copied', actor, { from: source.publicId });
       return plan.publicId;
-    });
+    }, TX);
     return this.get(id);
   }
 
@@ -534,12 +538,12 @@ export class PnlPlansService {
         resourcePublicId: plan.publicId,
         data: { snapshotSha256: snapshot.toString('hex'), cells: cells.length },
       });
-      await this.record(tx, plan, 'pnl_plan.locked', actor);
+      await this.recordEvent(tx, plan, 'pnl_plan.locked', actor);
     });
     return this.get(publicId);
   }
 
-  private record(
+  recordEvent(
     tx: Tx,
     plan: PnlPlan,
     type: string,

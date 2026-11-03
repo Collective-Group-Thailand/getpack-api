@@ -488,6 +488,8 @@ export const API_TAGS: Record<string, string> = {
   // --- B5.6 close, reports & audit
   'admin.financialReports':
     'Trial balance, GL detail with drill-down, balance sheet, P&L by dimension and the indirect cash-flow statement from the posted ledger (D-031).',
+  'admin.pnl':
+    'Management P&L planner (D-472): plans by year and scenario filled from the ledger and operations, manual and override cells with notes and reasons, tooltips per line, plan vs actual, drill-down, watermarked export. Management figures only — never posted.',
   'admin.close':
     'Period close (§7): the nine steps with blocking checks, owners and evidence; submit → soft close, approval by another Finance Manager → close, lock (auditor sign-off at year end).',
   'admin.auditSupport':

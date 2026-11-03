@@ -197,7 +197,18 @@ export function computePlan(input: PlanComputeInput): PlanComputeResult {
     );
   }
 
-  // --- totals ---
+  return { months: out, totals: planTotals(out, n), smeApplied: sme };
+}
+
+/**
+ * The year column of a plan from its month values (stored or computed): money summed, ratios and days recomputed on
+ * the year, the bad-debt provision (a balance) = the last month with a value.
+ */
+export function planTotals(
+  out: Record<PnlLineKey, (MoneyValue | null)[]>,
+  n: number,
+): Record<PnlLineKey, MoneyValue | null> {
+  const z = (key: PnlLineKey, i: number) => out[key][i] ?? ZERO();
   const totals = {} as Record<PnlLineKey, MoneyValue | null>;
   const total = (key: PnlLineKey) => out[key].reduce<MoneyValue>((a, v) => a.add(v ?? 0), ZERO());
   for (const l of PNL_LINES)
@@ -229,7 +240,7 @@ export function computePlan(input: PlanComputeInput): PlanComputeResult {
     total('gross_margin'),
     commissionsT,
   );
-  return { months: out, totals, smeApplied: sme };
+  return totals;
 }
 
 // --- forecast helpers -----------------------------------------------------------------------------------------------
