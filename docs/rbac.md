@@ -201,6 +201,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `discount_approvals.waterfall_full` — See a deal’s full waterfall: revenue, factory cost, shipping difference, fees, gross margin, commission, credit cost, bad-debt provision, contribution after commission; and factory price locks (D-470, D-141) | ◆ | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
 | `discount_approvals.export` — Export a deal’s full waterfall as CSV (finance only; logged) (D-470) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
 | `sales_waterfall_views.read` — Read the access log of deal waterfalls: who saw which quote’s waterfall, when and in which tier (D-470, D-444) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ● |  |
+| `sales_reports.read` — Read the sales reports: negotiation history per customer, lost-to-price by product class and quantity band, the post-deal review (in the waterfall tier one holds) (D-470) | ● | ● | ● | ● |  |  |  |  |  | ● |  |  | ● |  | ● |  |  |
 | `ops.read` — Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches) (D-113) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |

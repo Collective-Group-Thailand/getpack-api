@@ -78494,6 +78494,36 @@
         ],
         "type": "object"
       },
+      "LastCompetitorDto": {
+        "properties": {
+          "namedAt": {
+            "example": "2026-10-20T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "notes": {
+            "example": "ร้านกล่องเจ้าเดิม ราคา 9.80/ใบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "price": {
+            "description": "Their price as the agent typed it",
+            "example": "9.80",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "namedAt",
+          "notes",
+          "price"
+        ],
+        "type": "object"
+      },
       "LaunchpadAction": {
         "enum": [
           "pay",
@@ -79059,6 +79089,95 @@
           "device_pin"
         ],
         "type": "string"
+      },
+      "LostReasonCountDto": {
+        "properties": {
+          "count": {
+            "example": 2,
+            "type": "number"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentLeadLostReason"
+              }
+            ],
+            "example": "price"
+          }
+        },
+        "required": [
+          "reason",
+          "count"
+        ],
+        "type": "object"
+      },
+      "LostToPriceDto": {
+        "properties": {
+          "from": {
+            "example": "2026-05-08",
+            "format": "date",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/LostToPriceRowDto"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-11-03",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "LostToPriceRowDto": {
+        "properties": {
+          "closed": {
+            "description": "Leads with a quotation in the cell, closed in the range",
+            "example": 12,
+            "type": "number"
+          },
+          "lostToPrice": {
+            "description": "Lost with reason `price`",
+            "example": 4,
+            "type": "number"
+          },
+          "lostToPricePct": {
+            "example": "33.3",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productClass": {
+            "description": "Product class (product category code)",
+            "example": "folding_carton",
+            "type": "string"
+          },
+          "quantityBand": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesQuantityBand"
+              }
+            ],
+            "example": "1k_10k"
+          }
+        },
+        "required": [
+          "productClass",
+          "quantityBand",
+          "closed",
+          "lostToPrice",
+          "lostToPricePct"
+        ],
+        "type": "object"
       },
       "LoyaltySummaryDto": {
         "properties": {
@@ -80600,6 +80719,130 @@
           "extra_working_day"
         ],
         "type": "string"
+      },
+      "NegotiationHistoryDto": {
+        "properties": {
+          "averageApprovedDiscountPct": {
+            "example": "3.50",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lastCompetitor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LastCompetitorDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lastQuotes": {
+            "example": 5,
+            "type": "integer"
+          },
+          "lost": {
+            "example": 1,
+            "type": "number"
+          },
+          "lostReasons": {
+            "items": {
+              "$ref": "#/components/schemas/LostReasonCountDto"
+            },
+            "type": "array"
+          },
+          "minQuotes": {
+            "example": 2,
+            "type": "integer"
+          },
+          "minRounds": {
+            "description": "sales.negotiation_heavy.minRounds",
+            "example": 2,
+            "type": "integer"
+          },
+          "negotiationHeavy": {
+            "description": "\"เจรจาราคาสูง\" — raises the approval level by one",
+            "example": true,
+            "type": "boolean"
+          },
+          "quotes": {
+            "description": "Newest first",
+            "items": {
+              "$ref": "#/components/schemas/NegotiationQuoteDto"
+            },
+            "type": "array"
+          },
+          "won": {
+            "example": 3,
+            "type": "number"
+          }
+        },
+        "required": [
+          "negotiationHeavy",
+          "minRounds",
+          "minQuotes",
+          "lastQuotes",
+          "quotes",
+          "averageApprovedDiscountPct",
+          "won",
+          "lost",
+          "lostReasons",
+          "lastCompetitor"
+        ],
+        "type": "object"
+      },
+      "NegotiationQuoteDto": {
+        "properties": {
+          "acceptedDiscountPct": {
+            "description": "Discount of the option accepted",
+            "example": "3.00",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "agentQuoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6023",
+            "format": "uuid",
+            "type": "string"
+          },
+          "outcome": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesNegotiationOutcome"
+              }
+            ],
+            "description": "From the lead: won (first payment), lost, else open",
+            "example": "won"
+          },
+          "quoteCode": {
+            "example": "QT-2611-00042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "rounds": {
+            "example": 2,
+            "type": "integer"
+          },
+          "sentAt": {
+            "example": "2026-11-01T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "agentQuoteId",
+          "quoteCode",
+          "sentAt",
+          "rounds",
+          "acceptedDiscountPct",
+          "outcome"
+        ],
+        "type": "object"
       },
       "NextActionDto": {
         "properties": {
@@ -102588,6 +102831,15 @@
         ],
         "type": "object"
       },
+      "SalesNegotiationOutcome": {
+        "description": "From the lead: won (first payment), lost, else open",
+        "enum": [
+          "won",
+          "lost",
+          "open"
+        ],
+        "type": "string"
+      },
       "SalesOpenStage": {
         "enum": [
           "new",
@@ -102702,6 +102954,15 @@
           "gmv"
         ],
         "type": "object"
+      },
+      "SalesQuantityBand": {
+        "enum": [
+          "lt_1k",
+          "1k_10k",
+          "10k_100k",
+          "gte_100k"
+        ],
+        "type": "string"
       },
       "SalesRepDto": {
         "properties": {
@@ -343018,6 +343279,429 @@
         "x-required-permissions-any": [
           "sales.pipeline.self",
           "sales.pipeline.manage"
+        ]
+      }
+    },
+    "/v1/admin/sales/negotiations/history": {
+      "get": {
+        "description": "For a company, a customer or a lead: rounds per quote (newest first), the discount of each accepted option and their average, won / lost and lost reasons, the last competitor named, and `negotiationHeavy` — ≥ `minRounds` rounds on ≥ `minQuotes` of the last `lastQuotes` quotes (`sales.negotiation_heavy`), which raises the approval level (D-470).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesNegotiations.history",
+        "parameters": [
+          {
+            "description": "A company (its converted leads)",
+            "in": "query",
+            "name": "companyId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A customer (their converted leads)",
+            "in": "query",
+            "name": "customerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "A lead (a prospect not converted yet)",
+            "in": "query",
+            "name": "leadId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "averageApprovedDiscountPct": "3.50",
+                  "lastCompetitor": {
+                    "namedAt": "2026-10-20T10:00:00+07:00",
+                    "notes": "ร้านกล่องเจ้าเดิม",
+                    "price": "9.80"
+                  },
+                  "lastQuotes": 5,
+                  "lost": 1,
+                  "lostReasons": [
+                    {
+                      "count": 1,
+                      "reason": "price"
+                    }
+                  ],
+                  "minQuotes": 2,
+                  "minRounds": 2,
+                  "negotiationHeavy": true,
+                  "quotes": [
+                    {
+                      "acceptedDiscountPct": "3.00",
+                      "agentQuoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6023",
+                      "outcome": "open",
+                      "quoteCode": "QT-2611-00042",
+                      "rounds": 2,
+                      "sentAt": "2026-11-01T10:00:00+07:00"
+                    }
+                  ],
+                  "won": 3
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/NegotiationHistoryDto"
+                }
+              }
+            },
+            "description": "History",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Read a customer’s negotiation history",
+        "tags": [
+          "admin.salesNegotiations"
+        ],
+        "x-required-permissions": [
+          "sales_reports.read"
+        ]
+      }
+    },
+    "/v1/admin/sales/negotiations/lost-to-price": {
+      "get": {
+        "description": "Leads closed (won or lost) in the range, by the product class (category) and the quantity band (< 1k, 1k–10k, 10k–100k, ≥ 100k) of their latest quotation: how many were lost with reason `price` — input for the pricing tables (D-470, PLAN §7).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesNegotiations.lostToPrice",
+        "parameters": [
+          {
+            "description": "First Bangkok day (default: 180 days ago)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-08-01",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last Bangkok day, inclusive (default: today)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-03",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "from": "2026-05-08",
+                  "rows": [
+                    {
+                      "closed": 12,
+                      "lostToPrice": 4,
+                      "lostToPricePct": "33.3",
+                      "productClass": "folding_carton",
+                      "quantityBand": "1k_10k"
+                    }
+                  ],
+                  "to": "2026-11-03"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/LostToPriceDto"
+                }
+              }
+            },
+            "description": "Lost to price",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Read lost-to-price by product class and quantity band",
+        "tags": [
+          "admin.salesNegotiations"
+        ],
+        "x-required-permissions": [
+          "sales_reports.read"
         ]
       }
     },
@@ -616464,6 +617148,10 @@
     {
       "description": "The company sales pipeline: reps’ leads, stages and timeline in the admin zone — same model as the agent zone (D-469).",
       "name": "admin.salesLeads"
+    },
+    {
+      "description": "Negotiation history per customer and lost-to-price by product class and quantity band (D-470).",
+      "name": "admin.salesNegotiations"
     },
     {
       "description": "Quotations sent on behalf of getpack from the sales pipeline, and their discount rounds (D-469).",

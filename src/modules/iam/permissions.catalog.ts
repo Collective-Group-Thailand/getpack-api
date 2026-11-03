@@ -1640,8 +1640,16 @@ export const PERMISSIONS = [
   {
     key: 'sales_waterfall_views.read',
     audience: 'staff',
-    description: 'Read the access log of deal waterfalls: who saw which quote’s waterfall, when and in which tier',
+    description:
+      'Read the access log of deal waterfalls: who saw which quote’s waterfall, when and in which tier',
     decisionRefs: ['D-470', 'D-444'],
+  },
+  {
+    key: 'sales_reports.read',
+    audience: 'staff',
+    description:
+      'Read the sales reports: negotiation history per customer, lost-to-price by product class and quantity band, the post-deal review (in the waterfall tier one holds)',
+    decisionRefs: ['D-470'],
   },
   // --- B6.3 launch readiness (D-113)
   {

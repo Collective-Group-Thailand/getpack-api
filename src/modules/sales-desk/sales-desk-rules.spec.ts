@@ -1,4 +1,5 @@
 import { pickRep, slaBreached, slaPct, workingHoursDue } from './sales-desk-rules';
+import { quantityBand } from './sales-negotiations';
 
 const W = { from: '09:00', to: '18:00' };
 const at = (s: string) => new Date(s);
@@ -64,5 +65,17 @@ describe('sales desk rules (D-469)', () => {
       ),
     ).toBe('33.3');
     expect(slaPct([], now)).toBeNull();
+  });
+});
+
+describe('quantity bands (D-470 lost-to-price)', () => {
+  it('uses decade bands', () => {
+    expect([999, 1000, 9999, 10_000, 100_000].map(quantityBand)).toEqual([
+      'lt_1k',
+      '1k_10k',
+      '1k_10k',
+      '10k_100k',
+      'gte_100k',
+    ]);
   });
 });
