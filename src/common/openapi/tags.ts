@@ -54,6 +54,8 @@ export const API_TAGS: Record<string, string> = {
     'Negotiation history per customer and lost-to-price by product class and quantity band (D-470).',
   'admin.salesPlaybook':
     'The sales playbook admin: versioned cards owned by Marketing or the Sales Manager, maker-checker publishing (D-470).',
+  'admin.salesPostDeal':
+    'Post-deal review: approved vs actual margin of won deals by approver, agent, customer (D-470).',
   'admin.salesInbound':
     'The inbound pool of sales enquiries (contact form, RFQ, staff), their assignment to reps and the first-response SLA (D-469).',
   'store.loyalty':

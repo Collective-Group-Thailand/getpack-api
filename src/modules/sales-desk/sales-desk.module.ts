@@ -9,6 +9,7 @@ import { SalesInboundService } from './sales-inbound.service';
 import { SalesNegotiationsService } from './sales-negotiations';
 import { SalesPipelineService } from './sales-pipeline.service';
 import { SalesPlaybookAdminService } from './sales-playbook-admin';
+import { SalesPostDealService } from './sales-post-deal';
 import { SalesScopeService } from './sales-scope';
 
 const SERVICES = [
@@ -20,6 +21,7 @@ const SERVICES = [
   DiscountApprovalsService,
   SalesNegotiationsService,
   SalesPlaybookAdminService,
+  SalesPostDealService,
 ];
 
 /**

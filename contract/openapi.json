@@ -87690,6 +87690,262 @@
         ],
         "type": "object"
       },
+      "PostDealFullFiguresDto": {
+        "properties": {
+          "contribution": {
+            "description": "กำไรหลังหักค่าคอม",
+            "example": "50821.00",
+            "type": "string"
+          },
+          "contributionPct": {
+            "example": "4.95",
+            "type": "string"
+          },
+          "grossMargin": {
+            "example": "93000.00",
+            "type": "string"
+          },
+          "grossMarginPct": {
+            "example": "9.06",
+            "type": "string"
+          },
+          "netRevenue": {
+            "example": "1026000.00",
+            "type": "string"
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesWaterfallFullVisibility"
+              }
+            ],
+            "example": "full"
+          }
+        },
+        "required": [
+          "visibility",
+          "netRevenue",
+          "grossMargin",
+          "grossMarginPct",
+          "contribution",
+          "contributionPct"
+        ],
+        "type": "object"
+      },
+      "PostDealGroupDto": {
+        "properties": {
+          "actual": {
+            "discriminator": {
+              "mapping": {
+                "full": "#/components/schemas/PostDealFullFiguresDto",
+                "margin_pct": "#/components/schemas/PostDealPctFiguresDto"
+              },
+              "propertyName": "visibility"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PostDealPctFiguresDto"
+              },
+              {
+                "$ref": "#/components/schemas/PostDealFullFiguresDto"
+              }
+            ]
+          },
+          "approved": {
+            "discriminator": {
+              "mapping": {
+                "full": "#/components/schemas/PostDealFullFiguresDto",
+                "margin_pct": "#/components/schemas/PostDealPctFiguresDto"
+              },
+              "propertyName": "visibility"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PostDealPctFiguresDto"
+              },
+              {
+                "$ref": "#/components/schemas/PostDealFullFiguresDto"
+              }
+            ]
+          },
+          "deals": {
+            "example": 3,
+            "type": "integer"
+          },
+          "key": {
+            "example": "สมชาย ขายเก่ง",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "deals",
+          "approved",
+          "actual"
+        ],
+        "type": "object"
+      },
+      "PostDealPctFiguresDto": {
+        "properties": {
+          "contributionPct": {
+            "example": "6.10",
+            "type": "string"
+          },
+          "grossMarginPct": {
+            "example": "12.40",
+            "type": "string"
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesWaterfallMarginPctVisibility"
+              }
+            ],
+            "example": "margin_pct"
+          }
+        },
+        "required": [
+          "visibility",
+          "grossMarginPct",
+          "contributionPct"
+        ],
+        "type": "object"
+      },
+      "PostDealReviewDto": {
+        "properties": {
+          "deals": {
+            "items": {
+              "$ref": "#/components/schemas/PostDealRowDto"
+            },
+            "type": "array"
+          },
+          "from": {
+            "example": "2026-05-08",
+            "format": "date",
+            "type": "string"
+          },
+          "groupBy": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesPostDealGroupBy"
+              }
+            ],
+            "example": "approver"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/PostDealGroupDto"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-11-03",
+            "format": "date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "groupBy",
+          "deals",
+          "groups"
+        ],
+        "type": "object"
+      },
+      "PostDealRowDto": {
+        "properties": {
+          "actual": {
+            "description": "After delivery",
+            "discriminator": {
+              "mapping": {
+                "full": "#/components/schemas/PostDealFullFiguresDto",
+                "margin_pct": "#/components/schemas/PostDealPctFiguresDto"
+              },
+              "propertyName": "visibility"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PostDealPctFiguresDto"
+              },
+              {
+                "$ref": "#/components/schemas/PostDealFullFiguresDto"
+              }
+            ]
+          },
+          "agentCode": {
+            "description": "Agent code",
+            "example": "K7QX2MAP",
+            "type": "string"
+          },
+          "agentName": {
+            "example": "สมชาย ขายเก่ง",
+            "type": "string"
+          },
+          "approvalId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "approved": {
+            "description": "At approval (the accepted option)",
+            "discriminator": {
+              "mapping": {
+                "full": "#/components/schemas/PostDealFullFiguresDto",
+                "margin_pct": "#/components/schemas/PostDealPctFiguresDto"
+              },
+              "propertyName": "visibility"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PostDealPctFiguresDto"
+              },
+              {
+                "$ref": "#/components/schemas/PostDealFullFiguresDto"
+              }
+            ]
+          },
+          "approvedDiscountPct": {
+            "example": "5.00",
+            "type": "string"
+          },
+          "approverName": {
+            "example": "C-Level ทดสอบ",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "customerName": {
+            "example": "ร้านกาแฟบ้านสวน",
+            "type": "string"
+          },
+          "orders": {
+            "example": 1,
+            "type": "integer"
+          },
+          "quoteCode": {
+            "example": "QT-2611-00042",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "approvalId",
+          "quoteCode",
+          "agentCode",
+          "agentName",
+          "approverName",
+          "customerName",
+          "approvedDiscountPct",
+          "orders",
+          "approved",
+          "actual"
+        ],
+        "type": "object"
+      },
       "PostMessageDto": {
         "properties": {
           "body": {
@@ -103232,6 +103488,14 @@
           "repeatRatePct"
         ],
         "type": "object"
+      },
+      "SalesPostDealGroupBy": {
+        "enum": [
+          "approver",
+          "agent",
+          "customer"
+        ],
+        "type": "string"
       },
       "SalesProductTypeDto": {
         "properties": {
@@ -345813,6 +346077,243 @@
         ],
         "x-required-permissions": [
           "sales_playbook.manage"
+        ]
+      }
+    },
+    "/v1/admin/sales/post-deal-review": {
+      "get": {
+        "description": "Every won deal approved at the desk in the range: the approved gross margin and contribution after commission (the accepted option) against the actual after delivery — invoiced quantity incl. tolerance, the factory paid for at most the ordered quantity, shipping charged, refunds, commission accrued — grouped by approver, agent or customer. Sales managers get percentages only; full amounts with `discount_approvals.waterfall_full` (D-470).\n\nImplements: D-470, D-141, D-165.",
+        "operationId": "admin.salesPostDeal.review",
+        "parameters": [
+          {
+            "description": "Deals decided from this Bangkok day (default 180 days ago)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-08-01",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-03",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "groupBy",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesPostDealGroupBy"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "deals": [
+                    {
+                      "actual": {
+                        "contribution": "50821.00",
+                        "contributionPct": "4.95",
+                        "grossMargin": "90000.00",
+                        "grossMarginPct": "8.77",
+                        "netRevenue": "1026000.00",
+                        "visibility": "full"
+                      },
+                      "agentCode": "K7QX2MAP",
+                      "agentName": "สมชาย ขายเก่ง",
+                      "approvalId": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+                      "approved": {
+                        "contribution": "50821.00",
+                        "contributionPct": "4.95",
+                        "grossMargin": "93000.00",
+                        "grossMarginPct": "9.06",
+                        "netRevenue": "1026000.00",
+                        "visibility": "full"
+                      },
+                      "approvedDiscountPct": "5.00",
+                      "approverName": "C-Level ทดสอบ",
+                      "customerName": "ร้านกาแฟบ้านสวน",
+                      "orders": 1,
+                      "quoteCode": "QT-2611-00042"
+                    }
+                  ],
+                  "from": "2026-05-08",
+                  "groupBy": "approver",
+                  "groups": [
+                    {
+                      "actual": {
+                        "contribution": "50821.00",
+                        "contributionPct": "4.95",
+                        "grossMargin": "93000.00",
+                        "grossMarginPct": "9.06",
+                        "netRevenue": "1026000.00",
+                        "visibility": "full"
+                      },
+                      "approved": {
+                        "contribution": "50821.00",
+                        "contributionPct": "4.95",
+                        "grossMargin": "93000.00",
+                        "grossMarginPct": "9.06",
+                        "netRevenue": "1026000.00",
+                        "visibility": "full"
+                      },
+                      "deals": 1,
+                      "key": "C-Level ทดสอบ"
+                    }
+                  ],
+                  "to": "2026-11-03"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PostDealReviewDto"
+                }
+              }
+            },
+            "description": "Review",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Review won deals: approved vs actual margin",
+        "tags": [
+          "admin.salesPostDeal"
+        ],
+        "x-required-permissions": [
+          "sales_reports.read"
         ]
       }
     },
@@ -619267,6 +619768,10 @@
     {
       "description": "The sales playbook admin: versioned cards owned by Marketing or the Sales Manager, maker-checker publishing (D-470).",
       "name": "admin.salesPlaybook"
+    },
+    {
+      "description": "Post-deal review: approved vs actual margin of won deals by approver, agent, customer (D-470).",
+      "name": "admin.salesPostDeal"
     },
     {
       "description": "Quotations sent on behalf of getpack from the sales pipeline, and their discount rounds (D-469).",
