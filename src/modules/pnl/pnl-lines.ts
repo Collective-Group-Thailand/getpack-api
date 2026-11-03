@@ -553,3 +553,96 @@ export const PNL_LINE_CATALOGUE_SCHEMA = {
     },
   },
 } as const;
+
+// --- the setting `pnl.forecast_rules` --------------------------------------------------------------------------------
+
+/** D-472 how forecast months are filled (owner Finance Manager, proposed). Percentages are decimal strings. */
+export interface PnlForecastRules {
+  /** Probability of an open lead by pipeline stage (D-468 stages; won / lost are not open). */
+  stageProbabilityPct: Record<'new' | 'contacted' | 'quoted' | 'negotiating', string>;
+  /** The weighted pipeline is spread evenly over this many forecast months (leads carry no expected close date). */
+  pipelineHorizonMonths: number;
+  /** Complete months before the current one used for ratios, averages and the run rate. */
+  trailingMonths: number;
+  /** A customer is a repeat customer with revenue in at least this many months of the trailing window. */
+  repeatMinMonths: number;
+}
+
+export const PNL_FORECAST_RULES_SEED: PnlForecastRules = {
+  stageProbabilityPct: { new: '10.00', contacted: '20.00', quoted: '40.00', negotiating: '60.00' },
+  pipelineHorizonMonths: 3,
+  trailingMonths: 3,
+  repeatMinMonths: 2,
+};
+
+const PCT = { type: 'string', pattern: '^(100(\\.0{1,2})?|\\d{1,2}(\\.\\d{1,2})?)$' } as const;
+
+export const PNL_FORECAST_RULES_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['stageProbabilityPct', 'pipelineHorizonMonths', 'trailingMonths', 'repeatMinMonths'],
+  properties: {
+    stageProbabilityPct: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['new', 'contacted', 'quoted', 'negotiating'],
+      properties: { new: PCT, contacted: PCT, quoted: PCT, negotiating: PCT },
+    },
+    pipelineHorizonMonths: { type: 'integer', minimum: 1, maximum: 12 },
+    trailingMonths: { type: 'integer', minimum: 1, maximum: 12 },
+    repeatMinMonths: { type: 'integer', minimum: 1, maximum: 12 },
+  },
+} as const;
+
+// --- the setting `tax.cit_rates` -------------------------------------------------------------------------------------
+
+const MONEY = { type: 'string', pattern: '^\\d{1,12}(\\.\\d{1,2})?$' } as const;
+
+/**
+ * D-472 corporate income tax table (Revenue Code; ⚖ the CPA confirms): 20 %, or for an SME (paid-up capital ≤ ฿5M at
+ * year end and revenue ≤ ฿30M) 0 % to ฿300,000, 15 % to ฿3,000,000, 20 % above. The company's paid-up capital is
+ * not known to the system: null until the accountant enters it, and the standard rate applies meanwhile.
+ */
+export const CIT_RATES_SEED = {
+  standardRatePct: '20.00',
+  sme: {
+    bands: [
+      { upTo: '300000.00', ratePct: '0.00' },
+      { upTo: '3000000.00', ratePct: '15.00' },
+      { upTo: null, ratePct: '20.00' },
+    ],
+    paidUpCapitalMax: '5000000.00',
+    revenueMax: '30000000.00',
+  },
+  paidUpCapital: null,
+} as const;
+
+export const CIT_RATES_SCHEMA = {
+  type: 'object',
+  additionalProperties: false,
+  required: ['standardRatePct', 'sme', 'paidUpCapital'],
+  properties: {
+    standardRatePct: PCT,
+    sme: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['bands', 'paidUpCapitalMax', 'revenueMax'],
+      properties: {
+        bands: {
+          type: 'array',
+          minItems: 1,
+          maxItems: 10,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['upTo', 'ratePct'],
+            properties: { upTo: { anyOf: [MONEY, { type: 'null' }] }, ratePct: PCT },
+          },
+        },
+        paidUpCapitalMax: MONEY,
+        revenueMax: MONEY,
+      },
+    },
+    paidUpCapital: { anyOf: [MONEY, { type: 'null' }] },
+  },
+} as const;

@@ -1,4 +1,5 @@
-import { type PnlLineCatalogue } from '@modules/pnl/pnl-lines';
+import { type CitRates } from '@modules/pnl/pnl-engine';
+import { type PnlForecastRules, type PnlLineCatalogue } from '@modules/pnl/pnl-lines';
 import { type RuleCatalogue } from '@modules/studio/print-rules';
 import { type StyleLibraryContent } from '@modules/styles/style-library-content';
 /**
@@ -143,6 +144,10 @@ export interface SettingValues {
   'finance.bad_debt_provision_pct': { byGrade: Record<string, string> };
   /** D-472 the management P&L line catalogue: labels, tooltips and GL mapping (Finance Manager). */
   'pnl.line_catalogue': PnlLineCatalogue;
+  /** D-472 forecast rules of the P&L planner (stage probabilities, horizon, trailing window). */
+  'pnl.forecast_rules': PnlForecastRules;
+  /** D-472 corporate income tax table of the P&L estimate (⚖ CPA). */
+  'tax.cit_rates': CitRates;
   /** D-471 the lead-scoring rules (shape: `ScoringRules` in sales-desk/lead-scoring.ts). */
   'sales.scoring_rules': {
     base: number;

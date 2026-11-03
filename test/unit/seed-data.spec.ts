@@ -72,6 +72,8 @@ describe('seed data (B1.2 step 3)', () => {
       'sales.scoring_rules': 'proposed',
       // D-472: the GL mapping of the P&L lines is a proposal for the accountant.
       'pnl.line_catalogue': 'proposed',
+      'pnl.forecast_rules': 'proposed',
+      'tax.cit_rates': 'pending_cpa',
       // B3.1: D-060's legacy value is a secret not in the repository — its 7-day fallback, proposed.
       'orders.unpaid_expiry_days': 'proposed',
       // B3.1: nature of the sale per product type (accounting-design §2 ⚖).
