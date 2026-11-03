@@ -1651,6 +1651,19 @@ export const PERMISSIONS = [
       'Read the sales reports: negotiation history per customer, lost-to-price by product class and quantity band, the post-deal review (in the waterfall tier one holds)',
     decisionRefs: ['D-470'],
   },
+  {
+    key: 'sales_playbook.manage',
+    audience: 'staff',
+    description:
+      'Write sales playbook cards: drafts and new versions of the cards one’s role owns (Marketing, Sales Manager), submit them for review, retire them',
+    decisionRefs: ['D-470'],
+  },
+  {
+    key: 'sales_playbook.publish',
+    audience: 'staff',
+    description: 'Publish a submitted playbook card written or submitted by someone else (maker-checker)',
+    decisionRefs: ['D-470'],
+  },
   // --- B6.3 launch readiness (D-113)
   {
     key: 'ops.read',

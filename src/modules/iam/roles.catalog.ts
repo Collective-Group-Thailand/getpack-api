@@ -580,6 +580,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Marketing',
     // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
     permissions: [
+      'sales_playbook.manage',
+      'sales_playbook.publish',
       'settings.read',
       'settings.change',
       'studio_catalog.manage',
@@ -614,6 +616,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Sales Manager',
     // D-423: runs the agent programme — applications, agents, links, leads and the plans it drafts.
     permissions: [
+      'sales_playbook.manage',
+      'sales_playbook.publish',
       'sales_reports.read',
       'discount_approvals.read',
       'discount_approvals.decide',

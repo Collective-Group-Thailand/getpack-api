@@ -202,6 +202,8 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `discount_approvals.export` — Export a deal’s full waterfall as CSV (finance only; logged) (D-470) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
 | `sales_waterfall_views.read` — Read the access log of deal waterfalls: who saw which quote’s waterfall, when and in which tier (D-470, D-444) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ● |  |
 | `sales_reports.read` — Read the sales reports: negotiation history per customer, lost-to-price by product class and quantity band, the post-deal review (in the waterfall tier one holds) (D-470) | ● | ● | ● | ● |  |  |  |  |  | ● |  |  | ● |  | ● |  |  |
+| `sales_playbook.manage` — Write sales playbook cards: drafts and new versions of the cards one’s role owns (Marketing, Sales Manager), submit them for review, retire them (D-470) | ● |  |  |  |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `sales_playbook.publish` — Publish a submitted playbook card written or submitted by someone else (maker-checker) (D-470) | ● |  |  |  |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 | `ops.read` — Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches) (D-113) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |

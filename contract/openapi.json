@@ -4940,6 +4940,39 @@
           "type": "https://errors.getpack/sales.rep_unavailable"
         }
       },
+      "problem.sales_playbook.maker_checker": {
+        "summary": "sales_playbook.maker_checker",
+        "value": {
+          "code": "sales_playbook.maker_checker",
+          "detail": "ผู้เขียนหรือผู้ส่งตรวจการ์ดเผยแพร่การ์ดนั้นเองไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ต้องให้ผู้อื่นเผยแพร่",
+          "type": "https://errors.getpack/sales_playbook.maker_checker"
+        }
+      },
+      "problem.sales_playbook.not_draft": {
+        "summary": "sales_playbook.not_draft",
+        "value": {
+          "code": "sales_playbook.not_draft",
+          "detail": "แก้ไขหรือส่งตรวจได้เฉพาะการ์ดฉบับร่าง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ไม่ใช่ฉบับร่าง",
+          "type": "https://errors.getpack/sales_playbook.not_draft"
+        }
+      },
+      "problem.sales_playbook.not_submitted": {
+        "summary": "sales_playbook.not_submitted",
+        "value": {
+          "code": "sales_playbook.not_submitted",
+          "detail": "ส่งฉบับร่างให้ตรวจก่อนเผยแพร่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่ได้ส่งตรวจ",
+          "type": "https://errors.getpack/sales_playbook.not_submitted"
+        }
+      },
       "problem.samples.evidence_missing": {
         "summary": "samples.evidence_missing",
         "value": {
@@ -37364,6 +37397,84 @@
         "required": [
           "companyBankAccountId",
           "payOn"
+        ],
+        "type": "object"
+      },
+      "CreatePlaybookCardDto": {
+        "properties": {
+          "audiences": {
+            "items": {
+              "$ref": "#/components/schemas/SalesPlaybookAudience"
+            },
+            "type": "array"
+          },
+          "bodyEn": {
+            "example": null,
+            "maxLength": 8000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bodyTh": {
+            "description": "Markdown",
+            "example": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+            "maxLength": 8000,
+            "type": "string"
+          },
+          "changeNote": {
+            "example": "เพิ่มคำตอบเรื่องเครดิต 30 วัน",
+            "maxLength": 300,
+            "type": "string"
+          },
+          "contexts": {
+            "items": {
+              "$ref": "#/components/schemas/SalesPlaybookContext"
+            },
+            "type": "array"
+          },
+          "key": {
+            "description": "An existing key makes its next draft version (from the latest version); a new key starts at 1",
+            "example": "give-get-menu",
+            "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "ownerRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesPlaybookOwnerRole"
+              }
+            ],
+            "description": "New keys only (default: marketing for cards agents see, else sales_manager)"
+          },
+          "sort": {
+            "example": 20,
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "suggestedReplies": {
+            "items": {
+              "$ref": "#/components/schemas/PlaybookReplyInputDto"
+            },
+            "type": "array"
+          },
+          "titleEn": {
+            "example": "Give-get menu",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+            "maxLength": 200,
+            "type": "string"
+          }
+        },
+        "required": [
+          "key"
         ],
         "type": "object"
       },
@@ -86896,6 +87007,173 @@
         ],
         "type": "object"
       },
+      "PlaybookCardAdminDto": {
+        "properties": {
+          "audiences": {
+            "example": [
+              "agent",
+              "rep"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SalesPlaybookAudience"
+            },
+            "type": "array"
+          },
+          "bodyEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bodyTh": {
+            "example": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+            "type": "string"
+          },
+          "changeNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "contexts": {
+            "example": [
+              "discount_request"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SalesPlaybookContext"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "give-get-menu",
+            "type": "string"
+          },
+          "ownerRole": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesPlaybookOwnerRole"
+              }
+            ],
+            "example": "marketing"
+          },
+          "publishedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "sort": {
+            "example": 20,
+            "type": "integer"
+          },
+          "source": {
+            "example": "docs/design/agent-portal/PLAYBOOK.md v1 (2026-11-01)",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/TemplateVersionStatus"
+              }
+            ],
+            "example": "draft"
+          },
+          "submitted": {
+            "description": "A draft submitted for review (waiting for a publisher)",
+            "example": false,
+            "type": "boolean"
+          },
+          "submittedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "suggestedReplies": {
+            "items": {
+              "$ref": "#/components/schemas/AgentPlaybookReplyDto"
+            },
+            "type": "array"
+          },
+          "titleEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+            "type": "string"
+          },
+          "updatedAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "version": {
+            "example": 2,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "version",
+          "status",
+          "submitted",
+          "contexts",
+          "audiences",
+          "ownerRole",
+          "titleTh",
+          "titleEn",
+          "bodyTh",
+          "bodyEn",
+          "suggestedReplies",
+          "sort",
+          "changeNote",
+          "source",
+          "submittedAt",
+          "publishedAt",
+          "updatedAt"
+        ],
+        "type": "object"
+      },
+      "PlaybookReplyInputDto": {
+        "properties": {
+          "en": {
+            "example": null,
+            "maxLength": 500,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "th": {
+            "example": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ",
+            "maxLength": 500,
+            "type": "string"
+          }
+        },
+        "required": [
+          "th"
+        ],
+        "type": "object"
+      },
       "PoLineType": {
         "enum": [
           "production",
@@ -102873,6 +103151,33 @@
           "won"
         ],
         "type": "object"
+      },
+      "SalesPlaybookAudience": {
+        "enum": [
+          "agent",
+          "rep",
+          "manager"
+        ],
+        "type": "string"
+      },
+      "SalesPlaybookContext": {
+        "enum": [
+          "all",
+          "lead_lost_price",
+          "competitor_cheaper",
+          "discount_request",
+          "big_deal",
+          "follow_up",
+          "first_contact"
+        ],
+        "type": "string"
+      },
+      "SalesPlaybookOwnerRole": {
+        "enum": [
+          "marketing",
+          "sales_manager"
+        ],
+        "type": "string"
       },
       "SalesPointDto": {
         "properties": {
@@ -126094,6 +126399,67 @@
               "string",
               "null"
             ]
+          }
+        },
+        "type": "object"
+      },
+      "UpdatePlaybookCardDto": {
+        "properties": {
+          "audiences": {
+            "items": {
+              "$ref": "#/components/schemas/SalesPlaybookAudience"
+            },
+            "type": "array"
+          },
+          "bodyEn": {
+            "example": null,
+            "maxLength": 8000,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bodyTh": {
+            "description": "Markdown",
+            "example": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+            "maxLength": 8000,
+            "type": "string"
+          },
+          "changeNote": {
+            "example": "เพิ่มคำตอบเรื่องเครดิต 30 วัน",
+            "maxLength": 300,
+            "type": "string"
+          },
+          "contexts": {
+            "items": {
+              "$ref": "#/components/schemas/SalesPlaybookContext"
+            },
+            "type": "array"
+          },
+          "sort": {
+            "example": 20,
+            "maximum": 1000,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "suggestedReplies": {
+            "items": {
+              "$ref": "#/components/schemas/PlaybookReplyInputDto"
+            },
+            "type": "array"
+          },
+          "titleEn": {
+            "example": "Give-get menu",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+            "maxLength": 200,
+            "type": "string"
           }
         },
         "type": "object"
@@ -343702,6 +344068,1751 @@
         ],
         "x-required-permissions": [
           "sales_reports.read"
+        ]
+      }
+    },
+    "/v1/admin/sales/playbook": {
+      "get": {
+        "description": "Every version of every card (filter by status, key, audience), the published one per key first in use by the agent zone (D-470).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesPlaybook.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/TemplateVersionStatus"
+            }
+          },
+          {
+            "description": "Every version of one key",
+            "in": "query",
+            "name": "key",
+            "required": false,
+            "schema": {
+              "example": "give-get-menu",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "audience",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesPlaybookAudience"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "audiences": [
+                        "agent",
+                        "rep",
+                        "manager"
+                      ],
+                      "bodyEn": null,
+                      "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                      "changeNote": null,
+                      "contexts": [
+                        "discount_request",
+                        "competitor_cheaper"
+                      ],
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+                      "key": "give-get-menu",
+                      "ownerRole": "marketing",
+                      "publishedAt": null,
+                      "sort": 20,
+                      "source": null,
+                      "status": "draft",
+                      "submitted": false,
+                      "submittedAt": null,
+                      "suggestedReplies": [
+                        {
+                          "en": null,
+                          "th": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ"
+                        }
+                      ],
+                      "titleEn": null,
+                      "titleTh": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+                      "updatedAt": "2026-11-03T10:00:00+07:00",
+                      "version": 2
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/PlaybookCardAdminDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List playbook cards",
+        "tags": [
+          "admin.salesPlaybook"
+        ],
+        "x-required-permissions": [
+          "sales_playbook.manage"
+        ]
+      },
+      "post": {
+        "description": "A new key starts at version 1; an existing key gets its next draft version, copied from the latest and changed by the fields sent (one draft per key at a time). Only the owner role (Marketing / Sales Manager; Superadmin) writes; cards agents see must stay customer-safe (no cost, margin, factory or profit words) (D-470).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesPlaybook.create",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                    "changeNote": "ปรับถ้อยคำ",
+                    "key": "give-get-menu"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/CreatePlaybookCardDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "audiences": [
+                    "agent",
+                    "rep",
+                    "manager"
+                  ],
+                  "bodyEn": null,
+                  "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                  "changeNote": null,
+                  "contexts": [
+                    "discount_request",
+                    "competitor_cheaper"
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+                  "key": "give-get-menu",
+                  "ownerRole": "marketing",
+                  "publishedAt": null,
+                  "sort": 20,
+                  "source": null,
+                  "status": "draft",
+                  "submitted": false,
+                  "submittedAt": null,
+                  "suggestedReplies": [
+                    {
+                      "en": null,
+                      "th": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ"
+                    }
+                  ],
+                  "titleEn": null,
+                  "titleTh": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PlaybookCardAdminDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "sales_playbook.not_draft": {
+                    "$ref": "#/components/examples/problem.sales_playbook.not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `sales_playbook.not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Draft a playbook card or its next version",
+        "tags": [
+          "admin.salesPlaybook"
+        ],
+        "x-required-permissions": [
+          "sales_playbook.manage"
+        ]
+      }
+    },
+    "/v1/admin/sales/playbook/{cardId}": {
+      "get": {
+        "description": "One version with its status and review state (D-470).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesPlaybook.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cardId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "audiences": [
+                    "agent",
+                    "rep",
+                    "manager"
+                  ],
+                  "bodyEn": null,
+                  "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                  "changeNote": null,
+                  "contexts": [
+                    "discount_request",
+                    "competitor_cheaper"
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+                  "key": "give-get-menu",
+                  "ownerRole": "marketing",
+                  "publishedAt": null,
+                  "sort": 20,
+                  "source": null,
+                  "status": "draft",
+                  "submitted": false,
+                  "submittedAt": null,
+                  "suggestedReplies": [
+                    {
+                      "en": null,
+                      "th": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ"
+                    }
+                  ],
+                  "titleEn": null,
+                  "titleTh": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PlaybookCardAdminDto"
+                }
+              }
+            },
+            "description": "Card",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a playbook card version",
+        "tags": [
+          "admin.salesPlaybook"
+        ],
+        "x-required-permissions": [
+          "sales_playbook.manage"
+        ]
+      },
+      "patch": {
+        "description": "Drafts only; an edit after submission withdraws the submission (D-470).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesPlaybook.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cardId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "titleEn": "Give-get menu"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePlaybookCardDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "audiences": [
+                    "agent",
+                    "rep",
+                    "manager"
+                  ],
+                  "bodyEn": null,
+                  "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                  "changeNote": null,
+                  "contexts": [
+                    "discount_request",
+                    "competitor_cheaper"
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+                  "key": "give-get-menu",
+                  "ownerRole": "marketing",
+                  "publishedAt": null,
+                  "sort": 20,
+                  "source": null,
+                  "status": "draft",
+                  "submitted": false,
+                  "submittedAt": null,
+                  "suggestedReplies": [
+                    {
+                      "en": null,
+                      "th": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ"
+                    }
+                  ],
+                  "titleEn": null,
+                  "titleTh": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PlaybookCardAdminDto"
+                }
+              }
+            },
+            "description": "Draft",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "sales_playbook.not_draft": {
+                    "$ref": "#/components/examples/problem.sales_playbook.not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `sales_playbook.not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Edit a draft playbook card",
+        "tags": [
+          "admin.salesPlaybook"
+        ],
+        "x-required-permissions": [
+          "sales_playbook.manage"
+        ]
+      }
+    },
+    "/v1/admin/sales/playbook/{cardId}/actions/publish": {
+      "post": {
+        "description": "Maker-checker: neither its author nor its submitter publishes it (`sales_playbook.maker_checker`). The key’s previous published version retires; the agent zone reads the new one at once (D-470).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesPlaybook.publish",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cardId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "audiences": [
+                    "agent",
+                    "rep",
+                    "manager"
+                  ],
+                  "bodyEn": null,
+                  "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                  "changeNote": null,
+                  "contexts": [
+                    "discount_request",
+                    "competitor_cheaper"
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+                  "key": "give-get-menu",
+                  "ownerRole": "marketing",
+                  "publishedAt": "2026-11-03T12:00:00+07:00",
+                  "sort": 20,
+                  "source": null,
+                  "status": "published",
+                  "submitted": false,
+                  "submittedAt": null,
+                  "suggestedReplies": [
+                    {
+                      "en": null,
+                      "th": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ"
+                    }
+                  ],
+                  "titleEn": null,
+                  "titleTh": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PlaybookCardAdminDto"
+                }
+              }
+            },
+            "description": "Published",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "sales_playbook.maker_checker": {
+                    "$ref": "#/components/examples/problem.sales_playbook.maker_checker"
+                  },
+                  "sales_playbook.not_draft": {
+                    "$ref": "#/components/examples/problem.sales_playbook.not_draft"
+                  },
+                  "sales_playbook.not_submitted": {
+                    "$ref": "#/components/examples/problem.sales_playbook.not_submitted"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `sales_playbook.maker_checker`, `sales_playbook.not_draft`, `sales_playbook.not_submitted`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Publish a submitted card",
+        "tags": [
+          "admin.salesPlaybook"
+        ],
+        "x-required-permissions": [
+          "sales_playbook.publish"
+        ]
+      }
+    },
+    "/v1/admin/sales/playbook/{cardId}/actions/retire": {
+      "post": {
+        "description": "It is no longer shown anywhere (D-470).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesPlaybook.retire",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cardId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "audiences": [
+                    "agent",
+                    "rep",
+                    "manager"
+                  ],
+                  "bodyEn": null,
+                  "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                  "changeNote": null,
+                  "contexts": [
+                    "discount_request",
+                    "competitor_cheaper"
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+                  "key": "give-get-menu",
+                  "ownerRole": "marketing",
+                  "publishedAt": null,
+                  "sort": 20,
+                  "source": null,
+                  "status": "retired",
+                  "submitted": false,
+                  "submittedAt": null,
+                  "suggestedReplies": [
+                    {
+                      "en": null,
+                      "th": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ"
+                    }
+                  ],
+                  "titleEn": null,
+                  "titleTh": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PlaybookCardAdminDto"
+                }
+              }
+            },
+            "description": "Retired",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "sales_playbook.not_draft": {
+                    "$ref": "#/components/examples/problem.sales_playbook.not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `sales_playbook.not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Retire a card version",
+        "tags": [
+          "admin.salesPlaybook"
+        ],
+        "x-required-permissions": [
+          "sales_playbook.manage"
+        ]
+      }
+    },
+    "/v1/admin/sales/playbook/{cardId}/actions/submit": {
+      "post": {
+        "description": "Someone else publishes it (maker-checker, D-470).\n\nImplements: D-470, D-468.",
+        "operationId": "admin.salesPlaybook.submit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "cardId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "audiences": [
+                    "agent",
+                    "rep",
+                    "manager"
+                  ],
+                  "bodyEn": null,
+                  "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                  "changeNote": null,
+                  "contexts": [
+                    "discount_request",
+                    "competitor_cheaper"
+                  ],
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+                  "key": "give-get-menu",
+                  "ownerRole": "marketing",
+                  "publishedAt": null,
+                  "sort": 20,
+                  "source": null,
+                  "status": "draft",
+                  "submitted": true,
+                  "submittedAt": "2026-11-03T11:00:00+07:00",
+                  "suggestedReplies": [
+                    {
+                      "en": null,
+                      "th": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ"
+                    }
+                  ],
+                  "titleEn": null,
+                  "titleTh": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+                  "updatedAt": "2026-11-03T10:00:00+07:00",
+                  "version": 2
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/PlaybookCardAdminDto"
+                }
+              }
+            },
+            "description": "Submitted",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "sales_playbook.not_draft": {
+                    "$ref": "#/components/examples/problem.sales_playbook.not_draft"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `sales_playbook.not_draft`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Submit a draft card for review",
+        "tags": [
+          "admin.salesPlaybook"
+        ],
+        "x-required-permissions": [
+          "sales_playbook.manage"
         ]
       }
     },
@@ -617152,6 +619263,10 @@
     {
       "description": "Negotiation history per customer and lost-to-price by product class and quantity band (D-470).",
       "name": "admin.salesNegotiations"
+    },
+    {
+      "description": "The sales playbook admin: versioned cards owned by Marketing or the Sales Manager, maker-checker publishing (D-470).",
+      "name": "admin.salesPlaybook"
     },
     {
       "description": "Quotations sent on behalf of getpack from the sales pipeline, and their discount rounds (D-469).",

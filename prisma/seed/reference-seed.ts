@@ -698,6 +698,8 @@ async function ensureAgentProgramme(tx: Tx, count: (what: string) => void): Prom
         status: 'published',
         publishedAt: SEED_EFFECTIVE_FROM,
         source: PLAYBOOK_SOURCE,
+        // D-470: rep / manager-only cards are the Sales Manager's; the rest Marketing's.
+        ownerRole: card.audiences.includes('agent') ? 'marketing' : 'sales_manager',
       },
     });
     count('sales_playbook_cards');

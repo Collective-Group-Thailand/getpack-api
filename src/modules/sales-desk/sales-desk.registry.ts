@@ -9,6 +9,7 @@ import {
   AdminSalesQuotesController,
   AdminSalesRepsController,
 } from './sales-pipeline.controller';
+import { AdminSalesPlaybookController } from './sales-playbook-admin';
 
 export const SALES_DESK_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminSalesLeadsController,
@@ -18,4 +19,5 @@ export const SALES_DESK_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminSalesDashboardController,
   AdminDiscountApprovalsController,
   AdminSalesNegotiationsController,
+  AdminSalesPlaybookController,
 ];

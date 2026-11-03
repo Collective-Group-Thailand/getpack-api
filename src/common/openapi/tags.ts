@@ -52,6 +52,8 @@ export const API_TAGS: Record<string, string> = {
     'The discount approval & price lock desk: queue with SLA, the deal waterfall in the viewer’s tier, simulator, decisions, the waterfall access log (D-470).',
   'admin.salesNegotiations':
     'Negotiation history per customer and lost-to-price by product class and quantity band (D-470).',
+  'admin.salesPlaybook':
+    'The sales playbook admin: versioned cards owned by Marketing or the Sales Manager, maker-checker publishing (D-470).',
   'admin.salesInbound':
     'The inbound pool of sales enquiries (contact form, RFQ, staff), their assignment to reps and the first-response SLA (D-469).',
   'store.loyalty':

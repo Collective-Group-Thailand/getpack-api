@@ -8,6 +8,7 @@ import { SalesDeskJobs } from './sales-desk.jobs';
 import { SalesInboundService } from './sales-inbound.service';
 import { SalesNegotiationsService } from './sales-negotiations';
 import { SalesPipelineService } from './sales-pipeline.service';
+import { SalesPlaybookAdminService } from './sales-playbook-admin';
 import { SalesScopeService } from './sales-scope';
 
 const SERVICES = [
@@ -18,6 +19,7 @@ const SERVICES = [
   SalesDashboardService,
   DiscountApprovalsService,
   SalesNegotiationsService,
+  SalesPlaybookAdminService,
 ];
 
 /**
