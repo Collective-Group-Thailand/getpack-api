@@ -30,6 +30,7 @@ the checks marked **UAT** against the hosted UAT stack.
 | SR-18 | Factory confidentiality and margin wording on agent responses | — | Verified | `test/unit/storefront-factory-confidentiality.spec.ts` covers every `/v1/store/agent/*` operation; P7 adds the waitlist operation |
 | SR-19 | Waitlist (P7 item 5) enumeration and spam | Medium if absent | **Fixed in item 5** | anonymous, per-IP throttle 5 / minute, neutral `202` whether new or already listed, nothing echoed |
 | SR-20 | Forecast reads in-progress orders once per active link (N + 1) — a heavy agent could load the API | Low | Open (watch) | `agent-forecast.service.ts`; pilot volumes are small; `docs/launch/PERFORMANCE.md` watch item |
+| SR-21 | Offboarding: ending an agent left its registered deals active, so for up to `agent.deal_protection_days` (90) they kept blocking other agents' check / registration and staff assignment of the customer | Medium | **Fixed** | `AgentsService.setStatus(ended)` expires them with `agent_ended`; `agent-offboarding.spec.ts` |
 
 ## 2. Limits (technical, not business values)
 

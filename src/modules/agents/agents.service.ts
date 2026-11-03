@@ -753,6 +753,12 @@ export class AgentsService {
           where: { agentId: agent.id, status: 'pending' },
           data: { status: 'ended', closedAt: now, reason: 'agent_ended' },
         });
+        // P7 review: an ended agent's deal registrations stop protecting its (now expired) leads at once, so other
+        // agents and staff assignment are not blocked for the rest of `agent.deal_protection_days` (D-468 (4)).
+        await tx.salesAgentDealRegistration.updateMany({
+          where: { agentId: agent.id, status: 'registered' },
+          data: { status: 'expired', endedAt: now, endedReason: 'agent_ended', rowVersion: { increment: 1 } },
+        });
       }
       await this.audit.record(tx, {
         category: 'iam',

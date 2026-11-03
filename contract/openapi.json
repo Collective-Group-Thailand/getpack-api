@@ -143636,7 +143636,7 @@
     },
     "/v1/admin/agents/{agentId}/actions/end": {
       "post": {
-        "description": "Links end, protected leads expire, pending factory links end; accrued commission is still paid (D-416).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423.",
+        "description": "Links end, protected leads expire, registered deals expire (`agent_ended`), pending factory links end; accrued commission is still paid; statements and 50 ทวิ stay readable for `agents.ended_record_access_years` (D-416, D-467, D-468).\n\nImplements: D-416, D-417, D-418, D-419, D-420, D-423.",
         "operationId": "admin.agents.end",
         "parameters": [
           {
