@@ -383,6 +383,7 @@ model Entity {
 
   // --- Finance B5.1 (generated back-relations)
   fiscalYears          FiscalYear[]          @relation("FiscalYearEntity")
+  pnlPlans             PnlPlan[]             @relation("PnlPlanEntity")
   fiscalPeriods        FiscalPeriod[]        @relation("FiscalPeriodEntity")
   accounts             Account[]             @relation("AccountEntity")
   accountChanges       AccountChange[]       @relation("AccountChangeEntity")
