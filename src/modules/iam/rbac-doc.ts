@@ -21,6 +21,22 @@ export const SALES_DESK_NOTES: readonly string[] = [
   '    the factory price locks.',
   '  Every view, simulation and export is logged in `sales_waterfall_views` (Superadmin, Auditor read it); the only',
   '  export is `discount_approvals.export` (Finance Manager). Bottom line wording: "กำไรหลังหักค่าคอม", never "กำไรสุทธิ".',
+  '',
+  '## Automatic lead capture and scoring — personal data (D-471)',
+  '',
+  '- **Captured signals** (`sales_inbound_leads` sources `studio_idle`, `dieline_download`): the account the signal',
+  '  came from (`capture_user_id`), its name, phone, e-mail and active company, the idle studio design',
+  '  (`design_document_id`), repeat signals (`signal_count`, `last_signal_at`). Purpose: a sales follow-up the person',
+  '  agreed to — only when their latest marketing consent is granted; the consent record relied on is kept',
+  '  (`consent_record_id`, `consent_basis`). Retention: as the inbound item (while open, then 2 years). Access: as the',
+  '  inbound pool (`sales.pipeline.manage`, the assigned rep). Agents never see captured items.',
+  '- **Lead score** (`score`, `score_reasons`, `scored_at` on inbound items and agent leads): derived from the item or',
+  '  lead itself by `sales.scoring_rules`. Staff with the pipeline permissions see the score and its top 3 reasons; an',
+  '  agent sees the score of their own leads only (no reasons). Pricing-page visits are not used (analytics consent is',
+  '  for aggregate analytics only).',
+  '- **Dieline downloads without sign-in** (`dieline_downloads.device_hash`): SHA-256 of a random browser id, no',
+  '  account, no IP. Purpose: asking for a free sign-in from the second download. Retention: as the download log.',
+  '  Access: none through the API (counted only).',
 ];
 
 const AUDIENCES = [
