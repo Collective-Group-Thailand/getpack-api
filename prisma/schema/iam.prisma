@@ -881,6 +881,11 @@ model User {
   salesAgentDiscountOffers         SalesAgentDiscountOption[]  @relation("SalesAgentDiscountOptionOfferedBy")
   salesAgentDiscountAcceptances    SalesAgentDiscountOption[]  @relation("SalesAgentDiscountOptionAcceptedBy")
   salesAgentStatementsApproved     SalesAgentStatement[]       @relation("SalesAgentStatementApprovedBy")
+  salesInboundAssigned             SalesInboundLead[]          @relation("SalesInboundLeadAssignee")
+  salesInboundCreated              SalesInboundLead[]          @relation("SalesInboundLeadCreatedBy")
+  salesInboundAssignmentsFrom      SalesInboundAssignment[]    @relation("SalesInboundAssignmentFrom")
+  salesInboundAssignmentsTo        SalesInboundAssignment[]    @relation("SalesInboundAssignmentTo")
+  salesInboundAssignmentsCreated   SalesInboundAssignment[]    @relation("SalesInboundAssignmentCreatedBy")
   // --- end Sales agents
 
   // --- Documents D-428 – D-431 (back-relations)
@@ -891,6 +896,11 @@ model User {
   documentSigningRulesCreated  DocumentSigningRule[]       @relation("DocumentSigningRuleCreatedBy")
   documentCorrectionsRequested DocumentCorrectionRequest[] @relation("DocumentCorrectionRequestRequestedBy")
   documentCorrectionsDecided   DocumentCorrectionRequest[] @relation("DocumentCorrectionRequestDecidedBy")
+
+  // --- Sales desk D-470 (back-relations)
+  salesDiscountApprovalsRequested SalesDiscountApproval[] @relation("SalesDiscountApprovalRequestedBy")
+  salesDiscountApprovalsDecided   SalesDiscountApproval[] @relation("SalesDiscountApprovalDecidedBy")
+  salesWaterfallViews             SalesWaterfallView[]    @relation("SalesWaterfallViewViewer")
 
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))

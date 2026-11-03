@@ -233,94 +233,105 @@ export class AgentDiscountsService {
     offers: readonly OfferInput[],
     note?: string,
   ): Promise<DiscountRequestRow> {
-    const now = new Date();
-    const days = await this.settings.value('quotes.discounted_validity_days', now);
-    const id = await this.prisma.withTx(async (tx) => {
-      const req = await tx.salesAgentDiscountRequest.findUnique({
-        where: { publicId: requestPublicId },
-        include: {
-          agentQuote: true,
-          quoteOption: true,
-          agent: { select: { user: { select: { publicId: true } } } },
-        },
-      });
-      if (!req) throw new DomainException('http.not_found');
-      if (req.status !== 'open')
-        throw new DomainException('agents.discount_request_closed', { params: { status: req.status } });
-      const rate = await this.standardRate(tx, req.agentQuote);
-      const result = req.quoteOption.result as { shippingNetAmount?: string | null };
-      const base = quotedBase({
-        netAmount: req.quoteOption.netAmount.toFixed(2),
-        shippingNetAmount: result.shippingNetAmount ?? null,
-      });
-      let built;
-      try {
-        built = buildOptions(offers, { base, standardRatePct: rate.ratePct, minBase: rate.minBase });
-      } catch (error) {
-        if (error instanceof OfferError) invalid('options', error.message, error.problem);
-        throw error;
-      }
-      const validUntil = new Date(now.getTime() + days * DAY_MS);
-      const conditions = conditionsLine(
-        {
-          quantityChange: req.quantityChange,
-          commitment: req.commitment,
-          commitmentMonths: req.commitmentMonths,
-          depositPct: req.depositPct?.toString() ?? null,
-          cashWithinDays: req.cashWithinDays,
-          leadTimeFlexDays: req.leadTimeFlexDays,
-          specChange: req.specChange,
-        },
-        req.quoteOption.quantity,
-        bangkokDate(validUntil),
-      );
-      for (const o of built)
-        await tx.salesAgentDiscountOption.create({
-          data: {
-            requestId: req.id,
-            ...o,
-            conditionsTh: conditions.th,
-            conditionsEn: conditions.en,
-            validUntil,
-            offeredById: actor.type === 'user' ? actor.userId : null,
-            offeredAt: now,
-          },
-        });
-      await tx.salesAgentDiscountRequest.update({
-        where: { id: req.id },
-        data: {
-          status: 'offered',
-          decidedAt: now,
-          decidedById: actor.type === 'user' ? actor.userId : null,
-          decisionNote: note?.trim() || null,
-          rowVersion: { increment: 1 },
-        },
-      });
-      await appendLeadActivity(tx, {
-        leadId: req.agentQuote.leadId,
-        kind: 'system',
-        data: { event: 'discount_options', agentQuoteId: req.agentQuote.publicId, round: req.round },
-        occurredAt: now,
-      });
-      await recordAgentEvent(this, tx, {
-        type: 'sales_agent_discount.options_offered',
-        aggregateType: 'sales_agent_discount_request',
-        aggregateId: req.publicId,
-        // `customerId` addresses the agent's notification. No cost or margin in the payload (D-464).
-        payload: {
-          requestId: req.publicId,
-          options: built.length,
-          validUntilDate: addCalendarDays(bangkokDate(validUntil), 0),
-          customerId: req.agent.user.publicId,
-        },
-        actor,
-      });
-      return req.id;
-    });
+    const id = await this.prisma.withTx((tx) =>
+      this.offerOptionsInTx(tx, actor, requestPublicId, offers, note),
+    );
     return this.prisma.salesAgentDiscountRequest.findUniqueOrThrow({
       where: { id },
       include: DISCOUNT_REQUEST_INCLUDE,
     });
+  }
+
+  /** `offerOptions` in the caller's transaction (D-470: the approval desk decides and offers in one transaction). */
+  async offerOptionsInTx(
+    tx: Tx,
+    actor: Actor,
+    requestPublicId: string,
+    offers: readonly OfferInput[],
+    note?: string,
+  ): Promise<bigint> {
+    const now = new Date();
+    const days = await this.settings.value('quotes.discounted_validity_days', now);
+    const req = await tx.salesAgentDiscountRequest.findUnique({
+      where: { publicId: requestPublicId },
+      include: {
+        agentQuote: true,
+        quoteOption: true,
+        agent: { select: { user: { select: { publicId: true } } } },
+      },
+    });
+    if (!req) throw new DomainException('http.not_found');
+    if (req.status !== 'open')
+      throw new DomainException('agents.discount_request_closed', { params: { status: req.status } });
+    const rate = await this.standardRate(tx, req.agentQuote);
+    const result = req.quoteOption.result as { shippingNetAmount?: string | null };
+    const base = quotedBase({
+      netAmount: req.quoteOption.netAmount.toFixed(2),
+      shippingNetAmount: result.shippingNetAmount ?? null,
+    });
+    let built;
+    try {
+      built = buildOptions(offers, { base, standardRatePct: rate.ratePct, minBase: rate.minBase });
+    } catch (error) {
+      if (error instanceof OfferError) invalid('options', error.message, error.problem);
+      throw error;
+    }
+    const validUntil = new Date(now.getTime() + days * DAY_MS);
+    const conditions = conditionsLine(
+      {
+        quantityChange: req.quantityChange,
+        commitment: req.commitment,
+        commitmentMonths: req.commitmentMonths,
+        depositPct: req.depositPct?.toString() ?? null,
+        cashWithinDays: req.cashWithinDays,
+        leadTimeFlexDays: req.leadTimeFlexDays,
+        specChange: req.specChange,
+      },
+      req.quoteOption.quantity,
+      bangkokDate(validUntil),
+    );
+    for (const o of built)
+      await tx.salesAgentDiscountOption.create({
+        data: {
+          requestId: req.id,
+          ...o,
+          conditionsTh: conditions.th,
+          conditionsEn: conditions.en,
+          validUntil,
+          offeredById: actor.type === 'user' ? actor.userId : null,
+          offeredAt: now,
+        },
+      });
+    await tx.salesAgentDiscountRequest.update({
+      where: { id: req.id },
+      data: {
+        status: 'offered',
+        decidedAt: now,
+        decidedById: actor.type === 'user' ? actor.userId : null,
+        decisionNote: note?.trim() || null,
+        rowVersion: { increment: 1 },
+      },
+    });
+    await appendLeadActivity(tx, {
+      leadId: req.agentQuote.leadId,
+      kind: 'system',
+      data: { event: 'discount_options', agentQuoteId: req.agentQuote.publicId, round: req.round },
+      occurredAt: now,
+    });
+    await recordAgentEvent(this, tx, {
+      type: 'sales_agent_discount.options_offered',
+      aggregateType: 'sales_agent_discount_request',
+      aggregateId: req.publicId,
+      // `customerId` addresses the agent's notification. No cost or margin in the payload (D-464).
+      payload: {
+        requestId: req.publicId,
+        options: built.length,
+        validUntilDate: addCalendarDays(bangkokDate(validUntil), 0),
+        customerId: req.agent.user.publicId,
+      },
+      actor,
+    });
+    return req.id;
   }
 
   /**

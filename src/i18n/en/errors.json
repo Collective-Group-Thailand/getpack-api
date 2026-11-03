@@ -2234,5 +2234,71 @@
       "title": "Tax invoice needed",
       "detail": "A VAT-registered juristic agent’s tax invoice must be attached before approval"
     }
+  },
+  "sales": {
+    "no_employee_agent": {
+      "title": "No sales pipeline",
+      "detail": "Your staff account has no active employee sales agent; ask the Sales Manager to create one"
+    },
+    "lead_read_only": {
+      "title": "Lead is read-only here",
+      "detail": "This lead belongs to a freelance agent; staff read it but do not change it"
+    },
+    "rep_unavailable": {
+      "title": "Rep not available",
+      "detail": "Choose an active sales rep with an active employee agent"
+    },
+    "no_rep_available": {
+      "title": "No rep available",
+      "detail": "No active sales rep has room for another enquiry; assign one by hand"
+    },
+    "inbound_closed": {
+      "title": "Enquiry closed",
+      "detail": "This enquiry was converted or disqualified already"
+    },
+    "inbound_duplicate": {
+      "title": "Already in the pool",
+      "detail": "This enquiry is already in the inbound pool"
+    }
+  },
+  "discount_approval": {
+    "cost_unknown": {
+      "title": "Cost unknown",
+      "detail": "A quoted quantity has no buy price (price list, rate card or factory answer); the approval cannot open"
+    },
+    "stale": {
+      "title": "Approval no longer valid",
+      "detail": "The quotation’s lines, quantities, costs or terms changed since it was approved; ask again"
+    },
+    "not_pending": {
+      "title": "Already decided",
+      "detail": "This approval was decided, voided or closed already"
+    },
+    "not_authorised": {
+      "title": "Above your authority",
+      "detail": "This discount needs a higher approval level than yours"
+    },
+    "self_approval": {
+      "title": "Own request",
+      "detail": "You asked for this discount; someone else decides it (a Superadmin only under solo-owner mode, with a typed reason)"
+    },
+    "already_open": {
+      "title": "Approval exists",
+      "detail": "An approval for this discount request exists already"
+    }
+  },
+  "sales_playbook": {
+    "not_draft": {
+      "title": "Not a draft",
+      "detail": "Only a draft card can be changed or submitted"
+    },
+    "maker_checker": {
+      "title": "Someone else publishes",
+      "detail": "The person who wrote or submitted a card cannot publish it"
+    },
+    "not_submitted": {
+      "title": "Not submitted",
+      "detail": "Submit the draft for review before publishing it"
+    }
   }
 }

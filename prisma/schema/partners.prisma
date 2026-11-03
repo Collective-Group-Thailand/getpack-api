@@ -491,6 +491,8 @@ model Factory {
   documentSignatories  DocumentSignatory[]   @relation("DocumentSignatoryFactory")
   documentSigningRules DocumentSigningRule[] @relation("DocumentSigningRuleFactory")
 
+  salesFactoryPriceLocks SalesFactoryPriceLock[] @relation("SalesFactoryPriceLockFactory")
+
   @@unique([taxId, branchCode], map: "ux_factories__tax_id__branch_code")
   @@index([status], map: "ix_factories__status")
   @@index([calendarId], map: "ix_factories__calendar_id")
@@ -1286,6 +1288,8 @@ model PriceListVersion {
   bAssemblyPrices            PlBAssemblyPrice[]            @relation("PlBAssemblyPriceVersion")
   codeMargins                PlCodeMargin[]                @relation("PlCodeMarginVersion")
   // --- end Corrugate price components
+
+  salesFactoryPriceLocks SalesFactoryPriceLock[] @relation("SalesFactoryPriceLockPriceListVersion")
 
   @@unique([priceListId, versionNo], map: "ux_price_list_versions__price_list_id__version_no")
   @@index([priceListId, effectiveFrom(sort: Desc), versionNo(sort: Desc)], map: "ix_price_list_versions__resolution", where: raw("(status = 'approved'::config_version_status)"))

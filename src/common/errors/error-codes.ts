@@ -273,6 +273,22 @@ export const ERROR_CODES = {
   'agents.factory_links_retired': HttpStatus.GONE,
   /** D-465: a VAT-registered juristic agent's tax invoice must be attached before approval. */
   'agent_statements.tax_invoice_required': HttpStatus.CONFLICT,
+  // --- D-469 / D-470: the company sales desk and discount approval
+  'sales.no_employee_agent': HttpStatus.FORBIDDEN,
+  'sales.lead_read_only': HttpStatus.CONFLICT,
+  'sales.rep_unavailable': HttpStatus.UNPROCESSABLE_ENTITY,
+  'sales.no_rep_available': HttpStatus.CONFLICT,
+  'sales.inbound_closed': HttpStatus.CONFLICT,
+  'sales.inbound_duplicate': HttpStatus.CONFLICT,
+  'discount_approval.cost_unknown': HttpStatus.CONFLICT,
+  'discount_approval.stale': HttpStatus.CONFLICT,
+  'discount_approval.not_pending': HttpStatus.CONFLICT,
+  'discount_approval.not_authorised': HttpStatus.FORBIDDEN,
+  'discount_approval.self_approval': HttpStatus.CONFLICT,
+  'discount_approval.already_open': HttpStatus.CONFLICT,
+  'sales_playbook.not_draft': HttpStatus.CONFLICT,
+  'sales_playbook.maker_checker': HttpStatus.CONFLICT,
+  'sales_playbook.not_submitted': HttpStatus.CONFLICT,
   /** D-465: one open ล.ย.01 per agent and tax year; only individual freelance agents declare. */
   'agents.tax_declaration_open': HttpStatus.CONFLICT,
   'agents.tax_declaration_not_applicable': HttpStatus.UNPROCESSABLE_ENTITY,

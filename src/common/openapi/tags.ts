@@ -42,6 +42,22 @@ export const API_TAGS: Record<string, string> = {
   'admin.agentPayoutProfiles':
     'Freelance agents’ payout profiles, verified by Finance before the first payout (D-466).',
   'admin.agentTaxDeclarations': 'Agents’ ล.ย.01 allowance declarations, reviewed by Finance (D-465).',
+  'admin.salesLeads':
+    'The company sales pipeline: reps’ leads, stages and timeline in the admin zone — same model as the agent zone (D-469).',
+  'admin.salesQuotes':
+    'Quotations sent on behalf of getpack from the sales pipeline, and their discount rounds (D-469).',
+  'admin.salesReps': 'Company sales reps and their employee agents (D-469).',
+  'admin.sales': 'The sales manager’s dashboard: funnel, win rate, stage days, sources, reps, SLA (D-469).',
+  'admin.discountApprovals':
+    'The discount approval & price lock desk: queue with SLA, the deal waterfall in the viewer’s tier, simulator, decisions, the waterfall access log (D-470).',
+  'admin.salesNegotiations':
+    'Negotiation history per customer and lost-to-price by product class and quantity band (D-470).',
+  'admin.salesPlaybook':
+    'The sales playbook admin: versioned cards owned by Marketing or the Sales Manager, maker-checker publishing (D-470).',
+  'admin.salesPostDeal':
+    'Post-deal review: approved vs actual margin of won deals by approver, agent, customer (D-470).',
+  'admin.salesInbound':
+    'The inbound pool of sales enquiries (contact form, RFQ, staff), their assignment to reps and the first-response SLA (D-469).',
   'store.loyalty':
     'My points, tier and points history (D-130…D-134); redeem at checkout with `redeemPoints` (D-133).',
   'store.reviews': 'Review a delivered order and earn the review reward (D-135).',

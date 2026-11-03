@@ -41,6 +41,8 @@ export interface QuoteDocument {
     colourDeltaE?: string | null;
   }[];
   validityDays: number;
+  /** D-470: a discounted quotation — the discount and its conditions line (give-get), printed in the notes. */
+  conditions?: { discountPct: string; discountAmount: string; th: string | null; en: string | null } | null;
 }
 
 const money = (value: string | null): string =>
@@ -96,6 +98,7 @@ ${SIGN_STYLE}
 <div class="notes">
   ราคาเป็นเงินบาท รวมภาษีมูลค่าเพิ่มแล้ว · ใบเสนอราคานี้มีอายุ {{validityDays}} วัน ราคาไม่เปลี่ยนแปลงภายในระยะเวลาดังกล่าว หลังจากนั้นจะคำนวณราคาใหม่<br>
   Prices in THB including VAT · valid for {{validityDays}} days with the price locked; re-priced after expiry.
+  {{#if conditions}}<br><strong>ราคาพิเศษ ส่วนลด {{conditions.discountPct}}% ({{conditions.discountAmount}} บาท ก่อน VAT)</strong>{{#if conditions.th}} · {{conditions.th}}{{/if}}{{#if conditions.en}}<br>Special price, {{conditions.discountPct}}% off ({{conditions.discountAmount}} THB before VAT) · {{conditions.en}}{{/if}}{{/if}}
 </div>
 {{#if signatureHtml}}<div class="sign">{{{signatureHtml}}}</div>{{/if}}
 </body></html>`,
@@ -105,6 +108,13 @@ ${SIGN_STYLE}
 export function renderQuoteDocument(doc: QuoteDocument): string {
   return TEMPLATE({
     ...doc,
+    conditions: doc.conditions
+      ? {
+          ...doc.conditions,
+          discountPct: String(Number(doc.conditions.discountPct)),
+          discountAmount: money(doc.conditions.discountAmount),
+        }
+      : null,
     lines: doc.lines.map((l) => ({
       ...l,
       unitPrice: money(l.unitPrice),

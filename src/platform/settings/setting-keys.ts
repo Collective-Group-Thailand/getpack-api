@@ -117,6 +117,29 @@ export interface SettingValues {
   /** D-468 days a business-card photo is kept before it is purged (PDPA). */
   'agents.card_scan_retention_days': number;
   'agents.follow_up_quiet_hours': { from: string; to: string; timezone?: string };
+  /** D-469 working hours (P-05: every day in `calendar.business_hours`) to the first response of a sales enquiry. */
+  'sales.first_response_hours': number;
+  /** D-469 how new inbound enquiries are given to reps. */
+  'sales.assignment_mode': 'manual' | 'round_robin';
+  /** D-469 open enquiries a rep may hold under round robin; unset = no cap. */
+  'sales.max_open_per_rep': number;
+  /** D-470 working hours (P-05 rule) a discount approval has before it escalates one level. */
+  'sales.discount_approval_hours': number;
+  /** D-470 approval matrix: a rep decides ≤ repMaxPct, a sales manager ≤ managerMaxPct (margin ≥ floor); amounts optional. */
+  'sales.discount_authority': {
+    repMaxPct: string;
+    managerMaxPct: string;
+    repMaxAmount: string | null;
+    managerMaxAmount: string | null;
+  };
+  /** D-470 a customer is negotiation-heavy with ≥ minRounds rounds on ≥ minQuotes of their last lastQuotes quotes. */
+  'sales.negotiation_heavy': { minRounds: number; minQuotes: number; lastQuotes: number };
+  /** D-470 walk-away gross margin % by product class (product category code), `default` otherwise. */
+  'margin.floor_pct': { default: string; byProductClass: Record<string, string> };
+  /** D-470 annual cost of capital % behind the credit cost estimate (management figure, not posted). */
+  'finance.cost_of_capital_annual_pct': string;
+  /** D-470 bad-debt provision % of net revenue by customer credit grade; unset until Finance sets it. */
+  'finance.bad_debt_provision_pct': { byGrade: Record<string, string> };
   /** D-465 personal income tax table (net income bands, s.48(1)). */
   'tax.pit_brackets': { upTo: string | null; ratePct: string }[];
   /** D-465 s.40(2) expense deduction for the progressive withholding: rate (0.50) and cap. */

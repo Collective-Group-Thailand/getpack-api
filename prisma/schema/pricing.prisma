@@ -638,6 +638,12 @@ model Quote {
   salesAgentQuote       SalesAgentQuote?            @relation("SalesAgentQuoteQuote")
   agentDiscountRequests SalesAgentDiscountRequest[] @relation("SalesAgentDiscountRequestQuote")
 
+  /// D-470: discount approvals, waterfall views and discounted quotations of this quote.
+  salesDiscountApprovals SalesDiscountApproval[] @relation("SalesDiscountApprovalQuote")
+  salesWaterfallViews    SalesWaterfallView[]    @relation("SalesWaterfallViewQuote")
+  salesDiscounted        SalesDiscountedQuote?   @relation("SalesDiscountedQuoteQuote")
+  salesDiscountedFrom    SalesDiscountedQuote[]  @relation("SalesDiscountedQuoteSource")
+
   @@index([designDocumentVersionId], map: "ix_quotes__design_document_version_id")
   @@index([specHash], map: "ix_quotes__spec_hash")
   @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")
@@ -702,6 +708,9 @@ model QuoteOption {
 
   /// D-468: agent discount requests about this quantity.
   agentDiscountRequests SalesAgentDiscountRequest[] @relation("SalesAgentDiscountRequestQuoteOption")
+
+  /// D-470: factory buy-price locks of approved big deals.
+  salesFactoryPriceLocks SalesFactoryPriceLock[] @relation("SalesFactoryPriceLockQuoteOption")
 
   @@unique([quoteId, quantity], map: "ux_quote_options__quote_id__quantity")
   @@index([selectedFactoryId], map: "ix_quote_options__selected_factory_id")
@@ -833,6 +842,8 @@ model Rfq {
   messages              RfqMessage[]
   consultations         RfqFactoryConsultation[]
   quotes                RfqQuote[]
+  /// D-469: the inbound sales enquiry made from this RFQ.
+  salesInboundLead      SalesInboundLead?        @relation("SalesInboundLeadRfq")
   unmetDemand           UnmetDemandRecord[]
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftRfq")

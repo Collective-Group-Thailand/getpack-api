@@ -53,6 +53,13 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      'sales_reports.read',
+      // D-470: C-Level owns the discount authority matrix and margin floors (the owner check limits it to those).
+      'settings.change',
+      'discount_approvals.read',
+      'discount_approvals.decide',
+      'discount_approvals.waterfall_full',
+      'sales.pipeline.manage',
       'document_branding.read',
       'document_branding.manage',
       'agents.read',
@@ -104,6 +111,10 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'รองประธาน',
     nameEn: 'VP',
     permissions: [
+      'sales_reports.read',
+      'discount_approvals.read',
+      'discount_approvals.waterfall_full',
+      'sales.pipeline.manage',
       'agents.read',
       'agent_plans.approve',
       'reports.export',
@@ -130,6 +141,10 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้อำนวยการ',
     nameEn: 'Director',
     permissions: [
+      'sales_reports.read',
+      'discount_approvals.read',
+      'discount_approvals.waterfall_full',
+      'sales.pipeline.manage',
       'agents.read',
       ...APPROVER,
       'reports.export',
@@ -461,6 +476,10 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการฝ่ายการเงิน',
     nameEn: 'Finance Manager',
     permissions: [
+      'sales_reports.read',
+      'discount_approvals.read',
+      'discount_approvals.waterfall_full',
+      'discount_approvals.export',
       'receivables.documents.replace',
       'document_branding.read',
       'document_branding.manage',
@@ -561,6 +580,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Marketing',
     // CMS and SEO go to Marketing (no SEO role in D-140, schema-design §7 C-6).
     permissions: [
+      'sales_playbook.manage',
+      'sales_playbook.publish',
       'settings.read',
       'settings.change',
       'studio_catalog.manage',
@@ -595,6 +616,12 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Sales Manager',
     // D-423: runs the agent programme — applications, agents, links, leads and the plans it drafts.
     permissions: [
+      'sales_playbook.manage',
+      'sales_playbook.publish',
+      'sales_reports.read',
+      'discount_approvals.read',
+      'discount_approvals.decide',
+      'discount_approvals.margin_pct',
       'settings.change',
       ...EVERY_STAFF_MEMBER,
       'settings.read',
@@ -607,6 +634,22 @@ export const ROLES: readonly RoleDefinition[] = [
       'agents.read',
       'agents.manage',
       'agent_plans.manage',
+      // D-469: runs the company sales desk.
+      'sales.pipeline.manage',
+    ],
+  },
+  {
+    key: 'sales_rep',
+    audience: 'staff',
+    scopeType: 'platform',
+    nameTh: 'พนักงานขาย',
+    nameEn: 'Sales Rep',
+    // D-469 (PLAN A-07): a company sales rep works their own pipeline from the admin zone (their employee agent).
+    permissions: [
+      ...EVERY_STAFF_MEMBER,
+      'sales.pipeline.self',
+      'discount_approvals.read',
+      'discount_approvals.decide',
     ],
   },
   {
@@ -616,6 +659,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการพันธมิตร',
     nameEn: 'Partner Manager',
     permissions: [
+      'sales_reports.read',
       'settings.change',
       'agents.read',
       'reports.export',
@@ -659,6 +703,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ตรวจสอบบัญชี',
     nameEn: 'Auditor (read-only)',
     permissions: [
+      'sales_waterfall_views.read',
       'document_branding.read',
       'reports.export',
       'receivables.read',

@@ -2,6 +2,27 @@ import { SOD_RULES } from '../../../prisma/seed/data/reference';
 import { PERMISSIONS } from './permissions.catalog';
 import { ROLES } from './roles.catalog';
 
+/** D-469 / D-470: the sales desk's personal data and field-level visibility (not expressible as a permission grid). */
+export const SALES_DESK_NOTES: readonly string[] = [
+  '## Company sales desk — personal data and field visibility (D-469, D-470)',
+  '',
+  '- **Inbound sales enquiries** (`sales_inbound_leads`): contact name, phone, e-mail, organisation and need. Purpose:',
+  '  answering a sales enquiry the person sent (contact form, RFQ) or staff entered with their agreement. Retention:',
+  '  while open, then 2 years after it closes, unless the person asks for erasure earlier. Access:',
+  '  `sales.pipeline.manage` (the whole pool) and the assigned rep (`sales.pipeline.self`). Events carry no contact data.',
+  "- **Rep pipeline**: the agent programme's lead rules (D-417, D-468) — a rep reaches only their own employee agent's",
+  "  leads; a manager acting on a rep's lead is audited (`sales_lead.acted_for`); freelance agents' leads are read-only.",
+  '- **Deal waterfall (D-470)** — three serializers chosen on the server, never hidden client-side:',
+  '  - freelance agents: no access to the desk at all (the agent zone shows options and their own commission only);',
+  '  - `sales_rep` (`discount_approvals.read` without the two below): `authorityLevel` green / amber / red only —',
+  '    no revenue, cost, margin, commission base, credit cost or price lock field is present in the payload;',
+  '  - `sales_manager` (`discount_approvals.margin_pct`): discount %, gross margin %, contribution %, floor %, floor check;',
+  '  - C-Level, VP, Director, Finance Manager, Superadmin (`discount_approvals.waterfall_full`): the full waterfall and',
+  '    the factory price locks.',
+  '  Every view, simulation and export is logged in `sales_waterfall_views` (Superadmin, Auditor read it); the only',
+  '  export is `discount_approvals.export` (Finance Manager). Bottom line wording: "กำไรหลังหักค่าคอม", never "กำไรสุทธิ".',
+];
+
 const AUDIENCES = [
   { key: 'staff', title: 'getpack staff (platform scope)' },
   { key: 'partner', title: 'Partner factory (factory scope)' },
@@ -45,6 +66,7 @@ export function renderRbacDoc(): string {
     lines.push('');
   }
 
+  lines.push(...SALES_DESK_NOTES, '');
   lines.push('## Segregation of duties (`accounting-design.md` §8)', '');
   lines.push('| Rule | Kind | Pair | Match | Decisions |', '|---|---|---|---|---|');
   for (const rule of SOD_RULES) {

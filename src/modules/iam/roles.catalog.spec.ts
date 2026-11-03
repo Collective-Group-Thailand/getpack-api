@@ -44,6 +44,8 @@ describe('IAM catalogues (D-140, D-141)', () => {
         // D-423 / D-416: the sales agent programme.
         'sales_manager',
         'sales_agent',
+        // D-469: company sales reps.
+        'sales_rep',
       ].sort(),
     );
   });
