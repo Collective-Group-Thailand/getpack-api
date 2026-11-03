@@ -6,6 +6,7 @@ import { AgentCardScanService } from './agent-card-scan.service';
 import { AgentCommissionsService } from './agent-commissions.service';
 import { AgentDealsService } from './agent-deals.service';
 import { AgentDiscountsService } from './agent-discounts.service';
+import { AgentForecastService } from './agent-forecast.service';
 import { AgentLeadsService } from './agent-leads.service';
 import { AgentNotificationPreferencesService } from './agent-notification-preferences.service';
 import { AgentPayoutProfilesService } from './agent-payout-profiles.service';
@@ -31,6 +32,7 @@ const SERVICES = [
   AgentDealsService,
   AgentPlaybookService,
   AgentCardScanService,
+  AgentForecastService,
 ];
 
 /** The sales agent programme (D-416 – D-423): applications, agents, links, leads, commission, statements. */

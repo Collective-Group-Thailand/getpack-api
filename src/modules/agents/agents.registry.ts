@@ -7,6 +7,7 @@ import {
   AdminAgentsController,
   AdminAgentTaxDeclarationsController,
 } from './agents-admin.controller';
+import { StoreAgentForecastController } from './agents-forecast.controller';
 import { StoreAgentLeadsController } from './agents-leads.controller';
 import { StoreAgentPlaybookController } from './agents-playbook';
 import { StoreAgentQuotesController } from './agents-quotes.controller';
@@ -18,6 +19,7 @@ export const AGENTS_STORE_CONTROLLERS: Type<unknown>[] = [
   StoreAgentLeadsController,
   StoreAgentQuotesController,
   StoreAgentPlaybookController,
+  StoreAgentForecastController,
 ];
 export const AGENTS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminAgentsController,

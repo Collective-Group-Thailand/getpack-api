@@ -16373,6 +16373,44 @@
         ],
         "type": "object"
       },
+      "AgentCommissionForecastDto": {
+        "properties": {
+          "asOf": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgentForecastItemDto"
+            },
+            "type": "array"
+          },
+          "paymentTermsDays": {
+            "description": "Days after a statement is approved within which it is paid (`agents.rules.paymentTermsDays`)",
+            "example": 15,
+            "type": "integer"
+          },
+          "payoutProfileReady": {
+            "description": "False: a freelance agent’s payout details still need verifying",
+            "example": true,
+            "type": "boolean"
+          },
+          "totalExpected": {
+            "description": "Everything not paid yet",
+            "example": "2250.00",
+            "type": "string"
+          }
+        },
+        "required": [
+          "asOf",
+          "paymentTermsDays",
+          "payoutProfileReady",
+          "totalExpected",
+          "items"
+        ],
+        "type": "object"
+      },
       "AgentCommissionKind": {
         "enum": [
           "order",
@@ -17027,6 +17065,116 @@
           "originalName"
         ],
         "type": "object"
+      },
+      "AgentForecastItemDto": {
+        "properties": {
+          "earnableOn": {
+            "example": "2026-11-10",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "expectedBase": {
+            "description": "Before VAT, excl. shipping, after discounts",
+            "example": "45000.00",
+            "type": "string"
+          },
+          "expectedCommission": {
+            "example": "2250.00",
+            "type": "string"
+          },
+          "expectedPayableOn": {
+            "description": "Null while the order is in progress or under review",
+            "example": "2026-12-16",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isFirstOrder": {
+            "example": true,
+            "type": "boolean"
+          },
+          "orderCode": {
+            "example": "OR-2610-00042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "ratePct": {
+            "example": "5.0000",
+            "type": "string"
+          },
+          "statementOn": {
+            "example": "2026-12-01",
+            "format": "date",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentForecastStatus"
+              }
+            ],
+            "description": "`in_progress` the order is not completed yet · `pending` completed, waiting for the claim window / payment · `held` under review · `earned` · `statemented` in a statement · `paid`",
+            "example": "pending"
+          },
+          "waitingFor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentForecastWaitingFor"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "claim_window"
+          }
+        },
+        "required": [
+          "orderCode",
+          "status",
+          "isFirstOrder",
+          "expectedBase",
+          "ratePct",
+          "expectedCommission",
+          "earnableOn",
+          "statementOn",
+          "expectedPayableOn",
+          "waitingFor"
+        ],
+        "type": "object"
+      },
+      "AgentForecastStatus": {
+        "description": "`in_progress` the order is not completed yet · `pending` completed, waiting for the claim window / payment · `held` under review · `earned` · `statemented` in a statement · `paid`",
+        "enum": [
+          "in_progress",
+          "pending",
+          "held",
+          "earned",
+          "statemented",
+          "paid"
+        ],
+        "type": "string"
+      },
+      "AgentForecastWaitingFor": {
+        "enum": [
+          "completion",
+          "claim_window",
+          "payment",
+          "review",
+          "statement",
+          "approval",
+          "payout"
+        ],
+        "type": "string"
       },
       "AgentHeldDecision": {
         "enum": [
@@ -509105,6 +509253,167 @@
           }
         ],
         "summary": "List my commission",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/commissions/forecast": {
+      "get": {
+        "description": "Per order: orders of my customers in progress (expected at the rate locked or in force) and every commission not paid yet, with the expected payable date from the system’s rules — earned once the claim window has passed and the order is fully paid, summarised on the 1st of the next month, paid within `agents.rules.paymentTermsDays` of approval (employees: with payroll). Order code only, no other customer data (D-468, F47; D-466 §5).\n\nImplements: D-468, D-466, D-420.",
+        "operationId": "store.agentCommissions.forecast",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "asOf": "2026-11-03T10:00:00+07:00",
+                  "items": [
+                    {
+                      "earnableOn": "2026-11-10",
+                      "expectedBase": "45000.00",
+                      "expectedCommission": "2250.00",
+                      "expectedPayableOn": "2026-12-16",
+                      "isFirstOrder": true,
+                      "orderCode": "OR-2610-00042",
+                      "ratePct": "5.0000",
+                      "statementOn": "2026-12-01",
+                      "status": "pending",
+                      "waitingFor": "claim_window"
+                    }
+                  ],
+                  "paymentTermsDays": 15,
+                  "payoutProfileReady": true,
+                  "totalExpected": "2250.00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentCommissionForecastDto"
+                }
+              }
+            },
+            "description": "Forecast",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "When my commission is expected",
         "tags": [
           "store.agent"
         ],

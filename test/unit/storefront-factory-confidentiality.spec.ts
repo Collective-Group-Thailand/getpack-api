@@ -54,6 +54,7 @@ const P3_AGENT_OPERATIONS = [
   'store.agentQuotes.registerDeal',
   'store.agentPlaybook.get',
   'store.agentLeads.scanCard',
+  'store.agentCommissions.forecast',
 ];
 
 /** Operations removed by D-435; they must not come back. */
