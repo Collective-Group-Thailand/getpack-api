@@ -332,10 +332,13 @@ export class StoreAgentController {
     summary: 'Register a lead',
     description:
       'A customer prospect with a phone, e-mail or tax id, who agreed to be contacted (PDPA). Protected for ' +
-      '`agents.rules.leadProtectionDays`; refused when it is already a customer or company, or another agent’s ' +
-      'protected lead (D-417). Kind `customer` only — anything else is `agents.lead_kind_unsupported` (P-03, ' +
-      'D-464): factories apply at /partner-with-us.',
-    implements: DECISIONS,
+      '`agents.rules.leadProtectionDays`; refused with the one neutral `agents.lead_unavailable` when it is already ' +
+      'a customer or company, another agent’s protected lead or registered deal (D-417, D-440, D-468), ' +
+      '`agents.lead_duplicate` when it is already mine. Kind `customer` only — anything else is ' +
+      '`agents.lead_kind_unsupported` (P-03, D-464): factories apply at /partner-with-us. D-468: optional pipeline ' +
+      'fields (source manual | card_scan, expected value, next follow-up, industry, LINE id, tags); the lead starts ' +
+      'at stage `new`.',
+    implements: [...DECISIONS, 'D-440', 'D-468'],
   })
   @ApiBody({
     type: RegisterAgentLeadDto,
@@ -359,9 +362,7 @@ export class StoreAgentController {
     'agents.agent_inactive',
     'agents.lead_kind_unsupported',
     'agents.too_many_leads',
-    'agents.lead_existing_customer',
     'agents.lead_unavailable',
-    'agents.lead_taken',
     'agents.lead_duplicate',
   )
   async registerLead(

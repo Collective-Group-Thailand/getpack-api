@@ -21,6 +21,9 @@ import { LineMessagingClient } from './line-messaging/line-messaging-client';
 import { FakeIndexSource } from './material-price-index/fake-index-source';
 import { ManualIndexSource } from './material-price-index/manual-index-source';
 import { MATERIAL_PRICE_INDEX } from './material-price-index/material-price-index.port';
+import { FakeOcr } from './ocr/fake-ocr';
+import { OCR } from './ocr/ocr.port';
+import { TesseractCliOcr } from './ocr/tesseract-cli-ocr';
 import { FakeScbGateway, FakeSlipVerifier, FakeTwoC2PGateway } from './payments/fake-payment-gateways';
 import { SCB_GATEWAY, SLIP_VERIFIER, TWOC2P_GATEWAY } from './payments/payment-gateways.port';
 import { ScbAdapter } from './payments/scb.adapter';
@@ -236,6 +239,17 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
         config.useFakes ? new FakeDielineEngine() : new GetpackDielineEngine(),
     },
     {
+      // D-468 card scan: `OCR_ADAPTER` = tesseract_cli | fake (default: fake with fake integrations, else Tesseract).
+      provide: OCR,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) => {
+        const adapter = config.get('OCR_ADAPTER') ?? (config.useFakes ? 'fake' : 'tesseract_cli');
+        return adapter === 'fake'
+          ? new FakeOcr()
+          : new TesseractCliOcr(config.get('TESSERACT_PATH') ?? 'tesseract');
+      },
+    },
+    {
       // Real mode: ClamAV (clamd) when CLAMAV_HOST is set; otherwise files stay `pending` (never served unscanned).
       provide: VIRUS_SCANNER,
       inject: [AppConfig, OBJECT_STORAGE],
@@ -256,6 +270,7 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
     },
   ],
   exports: [
+    OCR,
     SCB_GATEWAY,
     TWOC2P_GATEWAY,
     SLIP_VERIFIER,

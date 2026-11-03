@@ -470,8 +470,9 @@ export class AdminAgentsController {
     summary: 'Assign or transfer a customer or company',
     description:
       'Links a customer or company to an agent, ending any current link — the only way to give an existing ' +
-      'customer to an agent or move one between agents; audited with the reason (D-417).',
-    implements: DECISIONS,
+      'customer to an agent or move one between agents; audited with the reason (D-417). Refused while another ' +
+      'agent’s registered deal protects the customer or company (`agents.deal_registered`, D-468).',
+    implements: [...DECISIONS, 'D-468'],
   })
   @ApiBody({
     type: AssignAgentLinkDto,
@@ -495,6 +496,7 @@ export class AdminAgentsController {
     'agents.agent_inactive',
     'agents.self_link',
     'agents.already_linked',
+    'agents.deal_registered',
     'agents.plan_not_in_force',
   )
   async assignLink(

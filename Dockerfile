@@ -49,6 +49,7 @@ FROM ${NODE_IMAGE} AS runtime
 RUN apt-get update \
   && apt-get upgrade -y \
   && apt-get install -y --no-install-recommends tini ca-certificates openssl chromium fonts-thai-tlwg fonts-noto-core \
+     tesseract-ocr tesseract-ocr-eng tesseract-ocr-tha \
   && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production PDF_CHROMIUM_PATH=/usr/bin/chromium
 # The processes run `node` and /opt/prisma-cli/node_modules/.bin/prisma; the base image's npm is not used and

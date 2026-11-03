@@ -634,6 +634,10 @@ model Quote {
   callOffAgreements CallOffAgreement[] @relation("CallOffQuote")
   callOffRelease    CallOffRelease?    @relation("CallOffReleaseQuote")
 
+  /// D-468: the agent who sent this quote on behalf of getpack, if any.
+  salesAgentQuote       SalesAgentQuote?            @relation("SalesAgentQuoteQuote")
+  agentDiscountRequests SalesAgentDiscountRequest[] @relation("SalesAgentDiscountRequestQuote")
+
   @@index([designDocumentVersionId], map: "ix_quotes__design_document_version_id")
   @@index([specHash], map: "ix_quotes__spec_hash")
   @@index([advisoryRecommendationId], map: "ix_quotes__advisory_recommendation_id")
@@ -695,6 +699,9 @@ model QuoteOption {
   orders           Order[]    @relation("OrderQuoteOption")
 
   callOffAgreements CallOffAgreement[] @relation("CallOffQuoteOption")
+
+  /// D-468: agent discount requests about this quantity.
+  agentDiscountRequests SalesAgentDiscountRequest[] @relation("SalesAgentDiscountRequestQuoteOption")
 
   @@unique([quoteId, quantity], map: "ux_quote_options__quote_id__quantity")
   @@index([selectedFactoryId], map: "ix_quote_options__selected_factory_id")
@@ -1329,6 +1336,9 @@ model CallOffAgreement {
   productType ProductType      @relation("CallOffProductType", fields: [productTypeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__product_type_id")
   respondedBy User?            @relation("CallOffRespondedBy", fields: [respondedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_call_off_agreements__responded_by")
   releases    CallOffRelease[]
+
+  /// D-468: the agent deal registration that keeps its rate lock for every call-off.
+  agentDealRegistrations SalesAgentDealRegistration[] @relation("SalesAgentDealCallOff")
 
   @@index([customerUserId], map: "ix_call_off_agreements__customer_user_id")
   @@index([quoteId], map: "ix_call_off_agreements__quote_id")

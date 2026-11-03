@@ -147,6 +147,10 @@ export const ERROR_CODES = {
   'shipping.carrier_refused': HttpStatus.UNPROCESSABLE_ENTITY,
   'numbering.series_missing': HttpStatus.CONFLICT,
   'numbering.series_exists': HttpStatus.CONFLICT,
+  /** D-468: one open discount request per quotation. */
+  'quotes.discount_request_open': HttpStatus.CONFLICT,
+  /** D-468 (PLAN A-10): one negotiation round per quotation unless the give-get changes. */
+  'quotes.discount_round_limit': HttpStatus.CONFLICT,
   'quotes.nothing_to_save': HttpStatus.UNPROCESSABLE_ENTITY,
   'quotes.not_live': HttpStatus.CONFLICT,
   'quotes.still_valid': HttpStatus.CONFLICT,
@@ -238,6 +242,20 @@ export const ERROR_CODES = {
   'agents.lead_taken': HttpStatus.CONFLICT,
   'agents.lead_duplicate': HttpStatus.CONFLICT,
   'agents.lead_closed': HttpStatus.CONFLICT,
+  /** D-468: won and lost are final stages. */
+  'agents.lead_stage_final': HttpStatus.CONFLICT,
+  /** D-468: the CSV import was committed already or its 24 h dry run expired. */
+  'agents.lead_import_closed': HttpStatus.CONFLICT,
+  /** D-468: the agent's quotation was withdrawn, accepted or expired. */
+  'agents.quote_closed': HttpStatus.CONFLICT,
+  /** D-468: the card photo could not be read (OCR unavailable or failed); type the fields instead. */
+  'agents.card_scan_failed': HttpStatus.UNPROCESSABLE_ENTITY,
+  /** D-468: another agent's registered deal protects this customer (neutral, staff assignment). */
+  'agents.deal_registered': HttpStatus.CONFLICT,
+  /** D-468: the option is no longer offered (accepted, lapsed or past its validity). */
+  'agents.discount_option_unavailable': HttpStatus.CONFLICT,
+  /** D-468: the discount request was answered or closed already (Phase 4 desk). */
+  'agents.discount_request_closed': HttpStatus.CONFLICT,
   'agents.self_link': HttpStatus.UNPROCESSABLE_ENTITY,
   'agents.already_linked': HttpStatus.CONFLICT,
   'agents.link_ended': HttpStatus.CONFLICT,

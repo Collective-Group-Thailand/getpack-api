@@ -537,6 +537,14 @@
     "no_target": {
       "title": "No target price",
       "detail": "Levers need the quotation's target price per unit; save the quotation with one (D-248)."
+    },
+    "discount_request_open": {
+      "title": "Discount request pending",
+      "detail": "This quotation already has a discount request waiting for an answer"
+    },
+    "discount_round_limit": {
+      "title": "One round per quotation",
+      "detail": "A quotation gets one discount round unless what the customer gives in return changes (quantity, commitment, payment, lead time or spec)"
     }
   },
   "rfq": {
@@ -2143,6 +2151,34 @@
     "ended": {
       "title": "Agent account ended",
       "detail": "This agent account has ended. Your commission statements and withholding certificates (50 ทวิ) stay available for the record-keeping period."
+    },
+    "lead_stage_final": {
+      "title": "Lead closed",
+      "detail": "A won or lost lead cannot change stage"
+    },
+    "lead_import_closed": {
+      "title": "Import closed",
+      "detail": "This file was imported already or its check expired (24 hours); check the file again"
+    },
+    "quote_closed": {
+      "title": "Quotation closed",
+      "detail": "This quotation was withdrawn, has expired or was ordered"
+    },
+    "discount_option_unavailable": {
+      "title": "Option not available",
+      "detail": "This option was taken, has lapsed or is no longer offered"
+    },
+    "discount_request_closed": {
+      "title": "Discount request closed",
+      "detail": "This discount request was answered or closed already"
+    },
+    "deal_registered": {
+      "title": "Deal registered",
+      "detail": "This customer is protected by a registered deal; assign them once it ends"
+    },
+    "card_scan_failed": {
+      "title": "Card not read",
+      "detail": "The card photo could not be read; take a clearer photo or type the details"
     }
   },
   "documents": {

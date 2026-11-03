@@ -29,6 +29,7 @@ import {
 import { GUARANTEE_POLICY_V1 } from './data/guarantee';
 import { NOTIFICATION_ROUTES, NOTIFICATION_TEMPLATES } from './data/notifications';
 import { AGREEMENT_TEMPLATES } from './data/partners';
+import { PLAYBOOK_CARDS, PLAYBOOK_SOURCE } from './data/playbook';
 import { CUSTOMER_POSTING_RULES } from './data/posting-rules-customer';
 import { VENDOR_POSTING_RULES } from './data/posting-rules-vendor';
 import { PRICING_FEATURE_FLAGS, QUOTE_LOSS_REASONS, UNMET_DEMAND_REASONS } from './data/quotes';
@@ -679,6 +680,27 @@ async function ensureAgentProgramme(tx: Tx, count: (what: string) => void): Prom
     for (const [i, faq] of AGENT_FAQ_DRAFTS.entries())
       await tx.faq.create({ data: { categoryId: category.id, sort: (i + 1) * 10, status: 'draft', ...faq } });
     count('faq_categories');
+  }
+  // D-468 (PLAN A-13): the sales playbook from PLAYBOOK.md, PUBLISHED v1 (owner-approved seed content). A key that
+  // already has any version is left alone (Phase 4 manages versions).
+  for (const card of PLAYBOOK_CARDS) {
+    if (await tx.salesPlaybookCard.findFirst({ where: { key: card.key } })) continue;
+    await tx.salesPlaybookCard.create({
+      data: {
+        key: card.key,
+        version: 1,
+        contexts: card.contexts,
+        audiences: card.audiences,
+        titleTh: card.titleTh,
+        bodyTh: card.bodyTh,
+        suggestedReplies: card.suggestedReplies,
+        sort: card.sort,
+        status: 'published',
+        publishedAt: SEED_EFFECTIVE_FROM,
+        source: PLAYBOOK_SOURCE,
+      },
+    });
+    count('sales_playbook_cards');
   }
 }
 

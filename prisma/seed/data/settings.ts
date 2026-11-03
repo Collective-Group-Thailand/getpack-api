@@ -172,6 +172,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-051'],
   },
   {
+    key: 'quotes.discounted_validity_days',
+    valueType: 'integer',
+    value: 7,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-468 (PLAN A-10, §7) days a discounted price offered for an agent’s discount request stays valid, with its ' +
+      'conditions printed; standard quotations keep `quotes.validity_days`',
+    decisions: ['D-468'],
+    ownerRole: 'sales_manager',
+  },
+  {
     key: 'catalog.print_limits',
     valueType: 'json',
     value: { maxSpotColoursPerSide: 1, cmykSpotAddOnEnabled: false },
@@ -492,6 +503,49 @@ export const SETTINGS: readonly SettingSeed[] = [
       'retention (Revenue Code s.87/3), 5–10',
     decisions: ['D-467'],
     ownerRole: 'finance_manager',
+  },
+  {
+    key: 'agent.deal_protection_days',
+    valueType: 'integer',
+    value: 90,
+    valueSchema: { minimum: 30, maximum: 365 },
+    description:
+      'D-468 (PLAN A-11) days a deal registration protects the lead from other agents and staff assignment and keeps ' +
+      'its rate lock open for new orders; never a rate cut',
+    decisions: ['D-468'],
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'agent.deal_registration_threshold',
+    valueType: 'money',
+    value: '500000.00',
+    description:
+      'D-468 (PLAN A-11) a quote whose commission base (before VAT, excl. shipping) reaches this registers its deal ' +
+      'automatically; smaller ones on the agent’s request; call-off agreements always',
+    decisions: ['D-468'],
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'agents.card_scan_retention_days',
+    valueType: 'integer',
+    value: 7,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-468 days a business-card photo uploaded for the agent card scan is kept before it is deleted (PDPA: the card ' +
+      'holder’s contact data; nothing is saved from it until the agent registers the lead)',
+    decisions: ['D-468'],
+    confirmation: 'proposed',
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'agents.follow_up_quiet_hours',
+    valueType: 'time_of_day_window',
+    value: { from: '21:00', to: '08:00', timezone: 'Asia/Bangkok' },
+    description:
+      'D-468 the quiet hours of the agent follow-up reminders (push / LINE / e-mail): a reminder due inside them ' +
+      'waits until they end (PLAN Phase 3, 21:00–08:00 Asia/Bangkok)',
+    decisions: ['D-468'],
+    ownerRole: 'sales_manager',
   },
   {
     key: 'tax.pit_brackets',

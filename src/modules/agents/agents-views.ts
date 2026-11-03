@@ -198,6 +198,18 @@ export function leadDto(r: LeadRow): AgentLeadDto {
     convertedAt: iso(r.convertedAt),
     closedReason: r.closedReason,
     createdAt: toBangkokIso(r.createdAt),
+    stage: r.stage,
+    stageChangedAt: iso(r.stageChangedAt),
+    expectedValue: r.expectedValue?.toFixed(2) ?? null,
+    nextFollowUpAt: iso(r.nextFollowUpAt),
+    lostReason: r.lostReason,
+    lostNote: r.lostNote,
+    source: r.source,
+    industry: r.industry,
+    lineId: r.lineId,
+    tags: r.tags,
+    wonAt: iso(r.wonAt),
+    updatedAt: toBangkokIso(r.updatedAt),
   };
 }
 

@@ -7,6 +7,8 @@ import { ApiAsync, ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/op
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { toBangkokIso } from '@common/time/bangkok';
 import { type Prisma } from '@generated/prisma/client';
+import { AgentQuotesService } from '@modules/agents/agent-quotes.service';
+import { SharedQuoteDto } from '@modules/agents/agents-quotes.dto';
 import { PermissionResolver } from '@modules/iam/permission-resolver.service';
 import { ApiSurface } from '@modules/surfaces/surfaces';
 import { TRACKING_THROTTLE } from '@modules/timeline/timeline.controller';
@@ -79,6 +81,7 @@ export class StoreSavedQuotesController {
     private readonly pdf: QuotePdfService,
     private readonly levers: QuoteLeversService,
     private readonly closing: QuoteClosingService,
+    private readonly agentQuotes: AgentQuotesService,
   ) {}
 
   @Post()
@@ -151,17 +154,20 @@ export class StoreSavedQuotesController {
     description:
       'Anyone with the link sees the quotation, never its owner, while it is shared and the link is live: 404 once ' +
       'the link expired (`configurations.share_link_days`), was revoked or replaced, or the quotation was converted ' +
-      'or expired (D-185, D-051).',
-    implements: [...DECISIONS, 'D-185'],
+      'or expired (D-185, D-051). D-468: `agentCode` names the agent who sent it (the web keeps it like `/a/{code}`); ' +
+      'the first open is shown to that agent.',
+    implements: [...DECISIONS, 'D-185', 'D-468'],
   })
   @ApiSuccess(200, {
     description: 'Quotation',
-    type: SavedQuoteDto,
-    example: { ...QUOTE_EXAMPLE, status: 'shared', quoteCode: 'QT-2026-000042' },
+    type: SharedQuoteDto,
+    example: { ...QUOTE_EXAMPLE, status: 'shared', quoteCode: 'QT-2026-000042', agentCode: 'K7QX2MAP' },
   })
   @ApiStandardErrors('http.not_found', 'http.too_many_requests')
-  async shared(@Param('token') token: string): Promise<SavedQuoteDto> {
-    return quoteDto(await this.quotes.shared(token));
+  async shared(@Param('token') token: string): Promise<SharedQuoteDto> {
+    const quote = await this.quotes.shared(token);
+    // D-468: a quotation an agent sent carries their code; the first open goes to the lead's timeline.
+    return { ...quoteDto(quote), agentCode: await this.agentQuotes.opened(quote) };
   }
 
   @Get(':quoteId')

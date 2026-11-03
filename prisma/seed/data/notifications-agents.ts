@@ -187,6 +187,52 @@ export const AGENT_NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] =
       body: '{{payload.contactName}} stays yours until {{payload.protectedUntilDate}} (within {{payload.daysLeft}} days)',
     },
   ),
+  // --- agent portal pack: P3 (D-468) ---
+  inApp(
+    'sales_agent_lead.follow_up_due:customer',
+    'Agent: the follow-up time set on a lead has come (D-468)',
+    {
+      subject: 'ถึงเวลาติดตามลูกค้ามุ่งหวัง',
+      body: 'ติดตาม {{payload.contactName}} ตามที่นัดไว้ {{payload.followUpTime}} น.',
+    },
+    {
+      subject: 'Time to follow up',
+      body: 'Follow up {{payload.contactName}} as planned ({{payload.followUpTime}})',
+    },
+  ),
+  inApp(
+    'sales_agent_quote.opened:customer',
+    'Agent: a customer opened a quotation the agent sent (D-468)',
+    {
+      subject: 'ลูกค้าเปิดใบเสนอราคาแล้ว',
+      body: '{{payload.contactName}} เปิดดูใบเสนอราคา {{payload.quoteCode}} แล้ว',
+    },
+    { subject: 'Quotation opened', body: '{{payload.contactName}} opened quotation {{payload.quoteCode}}' },
+  ),
+  inApp(
+    'sales_agent_discount.requested:staff_team',
+    'Sales: an agent asked for a better price on a quotation (D-468)',
+    {
+      subject: 'ตัวแทนขอส่วนลด',
+      body: 'ตัวแทน {{payload.agentCode}} ขอส่วนลด {{payload.requestedPct}}% ใบเสนอราคา {{payload.quoteCode}} (รอบที่ {{payload.round}})',
+    },
+    {
+      subject: 'Agent discount request',
+      body: 'Agent {{payload.agentCode}} asks {{payload.requestedPct}}% on quotation {{payload.quoteCode}} (round {{payload.round}})',
+    },
+  ),
+  inApp(
+    'sales_agent_discount.options_offered:customer',
+    'Agent: getpack answered a discount request with options (D-468)',
+    {
+      subject: 'มีคำตอบเรื่องส่วนลดแล้ว',
+      body: 'เลือกทางเลือกได้ใน getpack Agent ภายใน {{payload.validUntilDate}}',
+    },
+    {
+      subject: 'Your discount request was answered',
+      body: 'Choose an option in getpack Agent by {{payload.validUntilDate}}',
+    },
+  ),
 ];
 
 const EMAILS: readonly [string, string, string, string, string][] = [
@@ -259,6 +305,27 @@ const EMAILS: readonly [string, string, string, string, string][] = [
     '{{payload.contactName}} อยู่ในความดูแลของคุณถึง {{payload.protectedUntilDate}} (เหลือไม่เกิน {{payload.daysLeft}} วัน) ติดต่อให้ลูกค้าสมัครหรือสั่งซื้อก่อนวันนั้น',
     'Lead protection ending',
     '{{payload.contactName}} stays yours until {{payload.protectedUntilDate}} (within {{payload.daysLeft}} days). Get them to sign up or order before then.',
+  ],
+  [
+    'sales_agent_lead.follow_up_due',
+    'ถึงเวลาติดตามลูกค้ามุ่งหวัง',
+    'ติดตาม {{payload.contactName}} ตามที่นัดไว้ {{payload.followUpTime}} น. บันทึกผลการติดต่อและตั้งวันติดตามครั้งถัดไปได้ใน getpack Agent',
+    'Time to follow up',
+    'Follow up {{payload.contactName}} as planned ({{payload.followUpTime}}). Log the contact and set the next follow-up in getpack Agent.',
+  ],
+  [
+    'sales_agent_quote.opened',
+    'ลูกค้าเปิดใบเสนอราคาแล้ว',
+    '{{payload.contactName}} เปิดดูใบเสนอราคา {{payload.quoteCode}} แล้ว เป็นจังหวะดีที่จะติดต่อและตอบคำถาม',
+    'Quotation opened',
+    '{{payload.contactName}} opened quotation {{payload.quoteCode}}; a good moment to get in touch.',
+  ],
+  [
+    'sales_agent_discount.options_offered',
+    'มีคำตอบเรื่องส่วนลดแล้ว',
+    'getpack ตอบคำขอส่วนลดของคุณแล้ว เลือกทางเลือกได้ใน getpack Agent ภายใน {{payload.validUntilDate}} ทางเลือกแรกได้ค่าคอมเต็มเสมอ',
+    'Your discount request was answered',
+    'getpack answered your discount request. Choose an option in getpack Agent by {{payload.validUntilDate}}; the first option always keeps your full rate.',
   ],
   [
     'sales_agent_statement.paid',
@@ -344,6 +411,25 @@ const AGENT_ZONE_MESSAGES: readonly [
     },
   ],
   [
+    'sales_agent_quote.opened',
+    {
+      subject: 'ลูกค้าเปิดใบเสนอราคาแล้ว',
+      body: '{{payload.contactName}} เปิดดูใบเสนอราคา {{payload.quoteCode}} แล้ว',
+    },
+    { subject: 'Quotation opened', body: '{{payload.contactName}} opened quotation {{payload.quoteCode}}' },
+  ],
+  [
+    'sales_agent_lead.follow_up_due',
+    {
+      subject: 'ถึงเวลาติดตามลูกค้ามุ่งหวัง',
+      body: 'ติดตาม {{payload.contactName}} ตามที่นัดไว้ {{payload.followUpTime}} น.',
+    },
+    {
+      subject: 'Time to follow up',
+      body: 'Follow up {{payload.contactName}} as planned ({{payload.followUpTime}})',
+    },
+  ],
+  [
     'sales_agent_statement.payout_profile_needed',
     {
       subject: 'กรอกข้อมูลรับเงินเพื่อรับค่าคอม',
@@ -383,6 +469,7 @@ export const AGENT_NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
       ['sales_agent_commission.margin_alert', 'management'],
       ['sales_agent_tax_declaration.submitted', 'finance'],
       ['sales_agent_payout_profile.submitted', 'finance'],
+      ['sales_agent_discount.requested', 'sales'],
     ] as const
   ).map(([eventType, team]): NotificationRouteSeed => ({
     eventType,
@@ -418,6 +505,13 @@ export const AGENT_NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
       ['sales_agent_commission.earned', 'email'],
       ['sales_agent_lead.protection_expiring', 'in_app'],
       ['sales_agent_lead.protection_expiring', 'email'],
+      // D-468: follow-up reminders
+      ['sales_agent_lead.follow_up_due', 'in_app'],
+      ['sales_agent_lead.follow_up_due', 'email'],
+      ['sales_agent_quote.opened', 'in_app'],
+      ['sales_agent_quote.opened', 'email'],
+      ['sales_agent_discount.options_offered', 'in_app'],
+      ['sales_agent_discount.options_offered', 'email'],
       ...AGENT_ZONE_MESSAGES.flatMap(([event]) => [[event, 'web_push'] as const, [event, 'line'] as const]),
     ] as const
   ).map(([eventType, channel]): NotificationRouteSeed => ({

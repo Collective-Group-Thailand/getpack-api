@@ -354,7 +354,7 @@ export async function uploadFile(
   ctx: CommerceApp,
   token: string,
   text: string,
-  purpose: 'slip' | 'evidence' | 'document' | 'design_asset',
+  purpose: 'slip' | 'evidence' | 'document' | 'design_asset' | 'agent_card_scan',
   surface: 'store' | 'admin' = 'store',
 ) {
   const body = Buffer.from(text);

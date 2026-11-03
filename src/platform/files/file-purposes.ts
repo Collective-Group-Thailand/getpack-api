@@ -81,6 +81,12 @@ export const FILE_PURPOSES = {
     maxBytes: 50 * MiB,
     mimeTypes: [...PDF, 'application/dxf', 'image/vnd.dxf', 'image/x-dxf', 'image/svg+xml'],
   },
+  /**
+   * D-468: a business card an agent photographs to fill a lead (OCR, nothing saved until the agent confirms).
+   * Purged after `agents.card_scan_retention_days` (7) by `agents.card_scan_purge`. PDPA: the card holder's contact
+   * data; access = the agent who uploaded it.
+   */
+  agent_card_scan: { retentionClass: 'transient', maxBytes: 10 * MiB, mimeTypes: IMAGES },
 } as const satisfies Record<string, FilePurposeRule>;
 
 export type FilePurpose = keyof typeof FILE_PURPOSES;

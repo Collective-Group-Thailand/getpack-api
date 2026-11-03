@@ -28,6 +28,8 @@ export interface SettingValues {
   'notifications.marketing_window': { from: string; to: string; timezone?: string };
   'pricing.margin_floor_pct': string;
   'quotes.validity_days': number;
+  /** D-468 days a discounted price (an option offered for an agent's discount request) stays valid. */
+  'quotes.discounted_validity_days': number;
   /** B-API-6: what the engine can price per side today (pending business); caps every print model. */
   'catalog.print_limits': { maxSpotColoursPerSide: number; cmykSpotAddOnEnabled: boolean };
   'fulfilment.tolerance_default_pct': string;
@@ -105,8 +107,16 @@ export interface SettingValues {
   };
   /** D-464 internal alert (C-Level) when commission ÷ the order's gross margin exceeds this %. Never cuts pay. */
   'agent.margin_alert_pct': string;
+  /** D-468 days a deal registration protects the lead and its rate lock (PLAN A-11). */
+  'agent.deal_protection_days': number;
+  /** D-468 commission base (THB) from which a quote registers its deal automatically (PLAN A-11). */
+  'agent.deal_registration_threshold': string;
   /** D-467 years after `endedAt` an ended agent still reads their statements and 50 ทวิ (tax record retention). */
   'agents.ended_record_access_years': number;
+  /** D-468 follow-up reminders wait outside this Bangkok window (from 21:00 to 08:00). */
+  /** D-468 days a business-card photo is kept before it is purged (PDPA). */
+  'agents.card_scan_retention_days': number;
+  'agents.follow_up_quiet_hours': { from: string; to: string; timezone?: string };
   /** D-465 personal income tax table (net income bands, s.48(1)). */
   'tax.pit_brackets': { upTo: string | null; ratePct: string }[];
   /** D-465 s.40(2) expense deduction for the progressive withholding: rate (0.50) and cap. */

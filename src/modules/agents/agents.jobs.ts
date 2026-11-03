@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
 import { AgentAttributionService } from './agent-attribution.service';
+import { AgentCardScanService } from './agent-card-scan.service';
 import { AgentCommissionsService } from './agent-commissions.service';
+import { AgentDealsService } from './agent-deals.service';
+import { AgentLeadsService } from './agent-leads.service';
 import { AgentStatementsService } from './agent-statements.service';
 
 /** The sales agent programme's housekeeping in the worker (D-417 – D-420). */
@@ -12,6 +15,9 @@ export class AgentsJobs {
     private readonly attribution: AgentAttributionService,
     private readonly commissions: AgentCommissionsService,
     private readonly statements: AgentStatementsService,
+    private readonly leads: AgentLeadsService,
+    private readonly deals: AgentDealsService,
+    private readonly cards: AgentCardScanService,
   ) {}
 
   /** Pending commission past the claim window, with the group paid, becomes earned (D-418). */
@@ -45,6 +51,30 @@ export class AgentsJobs {
   @ScheduledJob({ name: 'agents.protection_reminders', every: 3_600_000 })
   protectionReminders(): Promise<number> {
     return this.attribution.remindProtectionEnding();
+  }
+
+  /** D-468: follow-up reminders at the time the agent set, never in the quiet hours (21:00–08:00 Bangkok). */
+  @ScheduledJob({ name: 'agents.follow_ups', every: 600_000 })
+  followUps(): Promise<number> {
+    return this.leads.remindFollowUps();
+  }
+
+  /** D-468: CSV import dry runs older than 24 h lose their contact data (PDPA). */
+  @ScheduledJob({ name: 'agents.lead_imports', every: 3_600_000 })
+  leadImports(): Promise<number> {
+    return this.leads.expireImports();
+  }
+
+  /** D-468: deal registrations past their protection expire (the locks of orders already placed stay). */
+  @ScheduledJob({ name: 'agents.deal_expiry', every: 3_600_000 })
+  dealExpiry(): Promise<number> {
+    return this.deals.expireDue();
+  }
+
+  /** D-468: business-card photos are deleted after `agents.card_scan_retention_days` (PDPA), daily 03:50. */
+  @ScheduledJob({ name: 'agents.card_scan_purge', cron: '50 3 * * *' })
+  cardScanPurge(): Promise<number> {
+    return this.cards.purge();
   }
 
   /** On the 1st, 03:00 Bangkok: last month's statements (D-420). */

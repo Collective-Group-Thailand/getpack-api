@@ -5,15 +5,19 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**139 settings** — 84 confirmed · 23 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**144 settings** — 88 confirmed · 24 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
 
 ## Settings
 
 | Key | Seeded value | Status | Owner | Decisions | What it controls |
 |---|---|---|---|---|---|
 | `advisory.rule_set` | `— (not set)` | not set | superadmin | D-188, D-237, D-239 | D-237 Structure Advisor rule set: McKee constant, ± uncertainty band %, eligible corrugate formulas, thin-margin threshold % and one factor (0 < f ≤ 1) per band of humidity, storage time, pallet pattern, pallet overhang, transport mode and fragility; not seeded — no advice until a Superadmin sets it after the D-189 sign-off |
+| `agent.deal_protection_days` | `90` | confirmed | sales_manager | D-468 | D-468 (PLAN A-11) days a deal registration protects the lead from other agents and staff assignment and keeps its rate lock open for new orders; never a rate cut |
+| `agent.deal_registration_threshold` | `500000.00` | confirmed | sales_manager | D-468 | D-468 (PLAN A-11) a quote whose commission base (before VAT, excl. shipping) reaches this registers its deal automatically; smaller ones on the agent’s request; call-off agreements always |
 | `agent.margin_alert_pct` | `30.00` | confirmed | finance_manager | D-464 | D-464 C-Level is alerted when an order’s agent commission exceeds this % of its gross margin; the commission is never reduced (owner 2026-11-01) |
+| `agents.card_scan_retention_days` | `7` | proposed | sales_manager | D-468 | D-468 days a business-card photo uploaded for the agent card scan is kept before it is deleted (PDPA: the card holder’s contact data; nothing is saved from it until the agent registers the lead) |
 | `agents.ended_record_access_years` | `5` | confirmed | finance_manager | D-467 | D-467 years after an agent ended during which they still read their commission statements and download their 50 ทวิ (withholding certificates) in the agent zone; everything else is refused. 5 = the tax record retention (Revenue Code s.87/3), 5–10 |
+| `agents.follow_up_quiet_hours` | `{"from":"21:00","to":"08:00","timezone":"Asia/Bangkok"}` | confirmed | sales_manager | D-468 | D-468 the quiet hours of the agent follow-up reminders (push / LINE / e-mail): a reminder due inside them waits until they end (PLAN Phase 3, 21:00–08:00 Asia/Bangkok) |
 | `agents.rules` | `{"linkCookieDays":90,"newCustomersOnly":true,"leadProtectionDays":60,"maxOpenLeads":50,"paymentTermsDays":15}` | proposed | sales_manager | D-417, D-420 | D-417 / D-420 sales agent programme: days the web keeps an agent link, attribution of new customers only, days a registered lead is protected, open leads per agent, payment terms of commission bills (proposed) |
 | `analytics.journey_alert_min_sessions` | `30` | confirmed | superadmin | D-303 | D-303 consented sessions at the first step a journey needs in both weeks before a week-over-week drop alerts (small samples swing) |
 | `analytics.journey_drop_alert_pct` | `15` | confirmed | superadmin | D-303, D-217 | D-303 a scorecard journey whose first-to-last conversion fell by more than this % against the week before raises ops signal journey_conversion_drops (docs/ux/competitive-scorecard.md §4) |
@@ -109,6 +113,7 @@
 | `promotions.code_attempt_limits` | `{"perCustomerPerHour":10,"perIpPerHour":30,"perDevicePerHour":10}` | proposed | superadmin | D-053 | D-053 abuse control: coupon code attempts allowed per customer, IP and device each hour |
 | `promotions.max_codes_per_cart` | `3` | confirmed | marketing | D-452, D-053 | D-452 coupon codes a cart may hold at once (D-053); the cart refuses one more with `promotions.code_invalid` (reason `too_many_codes`) and the storefront shows the limit from `CartDto.maxCodes` (owner C5 prompt: max 3) |
 | `qc.inspection_sampling` | `{"fullInspectionFromValue":"300000.00","sampledBandFromValue":"100000.00","sampledBandRatePct":"20","trialFactoryJobs":3,"trialFactoryRatePct":"100","highDefectRateThresholdPct":"3","highDefectWindowDays":90,"highDefectRatePct":"50","specialFinishOrFoodUpliftPp":"20","isoInspectionLevel":"II","aql":{"critical":"0","major":"2.5","minor":"4.0"}}` | confirmed | superadmin | D-076 | D-076 getpack risk-based inspection sampling (ISO 2859-1) |
+| `quotes.discounted_validity_days` | `7` | confirmed | sales_manager | D-468 | D-468 (PLAN A-10, §7) days a discounted price offered for an agent’s discount request stays valid, with its conditions printed; standard quotations keep `quotes.validity_days` |
 | `quotes.lever_quantity_multipliers` | `[2,5]` | proposed | superadmin | D-248 | D-248 quantity levers when the catalogue product has no preset quantity above the quoted: the largest quoted quantity × each multiplier |
 | `quotes.validity_days` | `15` | confirmed | superadmin | D-051 | D-051 quotation validity with price lock (days) |
 | `receivables.allowance_rates` | `— (not set)` | not set | finance_manager | D-033 | D-033 / accounting-design §10 allowance method (⚖): % of open receivables per days-overdue band for P30; not seeded — until set, Finance enters the allowance amount |

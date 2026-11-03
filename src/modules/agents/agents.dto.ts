@@ -12,6 +12,7 @@ import {
   IsEmail,
   IsIn,
   IsInt,
+  IsISO8601,
   IsObject,
   IsOptional,
   IsString,
@@ -23,6 +24,8 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+
+import { AGENT_LEAD_SOURCES, LEAD_SOURCES, LEAD_STAGES, LOST_REASONS } from './agent-lead-rules';
 
 /** The sales agent programme (D-416 – D-423). Money: decimal strings, THB. */
 
@@ -1121,6 +1124,52 @@ export class RegisterAgentLeadDto {
   })
   @IsBoolean()
   consentConfirmed!: boolean;
+  // --- D-468 pipeline (optional) ---
+
+  @ApiPropertyOptional({
+    enum: AGENT_LEAD_SOURCES,
+    enumName: 'AgentLeadEntrySource',
+    default: 'manual',
+    description: '`card_scan` when the fields came from a scanned business card',
+  })
+  @IsOptional()
+  @IsIn(AGENT_LEAD_SOURCES)
+  source?: (typeof AGENT_LEAD_SOURCES)[number];
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: '45000.00', pattern: POSITIVE_MONEY.source })
+  @IsOptional()
+  @Matches(POSITIVE_MONEY)
+  expectedValue?: string | null;
+
+  @ApiPropertyOptional({
+    type: String,
+    format: 'date-time',
+    nullable: true,
+    example: '2026-10-20T10:00:00+07:00',
+  })
+  @IsOptional()
+  @IsISO8601({ strict: true })
+  nextFollowUpAt?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'ร้านกาแฟ / เบเกอรี่' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)
+  industry?: string | null;
+
+  @ApiPropertyOptional({ type: String, nullable: true, example: 'manee.cafe' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  lineId?: string | null;
+
+  @ApiPropertyOptional({ type: [String], example: ['เบเกอรี่'], maxItems: 10 })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(10)
+  @IsString({ each: true })
+  @MaxLength(32, { each: true })
+  tags?: string[];
 }
 
 export class AgentLeadDto {
@@ -1162,6 +1211,54 @@ export class AgentLeadDto {
 
   @TimestampField('2026-10-16T10:00:00+07:00')
   createdAt!: string;
+
+  // --- D-468 pipeline -------------------------------------------------------------------------------------------
+
+  @ApiProperty({
+    enum: LEAD_STAGES,
+    enumName: 'AgentLeadStage',
+    example: 'contacted',
+    description: '`won` is set by the system when the converted customer first pays (a deposit counts)',
+  })
+  stage!: string;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-18T09:30:00+07:00' })
+  stageChangedAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    nullable: true,
+    example: '45000.00',
+    description: 'Expected order value, THB',
+  })
+  expectedValue!: string | null;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-20T10:00:00+07:00' })
+  nextFollowUpAt!: string | null;
+
+  @ApiProperty({ enum: LOST_REASONS, enumName: 'AgentLeadLostReason', nullable: true, example: null })
+  lostReason!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  lostNote!: string | null;
+
+  @ApiProperty({ enum: LEAD_SOURCES, enumName: 'AgentLeadSource', example: 'manual' })
+  source!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: 'ร้านกาแฟ / เบเกอรี่' })
+  industry!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: 'manee.cafe' })
+  lineId!: string | null;
+
+  @ApiProperty({ type: [String], example: ['เบเกอรี่', 'รายเดือน'] })
+  tags!: string[];
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: null })
+  wonAt!: string | null;
+
+  @TimestampField('2026-10-18T09:30:00+07:00')
+  updatedAt!: string;
 }
 
 export class AdminAgentLeadDto extends AgentLeadDto {
@@ -1195,6 +1292,18 @@ export const LEAD_EXAMPLE: AgentLeadDto = {
   convertedAt: null,
   closedReason: null,
   createdAt: '2026-10-16T10:00:00+07:00',
+  stage: 'contacted',
+  stageChangedAt: '2026-10-18T09:30:00+07:00',
+  expectedValue: '45000.00',
+  nextFollowUpAt: '2026-10-20T10:00:00+07:00',
+  lostReason: null,
+  lostNote: null,
+  source: 'manual',
+  industry: 'ร้านกาแฟ / เบเกอรี่',
+  lineId: 'manee.cafe',
+  tags: ['เบเกอรี่', 'รายเดือน'],
+  wonAt: null,
+  updatedAt: '2026-10-18T09:30:00+07:00',
 };
 
 export const ADMIN_LEAD_EXAMPLE: AdminAgentLeadDto = {
@@ -2243,6 +2352,8 @@ export const AGENT_NOTIFICATION_EVENT_VALUES = [
   'statement_ready',
   'payout_paid',
   'payout_profile_needed',
+  'follow_up_due',
+  'quote_opened',
 ] as const;
 export const AGENT_NOTIFICATION_CHANNEL_VALUES = ['web_push', 'line', 'email'] as const;
 type AgentNotificationEventValue = (typeof AGENT_NOTIFICATION_EVENT_VALUES)[number];
@@ -2251,7 +2362,8 @@ type AgentNotificationChannelValue = (typeof AGENT_NOTIFICATION_CHANNEL_VALUES)[
 const EVENT_DOC =
   '`lead_converted` a lead became a customer · `lead_protection_expiring` a lead’s protection ends in 7 days / 1 day · ' +
   '`commission_earned` · `statement_ready` the month’s statement is approved · `payout_paid` · ' +
-  '`payout_profile_needed` a statement waits for payout details';
+  '`payout_profile_needed` a statement waits for payout details · `follow_up_due` a follow-up time I set has come ' +
+  '(D-468; never in the quiet hours 21:00–08:00) · `quote_opened` a customer opened a quotation I sent';
 const CHANNEL_DOC = '`web_push` push to the agent zone (getpack Agent) · `line` LINE OA · `email`';
 
 export class SetAgentNotificationPreferenceDto {
@@ -2292,12 +2404,12 @@ export class SetAgentNotificationPreferencesDto {
   @ApiProperty({
     type: [SetAgentNotificationPreferenceDto],
     minItems: 1,
-    maxItems: 18,
+    maxItems: 24,
     description: 'The choices to change; what is not listed keeps its value',
   })
   @IsArray()
   @ArrayMinSize(1)
-  @ArrayMaxSize(18)
+  @ArrayMaxSize(24)
   @ValidateNested({ each: true })
   @Type(() => SetAgentNotificationPreferenceDto)
   items!: SetAgentNotificationPreferenceDto[];

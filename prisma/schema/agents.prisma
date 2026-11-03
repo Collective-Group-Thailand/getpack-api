@@ -24,6 +24,10 @@ enum SalesAgentNotificationEvent {
   statement_ready
   payout_paid
   payout_profile_needed
+  /// D-468: a lead's follow-up time has come (outside the quiet hours).
+  follow_up_due
+  /// D-468: a customer opened a quote the agent sent.
+  quote_opened
 
   @@map("sales_agent_notification_event")
 }
@@ -72,6 +76,75 @@ enum SalesAgentLeadStatus {
   withdrawn
 
   @@map("sales_agent_lead_status")
+}
+
+/// D-468 (PLAN A-06): where a lead is in the agent's pipeline; `won` is set by the system only.
+enum SalesAgentLeadStage {
+  new
+  contacted
+  quoted
+  negotiating
+  won
+  lost
+
+  @@map("sales_agent_lead_stage")
+}
+
+/// D-468: why a lead was lost (lost-to-price analytics in Phase 4).
+enum SalesAgentLeadLostReason {
+  price
+  lead_time
+  no_need
+  competitor
+  no_response
+  other
+
+  @@map("sales_agent_lead_lost_reason")
+}
+
+/// D-468: how a lead entered the pipeline.
+enum SalesAgentLeadSource {
+  manual
+  card_scan
+  csv_import
+  link
+  staff
+
+  @@map("sales_agent_lead_source")
+}
+
+/// D-468: what an entry of a lead's timeline records.
+enum SalesAgentLeadActivityKind {
+  call
+  line
+  visit
+  email
+  note
+  quote_sent
+  stage_change
+  system
+
+  @@map("sales_agent_lead_activity_kind")
+}
+
+/// D-468: a CSV import of leads — dry run, then commit.
+enum SalesAgentLeadImportStatus {
+  previewed
+  committed
+  expired
+
+  @@map("sales_agent_lead_import_status")
+}
+
+/// D-468: a quote an agent sent on behalf of getpack (`/q/{token}`).
+enum SalesAgentQuoteStatus {
+  sent
+  opened
+  accepted
+  expired
+  withdrawn
+
+  @@map("sales_agent_quote_status")
 }
 
 enum SalesAgentFactoryLinkStatus {
@@ -170,6 +243,8 @@ model SalesAgentPlanVersion {
 
   plan        SalesAgentPlan         @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_plan_versions__plan_id")
   commissions SalesAgentCommission[]
+
+  dealRegistrations SalesAgentDealRegistration[] @relation("SalesAgentDealPlanVersion")
 
   @@unique([planId, versionNo], map: "ux_sales_agent_plan_versions__plan_id__version_no")
   @@index([planId, status, effectiveFrom], map: "ix_sales_agent_plan_versions__plan_id__status__effective_from")
@@ -275,6 +350,10 @@ model SalesAgent {
   taxDeclarations         SalesAgentTaxDeclaration[]
   payoutProfile           SalesAgentPayoutProfile?
   notificationPreferences SalesAgentNotificationPreference[]
+  leadImports             SalesAgentLeadImport[]
+  quotes                  SalesAgentQuote[]
+  discountRequests        SalesAgentDiscountRequest[]
+  dealRegistrations       SalesAgentDealRegistration[]
 
   @@index([status, kind], map: "ix_sales_agents__status__kind")
   @@index([planId], map: "ix_sales_agents__plan_id")
@@ -322,37 +401,58 @@ model SalesAgentLink {
 
 /// A prospect an agent registered (D-417, D-419), protected from other agents for a while. PII.
 model SalesAgentLead {
-  id                     BigInt               @id(map: "pk_sales_agent_leads") @default(autoincrement())
-  publicId               String               @unique(map: "ux_sales_agent_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  agentId                BigInt               @map("agent_id")
+  id                     BigInt                    @id(map: "pk_sales_agent_leads") @default(autoincrement())
+  publicId               String                    @unique(map: "ux_sales_agent_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId                BigInt                    @map("agent_id")
   kind                   SalesAgentLeadKind
-  status                 SalesAgentLeadStatus @default(registered)
-  contactName            String               @map("contact_name")
-  organisationName       String?              @map("organisation_name")
+  status                 SalesAgentLeadStatus      @default(registered)
+  contactName            String                    @map("contact_name")
+  organisationName       String?                   @map("organisation_name")
   /// E.164 (+66…).
   phone                  String?
-  email                  String?              @db.Citext
-  taxId                  String?              @map("tax_id") @db.Char(13)
+  email                  String?                   @db.Citext
+  taxId                  String?                   @map("tax_id") @db.Char(13)
   note                   String?
-  protectedUntil         DateTime             @map("protected_until") @db.Timestamptz(6)
-  convertedAt            DateTime?            @map("converted_at") @db.Timestamptz(6)
-  convertedUserId        BigInt?              @map("converted_user_id")
-  convertedCompanyId     BigInt?              @map("converted_company_id")
-  convertedFactoryId     BigInt?              @map("converted_factory_id")
-  closedReason           String?              @map("closed_reason")
+  protectedUntil         DateTime                  @map("protected_until") @db.Timestamptz(6)
+  convertedAt            DateTime?                 @map("converted_at") @db.Timestamptz(6)
+  convertedUserId        BigInt?                   @map("converted_user_id")
+  convertedCompanyId     BigInt?                   @map("converted_company_id")
+  convertedFactoryId     BigInt?                   @map("converted_factory_id")
+  closedReason           String?                   @map("closed_reason")
   /// D-467: when the agent was told the protection ends in 7 days / 1 day (once each).
-  protectionReminded7dAt DateTime?            @map("protection_reminded_7d_at") @db.Timestamptz(6)
-  protectionReminded1dAt DateTime?            @map("protection_reminded_1d_at") @db.Timestamptz(6)
-  createdAt              DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt              DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion             Int                  @default(1) @map("row_version")
+  protectionReminded7dAt DateTime?                 @map("protection_reminded_7d_at") @db.Timestamptz(6)
+  protectionReminded1dAt DateTime?                 @map("protection_reminded_1d_at") @db.Timestamptz(6)
+  /// D-468 pipeline (PLAN A-06). PDPA for the new personal fields (`line_id`, `industry`, `tags`, follow-up notes in
+  /// the timeline): purpose = the agent's follow-up of a prospect who agreed to be contacted; retention = while the
+  /// lead is open, then as long as the lead row (agent programme records); access = the agent who registered it and
+  /// Sales (agents.read), never other agents.
+  stage                  SalesAgentLeadStage       @default(new)
+  stageChangedAt         DateTime?                 @map("stage_changed_at") @db.Timestamptz(6)
+  expectedValue          Decimal?                  @map("expected_value") @db.Decimal(14, 2)
+  nextFollowUpAt         DateTime?                 @map("next_follow_up_at") @db.Timestamptz(6)
+  /// When the reminder for `next_follow_up_at` was sent (null = not yet; reset when the time changes).
+  followUpRemindedAt     DateTime?                 @map("follow_up_reminded_at") @db.Timestamptz(6)
+  lostReason             SalesAgentLeadLostReason? @map("lost_reason")
+  lostNote               String?                   @map("lost_note")
+  source                 SalesAgentLeadSource      @default(manual)
+  industry               String?
+  /// The prospect's LINE id (PDPA: see above).
+  lineId                 String?                   @map("line_id")
+  tags                   String[]                  @default([])
+  wonAt                  DateTime?                 @map("won_at") @db.Timestamptz(6)
+  createdAt              DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt              DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion             Int                       @default(1) @map("row_version")
 
-  agent            SalesAgent              @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__agent_id")
-  convertedUser    User?                   @relation("SalesAgentLeadConvertedUser", fields: [convertedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_user_id")
-  convertedCompany Company?                @relation("SalesAgentLeadConvertedCompany", fields: [convertedCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_company_id")
-  convertedFactory Factory?                @relation("SalesAgentLeadConvertedFactory", fields: [convertedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_factory_id")
-  links            SalesAgentLink[]
-  factoryLinks     SalesAgentFactoryLink[]
+  activities        SalesAgentLeadActivity[]
+  agentQuotes       SalesAgentQuote[]
+  dealRegistrations SalesAgentDealRegistration[]
+  agent             SalesAgent                   @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__agent_id")
+  convertedUser     User?                        @relation("SalesAgentLeadConvertedUser", fields: [convertedUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_user_id")
+  convertedCompany  Company?                     @relation("SalesAgentLeadConvertedCompany", fields: [convertedCompanyId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_company_id")
+  convertedFactory  Factory?                     @relation("SalesAgentLeadConvertedFactory", fields: [convertedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_factory_id")
+  links             SalesAgentLink[]
+  factoryLinks      SalesAgentFactoryLink[]
 
   @@index([agentId, status], map: "ix_sales_agent_leads__agent_id__status")
   @@index([phone], map: "ix_sales_agent_leads__phone__registered", where: raw("(status = 'registered'::sales_agent_lead_status)"))
@@ -361,7 +461,58 @@ model SalesAgentLead {
   @@index([convertedUserId], map: "ix_sales_agent_leads__converted_user_id")
   @@index([convertedCompanyId], map: "ix_sales_agent_leads__converted_company_id")
   @@index([convertedFactoryId], map: "ix_sales_agent_leads__converted_factory_id")
+  @@index([agentId, stage], map: "ix_sales_agent_leads__agent_id__stage")
+  @@index([nextFollowUpAt], map: "ix_sales_agent_leads__next_follow_up_at__due", where: raw("(follow_up_reminded_at IS NULL AND next_follow_up_at IS NOT NULL)"))
   @@map("sales_agent_leads")
+}
+
+/// D-468: the timeline of a lead (calls, LINE, visits, notes, quotes sent, stage changes, system entries).
+/// Append-only (trigger `forbid_mutation`). PDPA: notes about a prospect; same purpose, retention and access as the
+/// lead.
+model SalesAgentLeadActivity {
+  id          BigInt                     @id(map: "pk_sales_agent_lead_activities") @default(autoincrement())
+  publicId    String                     @unique(map: "ux_sales_agent_lead_activities__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  leadId      BigInt                     @map("lead_id")
+  kind        SalesAgentLeadActivityKind
+  body        String?
+  /// Machine data of system entries (quote id, stage from / to …).
+  data        Json                       @default("{}")
+  occurredAt  DateTime                   @map("occurred_at") @db.Timestamptz(6)
+  /// The person who wrote it; null for system entries.
+  createdById BigInt?                    @map("created_by")
+  createdAt   DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  lead      SalesAgentLead @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_lead_activities__lead_id")
+  createdBy User?          @relation("SalesAgentLeadActivityCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_lead_activities__created_by")
+
+  @@index([leadId, occurredAt(sort: Desc), id(sort: Desc)], map: "ix_sales_agent_lead_activities__lead_id__occurred_at")
+  @@index([createdById], map: "ix_sales_agent_lead_activities__created_by")
+  @@map("sales_agent_lead_activities")
+}
+
+/// D-468: a CSV import of leads (≤ 500 rows): the dry run keeps the parsed rows and their errors for 24 h; commit
+/// re-checks every row. PDPA: prospects' contact data, purged (rows emptied) when it expires or 7 days after commit;
+/// access = the agent only.
+model SalesAgentLeadImport {
+  id           BigInt                     @id(map: "pk_sales_agent_lead_imports") @default(autoincrement())
+  publicId     String                     @unique(map: "ux_sales_agent_lead_imports__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId      BigInt                     @map("agent_id")
+  status       SalesAgentLeadImportStatus @default(previewed)
+  rows         Json
+  rowCount     Int                        @map("row_count")
+  validCount   Int                        @map("valid_count")
+  createdCount Int?                       @map("created_count")
+  expiresAt    DateTime                   @map("expires_at") @db.Timestamptz(6)
+  committedAt  DateTime?                  @map("committed_at") @db.Timestamptz(6)
+  purgedAt     DateTime?                  @map("purged_at") @db.Timestamptz(6)
+  createdAt    DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+  rowVersion   Int                        @default(1) @map("row_version")
+
+  agent SalesAgent @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_lead_imports__agent_id")
+
+  @@index([agentId, createdAt], map: "ix_sales_agent_lead_imports__agent_id__created_at")
+  @@index([status, expiresAt], map: "ix_sales_agent_lead_imports__status__expires_at")
+  @@map("sales_agent_lead_imports")
 }
 
 /// A factory an agent brought (D-419); one agent per factory.
@@ -644,4 +795,323 @@ model SalesAgentNotificationPreference {
 
   @@unique([agentId, event, channel], map: "ux_sales_agent_notification_preferences__agent__event__channel")
   @@map("sales_agent_notification_preferences")
+}
+
+/// D-468: a quote an agent sent to a lead on behalf of getpack (the quote itself is the store's write-once snapshot,
+/// owned by getpack — no customer until the lead signs up). The share token is kept encrypted so the agent can copy
+/// the link again; only its hash is on the quote. PDPA: no personal data of its own (the lead's).
+model SalesAgentQuote {
+  id                 BigInt                @id(map: "pk_sales_agent_quotes") @default(autoincrement())
+  publicId           String                @unique(map: "ux_sales_agent_quotes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId            BigInt                @map("agent_id")
+  leadId             BigInt                @map("lead_id")
+  quoteId            BigInt                @unique(map: "ux_sales_agent_quotes__quote_id") @map("quote_id")
+  /// The store session the quote was saved under (anonymous owner, store rules — D-441).
+  anonymousId        String                @map("anonymous_id") @db.Uuid
+  status             SalesAgentQuoteStatus @default(sent)
+  shareTokenEnc      Bytes?                @map("share_token_enc")
+  sentAt             DateTime              @map("sent_at") @db.Timestamptz(6)
+  sendCount          Int                   @default(1) @map("send_count")
+  openedAt           DateTime?             @map("opened_at") @db.Timestamptz(6)
+  acceptedAt         DateTime?             @map("accepted_at") @db.Timestamptz(6)
+  withdrawnAt        DateTime?             @map("withdrawn_at") @db.Timestamptz(6)
+  withdrawnReason    String?               @map("withdrawn_reason")
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                   @default(1) @map("row_version")
+  /// D-468: the deal registration that protects and locks this quote.
+  dealRegistrationId BigInt?               @map("deal_registration_id")
+
+  dealRegistration SalesAgentDealRegistration? @relation(fields: [dealRegistrationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__deal_registration_id")
+  agent            SalesAgent                  @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__agent_id")
+  lead             SalesAgentLead              @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__lead_id")
+  quote            Quote                       @relation("SalesAgentQuoteQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_quotes__quote_id")
+
+  discountRequests SalesAgentDiscountRequest[]
+
+  @@index([agentId, createdAt], map: "ix_sales_agent_quotes__agent_id__created_at")
+  @@index([leadId], map: "ix_sales_agent_quotes__lead_id")
+  @@index([dealRegistrationId], map: "ix_sales_agent_quotes__deal_registration_id")
+  @@map("sales_agent_quotes")
+}
+
+/// D-468: where an agent's discount request stands (the approval itself is Phase 4).
+enum SalesAgentDiscountRequestStatus {
+  /// Waiting for Sales (Phase 4 desk).
+  open
+  /// 1–3 options were offered; the agent may accept one.
+  offered
+  /// The agent accepted an option.
+  accepted
+  /// Refused by Sales.
+  rejected
+  /// Closed without an answer (quote withdrawn / expired, or the agent withdrew).
+  closed
+
+  @@map("sales_agent_discount_request_status")
+}
+
+/// D-468: why a discount is asked.
+enum SalesAgentDiscountReason {
+  competitor_price
+  budget
+  volume
+  strategic_account
+  other
+
+  @@map("sales_agent_discount_reason")
+}
+
+/// D-468 give-get: what the customer commits to.
+enum SalesAgentCommitment {
+  one_off
+  call_off
+
+  @@map("sales_agent_commitment")
+}
+
+/// D-468: an option offered for a discount request. `standard` always carries the full standard rate; `co_fund` a
+/// lower rate (effective only once the agent accepts it); `spiff` a higher one.
+enum SalesAgentDiscountOptionKind {
+  standard
+  co_fund
+  spiff
+
+  @@map("sales_agent_discount_option_kind")
+}
+
+enum SalesAgentDiscountOptionStatus {
+  offered
+  accepted
+  /// Another option was accepted, the request closed or the option's validity ended.
+  lapsed
+
+  @@map("sales_agent_discount_option_status")
+}
+
+/// D-468 (PLAN A-10, §7): one round of an agent's discount request on one quote version (a re-quote is a new
+/// version). One open round per quote (partial unique index); a further round needs a changed give-get. Every round
+/// is kept (negotiation history, Phase 4). PDPA: no personal data (competitor evidence is a document about prices).
+model SalesAgentDiscountRequest {
+  id               BigInt                          @id(map: "pk_sales_agent_discount_requests") @default(autoincrement())
+  publicId         String                          @unique(map: "ux_sales_agent_discount_requests__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId          BigInt                          @map("agent_id")
+  agentQuoteId     BigInt                          @map("agent_quote_id")
+  quoteId          BigInt                          @map("quote_id")
+  /// The quantity the request is about.
+  quoteOptionId    BigInt                          @map("quote_option_id")
+  round            Int                             @db.SmallInt
+  status           SalesAgentDiscountRequestStatus @default(open)
+  requestedPct     Decimal                         @map("requested_pct") @db.Decimal(7, 4)
+  reason           SalesAgentDiscountReason
+  reasonNote       String?                         @map("reason_note")
+  /// Give-get: the quantity the customer would order instead (null = unchanged).
+  quantityChange   Int?                            @map("quantity_change")
+  commitment       SalesAgentCommitment            @default(one_off)
+  commitmentMonths Int?                            @map("commitment_months") @db.SmallInt
+  depositPct       Decimal?                        @map("deposit_pct") @db.Decimal(7, 4)
+  cashWithinDays   Int?                            @map("cash_within_days") @db.SmallInt
+  leadTimeFlexDays Int?                            @map("lead_time_flex_days") @db.SmallInt
+  specChange       String?                         @map("spec_change")
+  /// SHA-256 of the give-get fields (a further round must change it).
+  giveGetSha256    Bytes                           @map("give_get_sha256")
+  competitorFileId BigInt?                         @map("competitor_file_id")
+  /// Like-for-like spec of the competitor's offer (board grade, flute, print sides / colours, finish, quantity, lead
+  /// time, shipping included, VAT included, price).
+  competitorSpec   Json?                           @map("competitor_spec")
+  createdById      BigInt                          @map("created_by")
+  createdAt        DateTime                        @default(now()) @map("created_at") @db.Timestamptz(6)
+  decidedAt        DateTime?                       @map("decided_at") @db.Timestamptz(6)
+  decidedById      BigInt?                         @map("decided_by")
+  decisionNote     String?                         @map("decision_note")
+  updatedAt        DateTime                        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int                             @default(1) @map("row_version")
+
+  agent          SalesAgent                 @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__agent_id")
+  agentQuote     SalesAgentQuote            @relation(fields: [agentQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__agent_quote_id")
+  quote          Quote                      @relation("SalesAgentDiscountRequestQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__quote_id")
+  quoteOption    QuoteOption                @relation("SalesAgentDiscountRequestQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__quote_option_id")
+  competitorFile FileObject?                @relation("SalesAgentDiscountRequestCompetitorFile", fields: [competitorFileId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__competitor_file_id")
+  createdBy      User                       @relation("SalesAgentDiscountRequestCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__created_by")
+  decidedBy      User?                      @relation("SalesAgentDiscountRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__decided_by")
+  options        SalesAgentDiscountOption[]
+
+  @@unique([quoteId, round], map: "ux_sales_agent_discount_requests__quote_id__round")
+  @@unique([quoteId], map: "ux_sales_agent_discount_requests__quote_id__open", where: raw("(status = 'open'::sales_agent_discount_request_status)"))
+  @@index([agentId, createdAt], map: "ix_sales_agent_discount_requests__agent_id__created_at")
+  @@index([agentQuoteId], map: "ix_sales_agent_discount_requests__agent_quote_id")
+  @@index([quoteOptionId], map: "ix_sales_agent_discount_requests__quote_option_id")
+  @@index([competitorFileId], map: "ix_sales_agent_discount_requests__competitor_file_id")
+  @@index([createdById], map: "ix_sales_agent_discount_requests__created_by")
+  @@index([decidedById], map: "ix_sales_agent_discount_requests__decided_by")
+  @@index([status, createdAt], map: "ix_sales_agent_discount_requests__status__created_at")
+  @@map("sales_agent_discount_requests")
+}
+
+/// D-468: an option offered for a discount request (1–3, Phase 4 creates them through
+/// `AgentDiscountsService.offerOptions`). Amounts are computed by the API (decimal.js): the discounted net and the
+/// agent's commission at that price. Accepting one is the agent's own act with its evidence (ip, user agent, time,
+/// snapshot + SHA-256); a lower rate (co-fund) is never applied without it.
+model SalesAgentDiscountOption {
+  id                BigInt                         @id(map: "pk_sales_agent_discount_options") @default(autoincrement())
+  publicId          String                         @unique(map: "ux_sales_agent_discount_options__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  requestId         BigInt                         @map("request_id")
+  position          Int                            @db.SmallInt
+  kind              SalesAgentDiscountOptionKind
+  status            SalesAgentDiscountOptionStatus @default(offered)
+  discountPct       Decimal                        @map("discount_pct") @db.Decimal(7, 4)
+  /// The quantity's price before VAT, excluding shipping, before and after the discount.
+  baseAmount        Decimal                        @map("base_amount") @db.Decimal(14, 2)
+  netAmount         Decimal                        @map("net_amount") @db.Decimal(14, 2)
+  /// The agent's rate on orders from this quote with this option, and the commission at `netAmount`.
+  ratePct           Decimal                        @map("rate_pct") @db.Decimal(7, 4)
+  standardRatePct   Decimal                        @map("standard_rate_pct") @db.Decimal(7, 4)
+  commissionAmount  Decimal                        @map("commission_amount") @db.Decimal(14, 2)
+  /// Conditions printed with the price (give-get), th / en.
+  conditionsTh      String?                        @map("conditions_th")
+  conditionsEn      String?                        @map("conditions_en")
+  validUntil        DateTime                       @map("valid_until") @db.Timestamptz(6)
+  offeredById       BigInt?                        @map("offered_by")
+  offeredAt         DateTime                       @default(now()) @map("offered_at") @db.Timestamptz(6)
+  acceptedAt        DateTime?                      @map("accepted_at") @db.Timestamptz(6)
+  acceptedById      BigInt?                        @map("accepted_by")
+  /// Acceptance evidence (PDPA: the agent's own ip and user agent, kept as long as the commission records).
+  acceptedIp        String?                        @map("accepted_ip") @db.Inet
+  acceptedUserAgent String?                        @map("accepted_user_agent")
+  acceptedSnapshot  Json?                          @map("accepted_snapshot")
+  acceptedSha256    Bytes?                         @map("accepted_sha256")
+  rowVersion        Int                            @default(1) @map("row_version")
+
+  request          SalesAgentDiscountRequest   @relation(fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__request_id")
+  offeredBy        User?                       @relation("SalesAgentDiscountOptionOfferedBy", fields: [offeredById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__offered_by")
+  dealRegistration SalesAgentDealRegistration? @relation("SalesAgentDealApprovedOption")
+  acceptedBy       User?                       @relation("SalesAgentDiscountOptionAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__accepted_by")
+
+  @@unique([requestId, position], map: "ux_sales_agent_discount_options__request_id__position")
+  @@unique([requestId], map: "ux_sales_agent_discount_options__request_id__accepted", where: raw("(status = 'accepted'::sales_agent_discount_option_status)"))
+  @@index([offeredById], map: "ix_sales_agent_discount_options__offered_by")
+  @@index([acceptedById], map: "ix_sales_agent_discount_options__accepted_by")
+  @@map("sales_agent_discount_options")
+}
+
+/// D-468 (PLAN A-11): what a deal registration protects and locks.
+enum SalesAgentDealScope {
+  quote
+  call_off_agreement
+
+  @@map("sales_agent_deal_scope")
+}
+
+enum SalesAgentDealStatus {
+  registered
+  won
+  lost
+  expired
+
+  @@map("sales_agent_deal_status")
+}
+
+enum SalesAgentDealOrigin {
+  /// The quote's commission base reached `agent.deal_registration_threshold`, or a call-off agreement was accepted.
+  automatic
+  /// The agent asked for it (smaller quotes); no approval.
+  requested
+
+  @@map("sales_agent_deal_origin")
+}
+
+/// D-468 (PLAN A-11): deal registration = protection + rate lock, never a rate cut. Locks the standard rates in force
+/// (or the rate of the option the agent accepted) for orders from its quotes; later plan versions never change it; a
+/// call-off agreement keeps the lock for every call-off. While `registered` and protected, other agents and staff
+/// assignment cannot take the lead / its customer (neutral refusal). One active registration per lead. No personal
+/// data of its own.
+model SalesAgentDealRegistration {
+  id                  BigInt               @id(map: "pk_sales_agent_deal_registrations") @default(autoincrement())
+  publicId            String               @unique(map: "ux_sales_agent_deal_registrations__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  agentId             BigInt               @map("agent_id")
+  leadId              BigInt               @map("lead_id")
+  scope               SalesAgentDealScope  @default(quote)
+  callOffAgreementId  BigInt?              @map("call_off_agreement_id")
+  origin              SalesAgentDealOrigin
+  status              SalesAgentDealStatus @default(registered)
+  lockedFirstRatePct  Decimal              @map("locked_first_rate_pct") @db.Decimal(7, 4)
+  lockedRepeatRatePct Decimal              @map("locked_repeat_rate_pct") @db.Decimal(7, 4)
+  planVersionId       BigInt               @map("plan_version_id")
+  approvedOptionId    BigInt?              @unique(map: "ux_sales_agent_deal_registrations__approved_option_id") @map("approved_option_id")
+  protectedUntil      DateTime             @map("protected_until") @db.Timestamptz(6)
+  /// The threshold, protection days and commission base in force when registered.
+  thresholdSnapshot   Json                 @map("threshold_snapshot")
+  registeredAt        DateTime             @default(now()) @map("registered_at") @db.Timestamptz(6)
+  endedAt             DateTime?            @map("ended_at") @db.Timestamptz(6)
+  endedReason         String?              @map("ended_reason")
+  createdAt           DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion          Int                  @default(1) @map("row_version")
+
+  agent            SalesAgent                @relation(fields: [agentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__agent_id")
+  lead             SalesAgentLead            @relation(fields: [leadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__lead_id")
+  callOffAgreement CallOffAgreement?         @relation("SalesAgentDealCallOff", fields: [callOffAgreementId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__call_off_agreement_id")
+  planVersion      SalesAgentPlanVersion     @relation("SalesAgentDealPlanVersion", fields: [planVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__plan_version_id")
+  approvedOption   SalesAgentDiscountOption? @relation("SalesAgentDealApprovedOption", fields: [approvedOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_deal_registrations__approved_option_id")
+  quotes           SalesAgentQuote[]
+
+  @@unique([leadId], map: "ux_sales_agent_deal_registrations__lead_id__registered", where: raw("(status = 'registered'::sales_agent_deal_status)"))
+  @@index([agentId, status], map: "ix_sales_agent_deal_registrations__agent_id__status")
+  @@index([status, protectedUntil], map: "ix_sales_agent_deal_registrations__status__protected_until")
+  @@index([callOffAgreementId], map: "ix_sales_agent_deal_registrations__call_off_agreement_id")
+  @@index([planVersionId], map: "ix_sales_agent_deal_registrations__plan_version_id")
+  @@map("sales_agent_deal_registrations")
+}
+
+/// D-468 (PLAN A-13): who a playbook card is written for.
+enum SalesPlaybookAudience {
+  agent
+  rep
+  manager
+
+  @@map("sales_playbook_audience")
+}
+
+enum SalesPlaybookCardStatus {
+  draft
+  published
+  retired
+
+  @@map("sales_playbook_card_status")
+}
+
+/// D-468 (PLAN A-13): the sales playbook as versioned cards — guidance shown in context (lead lost to price,
+/// competitor cheaper, discount request, big deal, follow-up, first contact). One published version per key (partial
+/// unique index); Phase 4 adds the maker-checker admin (D-470) on the same rows. Customer-safe copy only for cards an
+/// agent sees (no cost, margin, factory or %-of-profit wording). No personal data.
+model SalesPlaybookCard {
+  id               BigInt                  @id(map: "pk_sales_playbook_cards") @default(autoincrement())
+  publicId         String                  @unique(map: "ux_sales_playbook_cards__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key              String                  @db.VarChar(64)
+  version          Int                     @db.SmallInt
+  /// Context keys (`all` = every context).
+  contexts         String[]                @default([])
+  audiences        SalesPlaybookAudience[] @default([])
+  titleTh          String                  @map("title_th")
+  titleEn          String?                 @map("title_en")
+  /// Markdown.
+  bodyTh           String                  @map("body_th")
+  bodyEn           String?                 @map("body_en")
+  /// `[{ th, en }]` — replies an agent copies to LINE.
+  suggestedReplies Json                    @default("[]") @map("suggested_replies")
+  sort             Int                     @default(0) @db.SmallInt
+  status           SalesPlaybookCardStatus @default(draft)
+  publishedAt      DateTime?               @map("published_at") @db.Timestamptz(6)
+  /// Where the content came from (e.g. `docs/design/agent-portal/PLAYBOOK.md v1`).
+  source           String?
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?                 @map("created_by")
+  updatedAt        DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int                     @default(1) @map("row_version")
+
+  @@unique([key, version], map: "ux_sales_playbook_cards__key__version")
+  @@unique([key], map: "ux_sales_playbook_cards__key__published", where: raw("(status = 'published'::sales_playbook_card_status)"))
+  @@index([status, sort], map: "ix_sales_playbook_cards__status__sort")
+  @@index([contexts], type: Gin, map: "ix_sales_playbook_cards__contexts")
+  @@map("sales_playbook_cards")
 }
