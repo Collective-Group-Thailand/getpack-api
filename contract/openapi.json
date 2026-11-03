@@ -21971,6 +21971,23 @@
         ],
         "type": "object"
       },
+      "AssignSalesInboundDto": {
+        "properties": {
+          "reason": {
+            "description": "Required to move an enquiry from one rep to another (audited)",
+            "example": "ลูกค้าอยู่เชียงใหม่ ให้ทีมภาคเหนือดูแล",
+            "maxLength": 300,
+            "type": "string"
+          },
+          "repUserId": {
+            "description": "The rep (staff user id); omitted = round robin among the reps with room",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "AssignStructuralRequestDto": {
         "properties": {
           "assigneeId": {
@@ -24269,6 +24286,62 @@
           "assets",
           "liabilities",
           "equity"
+        ],
+        "type": "object"
+      },
+      "BulkAssignResultDto": {
+        "properties": {
+          "assigned": {
+            "items": {
+              "$ref": "#/components/schemas/SalesInboundDto"
+            },
+            "type": "array"
+          },
+          "skipped": {
+            "description": "Enquiries not assigned (closed, not found or no rep with room)",
+            "example": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "assigned",
+          "skipped"
+        ],
+        "type": "object"
+      },
+      "BulkAssignSalesInboundDto": {
+        "properties": {
+          "ids": {
+            "example": [
+              "0192f3a0-7c1e-7d2a-9b1f-0000000a7002"
+            ],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "type": "array"
+          },
+          "reason": {
+            "description": "Required to move an enquiry from one rep to another (audited)",
+            "example": "ลูกค้าอยู่เชียงใหม่ ให้ทีมภาคเหนือดูแล",
+            "maxLength": 300,
+            "type": "string"
+          },
+          "repUserId": {
+            "description": "The rep (staff user id); omitted = round robin among the reps with room",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "ids"
         ],
         "type": "object"
       },
@@ -101351,6 +101424,11 @@
             "example": "สมหญิง ขายดี",
             "type": "string"
           },
+          "openInbound": {
+            "description": "Inbound enquiries assigned and not yet converted or disqualified",
+            "example": 3,
+            "type": "number"
+          },
           "openLeads": {
             "description": "Open leads (registered or converted, not won / lost)",
             "example": 12,
@@ -101368,7 +101446,8 @@
           "displayName",
           "agent",
           "assignable",
-          "openLeads"
+          "openLeads",
+          "openInbound"
         ],
         "type": "object"
       },
@@ -335294,6 +335373,237 @@
         ]
       }
     },
+    "/v1/admin/sales/inbound/actions/bulk-assign": {
+      "post": {
+        "description": "Each to the named rep, or round robin one by one when no rep is named (the rep with the fewest open enquiries below `sales.max_open_per_rep`, then the least recently assigned). Closed, unknown or unassignable ones are listed in `skipped`; moving one from another rep needs a reason (audited) (D-469).\n\nImplements: D-469, D-458, D-440.",
+        "operationId": "admin.salesInbound.bulkAssign",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "ids": [
+                      "0192f3a0-7c1e-7d2a-9b1f-0000000a7002"
+                    ]
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/BulkAssignSalesInboundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assigned": [
+                    {
+                      "assignedAt": "2026-11-03T10:05:00+07:00",
+                      "assignee": {
+                        "displayName": "สมหญิง ขายดี",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
+                      },
+                      "contactEmail": null,
+                      "contactName": "คุณวิภา รักษ์ดี",
+                      "contactPhone": "+66890002222",
+                      "createdAt": "2026-11-03T10:00:00+07:00",
+                      "disqualifiedReason": null,
+                      "firstRespondedAt": null,
+                      "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                      "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                      "leadRefusal": null,
+                      "need": "business · กล่องขนม · qty 5000",
+                      "organisationName": "บริษัท ขนมดี จำกัด",
+                      "slaBreached": false,
+                      "slaBreachedAt": null,
+                      "source": "contact_form",
+                      "sourceRef": "CS-2611-00042",
+                      "status": "assigned",
+                      "statusNote": null,
+                      "updatedAt": "2026-11-03T10:05:00+07:00"
+                    }
+                  ],
+                  "skipped": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/BulkAssignResultDto"
+                }
+              }
+            },
+            "description": "Result",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "sales.rep_unavailable": {
+                    "$ref": "#/components/examples/problem.sales.rep_unavailable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `sales.rep_unavailable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Assign several enquiries",
+        "tags": [
+          "admin.salesInbound"
+        ],
+        "x-required-permissions": [
+          "sales.pipeline.manage"
+        ]
+      }
+    },
     "/v1/admin/sales/inbound/{inboundId}": {
       "get": {
         "description": "With its rep, lead and SLA (D-469).\n\nImplements: D-469, D-458, D-440.",
@@ -335501,6 +335811,291 @@
         ],
         "x-required-permissions-any": [
           "sales.pipeline.self",
+          "sales.pipeline.manage"
+        ]
+      }
+    },
+    "/v1/admin/sales/inbound/{inboundId}/actions/assign": {
+      "post": {
+        "description": "To a rep (`repUserId`), or round robin when omitted. Reassignment needs a reason (audited, kept in the assignment history). The lead is registered for the rep’s employee agent with the programme’s rules; a contact that cannot be a lead keeps the assignment with `leadRefusal` (D-469, D-417, D-440).\n\nImplements: D-469, D-458, D-440.",
+        "operationId": "admin.salesInbound.assign",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "inboundId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "repUserId": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
+                  }
+                },
+                "reassign": {
+                  "value": {
+                    "reason": "ลูกค้าขอคุยกับพนักงานคนเดิม",
+                    "repUserId": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
+                  }
+                },
+                "roundRobin": {
+                  "value": {}
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/AssignSalesInboundDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "assignedAt": "2026-11-03T10:05:00+07:00",
+                  "assignee": {
+                    "displayName": "สมหญิง ขายดี",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
+                  },
+                  "contactEmail": null,
+                  "contactName": "คุณวิภา รักษ์ดี",
+                  "contactPhone": "+66890002222",
+                  "createdAt": "2026-11-03T10:00:00+07:00",
+                  "disqualifiedReason": null,
+                  "firstRespondedAt": null,
+                  "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                  "leadRefusal": null,
+                  "need": "business · กล่องขนม · qty 5000",
+                  "organisationName": "บริษัท ขนมดี จำกัด",
+                  "slaBreached": false,
+                  "slaBreachedAt": null,
+                  "source": "contact_form",
+                  "sourceRef": "CS-2611-00042",
+                  "status": "assigned",
+                  "statusNote": null,
+                  "updatedAt": "2026-11-03T10:05:00+07:00"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SalesInboundDto"
+                }
+              }
+            },
+            "description": "Enquiry",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "sales.inbound_closed": {
+                    "$ref": "#/components/examples/problem.sales.inbound_closed"
+                  },
+                  "sales.no_rep_available": {
+                    "$ref": "#/components/examples/problem.sales.no_rep_available"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `sales.inbound_closed`, `sales.no_rep_available`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "sales.rep_unavailable": {
+                    "$ref": "#/components/examples/problem.sales.rep_unavailable"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `sales.rep_unavailable`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Assign or reassign an enquiry",
+        "tags": [
+          "admin.salesInbound"
+        ],
+        "x-required-permissions": [
           "sales.pipeline.manage"
         ]
       }
@@ -339679,6 +340274,7 @@
                     },
                     "assignable": true,
                     "displayName": "สมหญิง ขายดี",
+                    "openInbound": 3,
                     "openLeads": 12,
                     "userId": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   }

@@ -461,6 +461,7 @@ export class AdminSalesRepsController {
       agent: r.agent ? agentRef(r.agent) : null,
       assignable: r.assignable,
       openLeads: r.openLeads,
+      openInbound: r.openInbound,
     }));
   }
 }

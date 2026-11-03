@@ -85,6 +85,12 @@ export class SalesRepDto {
 
   @ApiProperty({ example: 12, description: 'Open leads (registered or converted, not won / lost)' })
   openLeads!: number;
+
+  @ApiProperty({
+    example: 3,
+    description: 'Inbound enquiries assigned and not yet converted or disqualified',
+  })
+  openInbound!: number;
 }
 
 export const SALES_REP_EXAMPLE: SalesRepDto = {
@@ -93,4 +99,5 @@ export const SALES_REP_EXAMPLE: SalesRepDto = {
   agent: { id: AGENT_IDS.agent, code: 'K7QX2MAP', legalName: 'สมหญิง ขายดี', kind: 'employee' },
   assignable: true,
   openLeads: 12,
+  openInbound: 3,
 };

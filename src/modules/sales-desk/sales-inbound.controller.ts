@@ -1,6 +1,7 @@
 import { CurrentActor } from '@common/auth/auth.decorators';
-import { CanAny } from '@common/auth/can.decorator';
+import { Can, CanAny } from '@common/auth/can.decorator';
 import { type Actor } from '@common/context/actor';
+import { DomainException } from '@common/errors/domain.exception';
 import { ApiEndpoint, ApiStandardErrors, ApiSuccess } from '@common/openapi/decorators';
 import { ApiPaginated } from '@common/pagination/api-paginated.decorator';
 import { ApiSurface } from '@modules/surfaces/surfaces';
@@ -8,6 +9,9 @@ import { Body, Controller, Get, HttpCode, Param, ParseUUIDPipe, Post, Query } fr
 import { ApiBody, ApiParam } from '@nestjs/swagger';
 
 import {
+  AssignSalesInboundDto,
+  BulkAssignResultDto,
+  BulkAssignSalesInboundDto,
   CreateSalesInboundDto,
   DisqualifySalesInboundDto,
   INBOUND_EXAMPLE,
@@ -81,6 +85,83 @@ export class AdminSalesInboundController {
   @ApiStandardErrors(...WRITE, 'sales.rep_unavailable')
   async create(@CurrentActor() actor: Actor, @Body() body: CreateSalesInboundDto): Promise<SalesInboundDto> {
     return inboundDto(await this.inbound.createManual(await this.scopes.of(actor), body));
+  }
+
+  @Post('actions/bulk-assign')
+  @HttpCode(200)
+  @Can('sales.pipeline.manage')
+  @ApiEndpoint({
+    id: 'admin.salesInbound.bulkAssign',
+    summary: 'Assign several enquiries',
+    description:
+      'Each to the named rep, or round robin one by one when no rep is named (the rep with the fewest open ' +
+      'enquiries below `sales.max_open_per_rep`, then the least recently assigned). Closed, unknown or ' +
+      'unassignable ones are listed in `skipped`; moving one from another rep needs a reason (audited) (D-469).',
+    implements: DECISIONS,
+  })
+  @ApiBody({
+    type: BulkAssignSalesInboundDto,
+    examples: { default: { value: { ids: [INBOUND_EXAMPLE.id] } } },
+  })
+  @ApiSuccess(200, {
+    description: 'Result',
+    type: BulkAssignResultDto,
+    example: { assigned: [INBOUND_EXAMPLE], skipped: [] },
+  })
+  @ApiStandardErrors(...WRITE, 'sales.rep_unavailable')
+  async bulkAssign(
+    @CurrentActor() actor: Actor,
+    @Body() body: BulkAssignSalesInboundDto,
+  ): Promise<BulkAssignResultDto> {
+    const scope = await this.scopes.of(actor);
+    const assigned: SalesInboundDto[] = [];
+    const skipped: string[] = [];
+    for (const id of [...new Set(body.ids)]) {
+      try {
+        assigned.push(inboundDto(await this.inbound.assign(scope, id, body)));
+      } catch (error) {
+        if (!(error instanceof DomainException) || error.code === 'sales.rep_unavailable') throw error;
+        skipped.push(id);
+      }
+    }
+    return { assigned, skipped };
+  }
+
+  @Post(':inboundId/actions/assign')
+  @HttpCode(200)
+  @Can('sales.pipeline.manage')
+  @ApiParam({ name: 'inboundId', format: 'uuid' })
+  @ApiEndpoint({
+    id: 'admin.salesInbound.assign',
+    summary: 'Assign or reassign an enquiry',
+    description:
+      'To a rep (`repUserId`), or round robin when omitted. Reassignment needs a reason (audited, kept in the ' +
+      'assignment history). The lead is registered for the rep’s employee agent with the programme’s rules; a ' +
+      'contact that cannot be a lead keeps the assignment with `leadRefusal` (D-469, D-417, D-440).',
+    implements: DECISIONS,
+  })
+  @ApiBody({
+    type: AssignSalesInboundDto,
+    examples: {
+      default: { value: { repUserId: INBOUND_EXAMPLE.assignee!.id } },
+      roundRobin: { value: {} },
+      reassign: { value: { repUserId: INBOUND_EXAMPLE.assignee!.id, reason: 'ลูกค้าขอคุยกับพนักงานคนเดิม' } },
+    },
+  })
+  @ApiSuccess(200, { description: 'Enquiry', type: SalesInboundDto, example: INBOUND_EXAMPLE })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    'sales.inbound_closed',
+    'sales.rep_unavailable',
+    'sales.no_rep_available',
+  )
+  async assign(
+    @CurrentActor() actor: Actor,
+    @Param('inboundId', ParseUUIDPipe) id: string,
+    @Body() body: AssignSalesInboundDto,
+  ): Promise<SalesInboundDto> {
+    return inboundDto(await this.inbound.assign(await this.scopes.of(actor), id, body));
   }
 
   @Get(':inboundId')

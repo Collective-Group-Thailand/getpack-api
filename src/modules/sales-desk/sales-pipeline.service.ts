@@ -162,6 +162,12 @@ export class SalesPipelineService {
       _count: { _all: true },
     });
     const openOf = new Map(open.map((o) => [o.agentId, o._count._all]));
+    const inbound = await this.prisma.salesInboundLead.groupBy({
+      by: ['assigneeUserId'],
+      where: { assigneeUserId: { in: userIds }, status: { notIn: ['converted_to_lead', 'disqualified'] } },
+      _count: { _all: true },
+    });
+    const inboundOf = new Map(inbound.map((o) => [o.assigneeUserId, o._count._all]));
     const isRep = new Set(holders.map((h) => h.userId));
     return users.map((u) => {
       const agent = agents.find((a) => a.staffUserId === u.id) ?? null;
@@ -170,6 +176,7 @@ export class SalesPipelineService {
         agent,
         assignable: u.status === 'active' && isRep.has(u.id) && agent?.status === 'active',
         openLeads: agent ? (openOf.get(agent.id) ?? 0) : 0,
+        openInbound: inboundOf.get(u.id) ?? 0,
       };
     });
   }
