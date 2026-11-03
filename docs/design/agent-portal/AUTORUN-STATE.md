@@ -5,7 +5,7 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 ## Status
 
 - Started: 2026-11-02 22:18 Asia/Bangkok
-- Current phase: P3
+- Current phase: P4
 - Step: plan
 - Overall: RUNNING
 
@@ -32,11 +32,12 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 | P0 | feat/agent-p0-rules → main | merge fbaceab4 | merge e0176433 |
 | P1 | feat/agent-p1-entry → main | merge e28f4962 | merge 6a01d784 |
 | P2 | feat/agent-p2-zone → main | merge 16211925 | merge ee7c593f |
+| P3 | feat/agent-p3-leads → main | merge 07462222 | merge ef7e802d |
 
 ## Last commit per repo
 
-- getpack-api: 16211925 (main, P2 merged)
-- getpack-web: ee7c593f (main, P2 merged)
+- getpack-api: 07462222 (main, P3 merged)
+- getpack-web: ef7e802d (main, P3 merged)
 
 ## BLOCKED
 
@@ -52,6 +53,7 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 2. Landing benefits for quote-on-behalf and the agent app depend on P3 / P2 → re-check at P7.
 3. Lighthouse perf on /agent is VM-limited here (64; /partner-with-us 67) → CI lhci decides.
 4. Ops: LINE Login callback + Firebase authorised domains must include agent.getpack.co.
+5. Card-scan photo retention (7 days, proposed) → PDPA owner; production image needs tesseract-ocr-tha (Dockerfile updated).
 - Note: the shell's default Node became 22 after a session restart; gates run with /opt/node24/bin first on PATH.
 
 ## Decisions recorded
@@ -59,3 +61,4 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 - D-464, D-465 (P0)
 - D-466 (P1)
 - D-467 (P2)
+- D-468 (P3)
