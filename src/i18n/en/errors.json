@@ -1552,6 +1552,10 @@
     }
   },
   "dielines": {
+    "sign_in_required": {
+      "title": "Sign in to keep downloading (free)",
+      "detail": "Your first dieline download needs no sign-in; from the second one, please sign in first. It stays free."
+    },
     "rate_limited": {
       "title": "Download limit reached",
       "detail": "You have reached the dieline download limit. Try again after the time in Retry-After."

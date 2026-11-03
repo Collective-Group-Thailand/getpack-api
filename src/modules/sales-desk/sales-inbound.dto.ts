@@ -20,7 +20,12 @@ import {
   MinLength,
 } from 'class-validator';
 
-import { DISQUALIFY_REASONS, INBOUND_SOURCES, INBOUND_STATUSES } from './sales-desk-rules';
+import {
+  DISQUALIFY_REASONS,
+  INBOUND_CONSENT_BASES,
+  INBOUND_SOURCES,
+  INBOUND_STATUSES,
+} from './sales-desk-rules';
 import { type InboundRow } from './sales-inbound.service';
 import { P4_IDS } from './sales-pipeline.dto';
 
@@ -173,14 +178,22 @@ export class SalesInboundDto {
   @IdField(P4_IDS.inbound)
   id!: string;
 
-  @ApiProperty({ enum: INBOUND_SOURCES, enumName: 'SalesInboundSource', example: 'contact_form' })
+  @ApiProperty({
+    enum: INBOUND_SOURCES,
+    enumName: 'SalesInboundSource',
+    example: 'contact_form',
+    description:
+      '`contact_form` / `rfq` (the person asked), `manual` (staff), `line_chat` (deferred), D-471 capture: ' +
+      '`studio_idle` "ออกแบบแล้วยังไม่สั่ง" (a saved studio design not ordered) and `dieline_download` (a free dieline ' +
+      'downloaded by a signed-in non-customer)',
+  })
   source!: string;
 
   @ApiProperty({
     type: String,
     nullable: true,
     example: 'CS-2611-00042',
-    description: 'Ticket no. or RFQ code',
+    description: 'Ticket no., RFQ code or the dieline’s style code',
   })
   sourceRef!: string | null;
 
@@ -251,6 +264,44 @@ export class SalesInboundDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   statusNote!: string | null;
 
+  @ApiProperty({
+    enum: INBOUND_CONSENT_BASES,
+    enumName: 'SalesInboundConsentBasis',
+    example: 'enquiry',
+    description:
+      'D-471 why getpack may contact the person (PDPA): `enquiry` (they asked), `staff_entry` (entered with their ' +
+      'agreement), `marketing_consent` (a captured signal; their latest marketing consent was granted)',
+  })
+  consentBasis!: string;
+
+  @ApiProperty({
+    example: 1,
+    description: 'D-471 signals behind the item (repeat dieline downloads refresh one open item)',
+  })
+  signalCount!: number;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-03T10:00:00+07:00' })
+  lastSignalAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description:
+      'D-471 the signed-in customer the item came from (captured signals, RFQs, signed-in contacts)',
+  })
+  customerId!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'D-471 the saved studio design not ordered (`studio_idle`)',
+  })
+  designId!: string | null;
+
   @TimestampField('2026-11-03T10:00:00+07:00')
   createdAt!: string;
 
@@ -284,6 +335,11 @@ export function inboundDto(r: InboundRow, now = new Date()): SalesInboundDto {
     slaBreachedAt: iso(r.slaBreachedAt),
     disqualifiedReason: r.disqualifiedReason,
     statusNote: r.statusNote,
+    consentBasis: r.consentBasis,
+    signalCount: r.signalCount,
+    lastSignalAt: iso(r.lastSignalAt),
+    customerId: r.captureUser?.publicId ?? null,
+    designId: r.designDocument?.publicId ?? null,
     createdAt: toBangkokIso(r.createdAt),
     updatedAt: toBangkokIso(r.updatedAt),
   };
@@ -309,6 +365,11 @@ export const INBOUND_EXAMPLE: SalesInboundDto = {
   slaBreachedAt: null,
   disqualifiedReason: null,
   statusNote: null,
+  consentBasis: 'enquiry',
+  signalCount: 1,
+  lastSignalAt: '2026-11-03T10:00:00+07:00',
+  customerId: null,
+  designId: null,
   createdAt: '2026-11-03T10:00:00+07:00',
   updatedAt: '2026-11-03T10:05:00+07:00',
 };

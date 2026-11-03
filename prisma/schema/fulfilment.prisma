@@ -589,6 +589,7 @@ model DesignDocument {
   shareLinks     DesignShareLink[]      @relation("DesignShareLinkDocument")
   comments       DesignComment[]        @relation("DesignCommentDocument")
   designServices DesignServiceRequest[] @relation("DesignServiceRequestDocument")
+  salesInbound   SalesInboundLead?      @relation("SalesInboundLeadDesign")
 
   @@unique([ownerUserId, importLocalId], map: "ux_design_documents__owner__import_local_id", where: raw("(import_local_id IS NOT NULL)"))
   @@index([ownerUserId, updatedAt(sort: Desc)], map: "ix_design_documents__owner_user_id__updated_at")

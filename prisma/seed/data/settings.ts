@@ -686,6 +686,41 @@ export const SETTINGS: readonly SettingSeed[] = [
     confirmation: 'pending_business',
     ownerRole: 'finance_manager',
   },
+  // --- Automatic lead capture (D-471, agent portal Phase 5): each source behind its own flag, off until Sales opens it.
+  {
+    key: 'capture.studio_idle_enabled',
+    valueType: 'boolean',
+    value: false,
+    description:
+      'D-471 a signed-in customer with a saved studio design not ordered within capture.studio_idle_days becomes an ' +
+      'inbound sales item "ออกแบบแล้วยังไม่สั่ง" — only with granted marketing consent and never for a contact ' +
+      'attributed to an agent or a rep; designs idle before the switch-on date are never captured (off until Sales ' +
+      'opens it)',
+    decisions: ['D-471'],
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'capture.studio_idle_days',
+    valueType: 'integer',
+    value: 3,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-471 days a saved studio design waits without an order before it is captured (PROMPT Phase 5: 3 days)',
+    decisions: ['D-471'],
+    confirmation: 'proposed',
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'capture.dieline_download_enabled',
+    valueType: 'boolean',
+    value: false,
+    description:
+      'D-471 a free dieline download by a signed-in non-customer (no order yet) creates or refreshes an inbound ' +
+      'sales item — only with granted marketing consent and never for a contact attributed to an agent; the download ' +
+      'itself stays free either way (off until Sales opens it)',
+    decisions: ['D-471'],
+    ownerRole: 'sales_manager',
+  },
   {
     key: 'tax.pit_brackets',
     valueType: 'json',
@@ -1666,6 +1701,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     description: 'D-203 / D-271 dieline downloads a signed-in customer may take in any 60 seconds',
     decisions: ['D-203', 'D-271'],
     ownerRole: 'superadmin',
+  },
+  {
+    key: 'dielines.anonymous_free_downloads',
+    valueType: 'integer',
+    value: 1,
+    valueSchema: { minimum: 0, maximum: 5 },
+    description:
+      'D-471 free dieline downloads a browser may take without signing in (counted by the SHA-256 of its device id); ' +
+      'from the next one a free sign-in is asked — never a payment. 0 = sign in for every download (before D-471)',
+    decisions: ['D-471', 'D-271'],
+    ownerRole: 'marketing',
   },
 
   // --- Structure Advisor (U2.2, D-237): definition only — not seeded in production; the advisor answers

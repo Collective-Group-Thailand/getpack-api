@@ -1,7 +1,9 @@
 import { Global, Module } from '@nestjs/common';
 
+import { CaptureAttributionService } from './capture-attribution.service';
 import { DiscountApprovalsService } from './discount-approvals.service';
 import { DiscountedQuotesService, SalesQuoteDiscountCheckout } from './discounted-quotes.service';
+import { SalesCaptureService } from './sales-capture.service';
 import { SalesCsvService } from './sales-csv.service';
 import { SalesDashboardService } from './sales-dashboard';
 import { SalesDeskJobs } from './sales-desk.jobs';
@@ -22,6 +24,8 @@ const SERVICES = [
   SalesNegotiationsService,
   SalesPlaybookAdminService,
   SalesPostDealService,
+  CaptureAttributionService,
+  SalesCaptureService,
 ];
 
 /**

@@ -25,6 +25,8 @@ import { type SalesScope } from './sales-scope';
 export const INBOUND_INCLUDE = {
   assignee: { select: { publicId: true, displayName: true } },
   agentLead: { select: { publicId: true } },
+  captureUser: { select: { publicId: true } },
+  designDocument: { select: { publicId: true } },
 } as const satisfies Prisma.SalesInboundLeadInclude;
 export type InboundRow = Prisma.SalesInboundLeadGetPayload<{ include: typeof INBOUND_INCLUDE }>;
 
@@ -220,12 +222,22 @@ export class SalesInboundService implements OnModuleInit {
     await this.autoAssign(tx, row, systemActor('sales.inbound'));
   }
 
-  private async intake(
+  /** One new item in the pool (also used by the D-471 capture sources); contact data never goes into the event. */
+  async intake(
     tx: Tx,
     source: SalesInboundLead['source'],
     sourceRef: string | null,
     input: InboundInput,
-    extra: { supportTicketId?: bigint; rfqId?: bigint; createdById?: bigint; actor: Actor },
+    extra: {
+      supportTicketId?: bigint;
+      rfqId?: bigint;
+      createdById?: bigint;
+      actor: Actor;
+      captureUserId?: bigint | null;
+      designDocumentId?: bigint | null;
+      consentRecordId?: bigint | null;
+      consentBasis?: SalesInboundLead['consentBasis'];
+    },
   ): Promise<SalesInboundLead> {
     const now = new Date();
     const due = await this.firstResponseDue(now);
@@ -235,6 +247,11 @@ export class SalesInboundService implements OnModuleInit {
         sourceRef,
         supportTicketId: extra.supportTicketId ?? null,
         rfqId: extra.rfqId ?? null,
+        captureUserId: extra.captureUserId ?? null,
+        designDocumentId: extra.designDocumentId ?? null,
+        consentRecordId: extra.consentRecordId ?? null,
+        consentBasis: extra.consentBasis ?? (source === 'manual' ? 'staff_entry' : 'enquiry'),
+        lastSignalAt: now,
         contactName: input.contactName.trim().slice(0, 200),
         contactPhone: input.contactPhone ?? null,
         contactEmail: input.contactEmail ?? null,
@@ -266,7 +283,7 @@ export class SalesInboundService implements OnModuleInit {
   // --- assignment -------------------------------------------------------------------------------------------------
 
   /** Round robin when `sales.assignment_mode` says so; otherwise the enquiry waits for a manager. */
-  private async autoAssign(tx: Tx, row: SalesInboundLead, actor: Actor): Promise<void> {
+  async autoAssign(tx: Tx, row: SalesInboundLead, actor: Actor): Promise<void> {
     if ((await this.settings.value('sales.assignment_mode', new Date())) !== 'round_robin') return;
     const to = await this.roundRobin(tx);
     if (to === null) return;
@@ -357,11 +374,11 @@ export class SalesInboundService implements OnModuleInit {
     return tx.salesInboundLead.findUniqueOrThrow({ where: { id: locked.id } });
   }
 
-  private async assignInTx(
+  async assignInTx(
     tx: Tx,
     row: SalesInboundLead,
     to: bigint,
-    mode: 'manual' | 'round_robin',
+    mode: 'manual' | 'round_robin' | 'attribution',
     reason: string | null,
     actor: Actor,
   ): Promise<void> {

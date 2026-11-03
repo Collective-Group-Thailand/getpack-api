@@ -524,6 +524,8 @@ export const ERROR_CODES = {
   'guarantee.version_pending': HttpStatus.CONFLICT,
   'guarantee.version_not_proposed': HttpStatus.CONFLICT,
   'dielines.rate_limited': HttpStatus.TOO_MANY_REQUESTS,
+  /** D-471: the free download without sign-in was used on this device; sign in (free) to download again. */
+  'dielines.sign_in_required': HttpStatus.UNAUTHORIZED,
   'dielines.size_out_of_range': HttpStatus.UNPROCESSABLE_ENTITY,
   'dielines.material_class_not_offered': HttpStatus.UNPROCESSABLE_ENTITY,
   'dielines.not_drawable': HttpStatus.UNPROCESSABLE_ENTITY,

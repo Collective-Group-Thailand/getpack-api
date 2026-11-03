@@ -2124,6 +2124,17 @@
           "type": "https://errors.getpack/dielines.rate_limited"
         }
       },
+      "problem.dielines.sign_in_required": {
+        "summary": "dielines.sign_in_required",
+        "value": {
+          "code": "dielines.sign_in_required",
+          "detail": "ดาวน์โหลดแบบแผ่นคลี่ครั้งแรกไม่ต้องเข้าสู่ระบบ ตั้งแต่ครั้งที่สองกรุณาเข้าสู่ระบบก่อน ไม่มีค่าใช้จ่าย",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "เข้าสู่ระบบเพื่อดาวน์โหลดต่อ (ฟรี)",
+          "type": "https://errors.getpack/dielines.sign_in_required"
+        }
+      },
       "problem.dielines.size_out_of_range": {
         "summary": "dielines.size_out_of_range",
         "value": {
@@ -44384,11 +44395,16 @@
             "example": "application/pdf",
             "type": "string"
           },
+          "nextNeedsSignIn": {
+            "description": "D-471: the next download from this browser needs a free sign-in (downloads without sign-in only; always false when signed in). Never a payment.",
+            "example": false,
+            "type": "boolean"
+          },
           "quantities": {
             "$ref": "#/components/schemas/DielineQuantitiesDto"
           },
           "remainingToday": {
-            "description": "Downloads left today (Bangkok day) for a customer; null for staff (not limited)",
+            "description": "Downloads left today (Bangkok day) for a customer; null for staff (not limited) and for a download without sign-in",
             "example": 19,
             "type": [
               "number",
@@ -44435,6 +44451,7 @@
           "engineVersion",
           "cached",
           "remainingToday",
+          "nextNeedsSignIn",
           "createdAt"
         ],
         "type": "object"
@@ -45870,6 +45887,77 @@
           "heightMm",
           "materialClass",
           "format"
+        ],
+        "type": "object"
+      },
+      "DownloadDielineFreeDto": {
+        "properties": {
+          "deviceId": {
+            "description": "A random id the web keeps for this browser in a first-party cookie (its BFF sets it); the API keeps only its SHA-256 to count the free downloads without sign-in (PDPA: pseudonymous, never logged)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d702",
+            "format": "uuid",
+            "type": "string"
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DielineDownloadFormat"
+              }
+            ],
+            "description": "`ai` is the designer PDF delivered as an Illustrator file (.ai) — same drawing, same layers and swatches",
+            "example": "pdf"
+          },
+          "heightMm": {
+            "description": "Height (depth), mm, in the basis given; 0 for a flat item",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lengthMm": {
+            "description": "Length, mm, in the basis given",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "number"
+          },
+          "materialClass": {
+            "description": "A material class of the style’s size ranges (`store.styles.get` → `sizeRanges[].materialClass`)",
+            "example": "paperboard",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182), default internal. Outside or over-crease sizes are converted to inside sizes with the reference caliper of the material class before drawing",
+            "example": "internal"
+          },
+          "variantCode": {
+            "description": "A style variant code",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
+          },
+          "widthMm": {
+            "description": "Width, mm, in the basis given",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "variantCode",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "materialClass",
+          "format",
+          "deviceId"
         ],
         "type": "object"
       },
@@ -103078,6 +103166,15 @@
         ],
         "type": "object"
       },
+      "SalesInboundConsentBasis": {
+        "description": "D-471 why getpack may contact the person (PDPA): `enquiry` (they asked), `staff_entry` (entered with their agreement), `marketing_consent` (a captured signal; their latest marketing consent was granted)",
+        "enum": [
+          "enquiry",
+          "staff_entry",
+          "marketing_consent"
+        ],
+        "type": "string"
+      },
       "SalesInboundDisqualifyReason": {
         "enum": [
           "not_a_buyer",
@@ -103109,6 +103206,15 @@
               }
             ]
           },
+          "consentBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesInboundConsentBasis"
+              }
+            ],
+            "description": "D-471 why getpack may contact the person (PDPA): `enquiry` (they asked), `staff_entry` (entered with their agreement), `marketing_consent` (a captured signal; their latest marketing consent was granted)",
+            "example": "enquiry"
+          },
           "contactEmail": {
             "example": null,
             "type": [
@@ -103131,6 +103237,24 @@
             "example": "2026-11-03T10:00:00+07:00",
             "format": "date-time",
             "type": "string"
+          },
+          "customerId": {
+            "description": "D-471 the signed-in customer the item came from (captured signals, RFQs, signed-in contacts)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "designId": {
+            "description": "D-471 the saved studio design not ordered (`studio_idle`)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "disqualifiedReason": {
             "anyOf": [
@@ -103160,6 +103284,14 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
             "format": "uuid",
             "type": "string"
+          },
+          "lastSignalAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "leadId": {
             "description": "The lead registered for the rep (open it with admin.salesLeads.get)",
@@ -103196,6 +103328,11 @@
               "null"
             ]
           },
+          "signalCount": {
+            "description": "D-471 signals behind the item (repeat dieline downloads refresh one open item)",
+            "example": 1,
+            "type": "number"
+          },
           "slaBreached": {
             "description": "Past the first-response due time without an answer (or was)",
             "example": false,
@@ -103215,10 +103352,11 @@
                 "$ref": "#/components/schemas/SalesInboundSource"
               }
             ],
+            "description": "`contact_form` / `rfq` (the person asked), `manual` (staff), `line_chat` (deferred), D-471 capture: `studio_idle` \"ออกแบบแล้วยังไม่สั่ง\" (a saved studio design not ordered) and `dieline_download` (a free dieline downloaded by a signed-in non-customer)",
             "example": "contact_form"
           },
           "sourceRef": {
-            "description": "Ticket no. or RFQ code",
+            "description": "Ticket no., RFQ code or the dieline’s style code",
             "example": "CS-2611-00042",
             "type": [
               "string",
@@ -103266,6 +103404,11 @@
           "slaBreachedAt",
           "disqualifiedReason",
           "statusNote",
+          "consentBasis",
+          "signalCount",
+          "lastSignalAt",
+          "customerId",
+          "designId",
           "createdAt",
           "updatedAt"
         ],
@@ -103301,11 +103444,14 @@
         "type": "string"
       },
       "SalesInboundSource": {
+        "description": "`contact_form` / `rfq` (the person asked), `manual` (staff), `line_chat` (deferred), D-471 capture: `studio_idle` \"ออกแบบแล้วยังไม่สั่ง\" (a saved studio design not ordered) and `dieline_download` (a free dieline downloaded by a signed-in non-customer)",
         "enum": [
           "contact_form",
           "rfq",
           "line_chat",
-          "manual"
+          "manual",
+          "studio_idle",
+          "dieline_download"
         ],
         "type": "string"
       },
@@ -248838,6 +248984,7 @@
                   "materialClass": "paperboard",
                   "measurementBasis": "internal",
                   "mimeType": "application/pdf",
+                  "nextNeedsSignIn": false,
                   "quantities": {
                     "blankAreaMm2": 31845.2,
                     "blankHeightMm": 187.2,
@@ -340022,18 +340169,23 @@
                         "displayName": "สมหญิง ขายดี",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                       },
+                      "consentBasis": "enquiry",
                       "contactEmail": null,
                       "contactName": "คุณวิภา รักษ์ดี",
                       "contactPhone": "+66890002222",
                       "createdAt": "2026-11-03T10:00:00+07:00",
+                      "customerId": null,
+                      "designId": null,
                       "disqualifiedReason": null,
                       "firstRespondedAt": null,
                       "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                      "lastSignalAt": "2026-11-03T10:00:00+07:00",
                       "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                       "leadRefusal": null,
                       "need": "business · กล่องขนม · qty 5000",
                       "organisationName": "บริษัท ขนมดี จำกัด",
+                      "signalCount": 1,
                       "slaBreached": false,
                       "slaBreachedAt": null,
                       "source": "contact_form",
@@ -340244,18 +340396,23 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -340473,18 +340630,23 @@
                         "displayName": "สมหญิง ขายดี",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                       },
+                      "consentBasis": "enquiry",
                       "contactEmail": null,
                       "contactName": "คุณวิภา รักษ์ดี",
                       "contactPhone": "+66890002222",
                       "createdAt": "2026-11-03T10:00:00+07:00",
+                      "customerId": null,
+                      "designId": null,
                       "disqualifiedReason": null,
                       "firstRespondedAt": null,
                       "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                      "lastSignalAt": "2026-11-03T10:00:00+07:00",
                       "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                       "leadRefusal": null,
                       "need": "business · กล่องขนม · qty 5000",
                       "organisationName": "บริษัท ขนมดี จำกัด",
+                      "signalCount": 1,
                       "slaBreached": false,
                       "slaBreachedAt": null,
                       "source": "contact_form",
@@ -340692,18 +340854,23 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -340929,18 +341096,23 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -341188,18 +341360,23 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -341442,18 +341619,23 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": "out_of_scope",
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -341713,18 +341895,23 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": "2026-11-03T11:20:00+07:00",
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -567514,6 +567701,7 @@
                   "materialClass": "paperboard",
                   "measurementBasis": "internal",
                   "mimeType": "application/pdf",
+                  "nextNeedsSignIn": false,
                   "quantities": {
                     "blankAreaMm2": 31845.2,
                     "blankHeightMm": 187.2,
@@ -567744,6 +567932,296 @@
           }
         ],
         "summary": "Download a free dieline",
+        "tags": [
+          "store.dielines"
+        ]
+      }
+    },
+    "/v1/store/dielines/downloads/free": {
+      "post": {
+        "description": "D-471: the first dieline download needs no sign-in. The same drawing, rules and size ranges as `store.dielines.download`, for a browser identified by `deviceId` (a random id kept in a first-party cookie; the API stores only its SHA-256). A browser may take `dielines.anonymous_free_downloads` (1) such downloads; the next answers 401 `dielines.sign_in_required` — the web then asks for a free sign-in (Google, Apple, LINE or phone OTP) and continues with `store.dielines.download`. The download is free either way: never a payment and never a plan gate (D-271). `nextNeedsSignIn` says whether the next one needs the sign-in. Throttled per client IP (429).\n\nImplements: D-471, D-302, D-271, D-270, D-203, D-182.",
+        "operationId": "store.dielines.downloadFree",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "deviceId": "0192f3a0-7c1e-7d2a-9b1f-00000000d702",
+                    "format": "pdf",
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "materialClass": "paperboard",
+                    "measurementBasis": "internal",
+                    "variantCode": "PK-TE-01-K7QD",
+                    "widthMm": 40
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DownloadDielineFreeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cached": false,
+                  "createdAt": "2026-10-03T14:10:00+07:00",
+                  "drawn": {
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "widthMm": 40
+                  },
+                  "engineVersion": "fake-dieline@0",
+                  "entered": {
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "widthMm": 40
+                  },
+                  "expiresAt": "2026-10-03T14:15:00+07:00",
+                  "fileName": "PK-TE-01-K7QD-60x40x120-paperboard.pdf",
+                  "format": "pdf",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d701",
+                  "materialClass": "paperboard",
+                  "measurementBasis": "internal",
+                  "mimeType": "application/pdf",
+                  "nextNeedsSignIn": true,
+                  "quantities": {
+                    "blankAreaMm2": 31845.2,
+                    "blankHeightMm": 187.2,
+                    "blankWidthMm": 231.4,
+                    "creaseMm": 902.3,
+                    "cutMm": 1412.6,
+                    "cutoutAreaMm2": 0,
+                    "glueOutlineMm": 240,
+                    "halfCutMm": 0,
+                    "perforationMm": 0,
+                    "pieces": 1
+                  },
+                  "remainingToday": null,
+                  "sizeBytes": 18234,
+                  "url": "https://files.example.invalid/signed",
+                  "variantCode": "PK-TE-01-K7QD",
+                  "violations": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DielineDownloadDto"
+                }
+              }
+            },
+            "description": "The download",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  },
+                  "dielines.sign_in_required": {
+                    "$ref": "#/components/examples/problem.dielines.sign_in_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`, `dielines.sign_in_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.variant_not_found": {
+                    "$ref": "#/components/examples/problem.styles.variant_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.variant_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "dielines.material_class_not_offered": {
+                    "$ref": "#/components/examples/problem.dielines.material_class_not_offered"
+                  },
+                  "dielines.not_drawable": {
+                    "$ref": "#/components/examples/problem.dielines.not_drawable"
+                  },
+                  "dielines.size_out_of_range": {
+                    "$ref": "#/components/examples/problem.dielines.size_out_of_range"
+                  },
+                  "specs.basis_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.basis_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `dielines.material_class_not_offered`, `dielines.not_drawable`, `dielines.size_out_of_range`, `specs.basis_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "501": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "drawing.engine_unavailable": {
+                    "$ref": "#/components/examples/problem.drawing.engine_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `drawing.engine_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Download a free dieline without signing in (first download)",
         "tags": [
           "store.dielines"
         ]

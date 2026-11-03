@@ -14,7 +14,7 @@ import { MEASUREMENT_BASES } from '@modules/specs/dimension-conversion';
 import { applyDecorators } from '@nestjs/common';
 import { ApiProperty } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsIn, IsNumber, IsString, Matches, Max, Min } from 'class-validator';
+import { IsIn, IsNumber, IsString, IsUUID, Matches, Max, Min } from 'class-validator';
 
 import { STYLE_VARIANT_CODE } from './style-variant-field';
 
@@ -184,9 +184,19 @@ export class DielineDownloadDto {
     type: Number,
     nullable: true,
     example: 19,
-    description: 'Downloads left today (Bangkok day) for a customer; null for staff (not limited)',
+    description:
+      'Downloads left today (Bangkok day) for a customer; null for staff (not limited) and for a download without ' +
+      'sign-in',
   })
   remainingToday!: number | null;
+
+  @ApiProperty({
+    example: false,
+    description:
+      'D-471: the next download from this browser needs a free sign-in (downloads without sign-in only; always ' +
+      'false when signed in). Never a payment.',
+  })
+  nextNeedsSignIn!: boolean;
 
   @ApiProperty({ format: 'date-time', example: '2026-10-03T14:10:00+07:00' })
   createdAt!: string;
@@ -221,6 +231,7 @@ export const DOWNLOAD_EXAMPLE: DielineDownloadDto = {
   engineVersion: 'fake-dieline@0',
   cached: false,
   remainingToday: 19,
+  nextNeedsSignIn: false,
   createdAt: '2026-10-03T14:10:00+07:00',
 };
 
@@ -232,4 +243,22 @@ export const DOWNLOAD_BODY_EXAMPLE = {
   measurementBasis: 'internal',
   materialClass: 'paperboard',
   format: 'pdf',
+};
+
+/** D-471: the free download without sign-in — the same body plus the browser's device id. */
+export class DownloadDielineFreeDto extends DownloadDielineDto {
+  @ApiProperty({
+    format: 'uuid',
+    example: '0192f3a0-7c1e-7d2a-9b1f-00000000d702',
+    description:
+      'A random id the web keeps for this browser in a first-party cookie (its BFF sets it); the API keeps only its ' +
+      'SHA-256 to count the free downloads without sign-in (PDPA: pseudonymous, never logged)',
+  })
+  @IsUUID()
+  deviceId!: string;
+}
+
+export const DOWNLOAD_FREE_BODY_EXAMPLE = {
+  ...DOWNLOAD_BODY_EXAMPLE,
+  deviceId: '0192f3a0-7c1e-7d2a-9b1f-00000000d702',
 };
