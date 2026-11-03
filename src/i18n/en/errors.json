@@ -2304,5 +2304,27 @@
       "title": "Not submitted",
       "detail": "Submit the draft for review before publishing it"
     }
+  },
+  "pnl": {
+    "plan_locked": {
+      "title": "Plan locked",
+      "detail": "A locked plan cannot change; copy it to a new version to revise it"
+    },
+    "line_read_only": {
+      "title": "Line is read-only",
+      "detail": "This line is calculated from other lines or is a memo figure and cannot be entered"
+    },
+    "note_required": {
+      "title": "Note required",
+      "detail": "The first value of a line without system data needs a note on where it comes from"
+    },
+    "reason_required": {
+      "title": "Reason required",
+      "detail": "Overriding a value the system computed needs a reason every time"
+    },
+    "not_computed": {
+      "title": "Plan not computed",
+      "detail": "Compute the plan from the system data before locking it"
+    }
   }
 }
