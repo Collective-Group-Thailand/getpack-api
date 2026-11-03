@@ -18419,6 +18419,122 @@
         ],
         "type": "string"
       },
+      "AgentPlaybookCardDto": {
+        "properties": {
+          "bodyEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "bodyTh": {
+            "description": "Markdown",
+            "example": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+            "type": "string"
+          },
+          "contexts": {
+            "description": "`all` = every context",
+            "example": [
+              "discount_request",
+              "competitor_cheaper"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+            "format": "uuid",
+            "type": "string"
+          },
+          "key": {
+            "example": "give-get-menu",
+            "type": "string"
+          },
+          "suggestedReplies": {
+            "description": "Replies to copy to LINE",
+            "items": {
+              "$ref": "#/components/schemas/AgentPlaybookReplyDto"
+            },
+            "type": "array"
+          },
+          "titleEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "titleTh": {
+            "example": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+            "type": "string"
+          },
+          "version": {
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "key",
+          "version",
+          "contexts",
+          "titleTh",
+          "titleEn",
+          "bodyTh",
+          "bodyEn",
+          "suggestedReplies"
+        ],
+        "type": "object"
+      },
+      "AgentPlaybookContext": {
+        "enum": [
+          "lead_lost_price",
+          "competitor_cheaper",
+          "discount_request",
+          "big_deal",
+          "follow_up",
+          "first_contact"
+        ],
+        "type": "string"
+      },
+      "AgentPlaybookDto": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AgentPlaybookCardDto"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "AgentPlaybookReplyDto": {
+        "properties": {
+          "en": {
+            "description": "Null until Marketing writes it",
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "th": {
+            "example": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ",
+            "type": "string"
+          }
+        },
+        "required": [
+          "th",
+          "en"
+        ],
+        "type": "object"
+      },
       "AgentProgrammeDto": {
         "properties": {
           "agreement": {
@@ -514215,6 +514331,199 @@
         "summary": "Confirm the OTP: the phone becomes my verified phone",
         "tags": [
           "store.agent"
+        ]
+      }
+    },
+    "/v1/store/agent/playbook": {
+      "get": {
+        "description": "Published guidance cards for agents — all of them (the \"คู่มือการขาย\" tab) or those for one context (lead lost to price, competitor cheaper, discount request, big deal, follow-up, first contact), with replies to copy to LINE. Read-only; Sales manages versions (D-468, PLAN A-13).\n\nImplements: D-468.",
+        "operationId": "store.agentPlaybook.get",
+        "parameters": [
+          {
+            "description": "Cards for one context (with the cards for every context); omitted = all published cards",
+            "in": "query",
+            "name": "context",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/AgentPlaybookContext"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "bodyEn": null,
+                      "bodyTh": "ถามก่อนว่าลูกค้าให้อะไรกลับมาได้บ้าง …",
+                      "contexts": [
+                        "discount_request",
+                        "competitor_cheaper"
+                      ],
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6028",
+                      "key": "give-get-menu",
+                      "suggestedReplies": [
+                        {
+                          "en": null,
+                          "th": "ถ้าสะดวกชำระภายใน 7 วัน เรามีส่วนลดเงินสดให้ค่ะ/ครับ"
+                        }
+                      ],
+                      "titleEn": null,
+                      "titleTh": "เมนูแลกเปลี่ยน: ให้ส่วนลด เมื่อได้อะไรกลับมา",
+                      "version": 1
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentPlaybookDto"
+                }
+              }
+            },
+            "description": "Cards",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Read the sales playbook",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
         ]
       }
     },

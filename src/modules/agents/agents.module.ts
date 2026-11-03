@@ -13,6 +13,7 @@ import { AgentStatementsService } from './agent-statements.service';
 import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
 import { AgentsJobs } from './agents.jobs';
 import { AgentsService } from './agents.service';
+import { AgentPlaybookService } from './agents-playbook';
 
 const SERVICES = [
   AgentsService,
@@ -27,6 +28,7 @@ const SERVICES = [
   AgentQuotesService,
   AgentDiscountsService,
   AgentDealsService,
+  AgentPlaybookService,
 ];
 
 /** The sales agent programme (D-416 – D-423): applications, agents, links, leads, commission, statements. */

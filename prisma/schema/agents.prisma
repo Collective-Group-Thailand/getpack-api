@@ -1062,3 +1062,56 @@ model SalesAgentDealRegistration {
   @@index([planVersionId], map: "ix_sales_agent_deal_registrations__plan_version_id")
   @@map("sales_agent_deal_registrations")
 }
+
+/// D-468 (PLAN A-13): who a playbook card is written for.
+enum SalesPlaybookAudience {
+  agent
+  rep
+  manager
+
+  @@map("sales_playbook_audience")
+}
+
+enum SalesPlaybookCardStatus {
+  draft
+  published
+  retired
+
+  @@map("sales_playbook_card_status")
+}
+
+/// D-468 (PLAN A-13): the sales playbook as versioned cards — guidance shown in context (lead lost to price,
+/// competitor cheaper, discount request, big deal, follow-up, first contact). One published version per key (partial
+/// unique index); Phase 4 adds the maker-checker admin (D-470) on the same rows. Customer-safe copy only for cards an
+/// agent sees (no cost, margin, factory or %-of-profit wording). No personal data.
+model SalesPlaybookCard {
+  id               BigInt                  @id(map: "pk_sales_playbook_cards") @default(autoincrement())
+  publicId         String                  @unique(map: "ux_sales_playbook_cards__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  key              String                  @db.VarChar(64)
+  version          Int                     @db.SmallInt
+  /// Context keys (`all` = every context).
+  contexts         String[]                @default([])
+  audiences        SalesPlaybookAudience[] @default([])
+  titleTh          String                  @map("title_th")
+  titleEn          String?                 @map("title_en")
+  /// Markdown.
+  bodyTh           String                  @map("body_th")
+  bodyEn           String?                 @map("body_en")
+  /// `[{ th, en }]` — replies an agent copies to LINE.
+  suggestedReplies Json                    @default("[]") @map("suggested_replies")
+  sort             Int                     @default(0) @db.SmallInt
+  status           SalesPlaybookCardStatus @default(draft)
+  publishedAt      DateTime?               @map("published_at") @db.Timestamptz(6)
+  /// Where the content came from (e.g. `docs/design/agent-portal/PLAYBOOK.md v1`).
+  source           String?
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById      BigInt?                 @map("created_by")
+  updatedAt        DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion       Int                     @default(1) @map("row_version")
+
+  @@unique([key, version], map: "ux_sales_playbook_cards__key__version")
+  @@unique([key], map: "ux_sales_playbook_cards__key__published", where: raw("(status = 'published'::sales_playbook_card_status)"))
+  @@index([status, sort], map: "ix_sales_playbook_cards__status__sort")
+  @@index([contexts], type: Gin, map: "ix_sales_playbook_cards__contexts")
+  @@map("sales_playbook_cards")
+}
