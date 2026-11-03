@@ -70,6 +70,8 @@ describe('seed data (B1.2 step 3)', () => {
       // D-471: the studio idle days come from the prompt pack (3), proposed; the scoring weights are a proposal.
       'capture.studio_idle_days': 'proposed',
       'sales.scoring_rules': 'proposed',
+      // D-472: the GL mapping of the P&L lines is a proposal for the accountant.
+      'pnl.line_catalogue': 'proposed',
       // B3.1: D-060's legacy value is a secret not in the repository — its 7-day fallback, proposed.
       'orders.unpaid_expiry_days': 'proposed',
       // B3.1: nature of the sale per product type (accounting-design §2 ⚖).

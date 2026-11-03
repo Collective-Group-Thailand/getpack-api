@@ -6,6 +6,7 @@
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
 import { PIT_BRACKETS_SEED } from '../../../src/modules/agents/agent-wht';
+import { PNL_LINE_CATALOGUE_SCHEMA, PNL_LINE_CATALOGUE_SEED } from '../../../src/modules/pnl/pnl-lines';
 import { STYLE_LIBRARY_CONTENT_SCHEMA } from '../../../src/modules/styles/style-library-content';
 import { HERO_PRESETS, heroPresetsAmendment } from './hero-presets';
 import { INTAKE_TERMS_V1 } from './intake-terms';
@@ -738,6 +739,21 @@ export const SETTINGS: readonly SettingSeed[] = [
       'shows "not set" until Finance sets it',
     decisions: ['D-470'],
     confirmation: 'pending_business',
+    ownerRole: 'finance_manager',
+  },
+  // --- D-472 management P&L planner
+  {
+    key: 'pnl.line_catalogue',
+    valueType: 'json',
+    value: PNL_LINE_CATALOGUE_SEED,
+    valueSchema: PNL_LINE_CATALOGUE_SCHEMA as unknown as Record<string, unknown>,
+    description:
+      'D-472 the management P&L lines: labels, tooltips (definition, formula, source, how to fill — from ' +
+      'PNL-LINES.md) and the GL accounts behind each line, mapped by the accountant; a line without an account is ' +
+      'entered by hand. Seeded mapping from the chart of accounts as seeded (proposed); salaries, rent & utilities, ' +
+      'software & cloud, professional fees and finance cost have no account yet',
+    decisions: ['D-472'],
+    confirmation: 'proposed',
     ownerRole: 'finance_manager',
   },
   {
