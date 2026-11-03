@@ -233,6 +233,25 @@ UAT_DATABASE_URL=postgresql://…/getpack_uat UAT_TOPUP_CONFIRM=uat-only UAT_SEE
   pnpm uat:populate test/uat/top-up-design-requests
 ```
 
+### 6.3 Agent portal (P7 of `docs/design/agent-portal`)
+
+`pnpm db:seed:uat` adds the agent layer (`prisma/seed/uat/uat-agents.ts`) once — when the agent `UATFRE22` exists
+nothing is created. Amounts follow the services' own formula modules and the settings in the database; history
+states (paid statement, earned / held / cancelled entries, decided approvals) are **direct inserts** because the
+services reach them only through months of events. No outbox events, ledger postings, vendor bills, bank accounts or
+tax documents are created. Set `FIELD_ENCRYPTION_KEY` to the API's key when seeding so the quote links and the bank
+numbers decrypt (without it they stay empty: the agent re-sends a quote for a new link; the bank shows last 4 only).
+
+| Who | Sign-in | What they find |
+|---|---|---|
+| Freelance individual `UATFRE22` | phone OTP `0800000301` (`uat-agent-freelance@example.invalid`), agent zone | verified payout profile, ล.ย.01 accepted (social security 9,000 + life insurance 20,000), 7 leads (new, contacted ×2 incl. a card-scan lead whose protection ends in 6 days, quoted, negotiating with a registered deal, won, lost), 3 quotes (sent / opened / accepted), commissions in every status (paid ×2 incl. a ฿200,000.00 uncapped first-order entry with the internal margin alert, earned, pending co-fund at 2 %, held `phone_match`, cancelled, reversal −฿1,500.00), statement `AG<yy><mm>-UATFRE22` paid with the progressive s.50(1) working (฿250,000.00 → withheld ฿12,216.67 when seeded in November: approved on the 1st of October, two months left) |
+| Freelance juristic VAT `UATJUR22` | phone OTP `0800000302` | verified VAT profile, 2 leads (contacted, won), draft statement ฿42,000.00 with its tax invoice `[UAT] INV-0001` attached — **Finance approves it in the rehearsal**: expected withholding 3 % = ฿1,260.00, VAT 7 % = ฿2,940.00 on the bill |
+| Employee agent `UATEMP22` | staff `uat-sales-rep@example.invalid` (role `sales_rep`, password `UAT_SEED_PASSWORD`), admin zone | 3 leads (new from the inbound pool, quoted, negotiating), 2 quotes (withdrawn, opened), earned order commission at 2 % and a manual adjustment (payroll path) |
+| Customers of agents | phone OTP `0800000311` (UATFRE22's), `0800000312` (UATJUR22's), `0800000313` (UATEMP22's) | linked customers with completed orders `UATOR-AG-*` |
+| Sales Manager / Finance Manager / C-Level | existing staff accounts (§3) | discount approvals in every state (pending at C-Level, approved with an accepted co-fund, rejected, countered, stale, withdrawn), 4 inbound items (one past its first-response SLA), the plan `[UAT] แผน P&L <year> (ฐาน)` with auto, manual (salaries) and override (marketing, March and September, with a reason) cells |
+
+The playbook is the reference seed's published v1 (11 cards).
+
 ## 7. Shortcuts and limits of the rehearsal
 
 - **Fake integrations.** `uat:populate` runs with `INTEGRATIONS_MODE=fake`: OTP codes come from the fake SMS sender,
