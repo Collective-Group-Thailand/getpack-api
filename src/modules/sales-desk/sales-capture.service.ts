@@ -1,7 +1,5 @@
 import { systemActor } from '@common/context/actor';
-import { DomainException } from '@common/errors/domain.exception';
 import { PrismaService, type Tx } from '@database/prisma.service';
-import { type SalesInboundLead } from '@generated/prisma/client';
 import { recordAgentEvent } from '@modules/agents/agent-shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ActivityLogService } from '@platform/activity/activity-log.service';
@@ -200,24 +198,11 @@ export class SalesCaptureService {
         consentRecordId: why.consentRecordId,
       },
     );
-    await this.place(tx, row, why.route);
+    await this.inbound.placeByRoute(tx, row, why.route, ACTOR);
     return 'captured';
   }
 
   // --- shared -------------------------------------------------------------------------------------------------------
-
-  /** A rep-attributed item goes to that rep (`attribution`); the pool follows `sales.assignment_mode`. */
-  async place(tx: Tx, row: SalesInboundLead, route: CaptureRoute, actor = ACTOR): Promise<void> {
-    if (route.route === 'rep')
-      try {
-        await this.inbound.assignInTx(tx, row, route.repUserId, 'attribution', null, actor);
-        return;
-      } catch (error) {
-        // The rep has no active employee agent any more: the pool takes it.
-        if (!(error instanceof DomainException) || error.code !== 'sales.rep_unavailable') throw error;
-      }
-    await this.inbound.autoAssign(tx, row, actor);
-  }
 
   /** The checks every captured signal shares: a customer account, not an agent, marketing consent granted. */
   private async eligible(

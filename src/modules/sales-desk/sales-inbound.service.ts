@@ -13,6 +13,8 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { holdersOfRole, type Recipient, RecipientDirectory } from '@platform/notifications/recipients';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
+import { CaptureAttributionService } from './capture-attribution.service';
+import { type CaptureRoute } from './capture-rules';
 import {
   CLOSED_INBOUND,
   type DISQUALIFY_REASONS,
@@ -73,6 +75,7 @@ export class SalesInboundService implements OnModuleInit {
     private readonly audit: AuditService,
     private readonly directory: RecipientDirectory,
     private readonly scoring: SalesScoringService,
+    private readonly routes: CaptureAttributionService,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
   ) {}
@@ -184,6 +187,15 @@ export class SalesInboundService implements OnModuleInit {
     });
     if (!ticket) return;
     if (await tx.salesInboundLead.findUnique({ where: { supportTicketId: ticket.id } })) return;
+    const contactPhone = normalisePhone(ticket.contactPhone ?? ticket.customer?.phone ?? null);
+    const contactEmail = (ticket.contactEmail ?? ticket.customer?.email ?? null)?.toLowerCase() ?? null;
+    // D-471: an agent's contact never enters the company pool (the ticket stays in the CS queue); a rep's goes to them.
+    const route = await this.routes.route(tx, {
+      userId: ticket.customerUserId,
+      phone: contactPhone,
+      email: contactEmail,
+    });
+    if (route.route === 'agent') return;
     const context = (ticket.context ?? {}) as Record<string, unknown>;
     const details = (context['details'] ?? {}) as Record<string, unknown>;
     const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -207,9 +219,13 @@ export class SalesInboundService implements OnModuleInit {
         organisationName: str(details['company']),
         need,
       },
-      { supportTicketId: ticket.id, actor: systemActor('sales.inbound') },
+      {
+        supportTicketId: ticket.id,
+        captureUserId: ticket.customerUserId,
+        actor: systemActor('sales.inbound'),
+      },
     );
-    await this.autoAssign(tx, row, systemActor('sales.inbound'));
+    await this.placeByRoute(tx, row, route, systemActor('sales.inbound'));
   }
 
   /** An RFQ from a customer with no order group yet and no agent becomes an enquiry ("non-customer"). */
@@ -222,10 +238,15 @@ export class SalesInboundService implements OnModuleInit {
     if (!rfq) return;
     if (await tx.salesInboundLead.findUnique({ where: { rfqId: rfq.id } })) return;
     const ordered = await tx.orderGroup.count({ where: { customerUserId: rfq.customerUserId } });
-    const linked = await tx.salesAgentLink.count({
-      where: { customerUserId: rfq.customerUserId, status: 'active' },
+    if (ordered > 0) return;
+    // D-471 precedence: an agent's customer (link of the customer or their company, or a protected lead) never enters
+    // the company pool; a rep's goes to that rep.
+    const route = await this.routes.route(tx, {
+      userId: rfq.customerUserId,
+      phone: rfq.customer.phone,
+      email: rfq.customer.email?.toLowerCase() ?? null,
     });
-    if (ordered > 0 || linked > 0) return;
+    if (route.route === 'agent') return;
     const row = await this.intake(
       tx,
       'rfq',
@@ -236,9 +257,26 @@ export class SalesInboundService implements OnModuleInit {
         contactEmail: rfq.customer.email,
         need: `RFQ ${rfq.rfqCode}`,
       },
-      { rfqId: rfq.id, actor: systemActor('sales.inbound') },
+      { rfqId: rfq.id, captureUserId: rfq.customerUserId, actor: systemActor('sales.inbound') },
     );
-    await this.autoAssign(tx, row, systemActor('sales.inbound'));
+    await this.placeByRoute(tx, row, route, systemActor('sales.inbound'));
+  }
+
+  /**
+   * D-471: a rep-attributed item goes straight to that rep (assignment mode `attribution`), the pool when the rep has
+   * no active employee agent any more; a pool item follows `sales.assignment_mode`. Agent-attributed contacts never
+   * reach this point.
+   */
+  async placeByRoute(tx: Tx, row: SalesInboundLead, route: CaptureRoute, actor: Actor): Promise<void> {
+    if (route.route === 'agent') throw new Error('an agent-attributed contact never enters the company pool');
+    if (route.route === 'rep')
+      try {
+        await this.assignInTx(tx, row, route.repUserId, 'attribution', null, actor);
+        return;
+      } catch (error) {
+        if (!(error instanceof DomainException) || error.code !== 'sales.rep_unavailable') throw error;
+      }
+    await this.autoAssign(tx, row, actor);
   }
 
   /** One new item in the pool (also used by the D-471 capture sources); contact data never goes into the event. */

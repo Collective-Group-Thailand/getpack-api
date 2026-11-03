@@ -1,5 +1,3 @@
-import { DomainException } from '@common/errors/domain.exception';
-
 import { type CaptureRoute } from './capture-rules';
 import { SalesCaptureService } from './sales-capture.service';
 
@@ -57,6 +55,7 @@ describe('SalesCaptureService (D-471)', () => {
       intake: jest.fn().mockResolvedValue(row),
       autoAssign: jest.fn().mockResolvedValue(undefined),
       assignInTx: jest.fn().mockResolvedValue(undefined),
+      placeByRoute: jest.fn().mockResolvedValue(undefined),
     };
     const attribution = {
       marketingConsent: jest.fn().mockResolvedValue('consent' in over ? over.consent : { id: 501n }),
@@ -91,7 +90,7 @@ describe('SalesCaptureService (D-471)', () => {
           consentRecordId: 501n,
         }),
       );
-      expect(inbound.autoAssign).toHaveBeenCalledWith(tx, row, expect.anything());
+      expect(inbound.placeByRoute).toHaveBeenCalledWith(tx, row, { route: 'pool' }, expect.anything());
       // One person at a time (no duplicate item from parallel downloads).
       expect(tx.$executeRaw).toHaveBeenCalled();
     });
@@ -144,23 +143,11 @@ describe('SalesCaptureService (D-471)', () => {
       expect(s.tx.salesInboundLead.update).not.toHaveBeenCalled();
     });
 
-    it('gives a rep-attributed contact to that rep, the pool when the rep is gone', async () => {
-      const s = setup({ route: { route: 'rep', repUserId: 44n, via: 'inbound' } });
+    it('gives a rep-attributed contact to that rep (placed by route)', async () => {
+      const route = { route: 'rep' as const, repUserId: 44n, via: 'inbound' as const };
+      const s = setup({ route });
       await s.service.captureDieline(s.tx as never, 9n, 'A', now);
-      expect(s.inbound.assignInTx).toHaveBeenCalledWith(
-        s.tx,
-        s.row,
-        44n,
-        'attribution',
-        null,
-        expect.anything(),
-      );
-      expect(s.inbound.autoAssign).not.toHaveBeenCalled();
-
-      const gone = setup({ route: { route: 'rep', repUserId: 44n, via: 'inbound' } });
-      gone.inbound.assignInTx.mockRejectedValue(new DomainException('sales.rep_unavailable'));
-      await gone.service.captureDieline(gone.tx as never, 9n, 'A', now);
-      expect(gone.inbound.autoAssign).toHaveBeenCalled();
+      expect(s.inbound.placeByRoute).toHaveBeenCalledWith(s.tx, s.row, route, expect.anything());
     });
 
     it('ignores staff and anonymous downloads and a switched-off flag', async () => {
