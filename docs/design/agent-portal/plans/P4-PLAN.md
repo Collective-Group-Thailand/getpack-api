@@ -67,8 +67,7 @@ first-response SLA %, freelance vs employee split. `admin.sales.exportDashboard`
   (`repMaxAmount`, `managerMaxAmount`) are defined but unset. `negotiation_heavy` customers move one level up
   (c_level stays). SLA `sales.discount_approval_hours` (4 working hours, same working-hours rule); the job
   `sales.discount_approval_sla` escalates an overdue approval one level once (`…escalated`), notifying the next
-  level. Deciders: rep level — any sales_rep / higher; manager level — sales_manager or higher; c_level — c_level,
-  vp, director? **No**: C-Level only (plus Superadmin). The requester never decides; a Superadmin may self-approve
+  level. Deciders: rep level — any `sales_rep` or higher; manager level — `sales_manager` or C-Level; C-Level level — `c_level` (Superadmin any). The requester never decides; a Superadmin may self-approve
   only under solo-owner mode with a typed reason (D-449), flagged and audited.
 - **Decide** (`Idempotency-Key`): `approve` with 1–3 options (the first = full-rate `standard`, mandatory — the
   P3 `offerOptions` rules, called in the same transaction), `reject` with reason, or `counter` with give-get
