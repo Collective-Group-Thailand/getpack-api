@@ -39,6 +39,9 @@ const DOMAINS: Record<string, { th: string; en: string }> = {
   sales_agent_lead: { th: 'ผู้มุ่งหวัง', en: 'Lead' },
   sales_agent_quote: { th: 'ใบเสนอราคาของตัวแทน', en: 'Agent quotation' },
   sales_agent_discount: { th: 'คำขอส่วนลดของตัวแทน', en: 'Agent discount request' },
+  // D-469 / D-470: the company sales desk.
+  sales_inbound_lead: { th: 'งานขายเข้าใหม่', en: 'Sales enquiry' },
+  sales_discount_approval: { th: 'อนุมัติส่วนลด', en: 'Discount approval' },
   sales_agent_statement: { th: 'ค่าตอบแทนตัวแทน', en: 'Agent commission' },
   sales_agent_commission: { th: 'ค่าคอมตัวแทน', en: 'Agent commission' },
   sales_agent_tax_declaration: { th: 'ลดหย่อนภาษี (ล.ย.01)', en: 'Tax allowances' },
