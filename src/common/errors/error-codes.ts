@@ -219,6 +219,7 @@ export const ERROR_CODES = {
   'promotions.payment_method_required': HttpStatus.UNPROCESSABLE_ENTITY,
   // Sales agent programme (D-416 – D-423)
   'agents.already_agent': HttpStatus.CONFLICT,
+  'agents.rate_limited': HttpStatus.TOO_MANY_REQUESTS,
   'agents.application_open': HttpStatus.CONFLICT,
   'agents.agreement_missing': HttpStatus.CONFLICT,
   'agents.agreement_outdated': HttpStatus.CONFLICT,

@@ -2183,6 +2183,10 @@
     "card_scan_failed": {
       "title": "Card not read",
       "detail": "The card photo could not be read; take a clearer photo or type the details"
+    },
+    "rate_limited": {
+      "title": "Too many requests",
+      "detail": "Please wait a moment and try again (see Retry-After)."
     }
   },
   "documents": {

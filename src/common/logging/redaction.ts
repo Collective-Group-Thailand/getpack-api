@@ -26,6 +26,10 @@ export const REDACTED_FIELDS = [
   'bankAccount',
   'bankAccountNumber',
   'taxId',
+  // P7 agent portal review: the hand-off code's device fingerprint and decrypted bank numbers (D-466, D-467).
+  'fingerprint',
+  'accountNo',
+  'handoffCode',
 ] as const;
 
 const REDACT_DEPTH = 5;

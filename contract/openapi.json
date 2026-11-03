@@ -573,6 +573,17 @@
           "type": "https://errors.getpack/agents.quote_closed"
         }
       },
+      "problem.agents.rate_limited": {
+        "summary": "agents.rate_limited",
+        "value": {
+          "code": "agents.rate_limited",
+          "detail": "กรุณารอสักครู่แล้วลองใหม่ (ดูเวลาใน Retry-After)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 429,
+          "title": "ใช้งานบ่อยเกินไป",
+          "type": "https://errors.getpack/agents.rate_limited"
+        }
+      },
       "problem.agents.self_link": {
         "summary": "agents.self_link",
         "value": {
@@ -529884,6 +529895,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.rate_limited": {
+                    "$ref": "#/components/examples/problem.agents.rate_limited"
+                  },
                   "http.too_many_requests": {
                     "$ref": "#/components/examples/problem.http.too_many_requests"
                   }
@@ -529893,7 +529907,7 @@
                 }
               }
             },
-            "description": "Problem: `http.too_many_requests`",
+            "description": "Problem: `agents.rate_limited`, `http.too_many_requests`",
             "headers": {
               "Retry-After": {
                 "$ref": "#/components/headers/RetryAfter"
@@ -530090,6 +530104,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.rate_limited": {
+                    "$ref": "#/components/examples/problem.agents.rate_limited"
+                  },
                   "http.too_many_requests": {
                     "$ref": "#/components/examples/problem.http.too_many_requests"
                   }
@@ -530099,7 +530116,7 @@
                 }
               }
             },
-            "description": "Problem: `http.too_many_requests`",
+            "description": "Problem: `agents.rate_limited`, `http.too_many_requests`",
             "headers": {
               "Retry-After": {
                 "$ref": "#/components/headers/RetryAfter"
@@ -530396,6 +530413,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.rate_limited": {
+                    "$ref": "#/components/examples/problem.agents.rate_limited"
+                  },
                   "http.too_many_requests": {
                     "$ref": "#/components/examples/problem.http.too_many_requests"
                   }
@@ -530405,7 +530425,7 @@
                 }
               }
             },
-            "description": "Problem: `http.too_many_requests`",
+            "description": "Problem: `agents.rate_limited`, `http.too_many_requests`",
             "headers": {
               "Retry-After": {
                 "$ref": "#/components/headers/RetryAfter"
@@ -530798,6 +530818,9 @@
             "content": {
               "application/problem+json": {
                 "examples": {
+                  "agents.rate_limited": {
+                    "$ref": "#/components/examples/problem.agents.rate_limited"
+                  },
                   "http.too_many_requests": {
                     "$ref": "#/components/examples/problem.http.too_many_requests"
                   }
@@ -530807,7 +530830,7 @@
                 }
               }
             },
-            "description": "Problem: `http.too_many_requests`",
+            "description": "Problem: `agents.rate_limited`, `http.too_many_requests`",
             "headers": {
               "Retry-After": {
                 "$ref": "#/components/headers/RetryAfter"

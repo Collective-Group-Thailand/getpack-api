@@ -39,6 +39,7 @@ import { type Request, type Response } from 'express';
 import { AgentAttributionService } from './agent-attribution.service';
 import { AgentCommissionsService } from './agent-commissions.service';
 import { AgentPayoutProfilesService, payoutProfileEtag } from './agent-payout-profiles.service';
+import { AgentRateLimiter } from './agent-rate-limit';
 import { invalid } from './agent-shared';
 import { AgentStatementsService } from './agent-statements.service';
 import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
@@ -130,6 +131,7 @@ export class StoreAgentController {
     private readonly statements: AgentStatementsService,
     private readonly declarations: AgentTaxDeclarationsService,
     private readonly payoutProfiles: AgentPayoutProfilesService,
+    private readonly limits: AgentRateLimiter,
   ) {}
 
   @Get('programme')
@@ -364,13 +366,17 @@ export class StoreAgentController {
     'agents.too_many_leads',
     'agents.lead_unavailable',
     'agents.lead_duplicate',
+    'agents.rate_limited',
   )
   async registerLead(
     @CurrentActor() actor: Actor,
     @Body() body: RegisterAgentLeadDto,
   ): Promise<AgentLeadDto> {
     const me = customer(actor);
-    return leadDto(await this.attribution.registerLead(me, await this.agents.mine(me.userId), body));
+    const agent = await this.agents.mine(me.userId);
+    // Same budget as the duplicate check: a refused registration answers the same neutral reason (P7 review).
+    await this.limits.hit(agent.id, 'lead_check');
+    return leadDto(await this.attribution.registerLead(me, agent, body));
   }
 
   @Post('leads/:leadId/actions/withdraw')
