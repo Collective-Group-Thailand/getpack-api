@@ -118,3 +118,196 @@ model SalesInboundAssignment {
   @@index([createdById], map: "ix_sales_inbound_assignments__created_by")
   @@map("sales_inbound_assignments")
 }
+
+// --- D-470: discount approval desk ----------------------------------------------------------------------------
+
+/// D-470: who must decide a discount (PLAN A-12): within a rep's authority, a sales manager's, or C-Level's.
+enum SalesDiscountApprovalLevel {
+  rep
+  sales_manager
+  c_level
+
+  @@map("sales_discount_approval_level")
+}
+
+enum SalesDiscountApprovalStatus {
+  pending
+  approved
+  rejected
+  /// Answered with give-get conditions instead (the agent may ask again with them).
+  countered
+  /// Lines, quantities, costs or terms changed since it was opened or approved (`discount_approval.stale`).
+  stale
+  /// The request closed without a decision (quote withdrawn / expired).
+  withdrawn
+
+  @@map("sales_discount_approval_status")
+}
+
+enum SalesFactoryPriceLockStatus {
+  /// Recorded; the factory's confirmation through the partner zone is not built yet (deferred).
+  requested
+  confirmed
+  expired
+  released
+
+  @@map("sales_factory_price_lock_status")
+}
+
+/// D-470: which serializer a viewer got (field-level visibility, docs/rbac.md).
+enum SalesWaterfallTier {
+  authority
+  margin_pct
+  full
+
+  @@map("sales_waterfall_tier")
+}
+
+enum SalesWaterfallViewPurpose {
+  view
+  simulate
+  export
+
+  @@map("sales_waterfall_view_purpose")
+}
+
+/// D-470 (PLAN A-12, §7): the approval of one discount request round. Holds the waterfall computed when it opened
+/// (staff only — served per viewer tier), the snapshot hash of lines, quantities, costs and terms (any change voids
+/// it), the level and its SLA. No personal data of its own.
+model SalesDiscountApproval {
+  id                 BigInt                      @id(map: "pk_sales_discount_approvals") @default(autoincrement())
+  publicId           String                      @unique(map: "ux_sales_discount_approvals__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  requestId          BigInt                      @unique(map: "ux_sales_discount_approvals__request_id") @map("request_id")
+  agentQuoteId       BigInt                      @map("agent_quote_id")
+  quoteId            BigInt                      @map("quote_id")
+  /// The level in force (after escalation) and the one the matrix gave.
+  level              SalesDiscountApprovalLevel
+  baseLevel          SalesDiscountApprovalLevel  @map("base_level")
+  negotiationHeavy   Boolean                     @default(false) @map("negotiation_heavy")
+  status             SalesDiscountApprovalStatus @default(pending)
+  requestedPct       Decimal                     @map("requested_pct") @db.Decimal(7, 4)
+  grossMarginPct     Decimal                     @map("gross_margin_pct") @db.Decimal(9, 4)
+  floorPct           Decimal                     @map("floor_pct") @db.Decimal(7, 4)
+  belowFloor         Boolean                     @default(false) @map("below_floor")
+  commissionBase     Decimal                     @map("commission_base") @db.Decimal(14, 2)
+  /// The quote's waterfall at the requested discount (all lines, decimal strings).
+  waterfall          Json
+  /// Lines, quantities, costs and terms the decision is about, and their SHA-256.
+  snapshot           Json
+  snapshotSha256     Bytes                       @map("snapshot_sha256")
+  dueAt              DateTime                    @map("due_at") @db.Timestamptz(6)
+  escalatedAt        DateTime?                   @map("escalated_at") @db.Timestamptz(6)
+  requestedById      BigInt                      @map("requested_by")
+  decidedById        BigInt?                     @map("decided_by")
+  decidedAt          DateTime?                   @map("decided_at") @db.Timestamptz(6)
+  decisionNote       String?                     @map("decision_note")
+  /// D-449: a Superadmin approving their own (staff) request under solo-owner mode, with the typed reason.
+  selfApproved       Boolean                     @default(false) @map("self_approved")
+  selfApprovalReason String?                     @map("self_approval_reason")
+  /// Counter-offer: the give-get conditions asked for instead.
+  counter            Json?
+  /// The options approved (kind, discount %, rate %) and until when they are valid.
+  approvedOptions    Json?                       @map("approved_options")
+  validUntil         DateTime?                   @map("valid_until") @db.Timestamptz(6)
+  staleAt            DateTime?                   @map("stale_at") @db.Timestamptz(6)
+  staleReason        String?                     @map("stale_reason")
+  createdAt          DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                         @default(1) @map("row_version")
+
+  request     SalesAgentDiscountRequest @relation("SalesDiscountApprovalRequest", fields: [requestId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discount_approvals__request_id")
+  agentQuote  SalesAgentQuote           @relation("SalesDiscountApprovalAgentQuote", fields: [agentQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discount_approvals__agent_quote_id")
+  quote       Quote                     @relation("SalesDiscountApprovalQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discount_approvals__quote_id")
+  requestedBy User                      @relation("SalesDiscountApprovalRequestedBy", fields: [requestedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discount_approvals__requested_by") // client: keep
+  decidedBy   User?                     @relation("SalesDiscountApprovalDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discount_approvals__decided_by") // client: keep
+  priceLocks  SalesFactoryPriceLock[]
+  views       SalesWaterfallView[]
+  discounted  SalesDiscountedQuote[]
+
+  @@index([status, level, dueAt], map: "ix_sales_discount_approvals__status__level__due_at")
+  @@index([agentQuoteId], map: "ix_sales_discount_approvals__agent_quote_id")
+  @@index([quoteId], map: "ix_sales_discount_approvals__quote_id")
+  @@index([requestedById], map: "ix_sales_discount_approvals__requested_by")
+  @@index([decidedById], map: "ix_sales_discount_approvals__decided_by")
+  @@map("sales_discount_approvals")
+}
+
+/// D-470: an approved big deal also locks the factory buy price for the approval's validity. The partner zone's
+/// confirmation is deferred (status `requested`); when it exists the validity is the shorter of the two. Staff only —
+/// never in a store or agent response (factory confidentiality, D-044 / D-435).
+model SalesFactoryPriceLock {
+  id                 BigInt                      @id(map: "pk_sales_factory_price_locks") @default(autoincrement())
+  publicId           String                      @unique(map: "ux_sales_factory_price_locks__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  approvalId         BigInt                      @map("approval_id")
+  quoteOptionId      BigInt                      @map("quote_option_id")
+  factoryId          BigInt?                     @map("factory_id")
+  priceListVersionId BigInt?                     @map("price_list_version_id")
+  buyPrice           Decimal                     @map("buy_price") @db.Decimal(14, 2)
+  status             SalesFactoryPriceLockStatus @default(requested)
+  validUntil         DateTime                    @map("valid_until") @db.Timestamptz(6)
+  createdAt          DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                    @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  approval         SalesDiscountApproval @relation(fields: [approvalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_factory_price_locks__approval_id")
+  quoteOption      QuoteOption           @relation("SalesFactoryPriceLockQuoteOption", fields: [quoteOptionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_factory_price_locks__quote_option_id")
+  factory          Factory?              @relation("SalesFactoryPriceLockFactory", fields: [factoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_factory_price_locks__factory_id")
+  priceListVersion PriceListVersion?     @relation("SalesFactoryPriceLockPriceListVersion", fields: [priceListVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_factory_price_locks__price_list_version_id")
+
+  @@index([approvalId], map: "ix_sales_factory_price_locks__approval_id")
+  @@index([quoteOptionId], map: "ix_sales_factory_price_locks__quote_option_id")
+  @@index([factoryId, status], map: "ix_sales_factory_price_locks__factory_id__status")
+  @@index([priceListVersionId], map: "ix_sales_factory_price_locks__price_list_version_id")
+  @@map("sales_factory_price_locks")
+}
+
+/// D-470 (like D-444): every time someone is shown a deal's waterfall — who, when, which quote, which tier, why.
+/// Append-only (trigger `forbid_mutation`). PDPA: the viewer's own staff id and request id only.
+model SalesWaterfallView {
+  id           BigInt                    @id(map: "pk_sales_waterfall_views") @default(autoincrement())
+  publicId     String                    @unique(map: "ux_sales_waterfall_views__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  viewerUserId BigInt                    @map("viewer_user_id")
+  quoteId      BigInt                    @map("quote_id")
+  approvalId   BigInt?                   @map("approval_id")
+  tier         SalesWaterfallTier
+  purpose      SalesWaterfallViewPurpose
+  requestId    String?                   @map("request_id")
+  viewedAt     DateTime                  @default(now()) @map("viewed_at") @db.Timestamptz(6)
+
+  viewer   User                   @relation("SalesWaterfallViewViewer", fields: [viewerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_waterfall_views__viewer_user_id") // client: keep
+  quote    Quote                  @relation("SalesWaterfallViewQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_waterfall_views__quote_id")
+  approval SalesDiscountApproval? @relation(fields: [approvalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_waterfall_views__approval_id")
+
+  @@index([viewedAt], map: "ix_sales_waterfall_views__viewed_at")
+  @@index([viewerUserId, viewedAt], map: "ix_sales_waterfall_views__viewer_user_id__viewed_at")
+  @@index([quoteId], map: "ix_sales_waterfall_views__quote_id")
+  @@index([approvalId], map: "ix_sales_waterfall_views__approval_id")
+  @@map("sales_waterfall_views")
+}
+
+/// D-470 (P3 deferral): a new quotation made at an accepted discount option — valid
+/// `quotes.discounted_validity_days`, its conditions printed on the PDF, and the discount memo (scope `sales_quote`)
+/// checkout applies to orders from it.
+model SalesDiscountedQuote {
+  id             BigInt   @id(map: "pk_sales_discounted_quotes") @default(autoincrement())
+  publicId       String   @unique(map: "ux_sales_discounted_quotes__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  quoteId        BigInt   @unique(map: "ux_sales_discounted_quotes__quote_id") @map("quote_id")
+  sourceQuoteId  BigInt   @map("source_quote_id")
+  approvalId     BigInt?  @map("approval_id")
+  optionId       BigInt   @unique(map: "ux_sales_discounted_quotes__option_id") @map("option_id")
+  discountMemoId BigInt?  @unique(map: "ux_sales_discounted_quotes__discount_memo_id") @map("discount_memo_id")
+  discountPct    Decimal  @map("discount_pct") @db.Decimal(7, 4)
+  discountAmount Decimal  @map("discount_amount") @db.Decimal(14, 2)
+  conditionsTh   String?  @map("conditions_th")
+  conditionsEn   String?  @map("conditions_en")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  quote        Quote                    @relation("SalesDiscountedQuoteQuote", fields: [quoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discounted_quotes__quote_id")
+  sourceQuote  Quote                    @relation("SalesDiscountedQuoteSource", fields: [sourceQuoteId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discounted_quotes__source_quote_id")
+  approval     SalesDiscountApproval?   @relation(fields: [approvalId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discounted_quotes__approval_id")
+  option       SalesAgentDiscountOption @relation("SalesDiscountedQuoteOption", fields: [optionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discounted_quotes__option_id")
+  discountMemo DiscountMemo?            @relation("SalesDiscountedQuoteMemo", fields: [discountMemoId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_discounted_quotes__discount_memo_id")
+
+  @@index([sourceQuoteId], map: "ix_sales_discounted_quotes__source_quote_id")
+  @@index([approvalId], map: "ix_sales_discounted_quotes__approval_id")
+  @@map("sales_discounted_quotes")
+}

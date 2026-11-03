@@ -2325,6 +2325,8 @@ model DiscountMemo {
 
   goodwillClaims Claim[] @relation("ClaimGoodwillMemo")
 
+  salesDiscountedQuote SalesDiscountedQuote? @relation("SalesDiscountedQuoteMemo")
+
   @@index([status, validUntil], map: "ix_discount_memos__status__valid_until")
   @@index([entityId], map: "ix_discount_memos__entity_id")
   @@index([requestedById], map: "ix_discount_memos__requested_by")

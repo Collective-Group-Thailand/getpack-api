@@ -12,6 +12,15 @@ export const SALES_DESK_NOTES: readonly string[] = [
   '  `sales.pipeline.manage` (the whole pool) and the assigned rep (`sales.pipeline.self`). Events carry no contact data.',
   "- **Rep pipeline**: the agent programme's lead rules (D-417, D-468) — a rep reaches only their own employee agent's",
   "  leads; a manager acting on a rep's lead is audited (`sales_lead.acted_for`); freelance agents' leads are read-only.",
+  '- **Deal waterfall (D-470)** — three serializers chosen on the server, never hidden client-side:',
+  '  - freelance agents: no access to the desk at all (the agent zone shows options and their own commission only);',
+  '  - `sales_rep` (`discount_approvals.read` without the two below): `authorityLevel` green / amber / red only —',
+  '    no revenue, cost, margin, commission base, credit cost or price lock field is present in the payload;',
+  '  - `sales_manager` (`discount_approvals.margin_pct`): discount %, gross margin %, contribution %, floor %, floor check;',
+  '  - C-Level, VP, Director, Finance Manager, Superadmin (`discount_approvals.waterfall_full`): the full waterfall and',
+  '    the factory price locks.',
+  '  Every view, simulation and export is logged in `sales_waterfall_views` (Superadmin, Auditor read it); the only',
+  '  export is `discount_approvals.export` (Finance Manager). Bottom line wording: "กำไรหลังหักค่าคอม", never "กำไรสุทธิ".',
 ];
 
 const AUDIENCES = [

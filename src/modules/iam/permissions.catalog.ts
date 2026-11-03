@@ -1600,6 +1600,49 @@ export const PERMISSIONS = [
       'Run the company sales desk: every rep’s pipeline (acting for a rep is audited), the inbound pool and its assignment, the sales dashboard',
     decisionRefs: ['D-469'],
   },
+  // --- Discount approval desk (D-470, PLAN A-12)
+  {
+    key: 'discount_approvals.read',
+    audience: 'staff',
+    description:
+      'See the discount approval queue and requests with the waterfall in the tier one’s other permissions allow (reps: the authority colour only)',
+    decisionRefs: ['D-470'],
+  },
+  {
+    key: 'discount_approvals.decide',
+    audience: 'staff',
+    description:
+      'Approve (with 1–3 options, the full-rate one first), reject or counter a discount within one’s approval level (rep ≤ 3 %, sales manager ≤ 8 % above the floor, C-Level above); never one’s own request',
+    decisionRefs: ['D-470'],
+  },
+  {
+    key: 'discount_approvals.margin_pct',
+    audience: 'staff',
+    description: 'See a deal’s margin and contribution percentages and its floor check (no amounts, no cost)',
+    sensitive: true,
+    decisionRefs: ['D-470', 'D-141'],
+  },
+  {
+    key: 'discount_approvals.waterfall_full',
+    audience: 'staff',
+    description:
+      'See a deal’s full waterfall: revenue, factory cost, shipping difference, fees, gross margin, commission, credit cost, bad-debt provision, contribution after commission; and factory price locks',
+    sensitive: true,
+    decisionRefs: ['D-470', 'D-141'],
+  },
+  {
+    key: 'discount_approvals.export',
+    audience: 'staff',
+    description: 'Export a deal’s full waterfall as CSV (finance only; logged)',
+    sensitive: true,
+    decisionRefs: ['D-470'],
+  },
+  {
+    key: 'sales_waterfall_views.read',
+    audience: 'staff',
+    description: 'Read the access log of deal waterfalls: who saw which quote’s waterfall, when and in which tier',
+    decisionRefs: ['D-470', 'D-444'],
+  },
   // --- B6.3 launch readiness (D-113)
   {
     key: 'ops.read',

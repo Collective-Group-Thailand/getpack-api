@@ -585,6 +585,108 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'sales_manager',
   },
   {
+    key: 'sales.discount_approval_hours',
+    valueType: 'integer',
+    value: 4,
+    valueSchema: { minimum: 1, maximum: 48 },
+    description:
+      'D-470 working hours (every day inside calendar.business_hours, P-05) a discount approval waits before it ' +
+      'escalates one level and the next level is told',
+    decisions: ['D-470'],
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'sales.discount_authority',
+    valueType: 'json',
+    value: { repMaxPct: '3.00', managerMaxPct: '8.00', repMaxAmount: null, managerMaxAmount: null },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['repMaxPct', 'managerMaxPct', 'repMaxAmount', 'managerMaxAmount'],
+      properties: {
+        repMaxPct: { type: 'string', pattern: '^\\d{1,2}(\\.\\d{1,2})?$' },
+        managerMaxPct: { type: 'string', pattern: '^\\d{1,2}(\\.\\d{1,2})?$' },
+        repMaxAmount: { type: ['string', 'null'], pattern: '^\\d{1,12}(\\.\\d{1,2})?$' },
+        managerMaxAmount: { type: ['string', 'null'], pattern: '^\\d{1,12}(\\.\\d{1,2})?$' },
+      },
+    },
+    description:
+      'D-470 discount approval matrix (PLAN A-12): a rep decides up to repMaxPct (3 %), a sales manager up to ' +
+      'managerMaxPct (8 %) while the gross margin stays at or above margin.floor_pct, above (or below the floor) ' +
+      'C-Level; optional discount-amount caps per level (null = none, no decision gives one); negotiation-heavy ' +
+      'customers go one level up',
+    decisions: ['D-470'],
+    ownerRole: 'c_level',
+  },
+  {
+    key: 'sales.negotiation_heavy',
+    valueType: 'json',
+    value: { minRounds: 2, minQuotes: 2, lastQuotes: 5 },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['minRounds', 'minQuotes', 'lastQuotes'],
+      properties: {
+        minRounds: { type: 'integer', minimum: 2, maximum: 10 },
+        minQuotes: { type: 'integer', minimum: 1, maximum: 20 },
+        lastQuotes: { type: 'integer', minimum: 1, maximum: 50 },
+      },
+    },
+    description:
+      'D-470 a customer is "เจรจาราคาสูง" (negotiation-heavy) when at least minRounds discount rounds were asked on ' +
+      'at least minQuotes of their last lastQuotes quotations (2 on 2 of 5); it raises the approval level by one',
+    decisions: ['D-470'],
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'margin.floor_pct',
+    valueType: 'json',
+    value: { default: '10.00', byProductClass: {} },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['default', 'byProductClass'],
+      properties: {
+        default: { type: 'string', pattern: '^\\d{1,2}(\\.\\d{1,2})?$' },
+        byProductClass: { type: 'object', additionalProperties: { type: 'string' } },
+      },
+    },
+    description:
+      'D-470 walk-away gross margin % of the discount desk by product class (product category code); default ' +
+      'copied from the D-012 margin floor (10 %), no class has its own until C-Level sets one',
+    decisions: ['D-470', 'D-012'],
+    ownerRole: 'c_level',
+  },
+  {
+    key: 'finance.cost_of_capital_annual_pct',
+    valueType: 'percent',
+    value: '7.00',
+    description:
+      'D-470 annual cost of capital behind the credit cost estimate of a deal (PLAN §7, owner agreed 2026-11-01): ' +
+      'Σ cash out to the factory × this % × days until the customer pays ÷ 365 — a management figure, never posted',
+    decisions: ['D-470'],
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'finance.bad_debt_provision_pct',
+    valueType: 'json',
+    value: null,
+    unset: true,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['byGrade'],
+      properties: { byGrade: { type: 'object', additionalProperties: { type: 'string' } } },
+    },
+    description:
+      'D-470 bad-debt provision % of net revenue by customer credit grade (credit = a company with approved credit ' +
+      'terms; customers paying before production carry none); not seeded — no decision gives a rate, the waterfall ' +
+      'shows "not set" until Finance sets it',
+    decisions: ['D-470'],
+    confirmation: 'pending_business',
+    ownerRole: 'finance_manager',
+  },
+  {
     key: 'tax.pit_brackets',
     valueType: 'json',
     value: PIT_BRACKETS_SEED,

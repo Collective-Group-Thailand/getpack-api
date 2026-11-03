@@ -830,6 +830,8 @@ model SalesAgentQuote {
 
   discountRequests SalesAgentDiscountRequest[]
 
+  approvals SalesDiscountApproval[] @relation("SalesDiscountApprovalAgentQuote")
+
   @@index([agentId, createdAt], map: "ix_sales_agent_quotes__agent_id__created_at")
   @@index([leadId], map: "ix_sales_agent_quotes__lead_id")
   @@index([dealRegistrationId], map: "ix_sales_agent_quotes__deal_registration_id")
@@ -937,6 +939,8 @@ model SalesAgentDiscountRequest {
   decidedBy      User?                      @relation("SalesAgentDiscountRequestDecidedBy", fields: [decidedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_requests__decided_by")
   options        SalesAgentDiscountOption[]
 
+  approval SalesDiscountApproval? @relation("SalesDiscountApprovalRequest")
+
   @@unique([quoteId, round], map: "ux_sales_agent_discount_requests__quote_id__round")
   @@unique([quoteId], map: "ux_sales_agent_discount_requests__quote_id__open", where: raw("(status = 'open'::sales_agent_discount_request_status)"))
   @@index([agentId, createdAt], map: "ix_sales_agent_discount_requests__agent_id__created_at")
@@ -987,6 +991,8 @@ model SalesAgentDiscountOption {
   offeredBy        User?                       @relation("SalesAgentDiscountOptionOfferedBy", fields: [offeredById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__offered_by")
   dealRegistration SalesAgentDealRegistration? @relation("SalesAgentDealApprovedOption")
   acceptedBy       User?                       @relation("SalesAgentDiscountOptionAcceptedBy", fields: [acceptedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_discount_options__accepted_by")
+
+  discountedQuote SalesDiscountedQuote? @relation("SalesDiscountedQuoteOption")
 
   @@unique([requestId, position], map: "ux_sales_agent_discount_options__request_id__position")
   @@unique([requestId], map: "ux_sales_agent_discount_options__request_id__accepted", where: raw("(status = 'accepted'::sales_agent_discount_option_status)"))

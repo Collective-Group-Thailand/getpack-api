@@ -332,3 +332,40 @@ describe('agent-facing responses carry no profit, margin or cap (D-464)', () => 
     expect(kinds?.enum).toEqual(['customer']);
   });
 });
+
+/**
+ * D-469 / D-470 (Phase 4): the sales desk and the discount approval desk are staff-only. No store response may reach
+ * the waterfall, the approval, the factory price lock, the waterfall access log or the inbound pool, and the desk's
+ * own staff routes stay on `/v1/admin`.
+ */
+describe('the sales desk and its waterfall stay off the store surface (D-469, D-470)', () => {
+  const DESK_SCHEMAS =
+    /Waterfall|DiscountApproval|PriceLock|SalesInbound|SalesDashboard|SalesRep|DiscountSimulation|PostDeal|Negotiation/;
+  const storeOps = Object.entries(contract.paths)
+    .filter(([path]) => path.startsWith('/v1/store/'))
+    .flatMap(([, ops]) => Object.values(ops));
+
+  it('reaches no desk schema from any store response', () => {
+    const leaks: string[] = [];
+    for (const operation of storeOps)
+      for (const [status, response] of Object.entries(operation.responses ?? {}))
+        for (const field of fieldsOf(response))
+          if (DESK_SCHEMAS.test(field.split('.')[0]!))
+            leaks.push(`${operation.operationId} ${status}: ${field}`);
+    expect([...new Set(leaks)]).toEqual([]);
+  });
+
+  it('publishes every desk operation under /v1/admin only', () => {
+    const desk = Object.entries(contract.paths).flatMap(([path, ops]) =>
+      Object.values(ops)
+        .filter((o) =>
+          /^(admin|store)\.(salesLeads|salesQuotes|salesReps|salesInbound|sales|discountApprovals|salesNegotiations|salesPlaybook|salesPostDeal)\./.test(
+            o.operationId ?? '',
+          ),
+        )
+        .map((o) => ({ path, id: o.operationId })),
+    );
+    expect(desk.length).toBeGreaterThan(20);
+    for (const { path, id } of desk) expect([id, path.startsWith('/v1/admin/sales/')]).toEqual([id, true]);
+  });
+});

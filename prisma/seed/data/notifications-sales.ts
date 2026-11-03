@@ -35,6 +35,36 @@ export const SALES_DESK_MESSAGES: readonly [string, string, Text, Text][] = [
       body: 'Enquiry {{payload.sourceRef}} has no answer past its due time. Rep: {{payload.assigneeName}}',
     },
   ],
+  [
+    'sales_discount_approval.opened',
+    'Deciders: a discount waits for your approval level (D-470)',
+    {
+      subject: 'มีคำขอส่วนลดรออนุมัติ',
+      body: 'คำขอส่วนลด {{payload.requestedPct}}% รอการตัดสินใจระดับ {{payload.level}}',
+    },
+    {
+      subject: 'A discount waits for approval',
+      body: 'A {{payload.requestedPct}}% discount waits for a {{payload.level}} decision',
+    },
+  ],
+  [
+    'sales_discount_approval.escalated',
+    'Deciders: an overdue discount approval moved up to your level (D-470)',
+    {
+      subject: 'คำขอส่วนลดเกินเวลา ส่งต่อถึงคุณ',
+      body: 'คำขอส่วนลดเกินเวลาอนุมัติ จึงส่งต่อจากระดับ {{payload.from}} ถึงระดับ {{payload.level}}',
+    },
+    {
+      subject: 'Overdue discount escalated to you',
+      body: 'A discount approval passed its time and moved from {{payload.from}} to {{payload.level}}',
+    },
+  ],
+  [
+    'sales_discount_approval.decided',
+    'Rep: your discount request was decided (D-470)',
+    { subject: 'คำขอส่วนลดได้รับการตัดสินแล้ว', body: 'ผลการพิจารณา: {{payload.decision}}' },
+    { subject: 'Your discount request was decided', body: 'Decision: {{payload.decision}}' },
+  ],
 ];
 
 const CHANNELS = ['in_app', 'email', 'web_push'] as const;

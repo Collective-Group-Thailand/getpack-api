@@ -1,5 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 
+import { DiscountApprovalsService } from './discount-approvals.service';
+import { DiscountedQuotesService, SalesQuoteDiscountCheckout } from './discounted-quotes.service';
 import { SalesCsvService } from './sales-csv.service';
 import { SalesDashboardService } from './sales-dashboard';
 import { SalesDeskJobs } from './sales-desk.jobs';
@@ -13,6 +15,7 @@ const SERVICES = [
   SalesInboundService,
   SalesCsvService,
   SalesDashboardService,
+  DiscountApprovalsService,
 ];
 
 /**
@@ -21,7 +24,7 @@ const SERVICES = [
  */
 @Global()
 @Module({
-  providers: [...SERVICES, SalesDeskJobs],
+  providers: [...SERVICES, DiscountedQuotesService, SalesQuoteDiscountCheckout, SalesDeskJobs],
   exports: SERVICES,
 })
 export class SalesDeskModule {}

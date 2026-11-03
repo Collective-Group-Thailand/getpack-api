@@ -13,7 +13,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 | `settings.read` — Read platform settings and their history | ● | ● | ● | ● | ● |  | ● | ● | ● | ● |  | ● | ● |  | ● | ● |  |
 | `settings.read_sensitive` — Read settings flagged sensitive | ◆ | ◆ |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
-| `settings.change` — Create a new effective-dated setting version (D-063) | ● |  |  |  | ● |  | ● | ● |  | ● |  | ● | ● |  | ● |  |  |
+| `settings.change` — Create a new effective-dated setting version (D-063) | ● | ● |  |  | ● |  | ● | ● |  | ● |  | ● | ● |  | ● |  |  |
 | `feature_flags.read` — Read feature flags | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
 | `feature_flags.manage` — Change feature flags | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `entities.manage` — Manage legal entities (D-092) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -195,6 +195,12 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `agent_plans.approve` — Approve or reject a commission plan version drafted by someone else (D-418) | ◆ | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
 | `sales.pipeline.self` — Work one’s own pipeline as a company sales rep (the staff account’s employee agent): leads, timeline, quotes on behalf, discount requests and the inbound items assigned to me (D-469) | ● |  |  |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |
 | `sales.pipeline.manage` — Run the company sales desk: every rep’s pipeline (acting for a rep is audited), the inbound pool and its assignment, the sales dashboard (D-469) | ● | ● | ● | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |
+| `discount_approvals.read` — See the discount approval queue and requests with the waterfall in the tier one’s other permissions allow (reps: the authority colour only) (D-470) | ● | ● | ● | ● |  |  |  |  |  | ● |  |  | ● | ● |  |  |  |
+| `discount_approvals.decide` — Approve (with 1–3 options, the full-rate one first), reject or counter a discount within one’s approval level (rep ≤ 3 %, sales manager ≤ 8 % above the floor, C-Level above); never one’s own request (D-470) | ● | ● |  |  |  |  |  |  |  |  |  |  | ● | ● |  |  |  |
+| `discount_approvals.margin_pct` — See a deal’s margin and contribution percentages and its floor check (no amounts, no cost) (D-470, D-141) | ◆ |  |  |  |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |
+| `discount_approvals.waterfall_full` — See a deal’s full waterfall: revenue, factory cost, shipping difference, fees, gross margin, commission, credit cost, bad-debt provision, contribution after commission; and factory price locks (D-470, D-141) | ◆ | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
+| `discount_approvals.export` — Export a deal’s full waterfall as CSV (finance only; logged) (D-470) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
+| `sales_waterfall_views.read` — Read the access log of deal waterfalls: who saw which quote’s waterfall, when and in which tier (D-470, D-444) | ● |  |  |  |  |  |  |  |  |  |  |  |  |  |  | ● |  |
 | `ops.read` — Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches) (D-113) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
@@ -339,6 +345,15 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
   `sales.pipeline.manage` (the whole pool) and the assigned rep (`sales.pipeline.self`). Events carry no contact data.
 - **Rep pipeline**: the agent programme's lead rules (D-417, D-468) — a rep reaches only their own employee agent's
   leads; a manager acting on a rep's lead is audited (`sales_lead.acted_for`); freelance agents' leads are read-only.
+- **Deal waterfall (D-470)** — three serializers chosen on the server, never hidden client-side:
+  - freelance agents: no access to the desk at all (the agent zone shows options and their own commission only);
+  - `sales_rep` (`discount_approvals.read` without the two below): `authorityLevel` green / amber / red only —
+    no revenue, cost, margin, commission base, credit cost or price lock field is present in the payload;
+  - `sales_manager` (`discount_approvals.margin_pct`): discount %, gross margin %, contribution %, floor %, floor check;
+  - C-Level, VP, Director, Finance Manager, Superadmin (`discount_approvals.waterfall_full`): the full waterfall and
+    the factory price locks.
+  Every view, simulation and export is logged in `sales_waterfall_views` (Superadmin, Auditor read it); the only
+  export is `discount_approvals.export` (Finance Manager). Bottom line wording: "กำไรหลังหักค่าคอม", never "กำไรสุทธิ".
 
 ## Segregation of duties (`accounting-design.md` §8)
 

@@ -48,6 +48,8 @@ export const API_TAGS: Record<string, string> = {
     'Quotations sent on behalf of getpack from the sales pipeline, and their discount rounds (D-469).',
   'admin.salesReps': 'Company sales reps and their employee agents (D-469).',
   'admin.sales': 'The sales manager’s dashboard: funnel, win rate, stage days, sources, reps, SLA (D-469).',
+  'admin.discountApprovals':
+    'The discount approval & price lock desk: queue with SLA, the deal waterfall in the viewer’s tier, simulator, decisions, the waterfall access log (D-470).',
   'admin.salesInbound':
     'The inbound pool of sales enquiries (contact form, RFQ, staff), their assignment to reps and the first-response SLA (D-469).',
   'store.loyalty':

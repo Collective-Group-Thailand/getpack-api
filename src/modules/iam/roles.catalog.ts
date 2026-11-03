@@ -53,6 +53,11 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      // D-470: C-Level owns the discount authority matrix and margin floors (the owner check limits it to those).
+      'settings.change',
+      'discount_approvals.read',
+      'discount_approvals.decide',
+      'discount_approvals.waterfall_full',
       'sales.pipeline.manage',
       'document_branding.read',
       'document_branding.manage',
@@ -105,6 +110,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'รองประธาน',
     nameEn: 'VP',
     permissions: [
+      'discount_approvals.read',
+      'discount_approvals.waterfall_full',
       'sales.pipeline.manage',
       'agents.read',
       'agent_plans.approve',
@@ -132,6 +139,8 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้อำนวยการ',
     nameEn: 'Director',
     permissions: [
+      'discount_approvals.read',
+      'discount_approvals.waterfall_full',
       'sales.pipeline.manage',
       'agents.read',
       ...APPROVER,
@@ -464,6 +473,9 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้จัดการฝ่ายการเงิน',
     nameEn: 'Finance Manager',
     permissions: [
+      'discount_approvals.read',
+      'discount_approvals.waterfall_full',
+      'discount_approvals.export',
       'receivables.documents.replace',
       'document_branding.read',
       'document_branding.manage',
@@ -598,6 +610,9 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Sales Manager',
     // D-423: runs the agent programme — applications, agents, links, leads and the plans it drafts.
     permissions: [
+      'discount_approvals.read',
+      'discount_approvals.decide',
+      'discount_approvals.margin_pct',
       'settings.change',
       ...EVERY_STAFF_MEMBER,
       'settings.read',
@@ -621,7 +636,12 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'พนักงานขาย',
     nameEn: 'Sales Rep',
     // D-469 (PLAN A-07): a company sales rep works their own pipeline from the admin zone (their employee agent).
-    permissions: [...EVERY_STAFF_MEMBER, 'sales.pipeline.self'],
+    permissions: [
+      ...EVERY_STAFF_MEMBER,
+      'sales.pipeline.self',
+      'discount_approvals.read',
+      'discount_approvals.decide',
+    ],
   },
   {
     key: 'partner_manager',
@@ -673,6 +693,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้ตรวจสอบบัญชี',
     nameEn: 'Auditor (read-only)',
     permissions: [
+      'sales_waterfall_views.read',
       'document_branding.read',
       'reports.export',
       'receivables.read',

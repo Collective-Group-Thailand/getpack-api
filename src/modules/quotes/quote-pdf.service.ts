@@ -111,6 +111,7 @@ export class QuotePdfService {
         };
       }),
       validityDays: Math.round((quote.validUntil.getTime() - quote.createdAt.getTime()) / DAY_MS),
+      conditions: await this.conditionsOf(tx, quote.id),
     };
     // D-428/D-429: getpack's logo and, when a rule says so, the quotation's signatory and seal.
     const branding = await this.branding.resolve(
@@ -154,6 +155,19 @@ export class QuotePdfService {
       aggregateId: quote.publicId,
       payload: { quoteId: quote.publicId, quoteCode: quote.quoteCode },
     });
+  }
+
+  /** D-470: the discount and conditions line of a discounted quotation (none for any other). */
+  private async conditionsOf(tx: Tx, quoteId: bigint): Promise<QuoteDocument['conditions']> {
+    const row = await tx.salesDiscountedQuote.findUnique({ where: { quoteId } });
+    return row
+      ? {
+          discountPct: row.discountPct.toFixed(2),
+          discountAmount: row.discountAmount.toFixed(2),
+          th: row.conditionsTh,
+          en: row.conditionsEn,
+        }
+      : null;
   }
 
   /** A signed download URL of the quote's PDF; the caller has checked access to the quote. */

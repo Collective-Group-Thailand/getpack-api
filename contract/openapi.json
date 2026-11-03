@@ -254,6 +254,17 @@
           "type": "https://errors.getpack/agents.discount_option_unavailable"
         }
       },
+      "problem.agents.discount_request_closed": {
+        "summary": "agents.discount_request_closed",
+        "value": {
+          "code": "agents.discount_request_closed",
+          "detail": "คำขอส่วนลดนี้ได้รับคำตอบหรือปิดไปแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "คำขอส่วนลดปิดแล้ว",
+          "type": "https://errors.getpack/agents.discount_request_closed"
+        }
+      },
       "problem.agents.ended": {
         "summary": "agents.ended",
         "value": {
@@ -2122,6 +2133,72 @@
           "status": 422,
           "title": "ขนาดอยู่นอกช่วงของสไตล์",
           "type": "https://errors.getpack/dielines.size_out_of_range"
+        }
+      },
+      "problem.discount_approval.already_open": {
+        "summary": "discount_approval.already_open",
+        "value": {
+          "code": "discount_approval.already_open",
+          "detail": "คำขอส่วนลดนี้มีรายการอนุมัติอยู่แล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "มีการอนุมัติอยู่แล้ว",
+          "type": "https://errors.getpack/discount_approval.already_open"
+        }
+      },
+      "problem.discount_approval.cost_unknown": {
+        "summary": "discount_approval.cost_unknown",
+        "value": {
+          "code": "discount_approval.cost_unknown",
+          "detail": "บางจำนวนในใบเสนอราคายังไม่มีราคาซื้อจากโรงงาน จึงเปิดการอนุมัติไม่ได้",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังไม่ทราบต้นทุน",
+          "type": "https://errors.getpack/discount_approval.cost_unknown"
+        }
+      },
+      "problem.discount_approval.not_authorised": {
+        "summary": "discount_approval.not_authorised",
+        "value": {
+          "code": "discount_approval.not_authorised",
+          "detail": "ส่วนลดนี้ต้องให้ผู้มีอำนาจอนุมัติระดับสูงกว่าเป็นผู้ตัดสิน",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 403,
+          "title": "เกินอำนาจอนุมัติ",
+          "type": "https://errors.getpack/discount_approval.not_authorised"
+        }
+      },
+      "problem.discount_approval.not_pending": {
+        "summary": "discount_approval.not_pending",
+        "value": {
+          "code": "discount_approval.not_pending",
+          "detail": "การอนุมัตินี้ตัดสินแล้ว ถูกยกเลิก หรือปิดไปแล้ว",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ตัดสินแล้ว",
+          "type": "https://errors.getpack/discount_approval.not_pending"
+        }
+      },
+      "problem.discount_approval.self_approval": {
+        "summary": "discount_approval.self_approval",
+        "value": {
+          "code": "discount_approval.self_approval",
+          "detail": "คุณเป็นผู้ขอส่วนลดนี้ ผู้อื่นต้องเป็นผู้ตัดสิน (ซูเปอร์แอดมินทำได้เฉพาะโหมดเจ้าของคนเดียวพร้อมเหตุผล)",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "อนุมัติคำขอของตัวเองไม่ได้",
+          "type": "https://errors.getpack/discount_approval.self_approval"
+        }
+      },
+      "problem.discount_approval.stale": {
+        "summary": "discount_approval.stale",
+        "value": {
+          "code": "discount_approval.stale",
+          "detail": "รายการ จำนวน ต้นทุน หรือเงื่อนไขเปลี่ยนไปหลังอนุมัติ กรุณาขออนุมัติใหม่",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "การอนุมัติใช้ไม่ได้แล้ว",
+          "type": "https://errors.getpack/discount_approval.stale"
         }
       },
       "problem.discount_memos.not_usable": {
@@ -20531,6 +20608,34 @@
         ],
         "type": "string"
       },
+      "ApprovalOptionInputDto": {
+        "properties": {
+          "discountPct": {
+            "example": "5.00",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountOptionKind"
+              }
+            ],
+            "example": "standard"
+          },
+          "ratePct": {
+            "description": "co_fund / spiff only",
+            "example": "2.0000",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "discountPct"
+        ],
+        "type": "object"
+      },
       "ApprovalPolicyDto": {
         "properties": {
           "current": {
@@ -22671,6 +22776,33 @@
         ],
         "type": "string"
       },
+      "AuthorityWaterfallDto": {
+        "properties": {
+          "authorityLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesAuthorityColour"
+              }
+            ],
+            "description": "green = within a rep’s authority · amber = a sales manager decides · red = C-Level decides",
+            "example": "amber"
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesWaterfallAuthorityVisibility"
+              }
+            ],
+            "description": "`authority`: no figures — the authority colour only (reps, D-470)",
+            "example": "authority"
+          }
+        },
+        "required": [
+          "visibility",
+          "authorityLevel"
+        ],
+        "type": "object"
+      },
       "B2bCompanyDto": {
         "properties": {
           "id": {
@@ -22748,6 +22880,36 @@
           "b2b_webhooks.manage"
         ],
         "type": "string"
+      },
+      "BadDebtLineDto": {
+        "properties": {
+          "amount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "pct": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesBadDebtStatus"
+              }
+            ],
+            "description": "`not_applicable`: the customer pays before production · `not_set`: no rate for the credit grade yet (0)",
+            "example": "not_applicable"
+          }
+        },
+        "required": [
+          "pct",
+          "amount",
+          "status"
+        ],
+        "type": "object"
       },
       "BalanceLineDto": {
         "properties": {
@@ -41275,6 +41437,53 @@
         ],
         "type": "object"
       },
+      "DecideDiscountApprovalDto": {
+        "properties": {
+          "counter": {
+            "additionalProperties": true,
+            "description": "`counter`: the give-get conditions asked for instead",
+            "example": {
+              "depositPct": "50.00",
+              "quantityChange": 8000
+            },
+            "type": "object"
+          },
+          "decision": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDiscountDecision"
+              }
+            ],
+            "example": "approve"
+          },
+          "note": {
+            "description": "Required to reject or counter",
+            "example": "อนุมัติเมื่อมัดจำ 50%",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "options": {
+            "description": "`approve`: 1–3 options; the first must be `standard` (the agent’s full rate)",
+            "items": {
+              "$ref": "#/components/schemas/ApprovalOptionInputDto"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "type": "array"
+          },
+          "selfApprovalReason": {
+            "description": "D-449: a Superadmin deciding their own request under solo-owner mode",
+            "example": "อนุมัติเองระหว่างโหมดเจ้าของคนเดียว ไม่มีผู้อนุมัติอื่น",
+            "maxLength": 500,
+            "minLength": 10,
+            "type": "string"
+          }
+        },
+        "required": [
+          "decision"
+        ],
+        "type": "object"
+      },
       "DecideHeldAgentCommissionDto": {
         "properties": {
           "decision": {
@@ -44275,6 +44484,399 @@
         ],
         "type": "object"
       },
+      "DiscountApprovalDto": {
+        "properties": {
+          "agent": {
+            "$ref": "#/components/schemas/AgentRefDto"
+          },
+          "agentQuoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6023",
+            "format": "uuid",
+            "type": "string"
+          },
+          "authorityLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesAuthorityColour"
+              }
+            ],
+            "example": "amber"
+          },
+          "baseLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDiscountApprovalLevel"
+              }
+            ],
+            "example": "rep"
+          },
+          "counter": {
+            "additionalProperties": true,
+            "description": "Counter-offer conditions",
+            "example": null,
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decisionNote": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "dueAt": {
+            "example": "2026-11-03T14:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "escalatedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lead": {
+            "$ref": "#/components/schemas/AgentQuoteLeadRefDto"
+          },
+          "level": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDiscountApprovalLevel"
+              }
+            ],
+            "example": "sales_manager"
+          },
+          "negotiationHeavy": {
+            "description": "\"เจรจาราคาสูง\": the level was raised one step",
+            "example": true,
+            "type": "boolean"
+          },
+          "optionWaterfalls": {
+            "items": {
+              "$ref": "#/components/schemas/OptionWaterfallDto"
+            },
+            "type": "array"
+          },
+          "overdue": {
+            "example": false,
+            "type": "boolean"
+          },
+          "priceLocks": {
+            "description": "Factory buy-price locks — only in the full tier (absent otherwise)",
+            "items": {
+              "$ref": "#/components/schemas/PriceLockDto"
+            },
+            "type": "array"
+          },
+          "quote": {
+            "$ref": "#/components/schemas/DiscountApprovalQuoteRefDto"
+          },
+          "request": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountRequestDto"
+              }
+            ],
+            "description": "The round: give-get, evidence, options offered"
+          },
+          "requestId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestedBy": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "requestedPct": {
+            "example": "5.00",
+            "type": "string"
+          },
+          "round": {
+            "example": 1,
+            "type": "integer"
+          },
+          "selfApproved": {
+            "description": "\"อนุมัติด้วยตนเอง\" (D-449 solo-owner mode)",
+            "example": false,
+            "type": "boolean"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDiscountApprovalStatus"
+              }
+            ],
+            "example": "pending"
+          },
+          "validUntil": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "waterfall": {
+            "description": "The quote at the requested discount, in the viewer’s tier",
+            "discriminator": {
+              "mapping": {
+                "authority": "#/components/schemas/AuthorityWaterfallDto",
+                "full": "#/components/schemas/FullWaterfallDto",
+                "margin_pct": "#/components/schemas/MarginPctWaterfallDto"
+              },
+              "propertyName": "visibility"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AuthorityWaterfallDto"
+              },
+              {
+                "$ref": "#/components/schemas/MarginPctWaterfallDto"
+              },
+              {
+                "$ref": "#/components/schemas/FullWaterfallDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "level",
+          "baseLevel",
+          "authorityLevel",
+          "negotiationHeavy",
+          "requestedPct",
+          "round",
+          "requestId",
+          "agentQuoteId",
+          "quote",
+          "agent",
+          "lead",
+          "requestedBy",
+          "dueAt",
+          "overdue",
+          "escalatedAt",
+          "decidedBy",
+          "decidedAt",
+          "validUntil",
+          "createdAt",
+          "request",
+          "waterfall",
+          "optionWaterfalls",
+          "decisionNote",
+          "counter",
+          "selfApproved"
+        ],
+        "type": "object"
+      },
+      "DiscountApprovalQuoteRefDto": {
+        "properties": {
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6024",
+            "format": "uuid",
+            "type": "string"
+          },
+          "quoteCode": {
+            "example": "QT-2611-00042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "validUntil": {
+            "example": "2026-11-18T23:59:59+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "quoteCode",
+          "validUntil"
+        ],
+        "type": "object"
+      },
+      "DiscountApprovalSummaryDto": {
+        "properties": {
+          "agent": {
+            "$ref": "#/components/schemas/AgentRefDto"
+          },
+          "agentQuoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6023",
+            "format": "uuid",
+            "type": "string"
+          },
+          "authorityLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesAuthorityColour"
+              }
+            ],
+            "example": "amber"
+          },
+          "baseLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDiscountApprovalLevel"
+              }
+            ],
+            "example": "rep"
+          },
+          "createdAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "decidedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "decidedBy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/UserRefDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dueAt": {
+            "example": "2026-11-03T14:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "escalatedAt": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lead": {
+            "$ref": "#/components/schemas/AgentQuoteLeadRefDto"
+          },
+          "level": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDiscountApprovalLevel"
+              }
+            ],
+            "example": "sales_manager"
+          },
+          "negotiationHeavy": {
+            "description": "\"เจรจาราคาสูง\": the level was raised one step",
+            "example": true,
+            "type": "boolean"
+          },
+          "overdue": {
+            "example": false,
+            "type": "boolean"
+          },
+          "quote": {
+            "$ref": "#/components/schemas/DiscountApprovalQuoteRefDto"
+          },
+          "requestId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+            "format": "uuid",
+            "type": "string"
+          },
+          "requestedBy": {
+            "$ref": "#/components/schemas/UserRefDto"
+          },
+          "requestedPct": {
+            "example": "5.00",
+            "type": "string"
+          },
+          "round": {
+            "example": 1,
+            "type": "integer"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDiscountApprovalStatus"
+              }
+            ],
+            "example": "pending"
+          },
+          "validUntil": {
+            "example": null,
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "status",
+          "level",
+          "baseLevel",
+          "authorityLevel",
+          "negotiationHeavy",
+          "requestedPct",
+          "round",
+          "requestId",
+          "agentQuoteId",
+          "quote",
+          "agent",
+          "lead",
+          "requestedBy",
+          "dueAt",
+          "overdue",
+          "escalatedAt",
+          "decidedBy",
+          "decidedAt",
+          "validUntil",
+          "createdAt"
+        ],
+        "type": "object"
+      },
       "DiscountCapReason": {
         "enum": [
           "margin_floor",
@@ -44427,6 +45029,45 @@
           "company"
         ],
         "type": "string"
+      },
+      "DiscountSimulationDto": {
+        "properties": {
+          "level": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDiscountApprovalLevel"
+              }
+            ],
+            "example": "sales_manager"
+          },
+          "waterfall": {
+            "description": "Recomputed in the viewer’s tier; nothing is saved",
+            "discriminator": {
+              "mapping": {
+                "authority": "#/components/schemas/AuthorityWaterfallDto",
+                "full": "#/components/schemas/FullWaterfallDto",
+                "margin_pct": "#/components/schemas/MarginPctWaterfallDto"
+              },
+              "propertyName": "visibility"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AuthorityWaterfallDto"
+              },
+              {
+                "$ref": "#/components/schemas/MarginPctWaterfallDto"
+              },
+              {
+                "$ref": "#/components/schemas/FullWaterfallDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "level",
+          "waterfall"
+        ],
+        "type": "object"
       },
       "DiscountSource": {
         "enum": [
@@ -72154,6 +72795,139 @@
         ],
         "type": "object"
       },
+      "FullWaterfallDto": {
+        "properties": {
+          "authorityLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesAuthorityColour"
+              }
+            ],
+            "description": "green = within a rep’s authority · amber = a sales manager decides · red = C-Level decides",
+            "example": "amber"
+          },
+          "badDebtProvision": {
+            "$ref": "#/components/schemas/BadDebtLineDto"
+          },
+          "commissionAmount": {
+            "example": "30780.00",
+            "type": "string"
+          },
+          "commissionRatePct": {
+            "example": "3.0000",
+            "type": "string"
+          },
+          "contributionAfterCommission": {
+            "description": "\"กำไรหลังหักค่าคอม\" — contribution after commission",
+            "example": "50821.00",
+            "type": "string"
+          },
+          "contributionPct": {
+            "description": "กำไรหลังหักค่าคอม ÷ net revenue, %",
+            "example": "6.10",
+            "type": "string"
+          },
+          "creditCost": {
+            "description": "Credit cost estimate (management figure, not posted)",
+            "example": "11399.00",
+            "type": "string"
+          },
+          "creditCostPct": {
+            "example": "1.11",
+            "type": "string"
+          },
+          "discountAmount": {
+            "example": "54000.00",
+            "type": "string"
+          },
+          "discountPct": {
+            "example": "5.00",
+            "type": "string"
+          },
+          "factoryCost": {
+            "description": "Factory buy price (net)",
+            "example": "936000.00",
+            "type": "string"
+          },
+          "floorCheck": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesFloorCheck"
+              }
+            ],
+            "example": "pass"
+          },
+          "floorPct": {
+            "description": "Walk-away gross margin % of the product class",
+            "example": "10.00",
+            "type": "string"
+          },
+          "freeServices": {
+            "description": "Samples and free services given",
+            "example": "0.00",
+            "type": "string"
+          },
+          "grossMargin": {
+            "example": "93000.00",
+            "type": "string"
+          },
+          "grossMarginPct": {
+            "description": "Gross margin ÷ net revenue, %",
+            "example": "12.40",
+            "type": "string"
+          },
+          "listRevenue": {
+            "description": "List revenue before VAT, excluding shipping",
+            "example": "1080000.00",
+            "type": "string"
+          },
+          "netRevenue": {
+            "example": "1026000.00",
+            "type": "string"
+          },
+          "paymentFee": {
+            "$ref": "#/components/schemas/PaymentFeeLineDto"
+          },
+          "shippingDifference": {
+            "description": "Shipping charged − shipping paid (net)",
+            "example": "3000.00",
+            "type": "string"
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesWaterfallFullVisibility"
+              }
+            ],
+            "description": "`full`: every line (C-Level, VP, Director, Finance Manager, Superadmin)",
+            "example": "full"
+          }
+        },
+        "required": [
+          "visibility",
+          "authorityLevel",
+          "discountPct",
+          "grossMarginPct",
+          "contributionPct",
+          "floorPct",
+          "floorCheck",
+          "listRevenue",
+          "discountAmount",
+          "netRevenue",
+          "factoryCost",
+          "shippingDifference",
+          "paymentFee",
+          "freeServices",
+          "grossMargin",
+          "commissionRatePct",
+          "commissionAmount",
+          "creditCost",
+          "creditCostPct",
+          "badDebtProvision",
+          "contributionAfterCommission"
+        ],
+        "type": "object"
+      },
       "FunnelReportDto": {
         "properties": {
           "productType": {
@@ -78568,6 +79342,65 @@
         ],
         "type": "object"
       },
+      "MarginPctWaterfallDto": {
+        "properties": {
+          "authorityLevel": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesAuthorityColour"
+              }
+            ],
+            "description": "green = within a rep’s authority · amber = a sales manager decides · red = C-Level decides",
+            "example": "amber"
+          },
+          "contributionPct": {
+            "description": "กำไรหลังหักค่าคอม ÷ net revenue, %",
+            "example": "6.10",
+            "type": "string"
+          },
+          "discountPct": {
+            "example": "5.00",
+            "type": "string"
+          },
+          "floorCheck": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesFloorCheck"
+              }
+            ],
+            "example": "pass"
+          },
+          "floorPct": {
+            "description": "Walk-away gross margin % of the product class",
+            "example": "10.00",
+            "type": "string"
+          },
+          "grossMarginPct": {
+            "description": "Gross margin ÷ net revenue, %",
+            "example": "12.40",
+            "type": "string"
+          },
+          "visibility": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesWaterfallMarginPctVisibility"
+              }
+            ],
+            "description": "`margin_pct`: percentages and the floor check only (sales managers)",
+            "example": "margin_pct"
+          }
+        },
+        "required": [
+          "visibility",
+          "authorityLevel",
+          "discountPct",
+          "grossMarginPct",
+          "contributionPct",
+          "floorPct",
+          "floorCheck"
+        ],
+        "type": "object"
+      },
       "MarkSalesInboundContactedDto": {
         "properties": {
           "note": {
@@ -80509,6 +81342,19 @@
         ],
         "type": "string"
       },
+      "OpenDiscountApprovalDto": {
+        "properties": {
+          "discountRequestId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+            "format": "uuid",
+            "type": "string"
+          }
+        },
+        "required": [
+          "discountRequestId"
+        ],
+        "type": "object"
+      },
       "OpenThreadDto": {
         "properties": {
           "body": {
@@ -80690,6 +81536,56 @@
         "required": [
           "kind",
           "optionId"
+        ],
+        "type": "object"
+      },
+      "OptionWaterfallDto": {
+        "properties": {
+          "discountPct": {
+            "example": "5.00",
+            "type": "string"
+          },
+          "kind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentDiscountOptionKind"
+              }
+            ],
+            "example": "standard"
+          },
+          "optionId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6026",
+            "format": "uuid",
+            "type": "string"
+          },
+          "waterfall": {
+            "description": "In the viewer’s tier",
+            "discriminator": {
+              "mapping": {
+                "authority": "#/components/schemas/AuthorityWaterfallDto",
+                "full": "#/components/schemas/FullWaterfallDto",
+                "margin_pct": "#/components/schemas/MarginPctWaterfallDto"
+              },
+              "propertyName": "visibility"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/AuthorityWaterfallDto"
+              },
+              {
+                "$ref": "#/components/schemas/MarginPctWaterfallDto"
+              },
+              {
+                "$ref": "#/components/schemas/FullWaterfallDto"
+              }
+            ]
+          }
+        },
+        "required": [
+          "optionId",
+          "kind",
+          "discountPct",
+          "waterfall"
         ],
         "type": "object"
       },
@@ -84572,6 +85468,36 @@
         ],
         "type": "string"
       },
+      "PaymentFeeLineDto": {
+        "properties": {
+          "amount": {
+            "example": "0.00",
+            "type": "string"
+          },
+          "method": {
+            "example": "bank_transfer",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesFeeStatus"
+              }
+            ],
+            "description": "`not_set`: `payments.method_fees` has no fee for the method (counted as 0)",
+            "example": "not_set"
+          }
+        },
+        "required": [
+          "method",
+          "amount",
+          "status"
+        ],
+        "type": "object"
+      },
       "PaymentMethod": {
         "description": "D-458 the payment methods anyone can start a payment with now (feature flags, D-176) — instalments excluded (hidden until live, DECISIONS §3); the business page lists these and nothing else",
         "enum": [
@@ -88202,6 +89128,41 @@
           "factoryAcceptedAt",
           "factorySignedOffAt",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "PriceLockDto": {
+        "properties": {
+          "buyPrice": {
+            "description": "Factory buy price locked (net)",
+            "example": "936000.00",
+            "type": "string"
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7004",
+            "format": "uuid",
+            "type": "string"
+          },
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesFactoryPriceLockStatus"
+              }
+            ],
+            "description": "`requested`: the factory’s confirmation in the partner zone is not built yet (deferred)",
+            "example": "requested"
+          },
+          "validUntil": {
+            "example": "2026-11-10T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "buyPrice",
+          "status",
+          "validUntil"
         ],
         "type": "object"
       },
@@ -101069,6 +102030,24 @@
         ],
         "type": "string"
       },
+      "SalesAuthorityColour": {
+        "description": "green = within a rep’s authority · amber = a sales manager decides · red = C-Level decides",
+        "enum": [
+          "green",
+          "amber",
+          "red"
+        ],
+        "type": "string"
+      },
+      "SalesBadDebtStatus": {
+        "description": "`not_applicable`: the customer pays before production · `not_set`: no rate for the credit grade yet (0)",
+        "enum": [
+          "set",
+          "not_set",
+          "not_applicable"
+        ],
+        "type": "string"
+      },
       "SalesBreakdownDto": {
         "properties": {
           "gmv": {
@@ -101228,6 +102207,58 @@
           "openValue"
         ],
         "type": "object"
+      },
+      "SalesDiscountApprovalLevel": {
+        "enum": [
+          "rep",
+          "sales_manager",
+          "c_level"
+        ],
+        "type": "string"
+      },
+      "SalesDiscountApprovalStatus": {
+        "enum": [
+          "pending",
+          "approved",
+          "rejected",
+          "countered",
+          "stale",
+          "withdrawn"
+        ],
+        "type": "string"
+      },
+      "SalesDiscountDecision": {
+        "enum": [
+          "approve",
+          "reject",
+          "counter"
+        ],
+        "type": "string"
+      },
+      "SalesFactoryPriceLockStatus": {
+        "description": "`requested`: the factory’s confirmation in the partner zone is not built yet (deferred)",
+        "enum": [
+          "requested",
+          "confirmed",
+          "expired",
+          "released"
+        ],
+        "type": "string"
+      },
+      "SalesFeeStatus": {
+        "description": "`not_set`: `payments.method_fees` has no fee for the method (counted as 0)",
+        "enum": [
+          "set",
+          "not_set"
+        ],
+        "type": "string"
+      },
+      "SalesFloorCheck": {
+        "enum": [
+          "pass",
+          "fail"
+        ],
+        "type": "string"
       },
       "SalesFunnelStage": {
         "enum": [
@@ -101891,6 +102922,43 @@
           "samples"
         ],
         "type": "object"
+      },
+      "SalesWaterfallAuthorityVisibility": {
+        "description": "`authority`: no figures — the authority colour only (reps, D-470)",
+        "enum": [
+          "authority"
+        ],
+        "type": "string"
+      },
+      "SalesWaterfallFullVisibility": {
+        "description": "`full`: every line (C-Level, VP, Director, Finance Manager, Superadmin)",
+        "enum": [
+          "full"
+        ],
+        "type": "string"
+      },
+      "SalesWaterfallMarginPctVisibility": {
+        "description": "`margin_pct`: percentages and the floor check only (sales managers)",
+        "enum": [
+          "margin_pct"
+        ],
+        "type": "string"
+      },
+      "SalesWaterfallTier": {
+        "enum": [
+          "authority",
+          "margin_pct",
+          "full"
+        ],
+        "type": "string"
+      },
+      "SalesWaterfallViewPurpose": {
+        "enum": [
+          "view",
+          "simulate",
+          "export"
+        ],
+        "type": "string"
       },
       "SampleCreditDto": {
         "properties": {
@@ -107437,6 +108505,54 @@
           "signatoryId",
           "stampSeal",
           "changedAt"
+        ],
+        "type": "object"
+      },
+      "SimulateDiscountApprovalDto": {
+        "properties": {
+          "creditDays": {
+            "description": "Credit days after delivery",
+            "example": 30,
+            "maximum": 180,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "depositPct": {
+            "example": "50.00",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "discountPct": {
+            "example": "5.00",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": "string"
+          },
+          "freeServicesAmount": {
+            "description": "Samples / free services given",
+            "example": "1500.00",
+            "pattern": "^\\d{1,12}(\\.\\d{1,2})?$",
+            "type": "string"
+          },
+          "paymentMethod": {
+            "example": "bank_transfer",
+            "maxLength": 40,
+            "type": "string"
+          },
+          "paymentTemplateKey": {
+            "description": "A payment schedule template key (D-020)",
+            "example": "deposit_50",
+            "maxLength": 64,
+            "type": "string"
+          },
+          "ratePct": {
+            "description": "Co-fund (lower) or spiff (higher) rate",
+            "example": "2.0000",
+            "pattern": "^\\d{1,2}(\\.\\d{1,4})?$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "discountPct"
         ],
         "type": "object"
       },
@@ -126633,6 +127749,70 @@
           "article"
         ],
         "type": "string"
+      },
+      "WaterfallViewDto": {
+        "properties": {
+          "approvalId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7005",
+            "format": "uuid",
+            "type": "string"
+          },
+          "purpose": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesWaterfallViewPurpose"
+              }
+            ],
+            "example": "view"
+          },
+          "quoteCode": {
+            "example": "QT-2611-00042",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "quoteId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6024",
+            "format": "uuid",
+            "type": "string"
+          },
+          "tier": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesWaterfallTier"
+              }
+            ],
+            "example": "full"
+          },
+          "viewedAt": {
+            "example": "2026-11-03T10:12:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "viewer": {
+            "$ref": "#/components/schemas/UserRefDto"
+          }
+        },
+        "required": [
+          "id",
+          "viewer",
+          "quoteId",
+          "quoteCode",
+          "approvalId",
+          "tier",
+          "purpose",
+          "viewedAt"
+        ],
+        "type": "object"
       },
       "WebPushKeysDto": {
         "properties": {
@@ -335738,6 +336918,2097 @@
         ],
         "x-required-permissions": [
           "sales.pipeline.manage"
+        ]
+      }
+    },
+    "/v1/admin/sales/discount-approvals": {
+      "get": {
+        "description": "The queue with the SLA (`dueAt`, `overdue`, escalation), level and authority colour; no figures. A rep sees their own requests and those their level may decide; `awaitingMe` = pending ones I may decide (D-470).\n\nImplements: D-470, D-468, D-449, D-141.",
+        "operationId": "admin.discountApprovals.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesDiscountApprovalStatus"
+            }
+          },
+          {
+            "in": "query",
+            "name": "level",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesDiscountApprovalLevel"
+            }
+          },
+          {
+            "description": "Pending approvals I may decide (not my own requests)",
+            "in": "query",
+            "name": "awaitingMe",
+            "required": false,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "agent": {
+                        "code": "K7QX2MAP",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                        "kind": "freelance",
+                        "legalName": "สมชาย ขายเก่ง"
+                      },
+                      "agentQuoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6023",
+                      "authorityLevel": "amber",
+                      "baseLevel": "rep",
+                      "createdAt": "2026-11-03T10:00:00+07:00",
+                      "decidedAt": null,
+                      "decidedBy": null,
+                      "dueAt": "2026-11-03T14:00:00+07:00",
+                      "escalatedAt": null,
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+                      "lead": {
+                        "contactName": "คุณมานี ใจดี",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                        "organisationName": "ร้านกาแฟบ้านสวน"
+                      },
+                      "level": "sales_manager",
+                      "negotiationHeavy": true,
+                      "overdue": false,
+                      "quote": {
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6024",
+                        "quoteCode": "QT-2611-00042",
+                        "validUntil": "2026-11-18T23:59:59+07:00"
+                      },
+                      "requestId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                      "requestedBy": {
+                        "displayName": "สมชาย ขายเก่ง",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6010"
+                      },
+                      "requestedPct": "5.00",
+                      "round": 1,
+                      "status": "pending",
+                      "validUntil": null
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/DiscountApprovalSummaryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List discount approvals",
+        "tags": [
+          "admin.discountApprovals"
+        ],
+        "x-required-permissions": [
+          "discount_approvals.read"
+        ]
+      },
+      "post": {
+        "description": "Normally automatic when an agent or rep asks; by hand for a request opened before or while a cost was unknown. Every quoted quantity needs a buy price (price list, rate card or factory RFQ answer) — else `discount_approval.cost_unknown` and nothing opens (D-470).\n\nImplements: D-470, D-468, D-449, D-141.",
+        "operationId": "admin.discountApprovals.open",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "discountRequestId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/OpenDiscountApprovalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "agentQuoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6023",
+                  "authorityLevel": "amber",
+                  "baseLevel": "rep",
+                  "counter": null,
+                  "createdAt": "2026-11-03T10:00:00+07:00",
+                  "decidedAt": null,
+                  "decidedBy": null,
+                  "decisionNote": null,
+                  "dueAt": "2026-11-03T14:00:00+07:00",
+                  "escalatedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+                  "lead": {
+                    "contactName": "คุณมานี ใจดี",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                    "organisationName": "ร้านกาแฟบ้านสวน"
+                  },
+                  "level": "sales_manager",
+                  "negotiationHeavy": true,
+                  "optionWaterfalls": [],
+                  "overdue": false,
+                  "priceLocks": [],
+                  "quote": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6024",
+                    "quoteCode": "QT-2611-00042",
+                    "validUntil": "2026-11-18T23:59:59+07:00"
+                  },
+                  "request": {
+                    "cashWithinDays": null,
+                    "commitment": "one_off",
+                    "commitmentMonths": null,
+                    "competitorFile": {
+                      "fileName": "quotation-other.pdf",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029"
+                    },
+                    "competitorSpec": {
+                      "boardGrade": "KA125/CA125",
+                      "flute": "B",
+                      "price": "42500.00",
+                      "quantity": 5000,
+                      "vatIncluded": true
+                    },
+                    "createdAt": "2026-10-18T15:00:00+07:00",
+                    "decidedAt": null,
+                    "decisionNote": null,
+                    "depositPct": "50.0000",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                    "leadTimeFlexDays": null,
+                    "options": [],
+                    "quantity": 5000,
+                    "quantityChange": 8000,
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6030",
+                    "reason": "competitor_price",
+                    "reasonNote": null,
+                    "requestedPct": "6.0000",
+                    "round": 1,
+                    "specChange": null,
+                    "status": "open"
+                  },
+                  "requestId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                  "requestedBy": {
+                    "displayName": "สมชาย ขายเก่ง",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6010"
+                  },
+                  "requestedPct": "5.00",
+                  "round": 1,
+                  "selfApproved": false,
+                  "status": "pending",
+                  "validUntil": null,
+                  "waterfall": {
+                    "authorityLevel": "red",
+                    "badDebtProvision": {
+                      "amount": "0.00",
+                      "pct": null,
+                      "status": "not_applicable"
+                    },
+                    "commissionAmount": "30780.00",
+                    "commissionRatePct": "3.0000",
+                    "contributionAfterCommission": "50821.00",
+                    "contributionPct": "4.95",
+                    "creditCost": "11399.00",
+                    "creditCostPct": "1.11",
+                    "discountAmount": "54000.00",
+                    "discountPct": "5.00",
+                    "factoryCost": "936000.00",
+                    "floorCheck": "fail",
+                    "floorPct": "10.00",
+                    "freeServices": "0.00",
+                    "grossMargin": "93000.00",
+                    "grossMarginPct": "9.06",
+                    "listRevenue": "1080000.00",
+                    "netRevenue": "1026000.00",
+                    "paymentFee": {
+                      "amount": "0.00",
+                      "method": "bank_transfer",
+                      "status": "not_set"
+                    },
+                    "shippingDifference": "3000.00",
+                    "visibility": "full"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountApprovalDto"
+                }
+              }
+            },
+            "description": "Approval",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.discount_request_closed": {
+                    "$ref": "#/components/examples/problem.agents.discount_request_closed"
+                  },
+                  "discount_approval.already_open": {
+                    "$ref": "#/components/examples/problem.discount_approval.already_open"
+                  },
+                  "discount_approval.cost_unknown": {
+                    "$ref": "#/components/examples/problem.discount_approval.cost_unknown"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.discount_request_closed`, `discount_approval.already_open`, `discount_approval.cost_unknown`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Open the approval of a discount request",
+        "tags": [
+          "admin.discountApprovals"
+        ],
+        "x-required-permissions": [
+          "discount_approvals.decide"
+        ]
+      }
+    },
+    "/v1/admin/sales/discount-approvals/views": {
+      "get": {
+        "description": "Who was shown which quote’s waterfall, when, in which tier and why (view, simulate, export) — newest first, append-only (D-470, like D-444).\n\nImplements: D-470, D-444.",
+        "operationId": "admin.discountApprovals.listViews",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "One quote",
+            "in": "query",
+            "name": "quoteId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "description": "One viewer (staff user)",
+            "in": "query",
+            "name": "viewerId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "approvalId": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7005",
+                      "purpose": "view",
+                      "quoteCode": "QT-2611-00042",
+                      "quoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6024",
+                      "tier": "full",
+                      "viewedAt": "2026-11-03T10:12:00+07:00",
+                      "viewer": {
+                        "displayName": "สมหญิง ขายดี",
+                        "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
+                      }
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/WaterfallViewDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Read the waterfall access log",
+        "tags": [
+          "admin.discountApprovals"
+        ],
+        "x-required-permissions": [
+          "sales_waterfall_views.read"
+        ]
+      }
+    },
+    "/v1/admin/sales/discount-approvals/{approvalId}": {
+      "get": {
+        "description": "The round (give-get, competitor evidence), the quote’s waterfall at the requested discount and one per offered option — each in the viewer’s tier (`visibility` authority | margin_pct | full); factory price locks only in the full tier. The view is logged (D-470).\n\nImplements: D-470, D-468, D-449, D-141.",
+        "operationId": "admin.discountApprovals.get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "approvalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "agentQuoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6023",
+                  "authorityLevel": "amber",
+                  "baseLevel": "rep",
+                  "counter": null,
+                  "createdAt": "2026-11-03T10:00:00+07:00",
+                  "decidedAt": null,
+                  "decidedBy": null,
+                  "decisionNote": null,
+                  "dueAt": "2026-11-03T14:00:00+07:00",
+                  "escalatedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+                  "lead": {
+                    "contactName": "คุณมานี ใจดี",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                    "organisationName": "ร้านกาแฟบ้านสวน"
+                  },
+                  "level": "sales_manager",
+                  "negotiationHeavy": true,
+                  "optionWaterfalls": [],
+                  "overdue": false,
+                  "priceLocks": [],
+                  "quote": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6024",
+                    "quoteCode": "QT-2611-00042",
+                    "validUntil": "2026-11-18T23:59:59+07:00"
+                  },
+                  "request": {
+                    "cashWithinDays": null,
+                    "commitment": "one_off",
+                    "commitmentMonths": null,
+                    "competitorFile": {
+                      "fileName": "quotation-other.pdf",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029"
+                    },
+                    "competitorSpec": {
+                      "boardGrade": "KA125/CA125",
+                      "flute": "B",
+                      "price": "42500.00",
+                      "quantity": 5000,
+                      "vatIncluded": true
+                    },
+                    "createdAt": "2026-10-18T15:00:00+07:00",
+                    "decidedAt": null,
+                    "decisionNote": null,
+                    "depositPct": "50.0000",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                    "leadTimeFlexDays": null,
+                    "options": [],
+                    "quantity": 5000,
+                    "quantityChange": 8000,
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6030",
+                    "reason": "competitor_price",
+                    "reasonNote": null,
+                    "requestedPct": "6.0000",
+                    "round": 1,
+                    "specChange": null,
+                    "status": "open"
+                  },
+                  "requestId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                  "requestedBy": {
+                    "displayName": "สมชาย ขายเก่ง",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6010"
+                  },
+                  "requestedPct": "5.00",
+                  "round": 1,
+                  "selfApproved": false,
+                  "status": "pending",
+                  "validUntil": null,
+                  "waterfall": {
+                    "authorityLevel": "red",
+                    "badDebtProvision": {
+                      "amount": "0.00",
+                      "pct": null,
+                      "status": "not_applicable"
+                    },
+                    "commissionAmount": "30780.00",
+                    "commissionRatePct": "3.0000",
+                    "contributionAfterCommission": "50821.00",
+                    "contributionPct": "4.95",
+                    "creditCost": "11399.00",
+                    "creditCostPct": "1.11",
+                    "discountAmount": "54000.00",
+                    "discountPct": "5.00",
+                    "factoryCost": "936000.00",
+                    "floorCheck": "fail",
+                    "floorPct": "10.00",
+                    "freeServices": "0.00",
+                    "grossMargin": "93000.00",
+                    "grossMarginPct": "9.06",
+                    "listRevenue": "1080000.00",
+                    "netRevenue": "1026000.00",
+                    "paymentFee": {
+                      "amount": "0.00",
+                      "method": "bank_transfer",
+                      "status": "not_set"
+                    },
+                    "shippingDifference": "3000.00",
+                    "visibility": "full"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountApprovalDto"
+                }
+              }
+            },
+            "description": "Approval",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "discount_approval.cost_unknown": {
+                    "$ref": "#/components/examples/problem.discount_approval.cost_unknown"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `discount_approval.cost_unknown`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Get a discount approval with its waterfall",
+        "tags": [
+          "admin.discountApprovals"
+        ],
+        "x-required-permissions": [
+          "discount_approvals.read"
+        ]
+      }
+    },
+    "/v1/admin/sales/discount-approvals/{approvalId}/actions/decide": {
+      "post": {
+        "description": "`approve` with 1–3 options (the first `standard` at the agent’s full rate; co-fund lower, spiff higher — each within my level) — they are offered to the agent valid `quotes.discounted_validity_days`; a big deal also locks the factory buy price. `reject` / `counter` need a note (counter: the give-get asked instead). The requester never decides; a Superadmin may self-approve only under solo-owner mode with a typed reason (D-449, flagged). A changed quote voids the approval (`discount_approval.stale`) (D-470).\n\nImplements: D-470, D-468, D-449, D-141.",
+        "operationId": "admin.discountApprovals.decide",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "approvalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/IdempotencyKey"
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "approve": {
+                  "value": {
+                    "decision": "approve",
+                    "note": "อนุมัติเมื่อมัดจำ 50%",
+                    "options": [
+                      {
+                        "discountPct": "3.00",
+                        "kind": "standard"
+                      },
+                      {
+                        "discountPct": "5.00",
+                        "kind": "co_fund",
+                        "ratePct": "2.0000"
+                      }
+                    ]
+                  }
+                },
+                "counter": {
+                  "value": {
+                    "counter": {
+                      "depositPct": "50.00"
+                    },
+                    "decision": "counter",
+                    "note": "ได้ถ้ามัดจำ 50%"
+                  }
+                },
+                "reject": {
+                  "value": {
+                    "decision": "reject",
+                    "note": "ต่ำกว่าเส้นขั้นต่ำ"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DecideDiscountApprovalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "agent": {
+                    "code": "K7QX2MAP",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6001",
+                    "kind": "freelance",
+                    "legalName": "สมชาย ขายเก่ง"
+                  },
+                  "agentQuoteId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6023",
+                  "authorityLevel": "amber",
+                  "baseLevel": "rep",
+                  "counter": null,
+                  "createdAt": "2026-11-03T10:00:00+07:00",
+                  "decidedAt": null,
+                  "decidedBy": null,
+                  "decisionNote": null,
+                  "dueAt": "2026-11-03T14:00:00+07:00",
+                  "escalatedAt": null,
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7003",
+                  "lead": {
+                    "contactName": "คุณมานี ใจดี",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
+                    "organisationName": "ร้านกาแฟบ้านสวน"
+                  },
+                  "level": "sales_manager",
+                  "negotiationHeavy": true,
+                  "optionWaterfalls": [],
+                  "overdue": false,
+                  "priceLocks": [],
+                  "quote": {
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6024",
+                    "quoteCode": "QT-2611-00042",
+                    "validUntil": "2026-11-18T23:59:59+07:00"
+                  },
+                  "request": {
+                    "cashWithinDays": null,
+                    "commitment": "one_off",
+                    "commitmentMonths": null,
+                    "competitorFile": {
+                      "fileName": "quotation-other.pdf",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029"
+                    },
+                    "competitorSpec": {
+                      "boardGrade": "KA125/CA125",
+                      "flute": "B",
+                      "price": "42500.00",
+                      "quantity": 5000,
+                      "vatIncluded": true
+                    },
+                    "createdAt": "2026-10-18T15:00:00+07:00",
+                    "decidedAt": null,
+                    "decisionNote": null,
+                    "depositPct": "50.0000",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                    "leadTimeFlexDays": null,
+                    "options": [],
+                    "quantity": 5000,
+                    "quantityChange": 8000,
+                    "quoteOptionId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6030",
+                    "reason": "competitor_price",
+                    "reasonNote": null,
+                    "requestedPct": "6.0000",
+                    "round": 1,
+                    "specChange": null,
+                    "status": "open"
+                  },
+                  "requestId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6025",
+                  "requestedBy": {
+                    "displayName": "สมชาย ขายเก่ง",
+                    "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a6010"
+                  },
+                  "requestedPct": "5.00",
+                  "round": 1,
+                  "selfApproved": false,
+                  "status": "approved",
+                  "validUntil": null,
+                  "waterfall": {
+                    "authorityLevel": "red",
+                    "badDebtProvision": {
+                      "amount": "0.00",
+                      "pct": null,
+                      "status": "not_applicable"
+                    },
+                    "commissionAmount": "30780.00",
+                    "commissionRatePct": "3.0000",
+                    "contributionAfterCommission": "50821.00",
+                    "contributionPct": "4.95",
+                    "creditCost": "11399.00",
+                    "creditCostPct": "1.11",
+                    "discountAmount": "54000.00",
+                    "discountPct": "5.00",
+                    "factoryCost": "936000.00",
+                    "floorCheck": "fail",
+                    "floorPct": "10.00",
+                    "freeServices": "0.00",
+                    "grossMargin": "93000.00",
+                    "grossMarginPct": "9.06",
+                    "listRevenue": "1080000.00",
+                    "netRevenue": "1026000.00",
+                    "paymentFee": {
+                      "amount": "0.00",
+                      "method": "bank_transfer",
+                      "status": "not_set"
+                    },
+                    "shippingDifference": "3000.00",
+                    "visibility": "full"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountApprovalDto"
+                }
+              }
+            },
+            "description": "Approval",
+            "headers": {
+              "Idempotent-Replayed": {
+                "$ref": "#/components/headers/IdempotentReplayed"
+              },
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  },
+                  "idempotency.key_invalid": {
+                    "$ref": "#/components/examples/problem.idempotency.key_invalid"
+                  },
+                  "idempotency.key_required": {
+                    "$ref": "#/components/examples/problem.idempotency.key_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`, `idempotency.key_invalid`, `idempotency.key_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  },
+                  "discount_approval.not_authorised": {
+                    "$ref": "#/components/examples/problem.discount_approval.not_authorised"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`, `discount_approval.not_authorised`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.discount_request_closed": {
+                    "$ref": "#/components/examples/problem.agents.discount_request_closed"
+                  },
+                  "discount_approval.cost_unknown": {
+                    "$ref": "#/components/examples/problem.discount_approval.cost_unknown"
+                  },
+                  "discount_approval.not_pending": {
+                    "$ref": "#/components/examples/problem.discount_approval.not_pending"
+                  },
+                  "discount_approval.self_approval": {
+                    "$ref": "#/components/examples/problem.discount_approval.self_approval"
+                  },
+                  "discount_approval.stale": {
+                    "$ref": "#/components/examples/problem.discount_approval.stale"
+                  },
+                  "idempotency.in_progress": {
+                    "$ref": "#/components/examples/problem.idempotency.in_progress"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.discount_request_closed`, `discount_approval.cost_unknown`, `discount_approval.not_pending`, `discount_approval.self_approval`, `discount_approval.stale`, `idempotency.in_progress`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "idempotency.key_reused": {
+                    "$ref": "#/components/examples/problem.idempotency.key_reused"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `idempotency.key_reused`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Approve, reject or counter a discount",
+        "tags": [
+          "admin.discountApprovals"
+        ],
+        "x-required-permissions": [
+          "discount_approvals.decide"
+        ]
+      }
+    },
+    "/v1/admin/sales/discount-approvals/{approvalId}/actions/simulate": {
+      "post": {
+        "description": "Recomputes the waterfall and the level for a discount %, credit days, a payment schedule template, a deposit, a co-fund / spiff rate, the payment method and free services — in the viewer’s tier. Nothing is saved; the simulation is logged (D-470).\n\nImplements: D-470, D-468, D-449, D-141.",
+        "operationId": "admin.discountApprovals.simulate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "approvalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "creditDays": 30,
+                    "discountPct": "4.00",
+                    "ratePct": "2.5000"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/SimulateDiscountApprovalDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "level": "sales_manager",
+                  "waterfall": {
+                    "authorityLevel": "red",
+                    "badDebtProvision": {
+                      "amount": "0.00",
+                      "pct": null,
+                      "status": "not_applicable"
+                    },
+                    "commissionAmount": "30780.00",
+                    "commissionRatePct": "3.0000",
+                    "contributionAfterCommission": "50821.00",
+                    "contributionPct": "4.95",
+                    "creditCost": "11399.00",
+                    "creditCostPct": "1.11",
+                    "discountAmount": "54000.00",
+                    "discountPct": "5.00",
+                    "factoryCost": "936000.00",
+                    "floorCheck": "fail",
+                    "floorPct": "10.00",
+                    "freeServices": "0.00",
+                    "grossMargin": "93000.00",
+                    "grossMarginPct": "9.06",
+                    "listRevenue": "1080000.00",
+                    "netRevenue": "1026000.00",
+                    "paymentFee": {
+                      "amount": "0.00",
+                      "method": "bank_transfer",
+                      "status": "not_set"
+                    },
+                    "shippingDifference": "3000.00",
+                    "visibility": "full"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DiscountSimulationDto"
+                }
+              }
+            },
+            "description": "Simulation",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "discount_approval.cost_unknown": {
+                    "$ref": "#/components/examples/problem.discount_approval.cost_unknown"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `discount_approval.cost_unknown`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Simulate a discount, credit terms or a co-fund rate",
+        "tags": [
+          "admin.discountApprovals"
+        ],
+        "x-required-permissions": [
+          "discount_approvals.read"
+        ]
+      }
+    },
+    "/v1/admin/sales/discount-approvals/{approvalId}/export": {
+      "get": {
+        "description": "Finance only (`discount_approvals.export`): the full waterfall of the quote and of every offered option behind a 5-minute link; logged as a view (export) and audited (D-470).\n\nImplements: D-470, D-468, D-449, D-141.",
+        "operationId": "admin.discountApprovals.export",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "approvalId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-11-03T10:05:00+07:00",
+                  "url": "https://getpack-files.s3.example.com/…"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Download link",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export a deal’s full waterfall as CSV",
+        "tags": [
+          "admin.discountApprovals"
+        ],
+        "x-required-permissions": [
+          "discount_approvals.export"
         ]
       }
     },
@@ -612941,6 +616212,10 @@
     {
       "description": "Dieline downloads of any style variant with an approved recipe, for staff (D-271, D-270).",
       "name": "admin.dielines"
+    },
+    {
+      "description": "The discount approval & price lock desk: queue with SLA, the deal waterfall in the viewer’s tier, simulator, decisions, the waterfall access log (D-470).",
+      "name": "admin.discountApprovals"
     },
     {
       "description": "Discounts above the CS limit, routed to the matching tier only; company discounts (D-052, D-124, D-162).",
