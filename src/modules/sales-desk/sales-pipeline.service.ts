@@ -41,7 +41,7 @@ export class SalesPipelineService {
     };
     const dir = q.order === SortOrder.Asc ? 'asc' : 'desc';
     const orderBy: Prisma.SalesAgentLeadOrderByWithRelationInput[] = [
-      q.sort === 'nextFollowUpAt' || q.sort === 'expectedValue'
+      q.sort === 'nextFollowUpAt' || q.sort === 'expectedValue' || q.sort === 'score'
         ? { [q.sort]: { sort: dir, nulls: 'last' } }
         : { [q.sort]: dir },
       { id: dir },

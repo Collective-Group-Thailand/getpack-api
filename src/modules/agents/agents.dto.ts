@@ -1,6 +1,7 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { StoreFaqDto } from '@modules/catalog/store/store-catalog.dto';
+import { SCORE_REASONS } from '@modules/sales-desk/lead-scoring';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
 import { Type } from 'class-transformer';
@@ -1172,6 +1173,15 @@ export class RegisterAgentLeadDto {
   tags?: string[];
 }
 
+/** D-471: one reason behind a lead score (staff only). */
+export class SalesScoreReasonDto {
+  @ApiProperty({ enum: SCORE_REASONS, enumName: 'SalesScoreReason', example: 'company_email_domain' })
+  reason!: string;
+
+  @ApiProperty({ example: 15, description: 'Points the reason added (negative: taken off)' })
+  points!: number;
+}
+
 export class AgentLeadDto {
   @IdField(AGENT_IDS.lead)
   id!: string;
@@ -1259,9 +1269,30 @@ export class AgentLeadDto {
 
   @TimestampField('2026-10-18T09:30:00+07:00')
   updatedAt!: string;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    minimum: 0,
+    maximum: 100,
+    example: 62,
+    description:
+      'D-471 lead score 0–100 (null until scored). The score only: the reasons are for getpack staff',
+  })
+  score!: number | null;
 }
 
 export class AdminAgentLeadDto extends AgentLeadDto {
+  @ApiProperty({
+    type: () => SalesScoreReasonDto,
+    isArray: true,
+    description: 'D-471 the top 3 reasons of the score (staff only)',
+  })
+  scoreReasons!: SalesScoreReasonDto[];
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-10-18T10:00:00+07:00' })
+  scoredAt!: string | null;
+
   @ApiProperty({ enum: LEAD_KINDS, enumName: 'AgentLeadKind', example: 'customer' })
   declare kind: string;
 
@@ -1304,6 +1335,7 @@ export const LEAD_EXAMPLE: AgentLeadDto = {
   tags: ['เบเกอรี่', 'รายเดือน'],
   wonAt: null,
   updatedAt: '2026-10-18T09:30:00+07:00',
+  score: 62,
 };
 
 export const ADMIN_LEAD_EXAMPLE: AdminAgentLeadDto = {
@@ -1312,6 +1344,12 @@ export const ADMIN_LEAD_EXAMPLE: AdminAgentLeadDto = {
   convertedCustomerId: null,
   convertedCompanyId: null,
   convertedFactoryId: null,
+  scoreReasons: [
+    { reason: 'company_email_domain', points: 15 },
+    { reason: 'recency', points: 10 },
+    { reason: 'value_band', points: 5 },
+  ],
+  scoredAt: '2026-10-18T10:00:00+07:00',
 };
 
 export class LeadListQuery extends PageQuery {

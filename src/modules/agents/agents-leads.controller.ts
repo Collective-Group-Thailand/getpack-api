@@ -59,7 +59,7 @@ import {
 } from './agents-pipeline.dto';
 import { leadDto } from './agents-views';
 
-const DECISIONS = ['D-417', 'D-440', 'D-468'];
+const DECISIONS = ['D-417', 'D-440', 'D-468', 'D-471'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'validation.failed'] as const;
 const AGENT_ERRORS = ['agents.not_agent', 'agents.ended'] as const;
 
@@ -170,8 +170,8 @@ export class StoreAgentLeadsController {
     summary: 'List my lead pipeline',
     description:
       'My customer leads with stage, value, next follow-up and protection; views for the agent zone tabs (open, ' +
-      'follow-up today, protection ending, closed), filters by stage, source, due and text; sorted with a cursor ' +
-      '(D-468).',
+      'follow-up today, protection ending, closed), filters by stage, source, due, minimum score and text; sorted ' +
+      'with a cursor (D-468). Each lead carries its score 0–100 only (D-471: the reasons stay with getpack staff).',
     implements: DECISIONS,
   })
   @ApiCursorPaginated(AgentLeadDto, { example: LEAD_EXAMPLE })

@@ -369,3 +369,47 @@ describe('the sales desk and its waterfall stay off the store surface (D-469, D-
     for (const { path, id } of desk) expect([id, path.startsWith('/v1/admin/sales/')]).toEqual([id, true]);
   });
 });
+
+/**
+ * D-471 (Phase 5): the lead score is a staff tool. Agents see the score of their own leads only — never the reasons,
+ * the rules or when it was computed — and no store response reaches the reasons. The free dieline download without
+ * sign-in is a store operation like the others (every check above applies to it).
+ */
+describe('lead scores stay with staff; agents see the score only (D-471)', () => {
+  const storeOps = Object.entries(contract.paths)
+    .filter(([path]) => path.startsWith('/v1/store/'))
+    .flatMap(([, ops]) => Object.values(ops));
+  const REASONS = /scoreReasons|scoredAt|SalesScoreReason|scoringRules|consentBasis|consentRecord/;
+
+  it('reaches no score reason, rule or consent basis from any store response', () => {
+    const leaks: string[] = [];
+    for (const operation of storeOps)
+      for (const [status, response] of Object.entries(operation.responses ?? {})) {
+        for (const field of fieldsOf(response))
+          if (REASONS.test(field)) leaks.push(`${operation.operationId} ${status}: ${field}`);
+        if (status.startsWith('2'))
+          for (const key of exampleKeysOf(response))
+            if (REASONS.test(key)) leaks.push(`${operation.operationId} ${status}: ${key}`);
+      }
+    expect([...new Set(leaks)]).toEqual([]);
+  });
+
+  it('gives the agent the score of their own leads', () => {
+    const list = contract.paths['/v1/store/agent/leads']?.['get'];
+    expect(fieldsOf(list?.responses?.['200']).some((f) => f.split('.').pop() === 'score')).toBe(true);
+  });
+
+  it('keeps the reasons on the staff lead and inbound schemas', () => {
+    const schemas = contract.components.schemas as Record<string, { properties?: Record<string, unknown> }>;
+    expect(Object.keys(schemas['AdminAgentLeadDto']?.properties ?? {})).toContain('scoreReasons');
+    expect(Object.keys(schemas['SalesInboundDto']?.properties ?? {})).toContain('scoreReasons');
+    expect(Object.keys(schemas['AgentLeadDto']?.properties ?? {})).not.toContain('scoreReasons');
+  });
+
+  it('publishes the free dieline download on the store surface without a paywall word', () => {
+    const op = contract.paths['/v1/store/dielines/downloads/free']?.['post'];
+    expect(op?.operationId).toBe('store.dielines.downloadFree');
+    expect(JSON.stringify(op)).toContain('dielines.sign_in_required');
+    expect(JSON.stringify(op)).not.toMatch(/paywall|฿0|price|plan required/i);
+  });
+});

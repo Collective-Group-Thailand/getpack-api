@@ -60,7 +60,7 @@ import {
 import { SalesPipelineService } from './sales-pipeline.service';
 import { SalesScopeService } from './sales-scope';
 
-const DECISIONS = ['D-469', 'D-468', 'D-417', 'D-440'];
+const DECISIONS = ['D-469', 'D-468', 'D-417', 'D-440', 'D-471'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'validation.failed'] as const;
 const SCOPE_ERRORS = ['sales.no_employee_agent'] as const;
 

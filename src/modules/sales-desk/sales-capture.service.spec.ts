@@ -69,6 +69,7 @@ describe('SalesCaptureService (D-471)', () => {
       settings as never,
       inbound as never,
       attribution as never,
+      { scoreInbound: jest.fn().mockResolvedValue({ score: 40, reasons: [] }) } as never,
       events as never,
       activity,
     );

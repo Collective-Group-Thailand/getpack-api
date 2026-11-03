@@ -85,7 +85,7 @@ export class AgentLeadsService {
     const where = leadListWhere(agent.id, q, now);
     const dir = q.order === SortOrder.Asc ? 'asc' : 'desc';
     const orderBy: Prisma.SalesAgentLeadOrderByWithRelationInput[] = [
-      q.sort === 'nextFollowUpAt' || q.sort === 'expectedValue'
+      q.sort === 'nextFollowUpAt' || q.sort === 'expectedValue' || q.sort === 'score'
         ? { [q.sort]: { sort: dir, nulls: 'last' } }
         : { [q.sort]: dir },
       { id: dir },
@@ -633,7 +633,7 @@ export function decodeLeadCursor(cursor: string): string {
 /** The list filters (pure; unit-tested). */
 export function leadListWhere(
   agentId: bigint,
-  q: Pick<AgentLeadListQuery, 'view' | 'stage' | 'source' | 'due' | 'q'>,
+  q: Pick<AgentLeadListQuery, 'view' | 'stage' | 'source' | 'due' | 'q' | 'minScore'>,
   now: Date,
 ): Prisma.SalesAgentLeadWhereInput {
   const endOfToday = startOfBangkokDay(addCalendarDays(bangkokDate(now), 1));
@@ -667,6 +667,7 @@ export function leadListWhere(
   if (q.source) and.push({ source: q.source });
   if (q.due === 'today') and.push({ nextFollowUpAt: { lt: endOfToday } });
   if (q.due === 'overdue') and.push({ nextFollowUpAt: { lt: now } });
+  if (q.minScore !== undefined) and.push({ score: { gte: q.minScore } });
   const text = q.q?.trim();
   if (text) {
     const contains = { contains: text, mode: 'insensitive' as const };

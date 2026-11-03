@@ -14,6 +14,7 @@ import { CaptureAttributionService } from './capture-attribution.service';
 import { type CaptureRoute, type CaptureSkip, studioIdleWindow } from './capture-rules';
 import { CLOSED_INBOUND } from './sales-desk-rules';
 import { INBOUND_AGGREGATE, SalesInboundService } from './sales-inbound.service';
+import { SalesScoringService } from './sales-scoring.service';
 
 const BATCH = 500;
 const ACTOR = systemActor('sales.capture');
@@ -42,6 +43,7 @@ export class SalesCaptureService {
     private readonly settings: SettingsService,
     private readonly inbound: SalesInboundService,
     private readonly attribution: CaptureAttributionService,
+    private readonly scoring: SalesScoringService,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
   ) {}
@@ -170,6 +172,7 @@ export class SalesCaptureService {
           rowVersion: { increment: 1 },
         },
       });
+      await this.scoring.scoreInbound(tx, open.id, now);
       await recordAgentEvent(this, tx, {
         type: 'sales_inbound_lead.refreshed',
         aggregateType: INBOUND_AGGREGATE,

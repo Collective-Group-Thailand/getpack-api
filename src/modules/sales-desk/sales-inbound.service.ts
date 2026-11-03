@@ -21,6 +21,7 @@ import {
   workingHoursDue,
 } from './sales-desk-rules';
 import { type SalesScope } from './sales-scope';
+import { SalesScoringService } from './sales-scoring.service';
 
 export const INBOUND_INCLUDE = {
   assignee: { select: { publicId: true, displayName: true } },
@@ -36,6 +37,19 @@ export interface InboundInput {
   contactEmail?: string | null;
   organisationName?: string | null;
   need?: string | null;
+}
+
+/** D-469 soonest due first; D-471 by score (unscored last) or newest. */
+export function inboundOrder(
+  sort: 'due' | 'score' | 'createdAt',
+  order?: 'asc' | 'desc',
+): Prisma.SalesInboundLeadOrderByWithRelationInput[] {
+  if (sort === 'score') {
+    const dir = order ?? 'desc';
+    return [{ score: { sort: dir, nulls: 'last' } }, { firstResponseDueAt: 'asc' }, { id: 'asc' }];
+  }
+  if (sort === 'createdAt') return [{ createdAt: order ?? 'desc' }, { id: order ?? 'desc' }];
+  return [{ firstResponseDueAt: 'asc' }, { id: 'asc' }];
 }
 
 /** Aggregate type of the inbound pool's events and its notification resolver. */
@@ -58,6 +72,7 @@ export class SalesInboundService implements OnModuleInit {
     private readonly attribution: AgentAttributionService,
     private readonly audit: AuditService,
     private readonly directory: RecipientDirectory,
+    private readonly scoring: SalesScoringService,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
   ) {}
@@ -84,6 +99,9 @@ export class SalesInboundService implements OnModuleInit {
       unassigned?: boolean;
       breached?: boolean;
       q?: string;
+      minScore?: number;
+      sort?: 'due' | 'score' | 'createdAt';
+      order?: 'asc' | 'desc';
       page: number;
       perPage: number;
     },
@@ -99,6 +117,7 @@ export class SalesInboundService implements OnModuleInit {
       ...(q.status?.length && { status: { in: q.status } }),
       ...(q.source && { source: q.source as SalesInboundLead['source'] }),
       ...(q.breached !== undefined && { slaBreachedAt: q.breached ? { not: null } : null }),
+      ...(q.minScore !== undefined && { score: { gte: q.minScore } }),
       ...(text && {
         OR: [
           { contactName: { contains: text, mode: 'insensitive' as const } },
@@ -113,7 +132,7 @@ export class SalesInboundService implements OnModuleInit {
       this.prisma.salesInboundLead.findMany({
         where,
         include: INBOUND_INCLUDE,
-        orderBy: [{ firstResponseDueAt: 'asc' }, { id: 'asc' }],
+        orderBy: inboundOrder(q.sort ?? 'due', q.order),
         skip: (q.page - 1) * q.perPage,
         take: q.perPage,
       }),
@@ -262,12 +281,20 @@ export class SalesInboundService implements OnModuleInit {
         createdAt: now,
       },
     });
+    // D-471: scored at intake (rules in force; the job keeps it fresh).
+    const scored = await this.scoring.scoreInbound(tx, row.id, now);
     // No contact data in events (PDPA).
     await recordAgentEvent(this, tx, {
       type: 'sales_inbound_lead.created',
       aggregateType: INBOUND_AGGREGATE,
       aggregateId: row.publicId,
-      payload: { inboundId: row.publicId, source, sourceRef, firstResponseDueAt: due.toISOString() },
+      payload: {
+        inboundId: row.publicId,
+        source,
+        sourceRef,
+        firstResponseDueAt: due.toISOString(),
+        score: scored.score,
+      },
       actor: extra.actor,
     });
     return row;

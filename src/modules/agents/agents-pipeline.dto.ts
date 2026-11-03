@@ -1,7 +1,7 @@
 import { CursorQuery, SortOrder } from '@common/pagination/pagination.dto';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -9,12 +9,15 @@ import {
   IsEmail,
   IsEnum,
   IsIn,
+  IsInt,
   IsISO8601,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
@@ -99,6 +102,8 @@ export const LEAD_SORTS = [
   'nextFollowUpAt',
   'protectedUntil',
   'expectedValue',
+  // D-471: the lead score (no score last).
+  'score',
 ] as const;
 
 const csvList = ({ value }: { value: unknown }) =>
@@ -153,6 +158,19 @@ export class AgentLeadListQuery extends CursorQuery {
   @IsString()
   @MaxLength(100)
   q?: string;
+
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: 0,
+    maximum: 100,
+    description: 'D-471: leads scored at least this (0–100); unscored leads are left out',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  minScore?: number;
 
   @ApiPropertyOptional({ enum: LEAD_SORTS, enumName: 'AgentLeadSort', default: 'createdAt' })
   @IsOptional()

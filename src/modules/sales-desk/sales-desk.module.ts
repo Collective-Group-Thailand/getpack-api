@@ -13,6 +13,7 @@ import { SalesPipelineService } from './sales-pipeline.service';
 import { SalesPlaybookAdminService } from './sales-playbook-admin';
 import { SalesPostDealService } from './sales-post-deal';
 import { SalesScopeService } from './sales-scope';
+import { SalesScoringService } from './sales-scoring.service';
 
 const SERVICES = [
   SalesScopeService,
@@ -26,6 +27,7 @@ const SERVICES = [
   SalesPostDealService,
   CaptureAttributionService,
   SalesCaptureService,
+  SalesScoringService,
 ];
 
 /**

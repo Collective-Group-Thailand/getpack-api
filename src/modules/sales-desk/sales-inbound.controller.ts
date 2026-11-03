@@ -23,7 +23,7 @@ import {
 import { SalesInboundService } from './sales-inbound.service';
 import { SalesScopeService } from './sales-scope';
 
-const DECISIONS = ['D-469', 'D-458', 'D-440'];
+const DECISIONS = ['D-469', 'D-458', 'D-440', 'D-471'];
 const WRITE = ['http.bad_request', 'http.malformed_json', 'validation.failed'] as const;
 
 /**
@@ -45,8 +45,9 @@ export class AdminSalesInboundController {
     id: 'admin.salesInbound.list',
     summary: 'List the inbound sales enquiries',
     description:
-      'Soonest first-response due first, with the SLA flag; by status, source, rep, unassigned, breached or text. ' +
-      'A rep sees only the enquiries assigned to them (D-469).',
+      'Soonest first-response due first (or by score / newest, D-471), with the SLA flag, the lead score and its ' +
+      'top 3 reasons; by status, source (incl. the D-471 capture sources studio_idle and dieline_download), rep, ' +
+      'unassigned, breached, minimum score or text. A rep sees only the enquiries assigned to them (D-469).',
     implements: DECISIONS,
   })
   @ApiPaginated(SalesInboundDto, { example: INBOUND_EXAMPLE })
