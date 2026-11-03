@@ -51,6 +51,7 @@ import { PayablesModule } from '@modules/payables/payables.module';
 import { PaymentSchedulesModule } from '@modules/payment-schedules/payment-schedules.module';
 import { PaymentsModule } from '@modules/payments/payments.module';
 import { PayoutsModule } from '@modules/payouts/payouts.module';
+import { PnlModule } from '@modules/pnl/pnl.module';
 import { PricingModule } from '@modules/pricing/pricing.module';
 import { ProductionModule } from '@modules/production/production.module';
 import { PromotionsModule } from '@modules/promotions/promotions.module';
@@ -169,6 +170,7 @@ import { LoggerModule } from 'nestjs-pino';
     TaxModule,
     FixedAssetsModule,
     FinancialReportsModule,
+    PnlModule,
     CloseModule,
     AuditSupportModule,
     AnalyticsModule,

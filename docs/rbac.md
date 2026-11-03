@@ -204,6 +204,9 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `sales_reports.read` — Read the sales reports: negotiation history per customer, lost-to-price by product class and quantity band, the post-deal review (in the waterfall tier one holds) (D-470) | ● | ● | ● | ● |  |  |  |  |  | ● |  |  | ● |  | ● |  |  |
 | `sales_playbook.manage` — Write sales playbook cards: drafts and new versions of the cards one’s role owns (Marketing, Sales Manager), submit them for review, retire them (D-470) | ● |  |  |  |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
 | `sales_playbook.publish` — Publish a submitted playbook card written or submitted by someone else (maker-checker) (D-470) | ● |  |  |  |  |  |  |  |  |  |  | ● | ● |  |  |  |  |
+| `pnl.read` — See management P&L plans: the grid with auto, calculated, manual and override cells, tooltips, plan vs actual and the drill-down to source records (every view logged) (D-472, D-141) | ◆ | ◆ | ◆ | ◆ |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
+| `pnl.manage` — Create, copy, recompute and lock P&L plans; enter manual values (note on the first entry) and override auto values (with a reason); write variance notes (D-472) | ◆ | ◆ |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
+| `pnl.export` — Export a P&L plan or its plan vs actual as XLSX / PDF, watermarked with the viewer’s name and the time (logged and audited) (D-472) | ◆ | ◆ |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
 | `ops.read` — Read the operational signals (outbox, queues, webhooks, payouts, ledger postings, SLA breaches) (D-113) | ● |  |  |  | ● |  |  |  |  |  |  |  |  |  |  |  |  |
 
 | Role | Name (th) | Name (en) |
@@ -373,6 +376,15 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 - **Dieline downloads without sign-in** (`dieline_downloads.device_hash`): SHA-256 of a random browser id, no
   account, no IP. Purpose: asking for a free sign-in from the second download. Retention: as the download log.
   Access: none through the API (counted only).
+
+## Management P&L planner — confidentiality (D-472)
+
+- `pnl.read`: C-Level, VP, Director, Finance Manager (+ Superadmin); `pnl.manage` and `pnl.export`: C-Level and
+  Finance Manager (+ Superadmin). VP and Director read only. Finance (the accountant role), Auditor, Sales and every
+  other role: 403 on every `admin.pnl.*` operation. Every grid / plan-vs-actual view and every export is logged in
+  the append-only `pnl_access_logs`; exports are watermarked with the viewer and the time and audited.
+- No personal data: the drill-down returns ids, codes and amounts only (leads by stage, run-rate customers as
+  company ids, never contact data). Management figures only — nothing is posted to the ledger.
 
 ## Segregation of duties (`accounting-design.md` §8)
 

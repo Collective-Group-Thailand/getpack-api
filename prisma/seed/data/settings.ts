@@ -6,6 +6,14 @@
  */
 import { ADVISORY_RULE_SET_SCHEMA } from '../../../src/modules/advisory/rule-set';
 import { PIT_BRACKETS_SEED } from '../../../src/modules/agents/agent-wht';
+import {
+  CIT_RATES_SCHEMA,
+  CIT_RATES_SEED,
+  PNL_FORECAST_RULES_SCHEMA,
+  PNL_FORECAST_RULES_SEED,
+  PNL_LINE_CATALOGUE_SCHEMA,
+  PNL_LINE_CATALOGUE_SEED,
+} from '../../../src/modules/pnl/pnl-lines';
 import { STYLE_LIBRARY_CONTENT_SCHEMA } from '../../../src/modules/styles/style-library-content';
 import { HERO_PRESETS, heroPresetsAmendment } from './hero-presets';
 import { INTAKE_TERMS_V1 } from './intake-terms';
@@ -738,6 +746,47 @@ export const SETTINGS: readonly SettingSeed[] = [
       'shows "not set" until Finance sets it',
     decisions: ['D-470'],
     confirmation: 'pending_business',
+    ownerRole: 'finance_manager',
+  },
+  // --- D-472 management P&L planner
+  {
+    key: 'pnl.line_catalogue',
+    valueType: 'json',
+    value: PNL_LINE_CATALOGUE_SEED,
+    valueSchema: PNL_LINE_CATALOGUE_SCHEMA,
+    description:
+      'D-472 the management P&L lines: labels, tooltips (definition, formula, source, how to fill — from ' +
+      'PNL-LINES.md) and the GL accounts behind each line, mapped by the accountant; a line without an account is ' +
+      'entered by hand. Seeded mapping from the chart of accounts as seeded (proposed); salaries, rent & utilities, ' +
+      'software & cloud, professional fees and finance cost have no account yet',
+    decisions: ['D-472'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'pnl.forecast_rules',
+    valueType: 'json',
+    value: PNL_FORECAST_RULES_SEED,
+    valueSchema: PNL_FORECAST_RULES_SCHEMA,
+    description:
+      'D-472 how the P&L planner fills forecast months: probability of an open lead per pipeline stage (new 10, ' +
+      'contacted 20, quoted 40, negotiating 60 %), the weighted pipeline spread over 3 months, a 3-month trailing ' +
+      'window for ratios and averages, repeat customers = revenue in 2 of the 3 months (proposed)',
+    decisions: ['D-472'],
+    confirmation: 'proposed',
+    ownerRole: 'finance_manager',
+  },
+  {
+    key: 'tax.cit_rates',
+    valueType: 'json',
+    value: CIT_RATES_SEED,
+    valueSchema: CIT_RATES_SCHEMA,
+    description:
+      'D-472 corporate income tax table of the P&L estimate: 20 %, or the SME bands (0 % to 300,000, 15 % to ' +
+      '3,000,000, 20 % above) when paid-up capital ≤ 5,000,000 and revenue ≤ 30,000,000; the company paid-up capital ' +
+      'is entered by the accountant (null = the standard rate) — always labelled ประมาณการ',
+    decisions: ['D-472'],
+    confirmation: 'pending_cpa',
     ownerRole: 'finance_manager',
   },
   {

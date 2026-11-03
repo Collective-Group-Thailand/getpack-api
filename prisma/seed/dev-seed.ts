@@ -319,8 +319,49 @@ export async function seedDev(
       });
       count('dev_customer_users');
     }
+
+    if (await seedDevPnlPlan(tx, entity.id)) count('dev_pnl_plans');
   });
   return report;
+}
+
+/**
+ * D-472: an obviously fake draft P&L plan for `pnpm dev` — only manual salary cells marked [DEV]; there is no GL dev
+ * seed, so the rest is filled when someone recomputes it (no posted test entries are created). Once; skipped when
+ * present.
+ */
+async function seedDevPnlPlan(tx: Prisma.TransactionClient, entityId: bigint): Promise<boolean> {
+  const name = '[DEV] แผน P&L ตัวอย่าง';
+  const fiscalYear = Number(new Date().toISOString().slice(0, 4));
+  if (await tx.pnlPlan.findFirst({ where: { entityId, name } })) return false;
+  const owner = await tx.user.findFirst({
+    where: { kind: 'staff', email: 'finance-manager@example.invalid' },
+  });
+  if (!owner) return false;
+  const plan = await tx.pnlPlan.create({
+    data: {
+      entityId,
+      name,
+      fiscalYear,
+      scenario: 'base',
+      note: '[DEV] ข้อมูลปลอมสำหรับทดสอบ',
+      ownerUserId: owner.id,
+      createdById: owner.id,
+    },
+  });
+  await tx.pnlPlanCell.createMany({
+    data: Array.from({ length: 12 }, (_, i) => ({
+      planId: plan.id,
+      lineKey: 'salaries',
+      month: new Date(Date.UTC(fiscalYear, i, 1)),
+      value: '100000.00',
+      mode: 'manual' as const,
+      source: 'none' as const,
+      note: '[DEV] พนักงานสมมติ 2 คน × 50,000 (ข้อมูลปลอม)',
+      updatedById: owner.id,
+    })),
+  });
+  return true;
 }
 
 /**

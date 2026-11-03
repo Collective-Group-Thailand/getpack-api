@@ -37,6 +37,15 @@ export const SALES_DESK_NOTES: readonly string[] = [
   '- **Dieline downloads without sign-in** (`dieline_downloads.device_hash`): SHA-256 of a random browser id, no',
   '  account, no IP. Purpose: asking for a free sign-in from the second download. Retention: as the download log.',
   '  Access: none through the API (counted only).',
+  '',
+  '## Management P&L planner — confidentiality (D-472)',
+  '',
+  '- `pnl.read`: C-Level, VP, Director, Finance Manager (+ Superadmin); `pnl.manage` and `pnl.export`: C-Level and',
+  '  Finance Manager (+ Superadmin). VP and Director read only. Finance (the accountant role), Auditor, Sales and every',
+  '  other role: 403 on every `admin.pnl.*` operation. Every grid / plan-vs-actual view and every export is logged in',
+  '  the append-only `pnl_access_logs`; exports are watermarked with the viewer and the time and audited.',
+  '- No personal data: the drill-down returns ids, codes and amounts only (leads by stage, run-rate customers as',
+  '  company ids, never contact data). Management figures only — nothing is posted to the ledger.',
 ];
 
 const AUDIENCES = [

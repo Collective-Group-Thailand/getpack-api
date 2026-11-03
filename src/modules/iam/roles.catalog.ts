@@ -54,6 +54,9 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'C-Level',
     permissions: [
       'sales_reports.read',
+      'pnl.read',
+      'pnl.manage',
+      'pnl.export',
       // D-470: C-Level owns the discount authority matrix and margin floors (the owner check limits it to those).
       'settings.change',
       'discount_approvals.read',
@@ -112,6 +115,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'VP',
     permissions: [
       'sales_reports.read',
+      'pnl.read',
       'discount_approvals.read',
       'discount_approvals.waterfall_full',
       'sales.pipeline.manage',
@@ -142,6 +146,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Director',
     permissions: [
       'sales_reports.read',
+      'pnl.read',
       'discount_approvals.read',
       'discount_approvals.waterfall_full',
       'sales.pipeline.manage',
@@ -477,6 +482,9 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'Finance Manager',
     permissions: [
       'sales_reports.read',
+      'pnl.read',
+      'pnl.manage',
+      'pnl.export',
       'discount_approvals.read',
       'discount_approvals.waterfall_full',
       'discount_approvals.export',

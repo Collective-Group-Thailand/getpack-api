@@ -903,6 +903,14 @@ model User {
   salesDiscountApprovalsDecided   SalesDiscountApproval[] @relation("SalesDiscountApprovalDecidedBy")
   salesWaterfallViews             SalesWaterfallView[]    @relation("SalesWaterfallViewViewer")
 
+  // --- Management P&L D-472 (back-relations)
+  pnlPlansOwned       PnlPlan[]         @relation("PnlPlanOwner")
+  pnlPlansLocked      PnlPlan[]         @relation("PnlPlanLockedBy")
+  pnlPlansCreated     PnlPlan[]         @relation("PnlPlanCreatedBy")
+  pnlPlanCellsUpdated PnlPlanCell[]     @relation("PnlPlanCellUpdatedBy")
+  pnlVarianceNotes    PnlVarianceNote[] @relation("PnlVarianceNoteUpdatedBy")
+  pnlAccessLogs       PnlAccessLog[]    @relation("PnlAccessLogViewer")
+
   @@unique([kind, email], map: "ux_users__kind__email", where: raw("((email IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@unique([kind, phone], map: "ux_users__kind__phone", where: raw("((phone IS NOT NULL) AND (anonymised_at IS NULL))"))
   @@index([createdById], map: "ix_users__created_by")

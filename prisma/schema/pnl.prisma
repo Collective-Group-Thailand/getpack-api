@@ -1,0 +1,185 @@
+// Management P&L planner (D-472, PLAN A-14; Phase 6 of `docs/design/agent-portal`). Management figures only: the
+// planner reads the posted ledger, the pipeline, commissions and the fixed-asset register and never posts.
+
+/// D-472: the scenario a plan describes.
+enum PnlScenario {
+  base
+  best
+  worst
+  custom
+
+  @@map("pnl_scenario")
+}
+
+/// D-472: a locked plan is frozen (DB trigger) and is the baseline of plan vs actual.
+enum PnlPlanStatus {
+  draft
+  locked
+
+  @@map("pnl_plan_status")
+}
+
+/// D-472: how a cell got its value — ระบบ (auto) · คำนวณ (calculated) · กรอกเอง (manual) · แก้ทับ (override).
+enum PnlCellMode {
+  /// From the system (GL, pipeline, commissions, fixed assets); `value` = `auto_value`.
+  auto
+  /// A formula over other lines of the same plan (read-only).
+  calculated
+  /// No system data: entered by Finance / C-Level (note required on the first entry).
+  manual
+  /// An auto value replaced by a person; `auto_value` kept beside it, reason in `note`.
+  override
+
+  @@map("pnl_cell_mode")
+}
+
+/// D-472: where an auto value came from.
+enum PnlCellSource {
+  /// Posted journal lines of the mapped accounts (actual months).
+  gl
+  /// Weighted pipeline + repeat-order run rate (forecast revenue).
+  pipeline_run_rate
+  /// Trailing-window ratio to another line (forecast).
+  trailing_ratio
+  /// Trailing-window average (forecast fixed costs, memo DSO / DPO / bad debt).
+  trailing_average
+  /// Pipeline at the agent plans' effective rates + run rate × trailing ratio (forecast commission).
+  commission_rates
+  /// Fixed-asset register schedules (forecast depreciation).
+  fixed_assets
+  /// AR / AP balances (memo DSO, DPO, bad-debt provision).
+  balances
+  /// A formula over other lines.
+  formula
+  /// No system data.
+  none
+
+  @@map("pnl_cell_source")
+}
+
+/// D-472 (D-444 pattern): why a plan's figures were shown.
+enum PnlAccessPurpose {
+  view
+  variance
+  export
+
+  @@map("pnl_access_purpose")
+}
+
+/// D-472: a management P&L plan of one fiscal year and scenario. A copy with the same name, year and scenario takes
+/// the next `version`. Drafts are soft-deleted; a locked plan never changes (trigger).
+model PnlPlan {
+  id                     BigInt        @id(map: "pk_pnl_plans") @default(autoincrement())
+  publicId               String        @unique(map: "ux_pnl_plans__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  entityId               BigInt        @map("entity_id")
+  name                   String
+  fiscalYear             Int           @map("fiscal_year") @db.SmallInt
+  scenario               PnlScenario
+  status                 PnlPlanStatus @default(draft)
+  version                Int           @default(1)
+  note                   String?
+  ownerUserId            BigInt        @map("owner_user_id")
+  copiedFromPlanId       BigInt?       @map("copied_from_plan_id")
+  computedAt             DateTime?     @map("computed_at") @db.Timestamptz(6)
+  /// Setting versions used by the last compute (ids, no FK — history of `setting_versions`).
+  catalogueVersionId     BigInt?       @map("catalogue_version_id")
+  forecastRulesVersionId BigInt?       @map("forecast_rules_version_id")
+  citRatesVersionId      BigInt?       @map("cit_rates_version_id")
+  lockedAt               DateTime?     @map("locked_at") @db.Timestamptz(6)
+  lockedById             BigInt?       @map("locked_by")
+  /// SHA-256 of every cell (line, month, value, mode, auto value) at lock time.
+  snapshotSha256         Bytes?        @map("snapshot_sha256")
+  deletedAt              DateTime?     @map("deleted_at") @db.Timestamptz(6)
+  createdAt              DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  createdById            BigInt?       @map("created_by")
+  updatedAt              DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion             Int           @default(1) @map("row_version")
+
+  entity        Entity            @relation("PnlPlanEntity", fields: [entityId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_plans__entity_id")
+  owner         User              @relation("PnlPlanOwner", fields: [ownerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_plans__owner_user_id") // client: keep
+  lockedBy      User?             @relation("PnlPlanLockedBy", fields: [lockedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_plans__locked_by") // client: keep
+  createdBy     User?             @relation("PnlPlanCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_plans__created_by")
+  copiedFrom    PnlPlan?          @relation("PnlPlanCopiedFrom", fields: [copiedFromPlanId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_plans__copied_from_plan_id")
+  copies        PnlPlan[]         @relation("PnlPlanCopiedFrom")
+  cells         PnlPlanCell[]
+  varianceNotes PnlVarianceNote[]
+  accessLogs    PnlAccessLog[]
+
+  @@unique([entityId, fiscalYear, scenario, name, version], map: "ux_pnl_plans__entity_id__fiscal_year__scenario__name__version", where: raw("(deleted_at IS NULL)"))
+  @@index([entityId, fiscalYear], map: "ix_pnl_plans__entity_id__fiscal_year")
+  @@index([ownerUserId], map: "ix_pnl_plans__owner_user_id")
+  @@index([lockedById], map: "ix_pnl_plans__locked_by")
+  @@index([createdById], map: "ix_pnl_plans__created_by")
+  @@index([copiedFromPlanId], map: "ix_pnl_plans__copied_from_plan_id")
+  @@map("pnl_plans")
+}
+
+/// D-472: one line × month of a plan. `auto_value` is what the system computed (kept beside an override); `note` is
+/// the manual note or the override reason; `source_ref` holds the inputs (accounts, window, ratios — ids only).
+model PnlPlanCell {
+  id          BigInt        @id(map: "pk_pnl_plan_cells") @default(autoincrement())
+  publicId    String        @unique(map: "ux_pnl_plan_cells__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  planId      BigInt        @map("plan_id")
+  lineKey     String        @map("line_key")
+  /// First day of the month (Asia/Bangkok calendar).
+  month       DateTime      @db.Date
+  value       Decimal?      @db.Decimal(14, 2)
+  mode        PnlCellMode
+  autoValue   Decimal?      @map("auto_value") @db.Decimal(14, 2)
+  source      PnlCellSource @default(none)
+  sourceRef   Json?         @map("source_ref")
+  note        String?
+  /// An actual month whose fiscal period is not closed yet ("ยังไม่ปิดงวด").
+  periodOpen  Boolean       @default(false) @map("period_open")
+  /// When the auto value was computed.
+  asOf        DateTime?     @map("as_of") @db.Timestamptz(6)
+  updatedById BigInt?       @map("updated_by")
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion  Int           @default(1) @map("row_version")
+
+  plan      PnlPlan @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_plan_cells__plan_id")
+  updatedBy User?   @relation("PnlPlanCellUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_plan_cells__updated_by") // client: keep
+
+  @@unique([planId, lineKey, month], map: "ux_pnl_plan_cells__plan_id__line_key__month")
+  @@index([updatedById], map: "ix_pnl_plan_cells__updated_by")
+  @@map("pnl_plan_cells")
+}
+
+/// D-472: Finance's explanation of a plan-vs-actual variance (allowed on locked plans; the cells stay frozen).
+model PnlVarianceNote {
+  id          BigInt   @id(map: "pk_pnl_variance_notes") @default(autoincrement())
+  planId      BigInt   @map("plan_id")
+  lineKey     String   @map("line_key")
+  month       DateTime @db.Date
+  note        String
+  updatedById BigInt   @map("updated_by")
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion  Int      @default(1) @map("row_version")
+
+  plan      PnlPlan @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_variance_notes__plan_id")
+  updatedBy User    @relation("PnlVarianceNoteUpdatedBy", fields: [updatedById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_variance_notes__updated_by") // client: keep
+
+  @@unique([planId, lineKey, month], map: "ux_pnl_variance_notes__plan_id__line_key__month")
+  @@index([updatedById], map: "ix_pnl_variance_notes__updated_by")
+  @@map("pnl_variance_notes")
+}
+
+/// D-472 (D-444 pattern): append-only log of who was shown a plan (grid, variance) or exported it, when and how.
+model PnlAccessLog {
+  id           BigInt           @id(map: "pk_pnl_access_logs") @default(autoincrement())
+  publicId     String           @unique(map: "ux_pnl_access_logs__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  planId       BigInt           @map("plan_id")
+  viewerUserId BigInt           @map("viewer_user_id")
+  purpose      PnlAccessPurpose
+  /// `xlsx` | `pdf` for exports.
+  format       String?
+  requestId    String?          @map("request_id")
+  viewedAt     DateTime         @default(now()) @map("viewed_at") @db.Timestamptz(6)
+
+  plan   PnlPlan @relation(fields: [planId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_access_logs__plan_id")
+  viewer User    @relation("PnlAccessLogViewer", fields: [viewerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_pnl_access_logs__viewer_user_id") // client: keep
+
+  @@index([planId, viewedAt], map: "ix_pnl_access_logs__plan_id__viewed_at")
+  @@index([viewerUserId, viewedAt], map: "ix_pnl_access_logs__viewer_user_id__viewed_at")
+  @@map("pnl_access_logs")
+}

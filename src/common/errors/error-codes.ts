@@ -289,6 +289,12 @@ export const ERROR_CODES = {
   'sales_playbook.not_draft': HttpStatus.CONFLICT,
   'sales_playbook.maker_checker': HttpStatus.CONFLICT,
   'sales_playbook.not_submitted': HttpStatus.CONFLICT,
+  // --- D-472: the management P&L planner
+  'pnl.plan_locked': HttpStatus.CONFLICT,
+  'pnl.line_read_only': HttpStatus.UNPROCESSABLE_ENTITY,
+  'pnl.note_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'pnl.reason_required': HttpStatus.UNPROCESSABLE_ENTITY,
+  'pnl.not_computed': HttpStatus.CONFLICT,
   /** D-465: one open ล.ย.01 per agent and tax year; only individual freelance agents declare. */
   'agents.tax_declaration_open': HttpStatus.CONFLICT,
   'agents.tax_declaration_not_applicable': HttpStatus.UNPROCESSABLE_ENTITY,

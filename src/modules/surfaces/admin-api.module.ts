@@ -39,6 +39,7 @@ import { PAYABLES_ADMIN_CONTROLLERS } from '@modules/payables/payables.registry'
 import { PAYMENT_SCHEDULES_ADMIN_CONTROLLERS } from '@modules/payment-schedules/payment-schedules.registry';
 import { PAYMENTS_ADMIN_CONTROLLERS } from '@modules/payments/payments.registry';
 import { PAYOUTS_ADMIN_CONTROLLERS } from '@modules/payouts/payouts.registry';
+import { PNL_ADMIN_CONTROLLERS } from '@modules/pnl/pnl.registry';
 import { PRICING_ADMIN_CONTROLLERS } from '@modules/pricing/pricing.registry';
 import { PRODUCTION_ADMIN_CONTROLLERS } from '@modules/production/production.registry';
 import { PROMOTIONS_ADMIN_CONTROLLERS } from '@modules/promotions/promotions.registry';
@@ -165,6 +166,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...TAX_ADMIN_CONTROLLERS,
     ...FIXED_ASSETS_ADMIN_CONTROLLERS,
     ...FINANCIAL_REPORTS_ADMIN_CONTROLLERS,
+    ...PNL_ADMIN_CONTROLLERS,
     ...CLOSE_ADMIN_CONTROLLERS,
     ...AUDIT_SUPPORT_ADMIN_CONTROLLERS,
     ...ANALYTICS_ADMIN_CONTROLLERS,
