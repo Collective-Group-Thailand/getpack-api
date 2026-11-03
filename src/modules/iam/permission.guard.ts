@@ -1,4 +1,4 @@
-import { REQUIRED_PERMISSIONS } from '@common/auth/can.decorator';
+import { ANY_PERMISSIONS, REQUIRED_PERMISSIONS } from '@common/auth/can.decorator';
 import { RequestContext } from '@common/context/request-context';
 import { DomainException } from '@common/errors/domain.exception';
 import { type CanActivate, type ExecutionContext, Injectable } from '@nestjs/common';
@@ -25,7 +25,11 @@ export class PermissionGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (!required?.length) return true;
+    const anyOf = this.reflector.getAllAndOverride<string[] | undefined>(ANY_PERMISSIONS, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+    if (!required?.length && !anyOf?.length) return true;
     const actor = RequestContext.actor();
     if (!actor) throw new DomainException('auth.unauthenticated');
 
@@ -34,7 +38,9 @@ export class PermissionGuard implements CanActivate {
     else if (actor.type === 'api_client') held = new Set(actor.scopes);
     else held = new Set();
 
-    const missing = required.filter((p) => !held.has(p));
+    const missing = (required ?? []).filter((p) => !held.has(p));
+    // D-469: `@CanAny()` — one of them is enough.
+    if (anyOf?.length && !anyOf.some((p) => held.has(p))) missing.push(anyOf.join(' | '));
     if (missing.length === 0) return true;
     const req = context.switchToHttp().getRequest<Request>();
     await this.audit.recordStandalone({

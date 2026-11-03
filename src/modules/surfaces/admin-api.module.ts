@@ -46,6 +46,7 @@ import { QUOTES_ADMIN_CONTROLLERS } from '@modules/quotes/quotes.registry';
 import { RECEIVABLES_ADMIN_CONTROLLERS } from '@modules/receivables/receivables.registry';
 import { REORDERS_ADMIN_CONTROLLERS } from '@modules/reorders/reorders.registry';
 import { REPORTS_ADMIN_CONTROLLERS } from '@modules/reports/reports.registry';
+import { SALES_DESK_ADMIN_CONTROLLERS } from '@modules/sales-desk/sales-desk.registry';
 import { SAMPLES_ADMIN_CONTROLLERS } from '@modules/samples/samples.registry';
 import { SHIPPING_ADMIN_CONTROLLERS } from '@modules/shipping/shipping.registry';
 import { STUDIO_ADMIN_CONTROLLERS } from '@modules/studio/studio.registry';
@@ -143,6 +144,7 @@ import { SettingsAdminModule } from '@platform/settings/settings-admin.module';
     ...PROMOTIONS_ADMIN_CONTROLLERS,
     ...LOYALTY_ADMIN_CONTROLLERS,
     ...AGENTS_ADMIN_CONTROLLERS,
+    ...SALES_DESK_ADMIN_CONTROLLERS,
     ...COMPANIES_ADMIN_CONTROLLERS,
     ...DISCOUNT_MEMOS_ADMIN_CONTROLLERS,
     ...PAYMENTS_ADMIN_CONTROLLERS,

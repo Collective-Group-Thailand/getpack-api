@@ -1585,6 +1585,21 @@ export const PERMISSIONS = [
     description: 'Use the agent pages: own link, leads, customers, commission and statements',
     decisionRefs: ['D-416', 'D-422'],
   },
+  // --- Company sales desk (D-469, PLAN A-07)
+  {
+    key: 'sales.pipeline.self',
+    audience: 'staff',
+    description:
+      'Work one’s own pipeline as a company sales rep (the staff account’s employee agent): leads, timeline, quotes on behalf, discount requests and the inbound items assigned to me',
+    decisionRefs: ['D-469'],
+  },
+  {
+    key: 'sales.pipeline.manage',
+    audience: 'staff',
+    description:
+      'Run the company sales desk: every rep’s pipeline (acting for a rep is audited), the inbound pool and its assignment, the sales dashboard',
+    decisionRefs: ['D-469'],
+  },
   // --- B6.3 launch readiness (D-113)
   {
     key: 'ops.read',

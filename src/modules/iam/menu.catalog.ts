@@ -67,6 +67,8 @@ export const ADMIN_MENU: readonly MenuEntry[] = [
   },
   // D-423: the sales agent programme — applications, agents, leads, commission, statements, plans.
   { key: 'agents', path: '/admin/agents', permission: 'agents.read' },
+  // D-469: the company sales desk — inbox, pipeline, quotes, dashboard (reps see their own).
+  { key: 'sales', path: '/admin/sales', permission: ['sales.pipeline.self', 'sales.pipeline.manage'] },
   {
     key: 'finance',
     path: '/admin/finance',

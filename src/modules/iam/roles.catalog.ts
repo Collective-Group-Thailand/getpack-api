@@ -53,6 +53,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้บริหารระดับสูง',
     nameEn: 'C-Level',
     permissions: [
+      'sales.pipeline.manage',
       'document_branding.read',
       'document_branding.manage',
       'agents.read',
@@ -104,6 +105,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'รองประธาน',
     nameEn: 'VP',
     permissions: [
+      'sales.pipeline.manage',
       'agents.read',
       'agent_plans.approve',
       'reports.export',
@@ -130,6 +132,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameTh: 'ผู้อำนวยการ',
     nameEn: 'Director',
     permissions: [
+      'sales.pipeline.manage',
       'agents.read',
       ...APPROVER,
       'reports.export',
@@ -607,7 +610,18 @@ export const ROLES: readonly RoleDefinition[] = [
       'agents.read',
       'agents.manage',
       'agent_plans.manage',
+      // D-469: runs the company sales desk.
+      'sales.pipeline.manage',
     ],
+  },
+  {
+    key: 'sales_rep',
+    audience: 'staff',
+    scopeType: 'platform',
+    nameTh: 'พนักงานขาย',
+    nameEn: 'Sales Rep',
+    // D-469 (PLAN A-07): a company sales rep works their own pipeline from the admin zone (their employee agent).
+    permissions: [...EVERY_STAFF_MEMBER, 'sales.pipeline.self'],
   },
   {
     key: 'partner_manager',
