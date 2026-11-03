@@ -1,5 +1,6 @@
 import { type Type } from '@nestjs/common';
 
+import { AdminSalesInboundController } from './sales-inbound.controller';
 import {
   AdminSalesLeadsController,
   AdminSalesQuotesController,
@@ -10,4 +11,5 @@ export const SALES_DESK_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminSalesLeadsController,
   AdminSalesQuotesController,
   AdminSalesRepsController,
+  AdminSalesInboundController,
 ];

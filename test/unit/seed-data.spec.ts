@@ -62,6 +62,9 @@ describe('seed data (B1.2 step 3)', () => {
       'shipping.target_margin_pct': 'pending_business',
       // B2.5: no decision gives the RFQ SLA.
       'rfq.sla_business_hours': 'pending_business',
+      // D-469: P-05's 4 working hours proposed for sales enquiries; the per-rep cap is the Sales Manager's.
+      'sales.first_response_hours': 'proposed',
+      'sales.max_open_per_rep': 'pending_business',
       // B3.1: D-060's legacy value is a secret not in the repository — its 7-day fallback, proposed.
       'orders.unpaid_expiry_days': 'proposed',
       // B3.1: nature of the sale per product type (accounting-design §2 ⚖).

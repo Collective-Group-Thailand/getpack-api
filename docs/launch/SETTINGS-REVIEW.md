@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**144 settings** — 88 confirmed · 24 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**147 settings** — 89 confirmed · 25 proposed · 4 pending the CPA (⚖) · 3 pending the business · 26 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -123,6 +123,9 @@
 | `reorder.min_orders` | `3` | confirmed | superadmin | D-204, D-288 | D-204 / D-288 earlier orders of a SKU (specification × approved artwork) needed before it is suggested |
 | `reorder.safety_stock_days` | `7` | confirmed | superadmin | D-204, D-288 | D-204 / D-288 days of safety stock: the suggestion comes this many days before need − lead time |
 | `rfq.sla_business_hours` | `— (not set)` | not set | superadmin | D-100 | D-100 first-response SLA of a request for quote, in business hours; scoped per product type (RFQ category) with a platform fallback; not seeded — no SLA due date until set |
+| `sales.assignment_mode` | `manual` | confirmed | sales_manager | D-469 | D-469 how new inbound sales enquiries reach reps: manual (a manager assigns) or round_robin (the active rep with the fewest open enquiries below sales.max_open_per_rep, then the least recently assigned) |
+| `sales.first_response_hours` | `4` | proposed | sales_manager | D-469 | D-469 working hours to the first response of an inbound sales enquiry, counted every day inside calendar.business_hours (P-05: the team replies within 4 working hours, daily 09:00–18:00); a breach alerts the sales managers |
+| `sales.max_open_per_rep` | `— (not set)` | not set | sales_manager | D-469 | D-469 open inbound enquiries a rep may hold before round robin skips them; not seeded — no cap until the Sales Manager sets one |
 | `samples.credit_pct` | `100` | confirmed | superadmin | D-197, D-257 | D-197 / D-257 share of an approved standalone sample’s product price (freight excluded) credited on its bulk order |
 | `samples.credit_window_days` | `30` | confirmed | superadmin | D-197, D-257 | D-197 / D-257 days after a sample’s approval within which its bulk order gets the credit |
 | `shipping.carton_spec` | `— (not set)` | not set | superadmin | D-013 | D-013 shipping carton used by the packing helper (legacy parcel logic: square footprint grid, stack height, weight limit); not seeded — no carton count until set |

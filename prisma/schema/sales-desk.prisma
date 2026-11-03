@@ -1,0 +1,120 @@
+// Company sales desk (D-469, PLAN A-07): the inbound pool of sales enquiries, its assignment to reps and the
+// first-response SLA. Discount approval desk (D-470) follows in the same file.
+
+/// D-469: where an inbound sales enquiry came from.
+enum SalesInboundSource {
+  /// A contact ticket routed to the sales queue (topics quote / business, D-458).
+  contact_form
+  /// An RFQ from a customer with no placed order yet.
+  rfq
+  /// A LINE OA chat tagged sales (deferred: chats carry no tags yet).
+  line_chat
+  /// Entered by staff.
+  manual
+
+  @@map("sales_inbound_source")
+}
+
+enum SalesInboundStatus {
+  new
+  assigned
+  contacted
+  converted_to_lead
+  disqualified
+
+  @@map("sales_inbound_status")
+}
+
+/// D-469: why an enquiry was disqualified.
+enum SalesInboundDisqualifyReason {
+  not_a_buyer
+  duplicate
+  no_response
+  out_of_scope
+  spam
+  other
+
+  @@map("sales_inbound_disqualify_reason")
+}
+
+enum SalesInboundAssignmentMode {
+  manual
+  round_robin
+
+  @@map("sales_inbound_assignment_mode")
+}
+
+/// D-469: one inbound sales enquiry in the pool, worked by a company rep. PDPA: the contact's name, phone, e-mail,
+/// organisation and need — purpose = answering a sales enquiry the person sent (or a contact staff entered with the
+/// person's agreement); retention = while open, then 2 years after it closes (converted / disqualified) unless the
+/// person asks for erasure earlier; access = Sales (sales.pipeline.manage) and the assigned rep (sales.pipeline.self).
+model SalesInboundLead {
+  id                 BigInt                        @id(map: "pk_sales_inbound_leads") @default(autoincrement())
+  publicId           String                        @unique(map: "ux_sales_inbound_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  source             SalesInboundSource
+  /// The ticket number or RFQ code it came from.
+  sourceRef          String?                       @map("source_ref")
+  supportTicketId    BigInt?                       @unique(map: "ux_sales_inbound_leads__support_ticket_id") @map("support_ticket_id")
+  rfqId              BigInt?                       @unique(map: "ux_sales_inbound_leads__rfq_id") @map("rfq_id")
+  contactName        String                        @map("contact_name")
+  /// E.164.
+  contactPhone       String?                       @map("contact_phone")
+  contactEmail       String?                       @map("contact_email") @db.Citext
+  organisationName   String?                       @map("organisation_name")
+  need               String?
+  status             SalesInboundStatus            @default(new)
+  assigneeUserId     BigInt?                       @map("assignee_user_id")
+  assignedAt         DateTime?                     @map("assigned_at") @db.Timestamptz(6)
+  /// The lead registered for the assignee's employee agent (null: not yet, or refused — see `lead_refusal`).
+  agentLeadId        BigInt?                       @map("agent_lead_id")
+  /// `unavailable` when the contact cannot be a lead (one neutral reason, D-440).
+  leadRefusal        String?                       @map("lead_refusal")
+  firstResponseDueAt DateTime                      @map("first_response_due_at") @db.Timestamptz(6)
+  firstRespondedAt   DateTime?                     @map("first_responded_at") @db.Timestamptz(6)
+  slaBreachedAt      DateTime?                     @map("sla_breached_at") @db.Timestamptz(6)
+  disqualifiedReason SalesInboundDisqualifyReason? @map("disqualified_reason")
+  statusNote         String?                       @map("status_note")
+  closedAt           DateTime?                     @map("closed_at") @db.Timestamptz(6)
+  createdById        BigInt?                       @map("created_by")
+  createdAt          DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime                      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion         Int                           @default(1) @map("row_version")
+
+  supportTicket SupportTicket?           @relation("SalesInboundLeadTicket", fields: [supportTicketId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__support_ticket_id")
+  rfq           Rfq?                     @relation("SalesInboundLeadRfq", fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__rfq_id")
+  assignee      User?                    @relation("SalesInboundLeadAssignee", fields: [assigneeUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__assignee_user_id") // client: keep
+  agentLead     SalesAgentLead?          @relation("SalesInboundLeadAgentLead", fields: [agentLeadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__agent_lead_id")
+  createdBy     User?                    @relation("SalesInboundLeadCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__created_by")
+  assignments   SalesInboundAssignment[]
+
+  @@index([status, createdAt], map: "ix_sales_inbound_leads__status__created_at")
+  @@index([assigneeUserId, status], map: "ix_sales_inbound_leads__assignee_user_id__status")
+  @@index([agentLeadId], map: "ix_sales_inbound_leads__agent_lead_id")
+  @@index([createdById], map: "ix_sales_inbound_leads__created_by")
+  @@index([firstResponseDueAt], map: "ix_sales_inbound_leads__sla_due", where: raw("(first_responded_at IS NULL AND sla_breached_at IS NULL)"))
+  @@map("sales_inbound_leads")
+}
+
+/// D-469: every (re)assignment of an enquiry — who, to whom, how and why. Append-only (trigger `forbid_mutation`).
+model SalesInboundAssignment {
+  id            BigInt                     @id(map: "pk_sales_inbound_assignments") @default(autoincrement())
+  publicId      String                     @unique(map: "ux_sales_inbound_assignments__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  inboundLeadId BigInt                     @map("inbound_lead_id")
+  fromUserId    BigInt?                    @map("from_user_id")
+  toUserId      BigInt                     @map("to_user_id")
+  mode          SalesInboundAssignmentMode
+  reason        String?
+  createdById   BigInt?                    @map("created_by")
+  createdAt     DateTime                   @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  inboundLead SalesInboundLead @relation(fields: [inboundLeadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_assignments__inbound_lead_id")
+  fromUser    User?            @relation("SalesInboundAssignmentFrom", fields: [fromUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_assignments__from_user_id") // client: keep
+  toUser      User             @relation("SalesInboundAssignmentTo", fields: [toUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_assignments__to_user_id") // client: keep
+  createdBy   User?            @relation("SalesInboundAssignmentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_assignments__created_by")
+
+  @@index([inboundLeadId, createdAt], map: "ix_sales_inbound_assignments__inbound_lead_id__created_at")
+  @@index([fromUserId], map: "ix_sales_inbound_assignments__from_user_id")
+  @@index([toUserId, createdAt], map: "ix_sales_inbound_assignments__to_user_id__created_at")
+  @@index([createdById], map: "ix_sales_inbound_assignments__created_by")
+  @@map("sales_inbound_assignments")
+}

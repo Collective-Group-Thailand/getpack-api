@@ -453,6 +453,7 @@ model SalesAgentLead {
   convertedFactory  Factory?                     @relation("SalesAgentLeadConvertedFactory", fields: [convertedFactoryId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_leads__converted_factory_id")
   links             SalesAgentLink[]
   factoryLinks      SalesAgentFactoryLink[]
+  inboundLeads      SalesInboundLead[]           @relation("SalesInboundLeadAgentLead")
 
   @@index([agentId, status], map: "ix_sales_agent_leads__agent_id__status")
   @@index([phone], map: "ix_sales_agent_leads__phone__registered", where: raw("(status = 'registered'::sales_agent_lead_status)"))

@@ -117,6 +117,12 @@ export interface SettingValues {
   /** D-468 days a business-card photo is kept before it is purged (PDPA). */
   'agents.card_scan_retention_days': number;
   'agents.follow_up_quiet_hours': { from: string; to: string; timezone?: string };
+  /** D-469 working hours (P-05: every day in `calendar.business_hours`) to the first response of a sales enquiry. */
+  'sales.first_response_hours': number;
+  /** D-469 how new inbound enquiries are given to reps. */
+  'sales.assignment_mode': 'manual' | 'round_robin';
+  /** D-469 open enquiries a rep may hold under round robin; unset = no cap. */
+  'sales.max_open_per_rep': number;
   /** D-465 personal income tax table (net income bands, s.48(1)). */
   'tax.pit_brackets': { upTo: string | null; ratePct: string }[];
   /** D-465 s.40(2) expense deduction for the progressive withholding: rate (0.50) and cap. */

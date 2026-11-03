@@ -1966,8 +1966,10 @@ model SupportTicket {
   firstRespondedAt  DateTime?           @map("first_responded_at") @db.Timestamptz(6)
   createdAt         DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_support_tickets__conversation_id")
-  customer     User?        @relation("SupportTicketCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_support_tickets__customer_user_id")
+  conversation     Conversation      @relation(fields: [conversationId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_support_tickets__conversation_id")
+  customer         User?             @relation("SupportTicketCustomer", fields: [customerUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_support_tickets__customer_user_id")
+  /// D-469: the inbound sales enquiry made from this ticket.
+  salesInboundLead SalesInboundLead? @relation("SalesInboundLeadTicket")
 
   @@index([conversationId], map: "ix_support_tickets__conversation_id")
   @@index([customerUserId], map: "ix_support_tickets__customer_user_id")

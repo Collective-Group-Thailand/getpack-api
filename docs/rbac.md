@@ -331,6 +331,15 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `company_accountant` | ฝ่ายบัญชีบริษัท | Accountant |
 | `sales_agent` | ตัวแทนขาย | Sales agent |
 
+## Company sales desk — personal data and field visibility (D-469, D-470)
+
+- **Inbound sales enquiries** (`sales_inbound_leads`): contact name, phone, e-mail, organisation and need. Purpose:
+  answering a sales enquiry the person sent (contact form, RFQ) or staff entered with their agreement. Retention:
+  while open, then 2 years after it closes, unless the person asks for erasure earlier. Access:
+  `sales.pipeline.manage` (the whole pool) and the assigned rep (`sales.pipeline.self`). Events carry no contact data.
+- **Rep pipeline**: the agent programme's lead rules (D-417, D-468) — a rep reaches only their own employee agent's
+  leads; a manager acting on a rep's lead is audited (`sales_lead.acted_for`); freelance agents' leads are read-only.
+
 ## Segregation of duties (`accounting-design.md` §8)
 
 | Rule | Kind | Pair | Match | Decisions |

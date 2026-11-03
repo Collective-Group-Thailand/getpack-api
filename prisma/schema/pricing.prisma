@@ -833,6 +833,8 @@ model Rfq {
   messages              RfqMessage[]
   consultations         RfqFactoryConsultation[]
   quotes                RfqQuote[]
+  /// D-469: the inbound sales enquiry made from this RFQ.
+  salesInboundLead      SalesInboundLead?        @relation("SalesInboundLeadRfq")
   unmetDemand           UnmetDemandRecord[]
 
   configurationDrafts ConfigurationDraft[] @relation("ConfigurationDraftRfq")

@@ -881,6 +881,11 @@ model User {
   salesAgentDiscountOffers         SalesAgentDiscountOption[]  @relation("SalesAgentDiscountOptionOfferedBy")
   salesAgentDiscountAcceptances    SalesAgentDiscountOption[]  @relation("SalesAgentDiscountOptionAcceptedBy")
   salesAgentStatementsApproved     SalesAgentStatement[]       @relation("SalesAgentStatementApprovedBy")
+  salesInboundAssigned             SalesInboundLead[]          @relation("SalesInboundLeadAssignee")
+  salesInboundCreated              SalesInboundLead[]          @relation("SalesInboundLeadCreatedBy")
+  salesInboundAssignmentsFrom      SalesInboundAssignment[]    @relation("SalesInboundAssignmentFrom")
+  salesInboundAssignmentsTo        SalesInboundAssignment[]    @relation("SalesInboundAssignmentTo")
+  salesInboundAssignmentsCreated   SalesInboundAssignment[]    @relation("SalesInboundAssignmentCreatedBy")
   // --- end Sales agents
 
   // --- Documents D-428 – D-431 (back-relations)

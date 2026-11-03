@@ -548,6 +548,43 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'sales_manager',
   },
   {
+    key: 'sales.first_response_hours',
+    valueType: 'integer',
+    value: 4,
+    valueSchema: { minimum: 1, maximum: 72 },
+    description:
+      'D-469 working hours to the first response of an inbound sales enquiry, counted every day inside ' +
+      'calendar.business_hours (P-05: the team replies within 4 working hours, daily 09:00–18:00); a breach alerts ' +
+      'the sales managers',
+    decisions: ['D-469'],
+    confirmation: 'proposed',
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'sales.assignment_mode',
+    valueType: 'enum',
+    value: 'manual',
+    valueSchema: { enum: ['manual', 'round_robin'] },
+    description:
+      'D-469 how new inbound sales enquiries reach reps: manual (a manager assigns) or round_robin (the active rep ' +
+      'with the fewest open enquiries below sales.max_open_per_rep, then the least recently assigned)',
+    decisions: ['D-469'],
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'sales.max_open_per_rep',
+    valueType: 'integer',
+    value: null,
+    unset: true,
+    valueSchema: { minimum: 1, maximum: 1000 },
+    description:
+      'D-469 open inbound enquiries a rep may hold before round robin skips them; not seeded — no cap until the ' +
+      'Sales Manager sets one',
+    decisions: ['D-469'],
+    confirmation: 'pending_business',
+    ownerRole: 'sales_manager',
+  },
+  {
     key: 'tax.pit_brackets',
     valueType: 'json',
     value: PIT_BRACKETS_SEED,

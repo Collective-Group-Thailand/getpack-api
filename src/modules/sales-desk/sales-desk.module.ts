@@ -1,9 +1,10 @@
 import { Global, Module } from '@nestjs/common';
 
+import { SalesInboundService } from './sales-inbound.service';
 import { SalesPipelineService } from './sales-pipeline.service';
 import { SalesScopeService } from './sales-scope';
 
-const SERVICES = [SalesScopeService, SalesPipelineService];
+const SERVICES = [SalesScopeService, SalesPipelineService, SalesInboundService];
 
 /**
  * The company sales desk (D-469) and the discount approval desk (D-470) over the agent programme's lead model
