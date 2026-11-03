@@ -101101,6 +101101,175 @@
         ],
         "type": "string"
       },
+      "SalesDashboardDto": {
+        "properties": {
+          "asOf": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "byPeriod": {
+            "items": {
+              "$ref": "#/components/schemas/SalesPeriodFiguresDto"
+            },
+            "type": "array"
+          },
+          "byRep": {
+            "items": {
+              "$ref": "#/components/schemas/SalesRepFiguresDto"
+            },
+            "type": "array"
+          },
+          "bySource": {
+            "items": {
+              "$ref": "#/components/schemas/SalesSourceFiguresDto"
+            },
+            "type": "array"
+          },
+          "from": {
+            "example": "2026-08-05",
+            "format": "date",
+            "type": "string"
+          },
+          "funnel": {
+            "items": {
+              "$ref": "#/components/schemas/SalesFunnelStepDto"
+            },
+            "type": "array"
+          },
+          "inbound": {
+            "$ref": "#/components/schemas/SalesInboundFiguresDto"
+          },
+          "medianDays": {
+            "items": {
+              "$ref": "#/components/schemas/SalesStageDaysDto"
+            },
+            "type": "array"
+          },
+          "period": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesDashboardPeriod"
+              }
+            ],
+            "example": "week"
+          },
+          "split": {
+            "items": {
+              "$ref": "#/components/schemas/SalesKindFiguresDto"
+            },
+            "type": "array"
+          },
+          "to": {
+            "example": "2026-11-03",
+            "format": "date",
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/SalesDashboardTotalsDto"
+          }
+        },
+        "required": [
+          "from",
+          "to",
+          "period",
+          "asOf",
+          "totals",
+          "funnel",
+          "medianDays",
+          "bySource",
+          "byRep",
+          "byPeriod",
+          "split",
+          "inbound"
+        ],
+        "type": "object"
+      },
+      "SalesDashboardPeriod": {
+        "enum": [
+          "week",
+          "month"
+        ],
+        "type": "string"
+      },
+      "SalesDashboardTotalsDto": {
+        "properties": {
+          "leads": {
+            "example": 24,
+            "type": "number"
+          },
+          "lost": {
+            "example": 4,
+            "type": "number"
+          },
+          "openValue": {
+            "description": "Σ expected value of open leads (THB)",
+            "example": "480000.00",
+            "type": "string"
+          },
+          "winRatePct": {
+            "description": "won ÷ (won + lost), %",
+            "example": "60.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "won": {
+            "example": 6,
+            "type": "number"
+          }
+        },
+        "required": [
+          "leads",
+          "won",
+          "lost",
+          "winRatePct",
+          "openValue"
+        ],
+        "type": "object"
+      },
+      "SalesFunnelStage": {
+        "enum": [
+          "new",
+          "contacted",
+          "quoted",
+          "negotiating",
+          "won"
+        ],
+        "type": "string"
+      },
+      "SalesFunnelStepDto": {
+        "properties": {
+          "count": {
+            "description": "Leads that reached this stage (or further)",
+            "example": 12,
+            "type": "number"
+          },
+          "dropOffPct": {
+            "description": "Lost from the previous step, %",
+            "example": "25.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesFunnelStage"
+              }
+            ],
+            "example": "quoted"
+          }
+        },
+        "required": [
+          "stage",
+          "count",
+          "dropOffPct"
+        ],
+        "type": "object"
+      },
       "SalesInboundDisqualifyReason": {
         "enum": [
           "not_a_buyer",
@@ -101294,6 +101463,27 @@
         ],
         "type": "object"
       },
+      "SalesInboundFiguresDto": {
+        "properties": {
+          "firstResponseSlaPct": {
+            "description": "Answered within the first-response time ÷ enquiries due, % (P-05)",
+            "example": "86.7",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "total": {
+            "example": 30,
+            "type": "number"
+          }
+        },
+        "required": [
+          "total",
+          "firstResponseSlaPct"
+        ],
+        "type": "object"
+      },
       "SalesInboundLeadRefusal": {
         "description": "Why no lead could be registered for the rep: `unavailable` (one neutral reason — an existing customer or someone else’s protected lead, D-440) or `too_many_leads` (the rep’s open-leads limit)",
         "enum": [
@@ -101320,6 +101510,86 @@
           "disqualified"
         ],
         "type": "string"
+      },
+      "SalesKindFiguresDto": {
+        "properties": {
+          "agentKind": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesAgentKindFilter"
+              }
+            ],
+            "example": "employee"
+          },
+          "leads": {
+            "example": 24,
+            "type": "number"
+          },
+          "lost": {
+            "example": 4,
+            "type": "number"
+          },
+          "openValue": {
+            "description": "Σ expected value of open leads (THB)",
+            "example": "480000.00",
+            "type": "string"
+          },
+          "winRatePct": {
+            "description": "won ÷ (won + lost), %",
+            "example": "60.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "won": {
+            "example": 6,
+            "type": "number"
+          }
+        },
+        "required": [
+          "leads",
+          "won",
+          "lost",
+          "winRatePct",
+          "openValue",
+          "agentKind"
+        ],
+        "type": "object"
+      },
+      "SalesOpenStage": {
+        "enum": [
+          "new",
+          "contacted",
+          "quoted",
+          "negotiating"
+        ],
+        "type": "string"
+      },
+      "SalesPeriodFiguresDto": {
+        "properties": {
+          "leads": {
+            "description": "Leads created",
+            "example": 8,
+            "type": "number"
+          },
+          "period": {
+            "description": "The month (`YYYY-MM`) or week (its Monday, `YYYY-MM-DD`), Bangkok",
+            "example": "2026-11",
+            "type": "string"
+          },
+          "won": {
+            "description": "Leads won",
+            "example": 2,
+            "type": "number"
+          }
+        },
+        "required": [
+          "period",
+          "leads",
+          "won"
+        ],
+        "type": "object"
       },
       "SalesPointDto": {
         "properties": {
@@ -101451,6 +101721,55 @@
         ],
         "type": "object"
       },
+      "SalesRepFiguresDto": {
+        "properties": {
+          "agentId": {
+            "description": "The rep’s employee agent",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001",
+            "format": "uuid",
+            "type": "string"
+          },
+          "leads": {
+            "example": 24,
+            "type": "number"
+          },
+          "lost": {
+            "example": 4,
+            "type": "number"
+          },
+          "name": {
+            "example": "สมหญิง ขายดี",
+            "type": "string"
+          },
+          "openValue": {
+            "description": "Σ expected value of open leads (THB)",
+            "example": "480000.00",
+            "type": "string"
+          },
+          "winRatePct": {
+            "description": "won ÷ (won + lost), %",
+            "example": "60.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "won": {
+            "example": 6,
+            "type": "number"
+          }
+        },
+        "required": [
+          "leads",
+          "won",
+          "lost",
+          "winRatePct",
+          "openValue",
+          "agentId",
+          "name"
+        ],
+        "type": "object"
+      },
       "SalesReportDto": {
         "properties": {
           "byChannel": {
@@ -101496,6 +101815,80 @@
           "byChannel",
           "bySegment",
           "byProductType"
+        ],
+        "type": "object"
+      },
+      "SalesSourceFiguresDto": {
+        "properties": {
+          "inbound": {
+            "description": "Inbound enquiries of that source in the period",
+            "example": 5,
+            "type": "number"
+          },
+          "leads": {
+            "example": 24,
+            "type": "number"
+          },
+          "lost": {
+            "example": 4,
+            "type": "number"
+          },
+          "source": {
+            "description": "Lead source (`AgentLeadSource`) or inbound source",
+            "example": "manual",
+            "type": "string"
+          },
+          "winRatePct": {
+            "description": "won ÷ (won + lost), %",
+            "example": "60.0",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "won": {
+            "example": 6,
+            "type": "number"
+          }
+        },
+        "required": [
+          "leads",
+          "won",
+          "lost",
+          "winRatePct",
+          "source",
+          "inbound"
+        ],
+        "type": "object"
+      },
+      "SalesStageDaysDto": {
+        "properties": {
+          "medianDays": {
+            "description": "Median days spent in the stage",
+            "example": "3.5",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "samples": {
+            "description": "Stage exits measured",
+            "example": 10,
+            "type": "number"
+          },
+          "stage": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesOpenStage"
+              }
+            ],
+            "example": "quoted"
+          }
+        },
+        "required": [
+          "stage",
+          "medianDays",
+          "samples"
         ],
         "type": "object"
       },
@@ -334840,6 +335233,511 @@
         "summary": "Record a web-vital sample",
         "tags": [
           "admin.rum"
+        ]
+      }
+    },
+    "/v1/admin/sales/dashboard": {
+      "get": {
+        "description": "Leads created in the range (Bangkok days, default the last 90): funnel by stage with drop-off, win rate, median days per stage (from the timeline’s stage changes), by source, by rep, by week or month, the inbound first-response SLA % (P-05) and freelance vs employee. Every figure is computed by the API (D-469).\n\nImplements: D-469.",
+        "operationId": "admin.sales.dashboard",
+        "parameters": [
+          {
+            "description": "First Bangkok day (default: 90 days ago)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-08-01",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last Bangkok day, inclusive (default: today)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-03",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesDashboardPeriod"
+            }
+          },
+          {
+            "description": "Only company reps or only freelance agents (default both)",
+            "in": "query",
+            "name": "agentKind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesAgentKindFilter"
+            }
+          },
+          {
+            "description": "One agent / rep only",
+            "in": "query",
+            "name": "agentId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "asOf": "2026-11-03T10:00:00+07:00",
+                  "byPeriod": [
+                    {
+                      "leads": 8,
+                      "period": "2026-11",
+                      "won": 2
+                    }
+                  ],
+                  "byRep": [
+                    {
+                      "agentId": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001",
+                      "leads": 12,
+                      "lost": 2,
+                      "name": "สมหญิง ขายดี",
+                      "openValue": "240000.00",
+                      "winRatePct": "66.7",
+                      "won": 4
+                    }
+                  ],
+                  "bySource": [
+                    {
+                      "inbound": 0,
+                      "leads": 10,
+                      "lost": 1,
+                      "source": "manual",
+                      "winRatePct": "75.0",
+                      "won": 3
+                    }
+                  ],
+                  "from": "2026-08-05",
+                  "funnel": [
+                    {
+                      "count": 24,
+                      "dropOffPct": null,
+                      "stage": "new"
+                    },
+                    {
+                      "count": 20,
+                      "dropOffPct": "16.7",
+                      "stage": "contacted"
+                    },
+                    {
+                      "count": 14,
+                      "dropOffPct": "30.0",
+                      "stage": "quoted"
+                    },
+                    {
+                      "count": 8,
+                      "dropOffPct": "42.9",
+                      "stage": "negotiating"
+                    },
+                    {
+                      "count": 6,
+                      "dropOffPct": "25.0",
+                      "stage": "won"
+                    }
+                  ],
+                  "inbound": {
+                    "firstResponseSlaPct": "86.7",
+                    "total": 30
+                  },
+                  "medianDays": [
+                    {
+                      "medianDays": "3.5",
+                      "samples": 10,
+                      "stage": "quoted"
+                    }
+                  ],
+                  "period": "week",
+                  "split": [
+                    {
+                      "agentKind": "employee",
+                      "leads": 16,
+                      "lost": 3,
+                      "openValue": "320000.00",
+                      "winRatePct": "62.5",
+                      "won": 5
+                    },
+                    {
+                      "agentKind": "freelance",
+                      "leads": 8,
+                      "lost": 1,
+                      "openValue": "160000.00",
+                      "winRatePct": "50.0",
+                      "won": 1
+                    }
+                  ],
+                  "to": "2026-11-03",
+                  "totals": {
+                    "leads": 24,
+                    "lost": 4,
+                    "openValue": "480000.00",
+                    "winRatePct": "60.0",
+                    "won": 6
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/SalesDashboardDto"
+                }
+              }
+            },
+            "description": "Dashboard",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Read the sales dashboard",
+        "tags": [
+          "admin.sales"
+        ],
+        "x-required-permissions": [
+          "sales.pipeline.manage"
+        ]
+      }
+    },
+    "/v1/admin/sales/dashboard/export": {
+      "get": {
+        "description": "The same figures as `admin.sales.dashboard` as a UTF-8 CSV (one section per block, formula-safe cells) behind a 5-minute link; audited as an export. No cost or margin is in it (D-469).\n\nImplements: D-469.",
+        "operationId": "admin.sales.exportDashboard",
+        "parameters": [
+          {
+            "description": "First Bangkok day (default: 90 days ago)",
+            "in": "query",
+            "name": "from",
+            "required": false,
+            "schema": {
+              "example": "2026-08-01",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last Bangkok day, inclusive (default: today)",
+            "in": "query",
+            "name": "to",
+            "required": false,
+            "schema": {
+              "example": "2026-11-03",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesDashboardPeriod"
+            }
+          },
+          {
+            "description": "Only company reps or only freelance agents (default both)",
+            "in": "query",
+            "name": "agentKind",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SalesAgentKindFilter"
+            }
+          },
+          {
+            "description": "One agent / rep only",
+            "in": "query",
+            "name": "agentId",
+            "required": false,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-11-03T10:05:00+07:00",
+                  "url": "https://getpack-files.s3.example.com/…"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DownloadUrlDto"
+                }
+              }
+            },
+            "description": "Download link",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export the sales dashboard as CSV",
+        "tags": [
+          "admin.sales"
+        ],
+        "x-required-permissions": [
+          "sales.pipeline.manage"
         ]
       }
     },
@@ -612279,6 +613177,10 @@
     {
       "description": "Real-user monitoring: Core Web Vitals samples by route pattern (U-B0.3).",
       "name": "admin.rum"
+    },
+    {
+      "description": "The sales manager’s dashboard: funnel, win rate, stage days, sources, reps, SLA (D-469).",
+      "name": "admin.sales"
     },
     {
       "description": "The inbound pool of sales enquiries (contact form, RFQ, staff), their assignment to reps and the first-response SLA (D-469).",
