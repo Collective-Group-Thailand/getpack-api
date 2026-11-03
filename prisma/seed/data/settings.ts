@@ -753,7 +753,7 @@ export const SETTINGS: readonly SettingSeed[] = [
     key: 'pnl.line_catalogue',
     valueType: 'json',
     value: PNL_LINE_CATALOGUE_SEED,
-    valueSchema: PNL_LINE_CATALOGUE_SCHEMA as unknown as Record<string, unknown>,
+    valueSchema: PNL_LINE_CATALOGUE_SCHEMA,
     description:
       'D-472 the management P&L lines: labels, tooltips (definition, formula, source, how to fill — from ' +
       'PNL-LINES.md) and the GL accounts behind each line, mapped by the accountant; a line without an account is ' +
@@ -767,7 +767,7 @@ export const SETTINGS: readonly SettingSeed[] = [
     key: 'pnl.forecast_rules',
     valueType: 'json',
     value: PNL_FORECAST_RULES_SEED,
-    valueSchema: PNL_FORECAST_RULES_SCHEMA as unknown as Record<string, unknown>,
+    valueSchema: PNL_FORECAST_RULES_SCHEMA,
     description:
       'D-472 how the P&L planner fills forecast months: probability of an open lead per pipeline stage (new 10, ' +
       'contacted 20, quoted 40, negotiating 60 %), the weighted pipeline spread over 3 months, a 3-month trailing ' +
@@ -780,7 +780,7 @@ export const SETTINGS: readonly SettingSeed[] = [
     key: 'tax.cit_rates',
     valueType: 'json',
     value: CIT_RATES_SEED,
-    valueSchema: CIT_RATES_SCHEMA as unknown as Record<string, unknown>,
+    valueSchema: CIT_RATES_SCHEMA,
     description:
       'D-472 corporate income tax table of the P&L estimate: 20 %, or the SME bands (0 % to 300,000, 15 % to ' +
       '3,000,000, 20 % above) when paid-up capital ≤ 5,000,000 and revenue ≤ 30,000,000; the company paid-up capital ' +
