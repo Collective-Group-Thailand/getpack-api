@@ -1,5 +1,6 @@
 import { Global, Module } from '@nestjs/common';
 
+import { SalesDeskJobs } from './sales-desk.jobs';
 import { SalesInboundService } from './sales-inbound.service';
 import { SalesPipelineService } from './sales-pipeline.service';
 import { SalesScopeService } from './sales-scope';
@@ -12,7 +13,7 @@ const SERVICES = [SalesScopeService, SalesPipelineService, SalesInboundService];
  */
 @Global()
 @Module({
-  providers: [...SERVICES],
+  providers: [...SERVICES, SalesDeskJobs],
   exports: SERVICES,
 })
 export class SalesDeskModule {}

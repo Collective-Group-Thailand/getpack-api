@@ -5,6 +5,7 @@ import {
   AGENT_NOTIFICATION_TEMPLATES,
   AGENT_ZONE_TEMPLATES,
 } from './notifications-agents';
+import { SALES_DESK_ROUTES, SALES_DESK_TEMPLATES } from './notifications-sales';
 
 /**
  * Platform notifications seeded by `pnpm db:seed` (B1.3): approvers hear about requests routed to
@@ -284,9 +285,11 @@ export const NOTIFICATION_TEMPLATES: readonly NotificationTemplateSeed[] = [
   ...AGENT_NOTIFICATION_TEMPLATES,
   ...AGENT_EMAIL_TEMPLATES,
   ...AGENT_ZONE_TEMPLATES,
+  ...SALES_DESK_TEMPLATES,
 ];
 export const NOTIFICATION_ROUTES: readonly NotificationRouteSeed[] = [
   ...PLATFORM_ROUTES,
   ...MATRIX_ROUTES,
   ...AGENT_NOTIFICATION_ROUTES,
+  ...SALES_DESK_ROUTES,
 ];
