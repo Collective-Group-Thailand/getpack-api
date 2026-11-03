@@ -199,6 +199,17 @@
           "type": "https://errors.getpack/agents.bank_name_mismatch"
         }
       },
+      "problem.agents.card_scan_failed": {
+        "summary": "agents.card_scan_failed",
+        "value": {
+          "code": "agents.card_scan_failed",
+          "detail": "อ่านข้อมูลจากรูปนามบัตรไม่ได้ ลองถ่ายใหม่ให้ชัดขึ้น หรือกรอกข้อมูลเอง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 422,
+          "title": "อ่านนามบัตรไม่ได้",
+          "type": "https://errors.getpack/agents.card_scan_failed"
+        }
+      },
       "problem.agents.code_invalid": {
         "summary": "agents.code_invalid",
         "value": {
@@ -16204,6 +16215,21 @@
           "none",
           "pending_approval",
           "active"
+        ],
+        "type": "string"
+      },
+      "AgentCardScanEngine": {
+        "enum": [
+          "tesseract_cli",
+          "fake"
+        ],
+        "type": "string"
+      },
+      "AgentCardScanLanguage": {
+        "description": "Languages on the card; `eng` alone reads an English-only card better",
+        "enum": [
+          "tha",
+          "eng"
         ],
         "type": "string"
       },
@@ -69996,7 +70022,8 @@
           "design_asset",
           "brand_mark",
           "signature",
-          "dieline"
+          "dieline",
+          "agent_card_scan"
         ],
         "type": "string"
       },
@@ -102059,6 +102086,193 @@
           "shared",
           "owner",
           "createdAt"
+        ],
+        "type": "object"
+      },
+      "ScanAgentCardDto": {
+        "properties": {
+          "fileId": {
+            "description": "The photo uploaded with `store.files.presign` (purpose `agent_card_scan`) and completed",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029",
+            "format": "uuid",
+            "type": "string"
+          },
+          "languages": {
+            "default": [
+              "tha",
+              "eng"
+            ],
+            "description": "Languages on the card; `eng` alone reads an English-only card better",
+            "items": {
+              "$ref": "#/components/schemas/AgentCardScanLanguage"
+            },
+            "maxItems": 2,
+            "type": "array"
+          }
+        },
+        "required": [
+          "fileId"
+        ],
+        "type": "object"
+      },
+      "ScannedCardDto": {
+        "properties": {
+          "contactName": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScannedFieldDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "deleteAfter": {
+            "example": "2026-10-25T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScannedFieldDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "engine": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentCardScanEngine"
+              }
+            ],
+            "example": "tesseract_cli"
+          },
+          "fileId": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029",
+            "format": "uuid",
+            "type": "string"
+          },
+          "lineId": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScannedFieldDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lines": {
+            "description": "Every line read, to copy from",
+            "items": {
+              "$ref": "#/components/schemas/ScannedLineDto"
+            },
+            "type": "array"
+          },
+          "organisationName": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScannedFieldDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "otherPhones": {
+            "description": "Other numbers on the card (office)",
+            "items": {
+              "$ref": "#/components/schemas/ScannedFieldDto"
+            },
+            "type": "array"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScannedFieldDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "E.164; a mobile first"
+          },
+          "taxId": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScannedFieldDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "website": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ScannedFieldDto"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "fileId",
+          "engine",
+          "contactName",
+          "organisationName",
+          "phone",
+          "otherPhones",
+          "email",
+          "taxId",
+          "lineId",
+          "website",
+          "lines",
+          "deleteAfter"
+        ],
+        "type": "object"
+      },
+      "ScannedFieldDto": {
+        "properties": {
+          "confidence": {
+            "description": "0–1; review anything below ~0.7",
+            "example": 0.86,
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "value": {
+            "example": "คุณมานี ใจดี",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "confidence"
+        ],
+        "type": "object"
+      },
+      "ScannedLineDto": {
+        "properties": {
+          "confidence": {
+            "example": 90,
+            "maximum": 100,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "text": {
+            "example": "คุณมานี ใจดี",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "confidence"
         ],
         "type": "object"
       },
@@ -509890,6 +510104,312 @@
           }
         ],
         "summary": "Check whether a contact can be my lead",
+        "tags": [
+          "store.agent"
+        ],
+        "x-required-permissions": [
+          "agent.self"
+        ]
+      }
+    },
+    "/v1/store/agent/leads/actions/scan-card": {
+      "post": {
+        "description": "OCR (Thai + English) of a card photo uploaded with purpose `agent_card_scan`: name, organisation, phone, e-mail, tax id, LINE id and website with a confidence each, and every line read. Nothing is saved — review the fields and register the lead with source `card_scan`. The photo is deleted after `agents.card_scan_retention_days` (7) (D-468, PDPA).\n\nImplements: D-417, D-440, D-468.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "operationId": "store.agentLeads.scanCard",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/ScanAgentCardDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "contactName": {
+                    "confidence": 0.86,
+                    "value": "คุณมานี ใจดี"
+                  },
+                  "deleteAfter": "2026-10-25T10:00:00+07:00",
+                  "email": {
+                    "confidence": 0.9,
+                    "value": "manee@example.invalid"
+                  },
+                  "engine": "tesseract_cli",
+                  "fileId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6029",
+                  "lineId": {
+                    "confidence": 0.86,
+                    "value": "manee.cafe"
+                  },
+                  "lines": [
+                    {
+                      "confidence": 90,
+                      "text": "คุณมานี ใจดี"
+                    },
+                    {
+                      "confidence": 90,
+                      "text": "บริษัท ตัวอย่างบรรจุภัณฑ์ จำกัด"
+                    },
+                    {
+                      "confidence": 90,
+                      "text": "โทร 089-000-1234"
+                    },
+                    {
+                      "confidence": 90,
+                      "text": "manee@example.invalid"
+                    },
+                    {
+                      "confidence": 90,
+                      "text": "LINE: manee.cafe"
+                    }
+                  ],
+                  "organisationName": {
+                    "confidence": 0.81,
+                    "value": "บริษัท ตัวอย่างบรรจุภัณฑ์ จำกัด"
+                  },
+                  "otherPhones": [],
+                  "phone": {
+                    "confidence": 0.86,
+                    "value": "+66890001234"
+                  },
+                  "taxId": null,
+                  "website": null
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ScannedCardDto"
+                }
+              }
+            },
+            "description": "Fields read",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.ended": {
+                    "$ref": "#/components/examples/problem.agents.ended"
+                  },
+                  "agents.not_agent": {
+                    "$ref": "#/components/examples/problem.agents.not_agent"
+                  },
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.ended`, `agents.not_agent`, `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.not_found": {
+                    "$ref": "#/components/examples/problem.http.not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.agent_inactive": {
+                    "$ref": "#/components/examples/problem.agents.agent_inactive"
+                  },
+                  "file.infected": {
+                    "$ref": "#/components/examples/problem.file.infected"
+                  },
+                  "file.not_ready": {
+                    "$ref": "#/components/examples/problem.file.not_ready"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.agent_inactive`, `file.infected`, `file.not_ready`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.card_scan_failed": {
+                    "$ref": "#/components/examples/problem.agents.card_scan_failed"
+                  },
+                  "file.too_large": {
+                    "$ref": "#/components/examples/problem.file.too_large"
+                  },
+                  "file.upload_incomplete": {
+                    "$ref": "#/components/examples/problem.file.upload_incomplete"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.card_scan_failed`, `file.too_large`, `file.upload_incomplete`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "customer": []
+          }
+        ],
+        "summary": "Read a business card photo",
         "tags": [
           "store.agent"
         ],

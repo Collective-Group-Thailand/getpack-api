@@ -33,6 +33,7 @@ import { ApiBody, ApiParam } from '@nestjs/swagger';
 import { DownloadUrlDto } from '@platform/files/files.dto';
 import { type Response } from 'express';
 
+import { AgentCardScanService } from './agent-card-scan.service';
 import { type ImportRow } from './agent-lead-rules';
 import { AgentLeadsService, leadEtag } from './agent-leads.service';
 import { normalisePhone } from './agent-shared';
@@ -49,7 +50,11 @@ import {
   ChangeAgentLeadStageDto,
   CheckAgentLeadDto,
   IMPORT_EXAMPLE,
+  P3_IDS,
   PreviewAgentLeadImportDto,
+  ScanAgentCardDto,
+  SCANNED_CARD_EXAMPLE,
+  ScannedCardDto,
   UpdateAgentLeadDto,
 } from './agents-pipeline.dto';
 import { leadDto } from './agents-views';
@@ -124,6 +129,7 @@ export class StoreAgentLeadsController {
   constructor(
     private readonly agents: AgentsService,
     private readonly leads: AgentLeadsService,
+    private readonly cards: AgentCardScanService,
   ) {}
 
   @Post('leads/actions/check')
@@ -284,6 +290,44 @@ export class StoreAgentLeadsController {
       row,
       rows.map((r) => ({ rowNo: r.rowNo, errors: r.errors, leadId: r.leadId ?? null })),
     );
+  }
+
+  @Post('leads/actions/scan-card')
+  @HttpCode(200)
+  @Can('agent.self')
+  @ApiEndpoint({
+    id: 'store.agentLeads.scanCard',
+    summary: 'Read a business card photo',
+    description:
+      'OCR (Thai + English) of a card photo uploaded with purpose `agent_card_scan`: name, organisation, phone, ' +
+      'e-mail, tax id, LINE id and website with a confidence each, and every line read. Nothing is saved — review ' +
+      'the fields and register the lead with source `card_scan`. The photo is deleted after ' +
+      '`agents.card_scan_retention_days` (7) (D-468, PDPA).',
+    implements: DECISIONS,
+  })
+  @ApiBody({ type: ScanAgentCardDto, examples: { default: { value: { fileId: P3_IDS.file } } } })
+  @ApiSuccess(200, { description: 'Fields read', type: ScannedCardDto, example: SCANNED_CARD_EXAMPLE })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.not_found',
+    ...AGENT_ERRORS,
+    'agents.agent_inactive',
+    'file.upload_incomplete',
+    'file.not_ready',
+    'file.infected',
+    'file.too_large',
+    'agents.card_scan_failed',
+  )
+  async scanCard(@CurrentActor() actor: Actor, @Body() body: ScanAgentCardDto): Promise<ScannedCardDto> {
+    const me = customer(actor);
+    const r = await this.cards.scan(me, await this.agents.mine(me.userId), body.fileId, body.languages);
+    return {
+      fileId: r.fileId,
+      engine: r.engine,
+      ...r.fields,
+      lines: r.lines,
+      deleteAfter: toBangkokIso(r.deleteAfter),
+    };
   }
 
   @Get('leads/:leadId')

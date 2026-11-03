@@ -355,6 +355,19 @@ export class EnvironmentVariables {
   @IsString()
   LINE_MESSAGING_CHANNEL_ID?: string;
 
+  /**
+   * D-468 business-card OCR: `tesseract_cli` (the `tesseract` binary with `tha` + `eng` data) or `fake`. Unset: fake
+   * when INTEGRATIONS_MODE=fake, else tesseract_cli.
+   */
+  @IsOptional()
+  @IsIn(['tesseract_cli', 'fake'])
+  OCR_ADAPTER?: 'tesseract_cli' | 'fake';
+
+  /** D-468 path of the Tesseract binary (default `tesseract` on PATH). */
+  @IsOptional()
+  @IsString()
+  TESSERACT_PATH?: string;
+
   /** Web push VAPID key pair (base64url) and contact (`mailto:` or URL). */
   @IsOptional()
   @IsString()

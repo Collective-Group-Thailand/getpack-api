@@ -114,6 +114,8 @@ export interface SettingValues {
   /** D-467 years after `endedAt` an ended agent still reads their statements and 50 ทวิ (tax record retention). */
   'agents.ended_record_access_years': number;
   /** D-468 follow-up reminders wait outside this Bangkok window (from 21:00 to 08:00). */
+  /** D-468 days a business-card photo is kept before it is purged (PDPA). */
+  'agents.card_scan_retention_days': number;
   'agents.follow_up_quiet_hours': { from: string; to: string; timezone?: string };
   /** D-465 personal income tax table (net income bands, s.48(1)). */
   'tax.pit_brackets': { upTo: string | null; ratePct: string }[];

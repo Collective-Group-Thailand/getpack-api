@@ -45,6 +45,9 @@ import { ClamdScanner } from './virus-scan/clamd-scanner';
 import { ExternalScanPending } from './virus-scan/external-scan-pending';
 import { FakeVirusScanner } from './virus-scan/fake-virus-scanner';
 import { VIRUS_SCANNER } from './virus-scan/virus-scanner.port';
+import { FakeOcr } from './ocr/fake-ocr';
+import { OCR } from './ocr/ocr.port';
+import { TesseractCliOcr } from './ocr/tesseract-cli-ocr';
 import { FakeWebPush } from './web-push/fake-web-push';
 import { VapidWebPush } from './web-push/vapid-web-push';
 import { WEB_PUSH } from './web-push/web-push.port';
@@ -236,6 +239,17 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
         config.useFakes ? new FakeDielineEngine() : new GetpackDielineEngine(),
     },
     {
+      // D-468 card scan: `OCR_ADAPTER` = tesseract_cli | fake (default: fake with fake integrations, else Tesseract).
+      provide: OCR,
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) => {
+        const adapter = config.get('OCR_ADAPTER') ?? (config.useFakes ? 'fake' : 'tesseract_cli');
+        return adapter === 'fake'
+          ? new FakeOcr()
+          : new TesseractCliOcr(config.get('TESSERACT_PATH') ?? 'tesseract');
+      },
+    },
+    {
       // Real mode: ClamAV (clamd) when CLAMAV_HOST is set; otherwise files stay `pending` (never served unscanned).
       provide: VIRUS_SCANNER,
       inject: [AppConfig, OBJECT_STORAGE],
@@ -256,6 +270,7 @@ import { WEBHOOK_SENDER } from './webhooks-out/webhook-sender.port';
     },
   ],
   exports: [
+    OCR,
     SCB_GATEWAY,
     TWOC2P_GATEWAY,
     SLIP_VERIFIER,

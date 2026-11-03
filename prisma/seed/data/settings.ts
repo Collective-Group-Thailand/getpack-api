@@ -526,6 +526,18 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'sales_manager',
   },
   {
+    key: 'agents.card_scan_retention_days',
+    valueType: 'integer',
+    value: 7,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-468 days a business-card photo uploaded for the agent card scan is kept before it is deleted (PDPA: the card ' +
+      'holder’s contact data; nothing is saved from it until the agent registers the lead)',
+    decisions: ['D-468'],
+    confirmation: 'proposed',
+    ownerRole: 'sales_manager',
+  },
+  {
     key: 'agents.follow_up_quiet_hours',
     valueType: 'time_of_day_window',
     value: { from: '21:00', to: '08:00', timezone: 'Asia/Bangkok' },

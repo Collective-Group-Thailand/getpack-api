@@ -494,3 +494,107 @@ export class AgentLeadImportParam {
 }
 
 export const LEAD_DETAIL_EXAMPLE = { ...LEAD_EXAMPLE, id: AGENT_IDS.lead };
+
+// --- card scan (D-468 item 6) ------------------------------------------------------------------------------------
+
+export const OCR_LANGUAGES = ['tha', 'eng'] as const;
+
+export class ScanAgentCardDto {
+  @ApiProperty({
+    format: 'uuid',
+    example: P3_IDS.file,
+    description: 'The photo uploaded with `store.files.presign` (purpose `agent_card_scan`) and completed',
+  })
+  @IsUUID()
+  fileId!: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    enum: OCR_LANGUAGES,
+    enumName: 'AgentCardScanLanguage',
+    default: ['tha', 'eng'],
+    description: 'Languages on the card; `eng` alone reads an English-only card better',
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(2)
+  @IsIn(OCR_LANGUAGES, { each: true })
+  languages?: (typeof OCR_LANGUAGES)[number][];
+}
+
+export class ScannedFieldDto {
+  @ApiProperty({ example: 'คุณมานี ใจดี' })
+  value!: string;
+
+  @ApiProperty({ example: 0.86, minimum: 0, maximum: 1, description: '0–1; review anything below ~0.7' })
+  confidence!: number;
+}
+
+export class ScannedLineDto {
+  @ApiProperty({ example: 'คุณมานี ใจดี' })
+  text!: string;
+
+  @ApiProperty({ type: 'integer', example: 90, minimum: 0, maximum: 100 })
+  confidence!: number;
+}
+
+export const OCR_ENGINES = ['tesseract_cli', 'fake'] as const;
+
+export class ScannedCardDto {
+  @ApiProperty({ format: 'uuid', example: P3_IDS.file })
+  fileId!: string;
+
+  @ApiProperty({ enum: OCR_ENGINES, enumName: 'AgentCardScanEngine', example: 'tesseract_cli' })
+  engine!: string;
+
+  @ApiProperty({ type: ScannedFieldDto, nullable: true })
+  contactName!: ScannedFieldDto | null;
+
+  @ApiProperty({ type: ScannedFieldDto, nullable: true })
+  organisationName!: ScannedFieldDto | null;
+
+  @ApiProperty({ type: ScannedFieldDto, nullable: true, description: 'E.164; a mobile first' })
+  phone!: ScannedFieldDto | null;
+
+  @ApiProperty({ type: [ScannedFieldDto], description: 'Other numbers on the card (office)' })
+  otherPhones!: ScannedFieldDto[];
+
+  @ApiProperty({ type: ScannedFieldDto, nullable: true })
+  email!: ScannedFieldDto | null;
+
+  @ApiProperty({ type: ScannedFieldDto, nullable: true })
+  taxId!: ScannedFieldDto | null;
+
+  @ApiProperty({ type: ScannedFieldDto, nullable: true })
+  lineId!: ScannedFieldDto | null;
+
+  @ApiProperty({ type: ScannedFieldDto, nullable: true })
+  website!: ScannedFieldDto | null;
+
+  @ApiProperty({ type: [ScannedLineDto], description: 'Every line read, to copy from' })
+  lines!: ScannedLineDto[];
+
+  @TimestampField('2026-10-25T10:00:00+07:00')
+  deleteAfter!: string;
+}
+
+export const SCANNED_CARD_EXAMPLE: ScannedCardDto = {
+  fileId: P3_IDS.file,
+  engine: 'tesseract_cli',
+  contactName: { value: 'คุณมานี ใจดี', confidence: 0.86 },
+  organisationName: { value: 'บริษัท ตัวอย่างบรรจุภัณฑ์ จำกัด', confidence: 0.81 },
+  phone: { value: '+66890001234', confidence: 0.86 },
+  otherPhones: [],
+  email: { value: 'manee@example.invalid', confidence: 0.9 },
+  taxId: null,
+  lineId: { value: 'manee.cafe', confidence: 0.86 },
+  website: null,
+  lines: [
+    { text: 'คุณมานี ใจดี', confidence: 90 },
+    { text: 'บริษัท ตัวอย่างบรรจุภัณฑ์ จำกัด', confidence: 90 },
+    { text: 'โทร 089-000-1234', confidence: 90 },
+    { text: 'manee@example.invalid', confidence: 90 },
+    { text: 'LINE: manee.cafe', confidence: 90 },
+  ],
+  deleteAfter: '2026-10-25T10:00:00+07:00',
+};

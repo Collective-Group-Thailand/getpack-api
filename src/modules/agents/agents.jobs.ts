@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ScheduledJob } from '@platform/maintenance/scheduled-job.decorator';
 
 import { AgentAttributionService } from './agent-attribution.service';
+import { AgentCardScanService } from './agent-card-scan.service';
 import { AgentCommissionsService } from './agent-commissions.service';
 import { AgentDealsService } from './agent-deals.service';
 import { AgentLeadsService } from './agent-leads.service';
@@ -16,6 +17,7 @@ export class AgentsJobs {
     private readonly statements: AgentStatementsService,
     private readonly leads: AgentLeadsService,
     private readonly deals: AgentDealsService,
+    private readonly cards: AgentCardScanService,
   ) {}
 
   /** Pending commission past the claim window, with the group paid, becomes earned (D-418). */
@@ -67,6 +69,12 @@ export class AgentsJobs {
   @ScheduledJob({ name: 'agents.deal_expiry', every: 3_600_000 })
   dealExpiry(): Promise<number> {
     return this.deals.expireDue();
+  }
+
+  /** D-468: business-card photos are deleted after `agents.card_scan_retention_days` (PDPA), daily 03:50. */
+  @ScheduledJob({ name: 'agents.card_scan_purge', cron: '50 3 * * *' })
+  cardScanPurge(): Promise<number> {
+    return this.cards.purge();
   }
 
   /** On the 1st, 03:00 Bangkok: last month's statements (D-420). */

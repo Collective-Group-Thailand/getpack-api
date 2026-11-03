@@ -2175,6 +2175,10 @@
     "deal_registered": {
       "title": "Deal registered",
       "detail": "This customer is protected by a registered deal; assign them once it ends"
+    },
+    "card_scan_failed": {
+      "title": "Card not read",
+      "detail": "The card photo could not be read; take a clearer photo or type the details"
     }
   },
   "documents": {

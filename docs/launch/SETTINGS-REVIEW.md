@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**143 settings** — 88 confirmed · 23 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
+**144 settings** — 88 confirmed · 24 proposed · 4 pending the CPA (⚖) · 3 pending the business · 25 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -15,6 +15,7 @@
 | `agent.deal_protection_days` | `90` | confirmed | sales_manager | D-468 | D-468 (PLAN A-11) days a deal registration protects the lead from other agents and staff assignment and keeps its rate lock open for new orders; never a rate cut |
 | `agent.deal_registration_threshold` | `500000.00` | confirmed | sales_manager | D-468 | D-468 (PLAN A-11) a quote whose commission base (before VAT, excl. shipping) reaches this registers its deal automatically; smaller ones on the agent’s request; call-off agreements always |
 | `agent.margin_alert_pct` | `30.00` | confirmed | finance_manager | D-464 | D-464 C-Level is alerted when an order’s agent commission exceeds this % of its gross margin; the commission is never reduced (owner 2026-11-01) |
+| `agents.card_scan_retention_days` | `7` | proposed | sales_manager | D-468 | D-468 days a business-card photo uploaded for the agent card scan is kept before it is deleted (PDPA: the card holder’s contact data; nothing is saved from it until the agent registers the lead) |
 | `agents.ended_record_access_years` | `5` | confirmed | finance_manager | D-467 | D-467 years after an agent ended during which they still read their commission statements and download their 50 ทวิ (withholding certificates) in the agent zone; everything else is refused. 5 = the tax record retention (Revenue Code s.87/3), 5–10 |
 | `agents.follow_up_quiet_hours` | `{"from":"21:00","to":"08:00","timezone":"Asia/Bangkok"}` | confirmed | sales_manager | D-468 | D-468 the quiet hours of the agent follow-up reminders (push / LINE / e-mail): a reminder due inside them waits until they end (PLAN Phase 3, 21:00–08:00 Asia/Bangkok) |
 | `agents.rules` | `{"linkCookieDays":90,"newCustomersOnly":true,"leadProtectionDays":60,"maxOpenLeads":50,"paymentTermsDays":15}` | proposed | sales_manager | D-417, D-420 | D-417 / D-420 sales agent programme: days the web keeps an agent link, attribution of new customers only, days a registered lead is protected, open leads per agent, payment terms of commission bills (proposed) |
