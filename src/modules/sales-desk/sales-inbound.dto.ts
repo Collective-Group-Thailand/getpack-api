@@ -1,10 +1,12 @@
 import { PageQuery } from '@common/pagination/pagination.dto';
 import { toBangkokIso } from '@common/time/bangkok';
+import { SalesScoreReasonDto } from '@modules/agents/agents.dto';
 import { AGENT_IDS } from '@modules/agents/agents.dto';
+import { scoreReasons } from '@modules/agents/agents-views';
 import { IdField, TimestampField } from '@modules/catalog/crud/dto-fields';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRefDto } from '@platform/approvals/approvals.dto';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   ArrayMinSize,
@@ -12,21 +14,31 @@ import {
   IsBoolean,
   IsEmail,
   IsIn,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   Matches,
+  Max,
   MaxLength,
+  Min,
   MinLength,
 } from 'class-validator';
 
-import { DISQUALIFY_REASONS, INBOUND_SOURCES, INBOUND_STATUSES } from './sales-desk-rules';
+import {
+  DISQUALIFY_REASONS,
+  INBOUND_CONSENT_BASES,
+  INBOUND_SOURCES,
+  INBOUND_STATUSES,
+} from './sales-desk-rules';
 import { type InboundRow } from './sales-inbound.service';
 import { P4_IDS } from './sales-pipeline.dto';
 
 const E164 = /^\+[1-9]\d{7,14}$/;
 const csvList = ({ value }: { value: unknown }) =>
   typeof value === 'string' ? value.split(',').map((v) => v.trim()) : value;
+
+export const INBOUND_SORTS = ['due', 'score', 'createdAt'] as const;
 
 export class SalesInboundListQuery extends PageQuery {
   @ApiPropertyOptional({
@@ -69,6 +81,31 @@ export class SalesInboundListQuery extends PageQuery {
   @Transform(({ value }) => value === true || value === 'true')
   @IsBoolean()
   breached?: boolean;
+
+  @ApiPropertyOptional({
+    type: Number,
+    minimum: 0,
+    maximum: 100,
+    description: 'D-471: items scored at least this (0–100); unscored items are left out',
+  })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(0)
+  @Max(100)
+  minScore?: number;
+
+  @ApiPropertyOptional({
+    enum: INBOUND_SORTS,
+    enumName: 'SalesInboundSort',
+    default: 'due',
+    description:
+      '`due` soonest first-response due first (P4 default; `order` ignored) · `score` (D-471, unscored last) · ' +
+      '`createdAt` — these two follow `order` (default descending)',
+  })
+  @IsOptional()
+  @IsIn(INBOUND_SORTS)
+  declare sort?: (typeof INBOUND_SORTS)[number];
 }
 
 export class CreateSalesInboundDto {
@@ -173,14 +210,22 @@ export class SalesInboundDto {
   @IdField(P4_IDS.inbound)
   id!: string;
 
-  @ApiProperty({ enum: INBOUND_SOURCES, enumName: 'SalesInboundSource', example: 'contact_form' })
+  @ApiProperty({
+    enum: INBOUND_SOURCES,
+    enumName: 'SalesInboundSource',
+    example: 'contact_form',
+    description:
+      '`contact_form` / `rfq` (the person asked), `manual` (staff), `line_chat` (deferred), D-471 capture: ' +
+      '`studio_idle` "ออกแบบแล้วยังไม่สั่ง" (a saved studio design not ordered) and `dieline_download` (a free dieline ' +
+      'downloaded by a signed-in non-customer)',
+  })
   source!: string;
 
   @ApiProperty({
     type: String,
     nullable: true,
     example: 'CS-2611-00042',
-    description: 'Ticket no. or RFQ code',
+    description: 'Ticket no., RFQ code or the dieline’s style code',
   })
   sourceRef!: string | null;
 
@@ -251,6 +296,64 @@ export class SalesInboundDto {
   @ApiProperty({ type: String, nullable: true, example: null })
   statusNote!: string | null;
 
+  @ApiProperty({
+    enum: INBOUND_CONSENT_BASES,
+    enumName: 'SalesInboundConsentBasis',
+    example: 'enquiry',
+    description:
+      'D-471 why getpack may contact the person (PDPA): `enquiry` (they asked), `staff_entry` (entered with their ' +
+      'agreement), `marketing_consent` (a captured signal; their latest marketing consent was granted)',
+  })
+  consentBasis!: string;
+
+  @ApiProperty({
+    example: 1,
+    description: 'D-471 signals behind the item (repeat dieline downloads refresh one open item)',
+  })
+  signalCount!: number;
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-03T10:00:00+07:00' })
+  lastSignalAt!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description:
+      'D-471 the signed-in customer the item came from (captured signals, RFQs, signed-in contacts)',
+  })
+  customerId!: string | null;
+
+  @ApiProperty({
+    type: String,
+    format: 'uuid',
+    nullable: true,
+    example: null,
+    description: 'D-471 the saved studio design not ordered (`studio_idle`)',
+  })
+  designId!: string | null;
+
+  @ApiProperty({
+    type: Number,
+    nullable: true,
+    minimum: 0,
+    maximum: 100,
+    example: 55,
+    description: 'D-471 lead score 0–100 by `sales.scoring_rules` (null until scored)',
+  })
+  score!: number | null;
+
+  @ApiProperty({
+    type: () => SalesScoreReasonDto,
+    isArray: true,
+    description: 'D-471 the top 3 reasons of the score, largest first',
+  })
+  scoreReasons!: SalesScoreReasonDto[];
+
+  @ApiProperty({ type: String, format: 'date-time', nullable: true, example: '2026-11-03T10:00:00+07:00' })
+  scoredAt!: string | null;
+
   @TimestampField('2026-11-03T10:00:00+07:00')
   createdAt!: string;
 
@@ -284,6 +387,14 @@ export function inboundDto(r: InboundRow, now = new Date()): SalesInboundDto {
     slaBreachedAt: iso(r.slaBreachedAt),
     disqualifiedReason: r.disqualifiedReason,
     statusNote: r.statusNote,
+    consentBasis: r.consentBasis,
+    signalCount: r.signalCount,
+    lastSignalAt: iso(r.lastSignalAt),
+    customerId: r.captureUser?.publicId ?? null,
+    designId: r.designDocument?.publicId ?? null,
+    score: r.score,
+    scoreReasons: scoreReasons(r.scoreReasons),
+    scoredAt: iso(r.scoredAt),
     createdAt: toBangkokIso(r.createdAt),
     updatedAt: toBangkokIso(r.updatedAt),
   };
@@ -309,6 +420,18 @@ export const INBOUND_EXAMPLE: SalesInboundDto = {
   slaBreachedAt: null,
   disqualifiedReason: null,
   statusNote: null,
+  consentBasis: 'enquiry',
+  signalCount: 1,
+  lastSignalAt: '2026-11-03T10:00:00+07:00',
+  customerId: null,
+  designId: null,
+  score: 55,
+  scoreReasons: [
+    { reason: 'source', points: 15 },
+    { reason: 'recency', points: 15 },
+    { reason: 'company_email_domain', points: 15 },
+  ],
+  scoredAt: '2026-11-03T10:00:00+07:00',
   createdAt: '2026-11-03T10:00:00+07:00',
   updatedAt: '2026-11-03T10:05:00+07:00',
 };

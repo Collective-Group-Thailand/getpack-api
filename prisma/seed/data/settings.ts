@@ -155,6 +155,60 @@ const TRANSIT_WINDOW_SCHEMA = {
   },
 } as const;
 
+/**
+ * D-471 the proposed lead-scoring rules (Sales Manager tunes them as new effective-dated versions). No decision gives
+ * the weights: they are a starting proposal — base 10, a source, company vs free e-mail, tax id, quantity and value
+ * bands, recency, repeat signals; repeat visits to pricing pages are not scored (PDPA purpose limitation).
+ */
+export const SCORING_RULES_SEED = {
+  base: 10,
+  inboundSource: {
+    contact_form: 15,
+    rfq: 20,
+    line_chat: 10,
+    manual: 10,
+    studio_idle: 10,
+    dieline_download: 5,
+  },
+  leadSource: { manual: 5, card_scan: 10, csv_import: 0, link: 15, staff: 10 },
+  companyEmailDomain: 15,
+  freeEmailDomain: -5,
+  freeEmailDomains: [
+    'gmail.com',
+    'googlemail.com',
+    'hotmail.com',
+    'hotmail.co.th',
+    'outlook.com',
+    'outlook.co.th',
+    'live.com',
+    'msn.com',
+    'yahoo.com',
+    'yahoo.co.th',
+    'ymail.com',
+    'icloud.com',
+    'me.com',
+    'proton.me',
+    'protonmail.com',
+  ],
+  taxIdPresent: 15,
+  quantityBands: [
+    { min: 1000, points: 5 },
+    { min: 5000, points: 10 },
+    { min: 20000, points: 15 },
+  ],
+  valueBands: [
+    { min: '20000.00', points: 5 },
+    { min: '100000.00', points: 10 },
+    { min: '500000.00', points: 15 },
+  ],
+  recencyBands: [
+    { maxDays: 1, points: 15 },
+    { maxDays: 7, points: 10 },
+    { maxDays: 30, points: 5 },
+  ],
+  repeatSignals: { min: 3, points: 5 },
+};
+
 export const SETTINGS: readonly SettingSeed[] = [
   // --- Pricing & selling
   {
@@ -685,6 +739,138 @@ export const SETTINGS: readonly SettingSeed[] = [
     decisions: ['D-470'],
     confirmation: 'pending_business',
     ownerRole: 'finance_manager',
+  },
+  {
+    key: 'sales.scoring_rules',
+    valueType: 'json',
+    value: SCORING_RULES_SEED,
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: [
+        'base',
+        'inboundSource',
+        'leadSource',
+        'companyEmailDomain',
+        'freeEmailDomain',
+        'freeEmailDomains',
+        'taxIdPresent',
+        'quantityBands',
+        'valueBands',
+        'recencyBands',
+        'repeatSignals',
+      ],
+      properties: {
+        base: { type: 'integer', minimum: -100, maximum: 100 },
+        inboundSource: {
+          type: 'object',
+          additionalProperties: { type: 'integer', minimum: -100, maximum: 100 },
+        },
+        leadSource: {
+          type: 'object',
+          additionalProperties: { type: 'integer', minimum: -100, maximum: 100 },
+        },
+        companyEmailDomain: { type: 'integer', minimum: -100, maximum: 100 },
+        freeEmailDomain: { type: 'integer', minimum: -100, maximum: 100 },
+        freeEmailDomains: {
+          type: 'array',
+          maxItems: 200,
+          items: { type: 'string', pattern: '^[a-z0-9.-]+$' },
+        },
+        taxIdPresent: { type: 'integer', minimum: -100, maximum: 100 },
+        quantityBands: {
+          type: 'array',
+          maxItems: 10,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['min', 'points'],
+            properties: {
+              min: { type: 'integer', minimum: 1 },
+              points: { type: 'integer', minimum: -100, maximum: 100 },
+            },
+          },
+        },
+        valueBands: {
+          type: 'array',
+          maxItems: 10,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['min', 'points'],
+            properties: {
+              min: { type: 'string', pattern: '^\\d{1,12}(\\.\\d{1,2})?$' },
+              points: { type: 'integer', minimum: -100, maximum: 100 },
+            },
+          },
+        },
+        recencyBands: {
+          type: 'array',
+          maxItems: 10,
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['maxDays', 'points'],
+            properties: {
+              maxDays: { type: 'integer', minimum: 0, maximum: 365 },
+              points: { type: 'integer', minimum: -100, maximum: 100 },
+            },
+          },
+        },
+        repeatSignals: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['min', 'points'],
+          properties: {
+            min: { type: 'integer', minimum: 2 },
+            points: { type: 'integer', minimum: -100, maximum: 100 },
+          },
+        },
+      },
+    },
+    description:
+      'D-471 the lead score 0–100 of inbound items and leads (staff see the top 3 reasons, agents the score of their ' +
+      'own leads only): base + points by source, company e-mail domain vs free webmail, tax id present, quantity and ' +
+      'value bands, recency of the last signal, repeat signals, clamped to 0–100. Proposed weights; repeat visits to ' +
+      'pricing pages are not scored (PDPA purpose limitation)',
+    decisions: ['D-471'],
+    confirmation: 'proposed',
+    ownerRole: 'sales_manager',
+  },
+  // --- Automatic lead capture (D-471, agent portal Phase 5): each source behind its own flag, off until Sales opens it.
+  {
+    key: 'capture.studio_idle_enabled',
+    valueType: 'boolean',
+    value: false,
+    description:
+      'D-471 a signed-in customer with a saved studio design not ordered within capture.studio_idle_days becomes an ' +
+      'inbound sales item "ออกแบบแล้วยังไม่สั่ง" — only with granted marketing consent and never for a contact ' +
+      'attributed to an agent or a rep; designs idle before the switch-on date are never captured (off until Sales ' +
+      'opens it)',
+    decisions: ['D-471'],
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'capture.studio_idle_days',
+    valueType: 'integer',
+    value: 3,
+    valueSchema: { minimum: 1, maximum: 30 },
+    description:
+      'D-471 days a saved studio design waits without an order before it is captured (PROMPT Phase 5: 3 days)',
+    decisions: ['D-471'],
+    confirmation: 'proposed',
+    ownerRole: 'sales_manager',
+  },
+  {
+    key: 'capture.dieline_download_enabled',
+    valueType: 'boolean',
+    value: false,
+    description:
+      'D-471 a free dieline download by a signed-in non-customer (no order yet) creates or refreshes an inbound ' +
+      'sales item — only with granted marketing consent and never for a contact attributed to an agent; the download ' +
+      'itself stays free either way (off until Sales opens it)',
+    decisions: ['D-471'],
+    ownerRole: 'sales_manager',
   },
   {
     key: 'tax.pit_brackets',
@@ -1666,6 +1852,17 @@ export const SETTINGS: readonly SettingSeed[] = [
     description: 'D-203 / D-271 dieline downloads a signed-in customer may take in any 60 seconds',
     decisions: ['D-203', 'D-271'],
     ownerRole: 'superadmin',
+  },
+  {
+    key: 'dielines.anonymous_free_downloads',
+    valueType: 'integer',
+    value: 1,
+    valueSchema: { minimum: 0, maximum: 5 },
+    description:
+      'D-471 free dieline downloads a browser may take without signing in (counted by the SHA-256 of its device id); ' +
+      'from the next one a free sign-in is asked — never a payment. 0 = sign in for every download (before D-471)',
+    decisions: ['D-471', 'D-271'],
+    ownerRole: 'marketing',
   },
 
   // --- Structure Advisor (U2.2, D-237): definition only — not seeded in production; the advisor answers

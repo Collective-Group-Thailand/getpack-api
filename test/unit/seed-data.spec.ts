@@ -67,6 +67,9 @@ describe('seed data (B1.2 step 3)', () => {
       'sales.max_open_per_rep': 'pending_business',
       // D-470: no decision gives a bad-debt rate.
       'finance.bad_debt_provision_pct': 'pending_business',
+      // D-471: the studio idle days come from the prompt pack (3), proposed; the scoring weights are a proposal.
+      'capture.studio_idle_days': 'proposed',
+      'sales.scoring_rules': 'proposed',
       // B3.1: D-060's legacy value is a secret not in the repository — its 7-day fallback, proposed.
       'orders.unpaid_expiry_days': 'proposed',
       // B3.1: nature of the sale per product type (accounting-design §2 ⚖).

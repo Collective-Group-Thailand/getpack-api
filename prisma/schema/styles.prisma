@@ -482,8 +482,12 @@ model DielineRender {
 model DielineDownload {
   id               BigInt           @id(map: "pk_dieline_downloads") @default(autoincrement())
   publicId         String           @unique(map: "ux_dieline_downloads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  userId           BigInt           @map("user_id")
+  /// Null for the free download without sign-in (D-471): then `device_hash` is set.
+  userId           BigInt?          @map("user_id")
   renderId         BigInt           @map("render_id")
+  /// D-471: SHA-256 of the browser's device id for a download without sign-in (PDPA: pseudonymous; purpose = asking
+  /// for a free sign-in from the second download; retention = as the download log; never the id itself).
+  deviceHash       Bytes?           @map("device_hash")
   /// A staff download: not counted against the D-203 limits.
   staff            Boolean
   /// D-182: the basis and sizes as entered (the render holds the inside sizes drawn).
@@ -493,11 +497,12 @@ model DielineDownload {
   enteredHeightMm  Decimal          @map("entered_height_mm") @db.Decimal(10, 2)
   createdAt        DateTime         @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  user   User          @relation("DielineDownloadUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_downloads__user_id")
+  user   User?         @relation("DielineDownloadUser", fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_downloads__user_id")
   render DielineRender @relation(fields: [renderId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_dieline_downloads__render_id")
 
   @@index([userId, createdAt], map: "ix_dieline_downloads__user_id__created_at")
   @@index([renderId], map: "ix_dieline_downloads__render_id")
+  @@index([deviceHash], map: "ix_dieline_downloads__device_hash", where: raw("(device_hash IS NOT NULL)"))
   @@map("dieline_downloads")
 }
 

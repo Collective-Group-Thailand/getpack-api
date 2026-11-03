@@ -2124,6 +2124,17 @@
           "type": "https://errors.getpack/dielines.rate_limited"
         }
       },
+      "problem.dielines.sign_in_required": {
+        "summary": "dielines.sign_in_required",
+        "value": {
+          "code": "dielines.sign_in_required",
+          "detail": "ดาวน์โหลดแบบแผ่นคลี่ครั้งแรกไม่ต้องเข้าสู่ระบบ ตั้งแต่ครั้งที่สองกรุณาเข้าสู่ระบบก่อน ไม่มีค่าใช้จ่าย",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 401,
+          "title": "เข้าสู่ระบบเพื่อดาวน์โหลดต่อ (ฟรี)",
+          "type": "https://errors.getpack/dielines.sign_in_required"
+        }
+      },
       "problem.dielines.size_out_of_range": {
         "summary": "dielines.size_out_of_range",
         "value": {
@@ -8163,6 +8174,31 @@
             "format": "date-time",
             "type": "string"
           },
+          "score": {
+            "description": "D-471 lead score 0–100 (null until scored). The score only: the reasons are for getpack staff",
+            "example": 62,
+            "maximum": 100,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "scoreReasons": {
+            "description": "D-471 the top 3 reasons of the score (staff only)",
+            "items": {
+              "$ref": "#/components/schemas/SalesScoreReasonDto"
+            },
+            "type": "array"
+          },
+          "scoredAt": {
+            "example": "2026-10-18T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "source": {
             "allOf": [
               {
@@ -8253,6 +8289,9 @@
           "tags",
           "wonAt",
           "updatedAt",
+          "score",
+          "scoreReasons",
+          "scoredAt",
           "agent",
           "convertedCustomerId",
           "convertedCompanyId",
@@ -17641,6 +17680,16 @@
             "format": "date-time",
             "type": "string"
           },
+          "score": {
+            "description": "D-471 lead score 0–100 (null until scored). The score only: the reasons are for getpack staff",
+            "example": 62,
+            "maximum": 100,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
           "source": {
             "allOf": [
               {
@@ -17730,7 +17779,8 @@
           "lineId",
           "tags",
           "wonAt",
-          "updatedAt"
+          "updatedAt",
+          "score"
         ],
         "type": "object"
       },
@@ -17945,7 +17995,8 @@
           "updatedAt",
           "nextFollowUpAt",
           "protectedUntil",
-          "expectedValue"
+          "expectedValue",
+          "score"
         ],
         "type": "string"
       },
@@ -44384,11 +44435,16 @@
             "example": "application/pdf",
             "type": "string"
           },
+          "nextNeedsSignIn": {
+            "description": "D-471: the next download from this browser needs a free sign-in (downloads without sign-in only; always false when signed in). Never a payment.",
+            "example": false,
+            "type": "boolean"
+          },
           "quantities": {
             "$ref": "#/components/schemas/DielineQuantitiesDto"
           },
           "remainingToday": {
-            "description": "Downloads left today (Bangkok day) for a customer; null for staff (not limited)",
+            "description": "Downloads left today (Bangkok day) for a customer; null for staff (not limited) and for a download without sign-in",
             "example": 19,
             "type": [
               "number",
@@ -44435,6 +44491,7 @@
           "engineVersion",
           "cached",
           "remainingToday",
+          "nextNeedsSignIn",
           "createdAt"
         ],
         "type": "object"
@@ -45870,6 +45927,77 @@
           "heightMm",
           "materialClass",
           "format"
+        ],
+        "type": "object"
+      },
+      "DownloadDielineFreeDto": {
+        "properties": {
+          "deviceId": {
+            "description": "A random id the web keeps for this browser in a first-party cookie (its BFF sets it); the API keeps only its SHA-256 to count the free downloads without sign-in (PDPA: pseudonymous, never logged)",
+            "example": "0192f3a0-7c1e-7d2a-9b1f-00000000d702",
+            "format": "uuid",
+            "type": "string"
+          },
+          "format": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DielineDownloadFormat"
+              }
+            ],
+            "description": "`ai` is the designer PDF delivered as an Illustrator file (.ai) — same drawing, same layers and swatches",
+            "example": "pdf"
+          },
+          "heightMm": {
+            "description": "Height (depth), mm, in the basis given; 0 for a flat item",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 0,
+            "type": "number"
+          },
+          "lengthMm": {
+            "description": "Length, mm, in the basis given",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "number"
+          },
+          "materialClass": {
+            "description": "A material class of the style’s size ranges (`store.styles.get` → `sizeRanges[].materialClass`)",
+            "example": "paperboard",
+            "pattern": "^[a-z][a-z0-9_]{1,39}$",
+            "type": "string"
+          },
+          "measurementBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MeasurementBasis"
+              }
+            ],
+            "description": "Basis of the sizes (D-182), default internal. Outside or over-crease sizes are converted to inside sizes with the reference caliper of the material class before drawing",
+            "example": "internal"
+          },
+          "variantCode": {
+            "description": "A style variant code",
+            "example": "PK-TE-01-K7QD",
+            "pattern": "^PK-[A-Z0-9]{2,8}-[0-9]{2,3}-[A-Z2-7]{4,8}$",
+            "type": "string"
+          },
+          "widthMm": {
+            "description": "Width, mm, in the basis given",
+            "example": 100,
+            "maximum": 5000,
+            "minimum": 1,
+            "type": "number"
+          }
+        },
+        "required": [
+          "variantCode",
+          "lengthMm",
+          "widthMm",
+          "heightMm",
+          "materialClass",
+          "format",
+          "deviceId"
         ],
         "type": "object"
       },
@@ -103078,6 +103206,15 @@
         ],
         "type": "object"
       },
+      "SalesInboundConsentBasis": {
+        "description": "D-471 why getpack may contact the person (PDPA): `enquiry` (they asked), `staff_entry` (entered with their agreement), `marketing_consent` (a captured signal; their latest marketing consent was granted)",
+        "enum": [
+          "enquiry",
+          "staff_entry",
+          "marketing_consent"
+        ],
+        "type": "string"
+      },
       "SalesInboundDisqualifyReason": {
         "enum": [
           "not_a_buyer",
@@ -103109,6 +103246,15 @@
               }
             ]
           },
+          "consentBasis": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesInboundConsentBasis"
+              }
+            ],
+            "description": "D-471 why getpack may contact the person (PDPA): `enquiry` (they asked), `staff_entry` (entered with their agreement), `marketing_consent` (a captured signal; their latest marketing consent was granted)",
+            "example": "enquiry"
+          },
           "contactEmail": {
             "example": null,
             "type": [
@@ -103131,6 +103277,24 @@
             "example": "2026-11-03T10:00:00+07:00",
             "format": "date-time",
             "type": "string"
+          },
+          "customerId": {
+            "description": "D-471 the signed-in customer the item came from (captured signals, RFQs, signed-in contacts)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "designId": {
+            "description": "D-471 the saved studio design not ordered (`studio_idle`)",
+            "example": null,
+            "format": "uuid",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "disqualifiedReason": {
             "anyOf": [
@@ -103160,6 +103324,14 @@
             "example": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
             "format": "uuid",
             "type": "string"
+          },
+          "lastSignalAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "leadId": {
             "description": "The lead registered for the rep (open it with admin.salesLeads.get)",
@@ -103196,6 +103368,36 @@
               "null"
             ]
           },
+          "score": {
+            "description": "D-471 lead score 0–100 by `sales.scoring_rules` (null until scored)",
+            "example": 55,
+            "maximum": 100,
+            "minimum": 0,
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "scoreReasons": {
+            "description": "D-471 the top 3 reasons of the score, largest first",
+            "items": {
+              "$ref": "#/components/schemas/SalesScoreReasonDto"
+            },
+            "type": "array"
+          },
+          "scoredAt": {
+            "example": "2026-11-03T10:00:00+07:00",
+            "format": "date-time",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "signalCount": {
+            "description": "D-471 signals behind the item (repeat dieline downloads refresh one open item)",
+            "example": 1,
+            "type": "number"
+          },
           "slaBreached": {
             "description": "Past the first-response due time without an answer (or was)",
             "example": false,
@@ -103215,10 +103417,11 @@
                 "$ref": "#/components/schemas/SalesInboundSource"
               }
             ],
+            "description": "`contact_form` / `rfq` (the person asked), `manual` (staff), `line_chat` (deferred), D-471 capture: `studio_idle` \"ออกแบบแล้วยังไม่สั่ง\" (a saved studio design not ordered) and `dieline_download` (a free dieline downloaded by a signed-in non-customer)",
             "example": "contact_form"
           },
           "sourceRef": {
-            "description": "Ticket no. or RFQ code",
+            "description": "Ticket no., RFQ code or the dieline’s style code",
             "example": "CS-2611-00042",
             "type": [
               "string",
@@ -103266,6 +103469,14 @@
           "slaBreachedAt",
           "disqualifiedReason",
           "statusNote",
+          "consentBasis",
+          "signalCount",
+          "lastSignalAt",
+          "customerId",
+          "designId",
+          "score",
+          "scoreReasons",
+          "scoredAt",
           "createdAt",
           "updatedAt"
         ],
@@ -103300,12 +103511,23 @@
         ],
         "type": "string"
       },
+      "SalesInboundSort": {
+        "enum": [
+          "due",
+          "score",
+          "createdAt"
+        ],
+        "type": "string"
+      },
       "SalesInboundSource": {
+        "description": "`contact_form` / `rfq` (the person asked), `manual` (staff), `line_chat` (deferred), D-471 capture: `studio_idle` \"ออกแบบแล้วยังไม่สั่ง\" (a saved studio design not ordered) and `dieline_download` (a free dieline downloaded by a signed-in non-customer)",
         "enum": [
           "contact_form",
           "rfq",
           "line_chat",
-          "manual"
+          "manual",
+          "studio_idle",
+          "dieline_download"
         ],
         "type": "string"
       },
@@ -103676,6 +103898,41 @@
           "byChannel",
           "bySegment",
           "byProductType"
+        ],
+        "type": "object"
+      },
+      "SalesScoreReason": {
+        "enum": [
+          "source",
+          "company_email_domain",
+          "free_email_domain",
+          "tax_id_present",
+          "quantity_band",
+          "value_band",
+          "recency",
+          "repeat_signals"
+        ],
+        "type": "string"
+      },
+      "SalesScoreReasonDto": {
+        "properties": {
+          "points": {
+            "description": "Points the reason added (negative: taken off)",
+            "example": 15,
+            "type": "number"
+          },
+          "reason": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/SalesScoreReason"
+              }
+            ],
+            "example": "company_email_domain"
+          }
+        },
+        "required": [
+          "reason",
+          "points"
         ],
         "type": "object"
       },
@@ -133741,6 +133998,22 @@
                       "organisationName": "ร้านกาแฟบ้านสวน",
                       "phone": "+66890001234",
                       "protectedUntil": "2026-12-15T10:00:00+07:00",
+                      "score": 62,
+                      "scoreReasons": [
+                        {
+                          "points": 15,
+                          "reason": "company_email_domain"
+                        },
+                        {
+                          "points": 10,
+                          "reason": "recency"
+                        },
+                        {
+                          "points": 5,
+                          "reason": "value_band"
+                        }
+                      ],
+                      "scoredAt": "2026-10-18T10:00:00+07:00",
                       "source": "manual",
                       "stage": "contacted",
                       "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -133983,6 +134256,22 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    },
+                    {
+                      "points": 10,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 5,
+                      "reason": "value_band"
+                    }
+                  ],
+                  "scoredAt": "2026-10-18T10:00:00+07:00",
                   "source": "manual",
                   "stage": "contacted",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -248838,6 +249127,7 @@
                   "materialClass": "paperboard",
                   "measurementBasis": "internal",
                   "mimeType": "application/pdf",
+                  "nextNeedsSignIn": false,
                   "quantities": {
                     "blankAreaMm2": 31845.2,
                     "blankHeightMm": 187.2,
@@ -339905,7 +340195,7 @@
     },
     "/v1/admin/sales/inbound": {
       "get": {
-        "description": "Soonest first-response due first, with the SLA flag; by status, source, rep, unassigned, breached or text. A rep sees only the enquiries assigned to them (D-469).\n\nImplements: D-469, D-458, D-440.",
+        "description": "Soonest first-response due first (or by score / newest, D-471), with the SLA flag, the lead score and its top 3 reasons; by status, source (incl. the D-471 capture sources studio_idle and dieline_download), rep, unassigned, breached, minimum score or text. A rep sees only the enquiries assigned to them (D-469).\n\nImplements: D-469, D-458, D-440, D-471.",
         "operationId": "admin.salesInbound.list",
         "parameters": [
           {
@@ -339930,14 +340220,12 @@
             }
           },
           {
-            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "description": "`due` soonest first-response due first (P4 default; `order` ignored) · `score` (D-471, unscored last) · `createdAt` — these two follow `order` (default descending)",
             "in": "query",
             "name": "sort",
             "required": false,
             "schema": {
-              "example": "createdAt",
-              "maxLength": 64,
-              "type": "string"
+              "$ref": "#/components/schemas/SalesInboundSort"
             }
           },
           {
@@ -340007,6 +340295,17 @@
             }
           },
           {
+            "description": "D-471: items scored at least this (0–100); unscored items are left out",
+            "in": "query",
+            "name": "minScore",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
             "$ref": "#/components/parameters/AcceptLanguage"
           }
         ],
@@ -340022,18 +340321,39 @@
                         "displayName": "สมหญิง ขายดี",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                       },
+                      "consentBasis": "enquiry",
                       "contactEmail": null,
                       "contactName": "คุณวิภา รักษ์ดี",
                       "contactPhone": "+66890002222",
                       "createdAt": "2026-11-03T10:00:00+07:00",
+                      "customerId": null,
+                      "designId": null,
                       "disqualifiedReason": null,
                       "firstRespondedAt": null,
                       "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                      "lastSignalAt": "2026-11-03T10:00:00+07:00",
                       "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                       "leadRefusal": null,
                       "need": "business · กล่องขนม · qty 5000",
                       "organisationName": "บริษัท ขนมดี จำกัด",
+                      "score": 55,
+                      "scoreReasons": [
+                        {
+                          "points": 15,
+                          "reason": "source"
+                        },
+                        {
+                          "points": 15,
+                          "reason": "recency"
+                        },
+                        {
+                          "points": 15,
+                          "reason": "company_email_domain"
+                        }
+                      ],
+                      "scoredAt": "2026-11-03T10:00:00+07:00",
+                      "signalCount": 1,
                       "slaBreached": false,
                       "slaBreachedAt": null,
                       "source": "contact_form",
@@ -340207,7 +340527,7 @@
         ]
       },
       "post": {
-        "description": "A phone call, a walk-in or a referral (source `manual`), with a phone or e-mail. A rep’s own entry is assigned to them; a manager may name a rep, else `sales.assignment_mode` applies. Due in `sales.first_response_hours` working hours (P-05, D-469).\n\nImplements: D-469, D-458, D-440.",
+        "description": "A phone call, a walk-in or a referral (source `manual`), with a phone or e-mail. A rep’s own entry is assigned to them; a manager may name a rep, else `sales.assignment_mode` applies. Due in `sales.first_response_hours` working hours (P-05, D-469).\n\nImplements: D-469, D-458, D-440, D-471.",
         "operationId": "admin.salesInbound.create",
         "parameters": [
           {
@@ -340244,18 +340564,39 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "score": 55,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "source"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    }
+                  ],
+                  "scoredAt": "2026-11-03T10:00:00+07:00",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -340435,7 +340776,7 @@
     },
     "/v1/admin/sales/inbound/actions/bulk-assign": {
       "post": {
-        "description": "Each to the named rep, or round robin one by one when no rep is named (the rep with the fewest open enquiries below `sales.max_open_per_rep`, then the least recently assigned). Closed, unknown or unassignable ones are listed in `skipped`; moving one from another rep needs a reason (audited) (D-469).\n\nImplements: D-469, D-458, D-440.",
+        "description": "Each to the named rep, or round robin one by one when no rep is named (the rep with the fewest open enquiries below `sales.max_open_per_rep`, then the least recently assigned). Closed, unknown or unassignable ones are listed in `skipped`; moving one from another rep needs a reason (audited) (D-469).\n\nImplements: D-469, D-458, D-440, D-471.",
         "operationId": "admin.salesInbound.bulkAssign",
         "parameters": [
           {
@@ -340473,18 +340814,39 @@
                         "displayName": "สมหญิง ขายดี",
                         "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                       },
+                      "consentBasis": "enquiry",
                       "contactEmail": null,
                       "contactName": "คุณวิภา รักษ์ดี",
                       "contactPhone": "+66890002222",
                       "createdAt": "2026-11-03T10:00:00+07:00",
+                      "customerId": null,
+                      "designId": null,
                       "disqualifiedReason": null,
                       "firstRespondedAt": null,
                       "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                       "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                      "lastSignalAt": "2026-11-03T10:00:00+07:00",
                       "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                       "leadRefusal": null,
                       "need": "business · กล่องขนม · qty 5000",
                       "organisationName": "บริษัท ขนมดี จำกัด",
+                      "score": 55,
+                      "scoreReasons": [
+                        {
+                          "points": 15,
+                          "reason": "source"
+                        },
+                        {
+                          "points": 15,
+                          "reason": "recency"
+                        },
+                        {
+                          "points": 15,
+                          "reason": "company_email_domain"
+                        }
+                      ],
+                      "scoredAt": "2026-11-03T10:00:00+07:00",
+                      "signalCount": 1,
                       "slaBreached": false,
                       "slaBreachedAt": null,
                       "source": "contact_form",
@@ -340666,7 +341028,7 @@
     },
     "/v1/admin/sales/inbound/{inboundId}": {
       "get": {
-        "description": "With its rep, lead and SLA (D-469).\n\nImplements: D-469, D-458, D-440.",
+        "description": "With its rep, lead and SLA (D-469).\n\nImplements: D-469, D-458, D-440, D-471.",
         "operationId": "admin.salesInbound.get",
         "parameters": [
           {
@@ -340692,18 +341054,39 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "score": 55,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "source"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    }
+                  ],
+                  "scoredAt": "2026-11-03T10:00:00+07:00",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -340877,7 +341260,7 @@
     },
     "/v1/admin/sales/inbound/{inboundId}/actions/assign": {
       "post": {
-        "description": "To a rep (`repUserId`), or round robin when omitted. Reassignment needs a reason (audited, kept in the assignment history). The lead is registered for the rep’s employee agent with the programme’s rules; a contact that cannot be a lead keeps the assignment with `leadRefusal` (D-469, D-417, D-440).\n\nImplements: D-469, D-458, D-440.",
+        "description": "To a rep (`repUserId`), or round robin when omitted. Reassignment needs a reason (audited, kept in the assignment history). The lead is registered for the rep’s employee agent with the programme’s rules; a contact that cannot be a lead keeps the assignment with `leadRefusal` (D-469, D-417, D-440).\n\nImplements: D-469, D-458, D-440, D-471.",
         "operationId": "admin.salesInbound.assign",
         "parameters": [
           {
@@ -340929,18 +341312,39 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "score": 55,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "source"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    }
+                  ],
+                  "scoredAt": "2026-11-03T10:00:00+07:00",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -341162,7 +341566,7 @@
     },
     "/v1/admin/sales/inbound/{inboundId}/actions/convert": {
       "post": {
-        "description": "Closes the enquiry as `converted_to_lead`; it needs the lead registered for the rep at assignment (`agents.lead_unavailable` when the contact cannot be a lead — one neutral reason, D-440) (D-469).\n\nImplements: D-469, D-458, D-440.",
+        "description": "Closes the enquiry as `converted_to_lead`; it needs the lead registered for the rep at assignment (`agents.lead_unavailable` when the contact cannot be a lead — one neutral reason, D-440) (D-469).\n\nImplements: D-469, D-458, D-440, D-471.",
         "operationId": "admin.salesInbound.convert",
         "parameters": [
           {
@@ -341188,18 +341592,39 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "score": 55,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "source"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    }
+                  ],
+                  "scoredAt": "2026-11-03T10:00:00+07:00",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -341399,7 +341824,7 @@
     },
     "/v1/admin/sales/inbound/{inboundId}/actions/disqualify": {
       "post": {
-        "description": "Closed with a reason (not a buyer, duplicate, no response, out of scope, spam, other) (D-469).\n\nImplements: D-469, D-458, D-440.",
+        "description": "Closed with a reason (not a buyer, duplicate, no response, out of scope, spam, other) (D-469).\n\nImplements: D-469, D-458, D-440, D-471.",
         "operationId": "admin.salesInbound.disqualify",
         "parameters": [
           {
@@ -341442,18 +341867,39 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": "out_of_scope",
                   "firstRespondedAt": null,
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "score": 55,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "source"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    }
+                  ],
+                  "scoredAt": "2026-11-03T10:00:00+07:00",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -341670,7 +342116,7 @@
     },
     "/v1/admin/sales/inbound/{inboundId}/actions/mark-contacted": {
       "post": {
-        "description": "The rep answered: status `contacted`, the first-response time is kept for the SLA % (P-05, D-469).\n\nImplements: D-469, D-458, D-440.",
+        "description": "The rep answered: status `contacted`, the first-response time is kept for the SLA % (P-05, D-469).\n\nImplements: D-469, D-458, D-440, D-471.",
         "operationId": "admin.salesInbound.markContacted",
         "parameters": [
           {
@@ -341713,18 +342159,39 @@
                     "displayName": "สมหญิง ขายดี",
                     "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7001"
                   },
+                  "consentBasis": "enquiry",
                   "contactEmail": null,
                   "contactName": "คุณวิภา รักษ์ดี",
                   "contactPhone": "+66890002222",
                   "createdAt": "2026-11-03T10:00:00+07:00",
+                  "customerId": null,
+                  "designId": null,
                   "disqualifiedReason": null,
                   "firstRespondedAt": "2026-11-03T11:20:00+07:00",
                   "firstResponseDueAt": "2026-11-03T14:00:00+07:00",
                   "id": "0192f3a0-7c1e-7d2a-9b1f-0000000a7002",
+                  "lastSignalAt": "2026-11-03T10:00:00+07:00",
                   "leadId": "0192f3a0-7c1e-7d2a-9b1f-0000000a6006",
                   "leadRefusal": null,
                   "need": "business · กล่องขนม · qty 5000",
                   "organisationName": "บริษัท ขนมดี จำกัด",
+                  "score": 55,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "source"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    }
+                  ],
+                  "scoredAt": "2026-11-03T10:00:00+07:00",
+                  "signalCount": 1,
                   "slaBreached": false,
                   "slaBreachedAt": null,
                   "source": "contact_form",
@@ -341944,7 +342411,7 @@
     },
     "/v1/admin/sales/leads": {
       "get": {
-        "description": "A rep sees their own leads; a manager every rep’s (filter `agentId`) or, read-only, freelance agents’ (`agentKind=freelance`). Same views, filters, sort and cursor as the agent zone (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440.",
+        "description": "A rep sees their own leads; a manager every rep’s (filter `agentId`) or, read-only, freelance agents’ (`agentKind=freelance`). Same views, filters, sort and cursor as the agent zone (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440, D-471.",
         "operationId": "admin.salesLeads.list",
         "parameters": [
           {
@@ -342013,6 +342480,17 @@
             "schema": {
               "maxLength": 100,
               "type": "string"
+            }
+          },
+          {
+            "description": "D-471: leads scored at least this (0–100); unscored leads are left out",
+            "in": "query",
+            "name": "minScore",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
             }
           },
           {
@@ -342087,6 +342565,22 @@
                       "organisationName": "ร้านกาแฟบ้านสวน",
                       "phone": "+66890001234",
                       "protectedUntil": "2026-12-15T10:00:00+07:00",
+                      "score": 62,
+                      "scoreReasons": [
+                        {
+                          "points": 15,
+                          "reason": "company_email_domain"
+                        },
+                        {
+                          "points": 10,
+                          "reason": "recency"
+                        },
+                        {
+                          "points": 5,
+                          "reason": "value_band"
+                        }
+                      ],
+                      "scoredAt": "2026-10-18T10:00:00+07:00",
                       "source": "manual",
                       "stage": "contacted",
                       "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -342262,7 +342756,7 @@
         ]
       },
       "post": {
-        "description": "For my own employee agent, or (managers) a rep’s with `agentId`. The agent programme’s rules apply: consent, the open-leads limit, protection and one neutral refusal `agents.lead_unavailable` (an existing customer, another agent’s protected lead or registered deal — D-417, D-440). Starts at stage `new`.\n\nImplements: D-469, D-468, D-417, D-440.",
+        "description": "For my own employee agent, or (managers) a rep’s with `agentId`. The agent programme’s rules apply: consent, the open-leads limit, protection and one neutral refusal `agents.lead_unavailable` (an existing customer, another agent’s protected lead or registered deal — D-417, D-440). Starts at stage `new`.\n\nImplements: D-469, D-468, D-417, D-440, D-471.",
         "operationId": "admin.salesLeads.create",
         "parameters": [
           {
@@ -342321,6 +342815,22 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    },
+                    {
+                      "points": 10,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 5,
+                      "reason": "value_band"
+                    }
+                  ],
+                  "scoredAt": "2026-10-18T10:00:00+07:00",
                   "source": "manual",
                   "stage": "contacted",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -342559,7 +343069,7 @@
     },
     "/v1/admin/sales/leads/{leadId}": {
       "get": {
-        "description": "With its pipeline fields, agent and protection; `ETag` for `update` (D-469).\n\nImplements: D-469, D-468, D-417, D-440.",
+        "description": "With its pipeline fields, agent and protection; `ETag` for `update` (D-469).\n\nImplements: D-469, D-468, D-417, D-440, D-471.",
         "operationId": "admin.salesLeads.get",
         "parameters": [
           {
@@ -342606,6 +343116,22 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    },
+                    {
+                      "points": 10,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 5,
+                      "reason": "value_band"
+                    }
+                  ],
+                  "scoredAt": "2026-10-18T10:00:00+07:00",
                   "source": "manual",
                   "stage": "contacted",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -342784,7 +343310,7 @@
         ]
       },
       "patch": {
-        "description": "Any subset of the fields (`If-Match` required); contact keys only while registered, through the same neutral check. Only company reps’ leads change here (`sales.lead_read_only`); a manager editing a rep’s lead is audited (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440.",
+        "description": "Any subset of the fields (`If-Match` required); contact keys only while registered, through the same neutral check. Only company reps’ leads change here (`sales.lead_read_only`); a manager editing a rep’s lead is audited (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440, D-471.",
         "operationId": "admin.salesLeads.update",
         "parameters": [
           {
@@ -342852,6 +343378,22 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    },
+                    {
+                      "points": 10,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 5,
+                      "reason": "value_band"
+                    }
+                  ],
+                  "scoredAt": "2026-10-18T10:00:00+07:00",
                   "source": "manual",
                   "stage": "contacted",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -343121,7 +343663,7 @@
     },
     "/v1/admin/sales/leads/{leadId}/actions/change-stage": {
       "post": {
-        "description": "new, contacted, quoted, negotiating or lost (with a reason); `won` only by the system on the first payment (PLAN A-06). `lost` releases the protection. Same rules as the agent zone (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440.",
+        "description": "new, contacted, quoted, negotiating or lost (with a reason); `won` only by the system on the first payment (PLAN A-06). `lost` releases the protection. Same rules as the agent zone (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440, D-471.",
         "operationId": "admin.salesLeads.changeStage",
         "parameters": [
           {
@@ -343192,6 +343734,22 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
+                  "scoreReasons": [
+                    {
+                      "points": 15,
+                      "reason": "company_email_domain"
+                    },
+                    {
+                      "points": 10,
+                      "reason": "recency"
+                    },
+                    {
+                      "points": 5,
+                      "reason": "value_band"
+                    }
+                  ],
+                  "scoredAt": "2026-10-18T10:00:00+07:00",
                   "source": "manual",
                   "stage": "negotiating",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -343418,7 +343976,7 @@
     },
     "/v1/admin/sales/leads/{leadId}/activities": {
       "get": {
-        "description": "Newest first, cursor paged; `author` `agent` = the lead’s own rep / agent, `getpack` = other staff, `system` = automatic entries (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440.",
+        "description": "Newest first, cursor paged; `author` `agent` = the lead’s own rep / agent, `getpack` = other staff, `system` = automatic entries (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440, D-471.",
         "operationId": "admin.salesLeads.listActivities",
         "parameters": [
           {
@@ -343654,7 +344212,7 @@
         ]
       },
       "post": {
-        "description": "A call, LINE chat, visit, e-mail or note in the lead’s timeline (append-only), optionally with the next follow-up; the first one moves a new lead to `contacted` (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440.",
+        "description": "A call, LINE chat, visit, e-mail or note in the lead’s timeline (append-only), optionally with the next follow-up; the first one moves a new lead to `contacted` (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440, D-471.",
         "operationId": "admin.salesLeads.addActivity",
         "parameters": [
           {
@@ -346319,7 +346877,7 @@
     },
     "/v1/admin/sales/quotes": {
       "get": {
-        "description": "A rep’s own (managers: every rep’s, filter `agentId`), newest first, by lead or status (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440.",
+        "description": "A rep’s own (managers: every rep’s, filter `agentId`), newest first, by lead or status (D-469, D-468).\n\nImplements: D-469, D-468, D-417, D-440, D-471.",
         "operationId": "admin.salesQuotes.list",
         "parameters": [
           {
@@ -346726,7 +347284,7 @@
         ]
       },
       "post": {
-        "description": "Prices the configuration on the store path (D-441), saves it as getpack’s quotation and shares it (`shareUrl` `/q/{token}` carries the rep’s agent code). The lead moves to `quoted`; a big quote registers its deal (D-468). The price is never changed here (D-469).\n\nImplements: D-469, D-468, D-417, D-440, D-441.",
+        "description": "Prices the configuration on the store path (D-441), saves it as getpack’s quotation and shares it (`shareUrl` `/q/{token}` carries the rep’s agent code). The lead moves to `quoted`; a big quote registers its deal (D-468). The price is never changed here (D-469).\n\nImplements: D-469, D-468, D-417, D-440, D-471, D-441.",
         "operationId": "admin.salesQuotes.create",
         "parameters": [
           {
@@ -347190,7 +347748,7 @@
     },
     "/v1/admin/sales/quotes/{agentQuoteId}/discount-requests": {
       "get": {
-        "description": "Every round, oldest first, with the options offered (price and the rep’s commission). No cost or margin (D-469, D-470).\n\nImplements: D-469, D-468, D-417, D-440, D-470.",
+        "description": "Every round, oldest first, with the options offered (price and the rep’s commission). No cost or margin (D-469, D-470).\n\nImplements: D-469, D-468, D-417, D-440, D-471, D-470.",
         "operationId": "admin.salesQuotes.discountRequests",
         "parameters": [
           {
@@ -347426,7 +347984,7 @@
         ]
       },
       "post": {
-        "description": "The agent zone’s give-get request (D-468, PLAN A-10) for a rep’s quotation: what the customer gives in return, the reason and competitor evidence; one open round per quotation. It goes to the discount approval desk (D-470) — a rep never approves their own request (D-469).\n\nImplements: D-469, D-468, D-417, D-440, D-470.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "description": "The agent zone’s give-get request (D-468, PLAN A-10) for a rep’s quotation: what the customer gives in return, the reason and competitor evidence; one open round per quotation. It goes to the discount approval desk (D-470) — a rep never approves their own request (D-469).\n\nImplements: D-469, D-468, D-417, D-440, D-471, D-470.\n\n**Files:** upload first — `admin.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "admin.salesQuotes.requestDiscount",
         "parameters": [
           {
@@ -523410,6 +523968,7 @@
                       "organisationName": "ร้านกาแฟบ้านสวน",
                       "phone": "+66890001234",
                       "protectedUntil": "2026-12-15T10:00:00+07:00",
+                      "score": 62,
                       "source": "manual",
                       "stage": "contacted",
                       "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -523642,6 +524201,7 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
                   "source": "manual",
                   "stage": "contacted",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -523859,7 +524419,7 @@
     },
     "/v1/store/agent/leads/actions/check": {
       "post": {
-        "description": "Before registering (on blur of phone, e-mail or tax id): `available`, or one neutral reason — `own_lead` (my own protected lead, with its id) or `unavailable` (cannot be registered). Never says whether a customer, another agent or a registered deal holds it (D-440, D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "Before registering (on blur of phone, e-mail or tax id): `available`, or one neutral reason — `own_lead` (my own protected lead, with its id) or `unavailable` (cannot be registered). Never says whether a customer, another agent or a registered deal holds it (D-440, D-468).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.check",
         "parameters": [
           {
@@ -524065,7 +524625,7 @@
     },
     "/v1/store/agent/leads/actions/scan-card": {
       "post": {
-        "description": "OCR (Thai + English) of a card photo uploaded with purpose `agent_card_scan`: name, organisation, phone, e-mail, tax id, LINE id and website with a confidence each, and every line read. Nothing is saved — review the fields and register the lead with source `card_scan`. The photo is deleted after `agents.card_scan_retention_days` (7) (D-468, PDPA).\n\nImplements: D-417, D-440, D-468.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
+        "description": "OCR (Thai + English) of a card photo uploaded with purpose `agent_card_scan`: name, organisation, phone, e-mail, tax id, LINE id and website with a confidence each, and every line read. Nothing is saved — review the fields and register the lead with source `card_scan`. The photo is deleted after `agents.card_scan_retention_days` (7) (D-468, PDPA).\n\nImplements: D-417, D-440, D-468, D-471.\n\n**Files:** upload first — `store.files.presign` → PUT the bytes to the returned URL → `…/actions/complete` — then send the `fileId` (contract §3).",
         "operationId": "store.agentLeads.scanCard",
         "parameters": [
           {
@@ -524371,7 +524931,7 @@
     },
     "/v1/store/agent/leads/export": {
       "get": {
-        "description": "All my customer leads as a UTF-8 CSV behind a 5-minute link; cells that could run as a spreadsheet formula are neutralised, Thai mobile numbers are written locally (0812345678). Audited as an export (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "All my customer leads as a UTF-8 CSV behind a 5-minute link; cells that could run as a spreadsheet formula are neutralised, Thai mobile numbers are written locally (0812345678). Audited as an export (D-468).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.export",
         "parameters": [
           {
@@ -524516,7 +525076,7 @@
     },
     "/v1/store/agent/leads/imports": {
       "post": {
-        "description": "Parses up to 500 rows and puts each through the same checks as a new lead (fields, the neutral duplicate check, the open-leads limit) — nothing is created. The result is kept 24 h for `importCommit`; its contact data is dropped afterwards (PDPA). Requires the agent’s confirmation that every lead agreed to be contacted (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "Parses up to 500 rows and puts each through the same checks as a new lead (fields, the neutral duplicate check, the open-leads limit) — nothing is created. The result is kept 24 h for `importCommit`; its contact data is dropped afterwards (PDPA). Requires the agent’s confirmation that every lead agreed to be contacted (D-468).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.importPreview",
         "parameters": [
           {
@@ -524773,7 +525333,7 @@
     },
     "/v1/store/agent/leads/imports/{importId}/actions/commit": {
       "post": {
-        "description": "Creates the rows of a dry run that had no errors, each checked again now (a contact taken since is skipped with its error). Leads get source `csv_import`. Only row numbers, errors and the created lead ids are kept afterwards (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "Creates the rows of a dry run that had no errors, each checked again now (a contact taken since is skipped with its error). Leads get source `csv_import`. Only row numbers, errors and the created lead ids are kept afterwards (D-468).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.importCommit",
         "parameters": [
           {
@@ -525056,7 +525616,7 @@
     },
     "/v1/store/agent/leads/pipeline": {
       "get": {
-        "description": "My customer leads with stage, value, next follow-up and protection; views for the agent zone tabs (open, follow-up today, protection ending, closed), filters by stage, source, due and text; sorted with a cursor (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "My customer leads with stage, value, next follow-up and protection; views for the agent zone tabs (open, follow-up today, protection ending, closed), filters by stage, source, due, minimum score and text; sorted with a cursor (D-468). Each lead carries its score 0–100 only (D-471: the reasons stay with getpack staff).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.list",
         "parameters": [
           {
@@ -525128,6 +525688,17 @@
             }
           },
           {
+            "description": "D-471: leads scored at least this (0–100); unscored leads are left out",
+            "in": "query",
+            "name": "minScore",
+            "required": false,
+            "schema": {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
             "in": "query",
             "name": "sort",
             "required": false,
@@ -525171,6 +525742,7 @@
                       "organisationName": "ร้านกาแฟบ้านสวน",
                       "phone": "+66890001234",
                       "protectedUntil": "2026-12-15T10:00:00+07:00",
+                      "score": 62,
                       "source": "manual",
                       "stage": "contacted",
                       "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -525353,7 +525925,7 @@
     },
     "/v1/store/agent/leads/{leadId}": {
       "get": {
-        "description": "With its pipeline fields and protection; `ETag` for `update` (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "With its pipeline fields and protection; `ETag` for `update` (D-468).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.get",
         "parameters": [
           {
@@ -525391,6 +525963,7 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
                   "source": "manual",
                   "stage": "contacted",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -525574,7 +526147,7 @@
         ]
       },
       "patch": {
-        "description": "Any subset of the fields (`If-Match` required). Phone, e-mail and tax id change only while the lead is registered and go through the same neutral check as a new lead. A new follow-up time re-arms the reminder (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "Any subset of the fields (`If-Match` required). Phone, e-mail and tax id change only while the lead is registered and go through the same neutral check as a new lead. A new follow-up time re-arms the reminder (D-468).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.update",
         "parameters": [
           {
@@ -525633,6 +526206,7 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
                   "source": "manual",
                   "stage": "contacted",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -525904,7 +526478,7 @@
     },
     "/v1/store/agent/leads/{leadId}/actions/change-stage": {
       "post": {
-        "description": "new, contacted, quoted, negotiating or lost (with a reason). `won` is set only by the system when the converted customer first pays. `lost` releases the protection at once; won and lost are final (`agents.lead_stage_final`). The move is written to the timeline (D-468, PLAN A-06).\n\nImplements: D-417, D-440, D-468.",
+        "description": "new, contacted, quoted, negotiating or lost (with a reason). `won` is set only by the system when the converted customer first pays. `lost` releases the protection at once; won and lost are final (`agents.lead_stage_final`). The move is written to the timeline (D-468, PLAN A-06).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.changeStage",
         "parameters": [
           {
@@ -525966,6 +526540,7 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
                   "source": "manual",
                   "stage": "negotiating",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -526232,6 +526807,7 @@
                   "organisationName": "ร้านกาแฟบ้านสวน",
                   "phone": "+66890001234",
                   "protectedUntil": "2026-12-15T10:00:00+07:00",
+                  "score": 62,
                   "source": "manual",
                   "stage": "contacted",
                   "stageChangedAt": "2026-10-18T09:30:00+07:00",
@@ -526434,7 +527010,7 @@
     },
     "/v1/store/agent/leads/{leadId}/activities": {
       "get": {
-        "description": "Newest first: my calls, LINE chats, visits, e-mails and notes, quotes sent, stage changes and system entries (signed up, quote opened / accepted, deal registered, won) — cursor paged (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "Newest first: my calls, LINE chats, visits, e-mails and notes, quotes sent, stage changes and system entries (signed up, quote opened / accepted, deal registered, won) — cursor paged (D-468).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.listActivities",
         "parameters": [
           {
@@ -526675,7 +527251,7 @@
         ]
       },
       "post": {
-        "description": "A call, LINE chat, visit, e-mail or note in the lead’s timeline (append-only), optionally with the next follow-up; the first one moves a new lead to `contacted` (D-468).\n\nImplements: D-417, D-440, D-468.",
+        "description": "A call, LINE chat, visit, e-mail or note in the lead’s timeline (append-only), optionally with the next follow-up; the first one moves a new lead to `contacted` (D-468).\n\nImplements: D-417, D-440, D-468, D-471.",
         "operationId": "store.agentLeads.addActivity",
         "parameters": [
           {
@@ -567514,6 +568090,7 @@
                   "materialClass": "paperboard",
                   "measurementBasis": "internal",
                   "mimeType": "application/pdf",
+                  "nextNeedsSignIn": false,
                   "quantities": {
                     "blankAreaMm2": 31845.2,
                     "blankHeightMm": 187.2,
@@ -567744,6 +568321,296 @@
           }
         ],
         "summary": "Download a free dieline",
+        "tags": [
+          "store.dielines"
+        ]
+      }
+    },
+    "/v1/store/dielines/downloads/free": {
+      "post": {
+        "description": "D-471: the first dieline download needs no sign-in. The same drawing, rules and size ranges as `store.dielines.download`, for a browser identified by `deviceId` (a random id kept in a first-party cookie; the API stores only its SHA-256). A browser may take `dielines.anonymous_free_downloads` (1) such downloads; the next answers 401 `dielines.sign_in_required` — the web then asks for a free sign-in (Google, Apple, LINE or phone OTP) and continues with `store.dielines.download`. The download is free either way: never a payment and never a plan gate (D-271). `nextNeedsSignIn` says whether the next one needs the sign-in. Throttled per client IP (429).\n\nImplements: D-471, D-302, D-271, D-270, D-203, D-182.",
+        "operationId": "store.dielines.downloadFree",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "deviceId": "0192f3a0-7c1e-7d2a-9b1f-00000000d702",
+                    "format": "pdf",
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "materialClass": "paperboard",
+                    "measurementBasis": "internal",
+                    "variantCode": "PK-TE-01-K7QD",
+                    "widthMm": 40
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/DownloadDielineFreeDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "cached": false,
+                  "createdAt": "2026-10-03T14:10:00+07:00",
+                  "drawn": {
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "widthMm": 40
+                  },
+                  "engineVersion": "fake-dieline@0",
+                  "entered": {
+                    "heightMm": 120,
+                    "lengthMm": 60,
+                    "widthMm": 40
+                  },
+                  "expiresAt": "2026-10-03T14:15:00+07:00",
+                  "fileName": "PK-TE-01-K7QD-60x40x120-paperboard.pdf",
+                  "format": "pdf",
+                  "id": "0192f3a0-7c1e-7d2a-9b1f-00000000d701",
+                  "materialClass": "paperboard",
+                  "measurementBasis": "internal",
+                  "mimeType": "application/pdf",
+                  "nextNeedsSignIn": true,
+                  "quantities": {
+                    "blankAreaMm2": 31845.2,
+                    "blankHeightMm": 187.2,
+                    "blankWidthMm": 231.4,
+                    "creaseMm": 902.3,
+                    "cutMm": 1412.6,
+                    "cutoutAreaMm2": 0,
+                    "glueOutlineMm": 240,
+                    "halfCutMm": 0,
+                    "perforationMm": 0,
+                    "pieces": 1
+                  },
+                  "remainingToday": null,
+                  "sizeBytes": 18234,
+                  "url": "https://files.example.invalid/signed",
+                  "variantCode": "PK-TE-01-K7QD",
+                  "violations": []
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/DielineDownloadDto"
+                }
+              }
+            },
+            "description": "The download",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  },
+                  "dielines.sign_in_required": {
+                    "$ref": "#/components/examples/problem.dielines.sign_in_required"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`, `dielines.sign_in_required`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "404": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "styles.variant_not_found": {
+                    "$ref": "#/components/examples/problem.styles.variant_not_found"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `styles.variant_not_found`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "dielines.material_class_not_offered": {
+                    "$ref": "#/components/examples/problem.dielines.material_class_not_offered"
+                  },
+                  "dielines.not_drawable": {
+                    "$ref": "#/components/examples/problem.dielines.not_drawable"
+                  },
+                  "dielines.size_out_of_range": {
+                    "$ref": "#/components/examples/problem.dielines.size_out_of_range"
+                  },
+                  "specs.basis_not_accepted": {
+                    "$ref": "#/components/examples/problem.specs.basis_not_accepted"
+                  },
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `dielines.material_class_not_offered`, `dielines.not_drawable`, `dielines.size_out_of_range`, `specs.basis_not_accepted`, `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "501": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "drawing.engine_unavailable": {
+                    "$ref": "#/components/examples/problem.drawing.engine_unavailable"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `drawing.engine_unavailable`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Download a free dieline without signing in (first download)",
         "tags": [
           "store.dielines"
         ]

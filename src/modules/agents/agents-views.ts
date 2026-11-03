@@ -210,7 +210,17 @@ export function leadDto(r: LeadRow): AgentLeadDto {
     tags: r.tags,
     wonAt: iso(r.wonAt),
     updatedAt: toBangkokIso(r.updatedAt),
+    score: r.score,
   };
+}
+
+/** D-471: the stored top reasons of a score (staff only). */
+export function scoreReasons(value: unknown): { reason: string; points: number }[] {
+  return Array.isArray(value)
+    ? (value as { reason?: unknown; points?: unknown }[])
+        .filter((r) => typeof r.reason === 'string' && typeof r.points === 'number')
+        .map((r) => ({ reason: r.reason as string, points: r.points as number }))
+    : [];
 }
 
 export function adminLeadDto(r: LeadRow): AdminAgentLeadDto {
@@ -220,6 +230,8 @@ export function adminLeadDto(r: LeadRow): AdminAgentLeadDto {
     convertedCustomerId: r.convertedUser?.publicId ?? null,
     convertedCompanyId: r.convertedCompany?.publicId ?? null,
     convertedFactoryId: r.convertedFactory?.publicId ?? null,
+    scoreReasons: scoreReasons(r.scoreReasons),
+    scoredAt: iso(r.scoredAt),
   };
 }
 

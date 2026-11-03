@@ -44,7 +44,16 @@ export const INBOUND_STATUSES = [
   'disqualified',
 ] as const;
 export type InboundStatus = (typeof INBOUND_STATUSES)[number];
-export const INBOUND_SOURCES = ['contact_form', 'rfq', 'line_chat', 'manual'] as const;
+export const INBOUND_SOURCES = [
+  'contact_form',
+  'rfq',
+  'line_chat',
+  'manual',
+  // D-471 automatic capture.
+  'studio_idle',
+  'dieline_download',
+] as const;
+export const INBOUND_CONSENT_BASES = ['enquiry', 'staff_entry', 'marketing_consent'] as const;
 export const DISQUALIFY_REASONS = [
   'not_a_buyer',
   'duplicate',

@@ -11,6 +11,10 @@ enum SalesInboundSource {
   line_chat
   /// Entered by staff.
   manual
+  /// D-471: a signed-in customer saved a studio design and has not ordered it within `capture.studio_idle_days`.
+  studio_idle
+  /// D-471: a signed-in non-customer downloaded a free dieline.
+  dieline_download
 
   @@map("sales_inbound_source")
 }
@@ -40,8 +44,22 @@ enum SalesInboundDisqualifyReason {
 enum SalesInboundAssignmentMode {
   manual
   round_robin
+  /// D-471: given to the rep the contact is already attributed to (precedence: agent > rep > pool).
+  attribution
 
   @@map("sales_inbound_assignment_mode")
+}
+
+/// D-471: why getpack may contact the person of an inbound item (PDPA lawful basis kept with the item).
+enum SalesInboundConsentBasis {
+  /// The person asked to be contacted (contact form, RFQ).
+  enquiry
+  /// Staff entered the contact with the person's agreement.
+  staff_entry
+  /// A captured signal (studio idle, dieline download): the person's latest marketing consent was granted.
+  marketing_consent
+
+  @@map("sales_inbound_consent_basis")
 }
 
 /// D-469: one inbound sales enquiry in the pool, worked by a company rep. PDPA: the contact's name, phone, e-mail,
@@ -49,45 +67,69 @@ enum SalesInboundAssignmentMode {
 /// person's agreement); retention = while open, then 2 years after it closes (converted / disqualified) unless the
 /// person asks for erasure earlier; access = Sales (sales.pipeline.manage) and the assigned rep (sales.pipeline.self).
 model SalesInboundLead {
-  id                 BigInt                        @id(map: "pk_sales_inbound_leads") @default(autoincrement())
-  publicId           String                        @unique(map: "ux_sales_inbound_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
-  source             SalesInboundSource
+  id                    BigInt                        @id(map: "pk_sales_inbound_leads") @default(autoincrement())
+  publicId              String                        @unique(map: "ux_sales_inbound_leads__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  source                SalesInboundSource
   /// The ticket number or RFQ code it came from.
-  sourceRef          String?                       @map("source_ref")
-  supportTicketId    BigInt?                       @unique(map: "ux_sales_inbound_leads__support_ticket_id") @map("support_ticket_id")
-  rfqId              BigInt?                       @unique(map: "ux_sales_inbound_leads__rfq_id") @map("rfq_id")
-  contactName        String                        @map("contact_name")
+  sourceRef             String?                       @map("source_ref")
+  supportTicketId       BigInt?                       @unique(map: "ux_sales_inbound_leads__support_ticket_id") @map("support_ticket_id")
+  rfqId                 BigInt?                       @unique(map: "ux_sales_inbound_leads__rfq_id") @map("rfq_id")
+  contactName           String                        @map("contact_name")
   /// E.164.
-  contactPhone       String?                       @map("contact_phone")
-  contactEmail       String?                       @map("contact_email") @db.Citext
-  organisationName   String?                       @map("organisation_name")
-  need               String?
-  status             SalesInboundStatus            @default(new)
-  assigneeUserId     BigInt?                       @map("assignee_user_id")
-  assignedAt         DateTime?                     @map("assigned_at") @db.Timestamptz(6)
+  contactPhone          String?                       @map("contact_phone")
+  contactEmail          String?                       @map("contact_email") @db.Citext
+  organisationName      String?                       @map("organisation_name")
+  need                  String?
+  status                SalesInboundStatus            @default(new)
+  assigneeUserId        BigInt?                       @map("assignee_user_id")
+  assignedAt            DateTime?                     @map("assigned_at") @db.Timestamptz(6)
   /// The lead registered for the assignee's employee agent (null: not yet, or refused — see `lead_refusal`).
-  agentLeadId        BigInt?                       @map("agent_lead_id")
+  agentLeadId           BigInt?                       @map("agent_lead_id")
   /// `unavailable` when the contact cannot be a lead (one neutral reason, D-440).
-  leadRefusal        String?                       @map("lead_refusal")
-  firstResponseDueAt DateTime                      @map("first_response_due_at") @db.Timestamptz(6)
-  firstRespondedAt   DateTime?                     @map("first_responded_at") @db.Timestamptz(6)
-  slaBreachedAt      DateTime?                     @map("sla_breached_at") @db.Timestamptz(6)
-  disqualifiedReason SalesInboundDisqualifyReason? @map("disqualified_reason")
-  statusNote         String?                       @map("status_note")
-  closedAt           DateTime?                     @map("closed_at") @db.Timestamptz(6)
-  createdById        BigInt?                       @map("created_by")
-  createdAt          DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt          DateTime                      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  rowVersion         Int                           @default(1) @map("row_version")
+  leadRefusal           String?                       @map("lead_refusal")
+  firstResponseDueAt    DateTime                      @map("first_response_due_at") @db.Timestamptz(6)
+  firstRespondedAt      DateTime?                     @map("first_responded_at") @db.Timestamptz(6)
+  slaBreachedAt         DateTime?                     @map("sla_breached_at") @db.Timestamptz(6)
+  disqualifiedReason    SalesInboundDisqualifyReason? @map("disqualified_reason")
+  statusNote            String?                       @map("status_note")
+  closedAt              DateTime?                     @map("closed_at") @db.Timestamptz(6)
+  createdById           BigInt?                       @map("created_by")
+  createdAt             DateTime                      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime                      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion            Int                           @default(1) @map("row_version")
+  /// D-471 capture. PDPA: `capture_user_id` (the signed-in customer the signal came from), `design_document_id`
+  /// (the idle studio design), `signal_count` / `last_signal_at` (repeat downloads) — purpose = a sales follow-up the
+  /// person consented to (marketing consent, `consent_record_id`); retention = as the item (while open, then 2 years);
+  /// access = Sales (sales.pipeline.manage) and the assigned rep.
+  captureUserId         BigInt?                       @map("capture_user_id")
+  designDocumentId      BigInt?                       @unique(map: "ux_sales_inbound_leads__design_document_id") @map("design_document_id")
+  signalCount           Int                           @default(1) @map("signal_count")
+  lastSignalAt          DateTime?                     @map("last_signal_at") @db.Timestamptz(6)
+  consentBasis          SalesInboundConsentBasis      @map("consent_basis")
+  /// The marketing consent record relied on (captured signals only).
+  consentRecordId       BigInt?                       @map("consent_record_id")
+  /// D-471 lead score 0–100 by `sales.scoring_rules` (the setting version used), the top 3 reasons
+  /// `[{ reason, points }]` (staff only) and when it was computed. Derived from the item's own data.
+  score                 Int?                          @db.SmallInt
+  scoreReasons          Json?                         @map("score_reasons")
+  scoredAt              DateTime?                     @map("scored_at") @db.Timestamptz(6)
+  scoreSettingVersionId BigInt?                       @map("score_setting_version_id")
 
-  supportTicket SupportTicket?           @relation("SalesInboundLeadTicket", fields: [supportTicketId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__support_ticket_id")
-  rfq           Rfq?                     @relation("SalesInboundLeadRfq", fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__rfq_id")
-  assignee      User?                    @relation("SalesInboundLeadAssignee", fields: [assigneeUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__assignee_user_id") // client: keep
-  agentLead     SalesAgentLead?          @relation("SalesInboundLeadAgentLead", fields: [agentLeadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__agent_lead_id")
-  createdBy     User?                    @relation("SalesInboundLeadCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__created_by")
-  assignments   SalesInboundAssignment[]
+  supportTicket  SupportTicket?           @relation("SalesInboundLeadTicket", fields: [supportTicketId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__support_ticket_id")
+  rfq            Rfq?                     @relation("SalesInboundLeadRfq", fields: [rfqId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__rfq_id")
+  assignee       User?                    @relation("SalesInboundLeadAssignee", fields: [assigneeUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__assignee_user_id") // client: keep
+  agentLead      SalesAgentLead?          @relation("SalesInboundLeadAgentLead", fields: [agentLeadId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__agent_lead_id")
+  createdBy      User?                    @relation("SalesInboundLeadCreatedBy", fields: [createdById], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__created_by")
+  assignments    SalesInboundAssignment[]
+  captureUser    User?                    @relation("SalesInboundLeadCaptureUser", fields: [captureUserId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__capture_user_id") // client: keep
+  designDocument DesignDocument?          @relation("SalesInboundLeadDesign", fields: [designDocumentId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__design_document_id")
+  consentRecord  ConsentRecord?           @relation("SalesInboundLeadConsent", fields: [consentRecordId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_inbound_leads__consent_record_id")
 
   @@index([status, createdAt], map: "ix_sales_inbound_leads__status__created_at")
+  @@index([captureUserId, source], map: "ix_sales_inbound_leads__capture_user_id__source")
+  @@index([consentRecordId], map: "ix_sales_inbound_leads__consent_record_id")
+  @@index([score(sort: Desc)], map: "ix_sales_inbound_leads__score")
+  @@index([scoredAt], map: "ix_sales_inbound_leads__scored_at")
   @@index([assigneeUserId, status], map: "ix_sales_inbound_leads__assignee_user_id__status")
   @@index([agentLeadId], map: "ix_sales_inbound_leads__agent_lead_id")
   @@index([createdById], map: "ix_sales_inbound_leads__created_by")

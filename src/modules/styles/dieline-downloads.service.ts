@@ -52,9 +52,14 @@ export interface DownloadResult {
   cached: boolean;
   url: string;
   expiresAt: Date;
-  /** Downloads left today for a customer, null for staff (not limited). */
+  /** Downloads left today for a customer, null for staff (not limited) and for a download without sign-in. */
   remainingToday: number | null;
+  /** D-471: the next download from this browser needs a (free) sign-in. */
+  nextNeedsSignIn: boolean;
 }
+
+/** Who downloads: staff (not limited), a signed-in customer (D-203 limits) or a browser without sign-in (D-471). */
+type Downloader = { kind: 'staff' | 'customer'; userId: bigint } | { kind: 'device'; deviceHash: Buffer };
 
 const MIME: Record<DielineDownloadFormat, string> = {
   svg: 'image/svg+xml',
@@ -110,7 +115,30 @@ export class DielineDownloadsService {
   ) {}
 
   async download(actor: UserActor, input: DownloadInput, now: Date = new Date()): Promise<DownloadResult> {
-    const staff = actor.audience === 'staff';
+    return this.run(
+      { kind: actor.audience === 'staff' ? 'staff' : 'customer', userId: actor.userId },
+      input,
+      now,
+    );
+  }
+
+  /**
+   * D-471: the free download without sign-in. A browser (its device id, kept only as SHA-256) may take
+   * `dielines.anonymous_free_downloads` (1) downloads; the next answers 401 `dielines.sign_in_required` and the web asks
+   * for a free sign-in, then calls `download` as the customer. Never a payment, never a plan gate (D-271).
+   */
+  async downloadFree(
+    deviceId: string,
+    input: DownloadInput,
+    now: Date = new Date(),
+  ): Promise<DownloadResult> {
+    const deviceHash = createHash('sha256').update(`dieline-device:${deviceId.toLowerCase()}`).digest();
+    await this.checkDevice(this.prisma, deviceHash, now);
+    return this.run({ kind: 'device', deviceHash }, input, now);
+  }
+
+  private async run(who: Downloader, input: DownloadInput, now: Date): Promise<DownloadResult> {
+    const staff = who.kind === 'staff';
     if (!(await this.dielines.ready())) throw new DomainException('drawing.engine_unavailable');
     const variant = await this.prisma.styleVariant.findUnique({
       where: { code: input.variantCode },
@@ -134,7 +162,7 @@ export class DielineDownloadsService {
     const basis = input.measurementBasis ?? 'internal';
     const inside = this.insideSizes(variant, input, basis, material);
     if (!staff) this.checkRange(inside, range!);
-    if (!staff) await this.checkLimits(this.prisma, actor.userId, now);
+    if (who.kind === 'customer') await this.checkLimits(this.prisma, who.userId, now);
 
     const { render, cached } = await this.render(
       variant,
@@ -147,14 +175,19 @@ export class DielineDownloadsService {
     );
     const entered = { lengthMm: input.lengthMm, widthMm: input.widthMm, heightMm: input.heightMm };
     const download = await this.prisma.withTx(async (tx) => {
-      if (!staff) {
+      if (who.kind === 'customer') {
         // One customer's downloads are counted one at a time, so parallel requests cannot pass the limit.
-        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('dieline_downloads'), (${actor.userId} % 2147483647)::int)`;
-        await this.checkLimits(tx, actor.userId, now);
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('dieline_downloads'), (${who.userId} % 2147483647)::int)`;
+        await this.checkLimits(tx, who.userId, now);
+      }
+      if (who.kind === 'device') {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('dieline_device'), hashtext(${who.deviceHash.toString('hex')}))`;
+        await this.checkDevice(tx, who.deviceHash, now);
       }
       const row = await tx.dielineDownload.create({
         data: {
-          userId: actor.userId,
+          userId: who.kind === 'device' ? null : who.userId,
+          deviceHash: who.kind === 'device' ? new Uint8Array(who.deviceHash) : null,
           renderId: render.id,
           staff,
           measurementBasis: basis,
@@ -174,6 +207,7 @@ export class DielineDownloadsService {
           format: input.format,
           materialClass: input.materialClass,
           staff,
+          anonymous: who.kind === 'device',
           cached,
         },
       });
@@ -191,7 +225,9 @@ export class DielineDownloadsService {
       cached,
       url: signed.url,
       expiresAt: signed.expiresAt,
-      remainingToday: staff ? null : await this.remainingToday(actor.userId, now),
+      remainingToday: who.kind === 'customer' ? await this.remainingToday(who.userId, now) : null,
+      nextNeedsSignIn:
+        who.kind === 'device' ? await this.deviceUsedUp(this.prisma, who.deviceHash, now) : false,
     };
   }
 
@@ -379,6 +415,17 @@ export class DielineDownloadsService {
         },
       ],
     });
+  }
+
+  /** D-471: the browser used its free downloads (or there are none) → a free sign-in is asked. */
+  private async checkDevice(db: Tx, deviceHash: Buffer, now: Date): Promise<void> {
+    if (await this.deviceUsedUp(db, deviceHash, now)) throw new DomainException('dielines.sign_in_required');
+  }
+
+  private async deviceUsedUp(db: Tx, deviceHash: Buffer, now: Date): Promise<boolean> {
+    const free = (await this.settings.at('dielines.anonymous_free_downloads', { at: now })).value;
+    if (free <= 0) return true;
+    return (await db.dielineDownload.count({ where: { deviceHash: new Uint8Array(deviceHash) } })) >= free;
   }
 
   /** D-203: refuses with 429 and `Retry-After` once a limit is reached (customer downloads only). */

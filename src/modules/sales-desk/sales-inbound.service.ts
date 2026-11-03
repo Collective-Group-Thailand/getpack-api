@@ -13,6 +13,8 @@ import { OnDomainEvent } from '@platform/domain-events/on-domain-event.decorator
 import { holdersOfRole, type Recipient, RecipientDirectory } from '@platform/notifications/recipients';
 import { SettingNotFoundError, SettingsService } from '@platform/settings/settings.service';
 
+import { CaptureAttributionService } from './capture-attribution.service';
+import { type CaptureRoute } from './capture-rules';
 import {
   CLOSED_INBOUND,
   type DISQUALIFY_REASONS,
@@ -21,10 +23,13 @@ import {
   workingHoursDue,
 } from './sales-desk-rules';
 import { type SalesScope } from './sales-scope';
+import { SalesScoringService } from './sales-scoring.service';
 
 export const INBOUND_INCLUDE = {
   assignee: { select: { publicId: true, displayName: true } },
   agentLead: { select: { publicId: true } },
+  captureUser: { select: { publicId: true } },
+  designDocument: { select: { publicId: true } },
 } as const satisfies Prisma.SalesInboundLeadInclude;
 export type InboundRow = Prisma.SalesInboundLeadGetPayload<{ include: typeof INBOUND_INCLUDE }>;
 
@@ -34,6 +39,19 @@ export interface InboundInput {
   contactEmail?: string | null;
   organisationName?: string | null;
   need?: string | null;
+}
+
+/** D-469 soonest due first; D-471 by score (unscored last) or newest. */
+export function inboundOrder(
+  sort: 'due' | 'score' | 'createdAt',
+  order?: 'asc' | 'desc',
+): Prisma.SalesInboundLeadOrderByWithRelationInput[] {
+  if (sort === 'score') {
+    const dir = order ?? 'desc';
+    return [{ score: { sort: dir, nulls: 'last' } }, { firstResponseDueAt: 'asc' }, { id: 'asc' }];
+  }
+  if (sort === 'createdAt') return [{ createdAt: order ?? 'desc' }, { id: order ?? 'desc' }];
+  return [{ firstResponseDueAt: 'asc' }, { id: 'asc' }];
 }
 
 /** Aggregate type of the inbound pool's events and its notification resolver. */
@@ -56,6 +74,8 @@ export class SalesInboundService implements OnModuleInit {
     private readonly attribution: AgentAttributionService,
     private readonly audit: AuditService,
     private readonly directory: RecipientDirectory,
+    private readonly scoring: SalesScoringService,
+    private readonly routes: CaptureAttributionService,
     readonly events: DomainEvents,
     readonly activity: ActivityLogService,
   ) {}
@@ -82,6 +102,9 @@ export class SalesInboundService implements OnModuleInit {
       unassigned?: boolean;
       breached?: boolean;
       q?: string;
+      minScore?: number;
+      sort?: 'due' | 'score' | 'createdAt';
+      order?: 'asc' | 'desc';
       page: number;
       perPage: number;
     },
@@ -97,6 +120,7 @@ export class SalesInboundService implements OnModuleInit {
       ...(q.status?.length && { status: { in: q.status } }),
       ...(q.source && { source: q.source as SalesInboundLead['source'] }),
       ...(q.breached !== undefined && { slaBreachedAt: q.breached ? { not: null } : null }),
+      ...(q.minScore !== undefined && { score: { gte: q.minScore } }),
       ...(text && {
         OR: [
           { contactName: { contains: text, mode: 'insensitive' as const } },
@@ -111,7 +135,7 @@ export class SalesInboundService implements OnModuleInit {
       this.prisma.salesInboundLead.findMany({
         where,
         include: INBOUND_INCLUDE,
-        orderBy: [{ firstResponseDueAt: 'asc' }, { id: 'asc' }],
+        orderBy: inboundOrder(q.sort ?? 'due', q.order),
         skip: (q.page - 1) * q.perPage,
         take: q.perPage,
       }),
@@ -163,6 +187,15 @@ export class SalesInboundService implements OnModuleInit {
     });
     if (!ticket) return;
     if (await tx.salesInboundLead.findUnique({ where: { supportTicketId: ticket.id } })) return;
+    const contactPhone = normalisePhone(ticket.contactPhone ?? ticket.customer?.phone ?? null);
+    const contactEmail = (ticket.contactEmail ?? ticket.customer?.email ?? null)?.toLowerCase() ?? null;
+    // D-471: an agent's contact never enters the company pool (the ticket stays in the CS queue); a rep's goes to them.
+    const route = await this.routes.route(tx, {
+      userId: ticket.customerUserId,
+      phone: contactPhone,
+      email: contactEmail,
+    });
+    if (route.route === 'agent') return;
     const context = (ticket.context ?? {}) as Record<string, unknown>;
     const details = (context['details'] ?? {}) as Record<string, unknown>;
     const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
@@ -186,9 +219,13 @@ export class SalesInboundService implements OnModuleInit {
         organisationName: str(details['company']),
         need,
       },
-      { supportTicketId: ticket.id, actor: systemActor('sales.inbound') },
+      {
+        supportTicketId: ticket.id,
+        captureUserId: ticket.customerUserId,
+        actor: systemActor('sales.inbound'),
+      },
     );
-    await this.autoAssign(tx, row, systemActor('sales.inbound'));
+    await this.placeByRoute(tx, row, route, systemActor('sales.inbound'));
   }
 
   /** An RFQ from a customer with no order group yet and no agent becomes an enquiry ("non-customer"). */
@@ -201,10 +238,15 @@ export class SalesInboundService implements OnModuleInit {
     if (!rfq) return;
     if (await tx.salesInboundLead.findUnique({ where: { rfqId: rfq.id } })) return;
     const ordered = await tx.orderGroup.count({ where: { customerUserId: rfq.customerUserId } });
-    const linked = await tx.salesAgentLink.count({
-      where: { customerUserId: rfq.customerUserId, status: 'active' },
+    if (ordered > 0) return;
+    // D-471 precedence: an agent's customer (link of the customer or their company, or a protected lead) never enters
+    // the company pool; a rep's goes to that rep.
+    const route = await this.routes.route(tx, {
+      userId: rfq.customerUserId,
+      phone: rfq.customer.phone,
+      email: rfq.customer.email?.toLowerCase() ?? null,
     });
-    if (ordered > 0 || linked > 0) return;
+    if (route.route === 'agent') return;
     const row = await this.intake(
       tx,
       'rfq',
@@ -215,17 +257,44 @@ export class SalesInboundService implements OnModuleInit {
         contactEmail: rfq.customer.email,
         need: `RFQ ${rfq.rfqCode}`,
       },
-      { rfqId: rfq.id, actor: systemActor('sales.inbound') },
+      { rfqId: rfq.id, captureUserId: rfq.customerUserId, actor: systemActor('sales.inbound') },
     );
-    await this.autoAssign(tx, row, systemActor('sales.inbound'));
+    await this.placeByRoute(tx, row, route, systemActor('sales.inbound'));
   }
 
-  private async intake(
+  /**
+   * D-471: a rep-attributed item goes straight to that rep (assignment mode `attribution`), the pool when the rep has
+   * no active employee agent any more; a pool item follows `sales.assignment_mode`. Agent-attributed contacts never
+   * reach this point.
+   */
+  async placeByRoute(tx: Tx, row: SalesInboundLead, route: CaptureRoute, actor: Actor): Promise<void> {
+    if (route.route === 'agent') throw new Error('an agent-attributed contact never enters the company pool');
+    if (route.route === 'rep')
+      try {
+        await this.assignInTx(tx, row, route.repUserId, 'attribution', null, actor);
+        return;
+      } catch (error) {
+        if (!(error instanceof DomainException) || error.code !== 'sales.rep_unavailable') throw error;
+      }
+    await this.autoAssign(tx, row, actor);
+  }
+
+  /** One new item in the pool (also used by the D-471 capture sources); contact data never goes into the event. */
+  async intake(
     tx: Tx,
     source: SalesInboundLead['source'],
     sourceRef: string | null,
     input: InboundInput,
-    extra: { supportTicketId?: bigint; rfqId?: bigint; createdById?: bigint; actor: Actor },
+    extra: {
+      supportTicketId?: bigint;
+      rfqId?: bigint;
+      createdById?: bigint;
+      actor: Actor;
+      captureUserId?: bigint | null;
+      designDocumentId?: bigint | null;
+      consentRecordId?: bigint | null;
+      consentBasis?: SalesInboundLead['consentBasis'];
+    },
   ): Promise<SalesInboundLead> {
     const now = new Date();
     const due = await this.firstResponseDue(now);
@@ -235,6 +304,11 @@ export class SalesInboundService implements OnModuleInit {
         sourceRef,
         supportTicketId: extra.supportTicketId ?? null,
         rfqId: extra.rfqId ?? null,
+        captureUserId: extra.captureUserId ?? null,
+        designDocumentId: extra.designDocumentId ?? null,
+        consentRecordId: extra.consentRecordId ?? null,
+        consentBasis: extra.consentBasis ?? (source === 'manual' ? 'staff_entry' : 'enquiry'),
+        lastSignalAt: now,
         contactName: input.contactName.trim().slice(0, 200),
         contactPhone: input.contactPhone ?? null,
         contactEmail: input.contactEmail ?? null,
@@ -245,12 +319,20 @@ export class SalesInboundService implements OnModuleInit {
         createdAt: now,
       },
     });
+    // D-471: scored at intake (rules in force; the job keeps it fresh).
+    const scored = await this.scoring.scoreInbound(tx, row.id, now);
     // No contact data in events (PDPA).
     await recordAgentEvent(this, tx, {
       type: 'sales_inbound_lead.created',
       aggregateType: INBOUND_AGGREGATE,
       aggregateId: row.publicId,
-      payload: { inboundId: row.publicId, source, sourceRef, firstResponseDueAt: due.toISOString() },
+      payload: {
+        inboundId: row.publicId,
+        source,
+        sourceRef,
+        firstResponseDueAt: due.toISOString(),
+        score: scored.score,
+      },
       actor: extra.actor,
     });
     return row;
@@ -266,7 +348,7 @@ export class SalesInboundService implements OnModuleInit {
   // --- assignment -------------------------------------------------------------------------------------------------
 
   /** Round robin when `sales.assignment_mode` says so; otherwise the enquiry waits for a manager. */
-  private async autoAssign(tx: Tx, row: SalesInboundLead, actor: Actor): Promise<void> {
+  async autoAssign(tx: Tx, row: SalesInboundLead, actor: Actor): Promise<void> {
     if ((await this.settings.value('sales.assignment_mode', new Date())) !== 'round_robin') return;
     const to = await this.roundRobin(tx);
     if (to === null) return;
@@ -357,11 +439,11 @@ export class SalesInboundService implements OnModuleInit {
     return tx.salesInboundLead.findUniqueOrThrow({ where: { id: locked.id } });
   }
 
-  private async assignInTx(
+  async assignInTx(
     tx: Tx,
     row: SalesInboundLead,
     to: bigint,
-    mode: 'manual' | 'round_robin',
+    mode: 'manual' | 'round_robin' | 'attribution',
     reason: string | null,
     actor: Actor,
   ): Promise<void> {

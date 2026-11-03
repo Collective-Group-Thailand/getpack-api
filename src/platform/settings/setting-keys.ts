@@ -140,6 +140,25 @@ export interface SettingValues {
   'finance.cost_of_capital_annual_pct': string;
   /** D-470 bad-debt provision % of net revenue by customer credit grade; unset until Finance sets it. */
   'finance.bad_debt_provision_pct': { byGrade: Record<string, string> };
+  /** D-471 the lead-scoring rules (shape: `ScoringRules` in sales-desk/lead-scoring.ts). */
+  'sales.scoring_rules': {
+    base: number;
+    inboundSource: Record<string, number>;
+    leadSource: Record<string, number>;
+    companyEmailDomain: number;
+    freeEmailDomain: number;
+    freeEmailDomains: string[];
+    taxIdPresent: number;
+    quantityBands: { min: number; points: number }[];
+    valueBands: { min: string; points: number }[];
+    recencyBands: { maxDays: number; points: number }[];
+    repeatSignals: { min: number; points: number };
+  };
+  /** D-471 capture of saved studio designs not ordered (flag) and the idle days before capture. */
+  'capture.studio_idle_enabled': boolean;
+  'capture.studio_idle_days': number;
+  /** D-471 capture of free dieline downloads by signed-in non-customers (flag). */
+  'capture.dieline_download_enabled': boolean;
   /** D-465 personal income tax table (net income bands, s.48(1)). */
   'tax.pit_brackets': { upTo: string | null; ratePct: string }[];
   /** D-465 s.40(2) expense deduction for the progressive withholding: rate (0.50) and cap. */
@@ -374,6 +393,8 @@ export interface SettingValues {
   'tooling.reuse_months': number;
   'dielines.downloads_per_day': number;
   'dielines.downloads_per_minute': number;
+  /** D-471 free dieline downloads per browser without sign-in (0 = always sign in). */
+  'dielines.anonymous_free_downloads': number;
   /** D-278 the studio print-check rule catalogue (Prepress). */
   'studio.print_rules': RuleCatalogue;
   /**

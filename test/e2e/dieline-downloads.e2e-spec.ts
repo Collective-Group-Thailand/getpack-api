@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -236,5 +237,30 @@ describe('dieline downloads and style assets (e2e, U3.B5)', () => {
     expect(await ctx.prisma.styleAsset.count({ where: own })).toBe(1);
     const detail = await request(ctx.server).get(`/v1/store/styles/${BASE}`).expect(200);
     expect(detail.body.dielineUrl).toMatch(/^https?:\/\//);
+  });
+
+  it('lets a browser take its first download without signing in, then asks for a free sign-in (D-471)', async () => {
+    const deviceId = randomUUID();
+    const first = await request(ctx.server)
+      .post('/v1/store/dielines/downloads/free')
+      .send({ ...body(), deviceId })
+      .expect(201);
+    expect(first.body).toMatchObject({ variantCode: published, remainingToday: null, nextNeedsSignIn: true });
+    const row = await ctx.prisma.dielineDownload.findUniqueOrThrow({ where: { publicId: first.body.id } });
+    // Only the SHA-256 of the device id is kept, never the id or an account.
+    expect(row.userId).toBeNull();
+    expect(Buffer.from(row.deviceHash!).toString('hex')).not.toContain(deviceId.replace(/-/g, ''));
+    const second = await request(ctx.server)
+      .post('/v1/store/dielines/downloads/free')
+      .send({ ...body(), deviceId })
+      .expect(401);
+    expect(second.body.code).toBe('dielines.sign_in_required');
+    // Signed in, the same browser keeps downloading for free.
+    await as(ctx, customer).post('/v1/store/dielines/downloads', body()).expect(201);
+    // Another browser gets its own first download.
+    await request(ctx.server)
+      .post('/v1/store/dielines/downloads/free')
+      .send({ ...body(), deviceId: randomUUID() })
+      .expect(201);
   });
 });

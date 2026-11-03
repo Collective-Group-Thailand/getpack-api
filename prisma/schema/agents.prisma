@@ -443,6 +443,12 @@ model SalesAgentLead {
   createdAt              DateTime                  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt              DateTime                  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
   rowVersion             Int                       @default(1) @map("row_version")
+  /// D-471 lead score 0–100 by `sales.scoring_rules` (the setting version used); the agent sees the score of their
+  /// own leads only, the reasons `[{ reason, points }]` are for staff. Derived from the lead's own data.
+  score                  Int?                      @db.SmallInt
+  scoreReasons           Json?                     @map("score_reasons")
+  scoredAt               DateTime?                 @map("scored_at") @db.Timestamptz(6)
+  scoreSettingVersionId  BigInt?                   @map("score_setting_version_id")
 
   activities        SalesAgentLeadActivity[]
   agentQuotes       SalesAgentQuote[]
@@ -463,6 +469,7 @@ model SalesAgentLead {
   @@index([convertedCompanyId], map: "ix_sales_agent_leads__converted_company_id")
   @@index([convertedFactoryId], map: "ix_sales_agent_leads__converted_factory_id")
   @@index([agentId, stage], map: "ix_sales_agent_leads__agent_id__stage")
+  @@index([scoredAt], map: "ix_sales_agent_leads__scored_at")
   @@index([nextFollowUpAt], map: "ix_sales_agent_leads__next_follow_up_at__due", where: raw("(follow_up_reminded_at IS NULL AND next_follow_up_at IS NOT NULL)"))
   @@map("sales_agent_leads")
 }
