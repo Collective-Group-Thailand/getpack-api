@@ -52,6 +52,8 @@ describe('seed data (B1.2 step 3)', () => {
       'auth.device_pin_policy': 'proposed',
       // D-467: the hand-off code lifetime is a technical / security limit.
       'auth.handoff_code_ttl_seconds': 'proposed',
+      // D-468: how long a business-card photo is kept (PDPA), proposed.
+      'agents.card_scan_retention_days': 'proposed',
       // D-172: defined without a value until the business sets it.
       'partners.suggestion_deviation_band_pct': 'pending_business',
       // B2.4: no decision gives the carton, the pallet or the target shipping margin.
