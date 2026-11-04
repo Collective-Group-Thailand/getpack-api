@@ -83,6 +83,12 @@ k6 is not installed in the build workspace (no approval to install binaries), so
 | `store.agent.statements` | seq scan (2 rows; `ix_sales_agent_statements__agent_id__period_start` exists) | 0.04 ms |
 | `store.agentCommissions.forecast` entries / links | index on commissions; links `ix_sales_agent_links__agent_id__status` | < 0.1 ms each |
 
+**Local smoke without k6** (same mix and rate as `agent-portal.js`, a plain Node `fetch` generator on the same VM):
+API booted locally against the UAT seed (PostgreSQL 16, Redis, `INTEGRATIONS_MODE=fake`, global throttle raised for
+the run), agent `UATFRE22`, **50 rps for 30 s: 1,500 requests, 0 errors, p50 10.3 ms, p95 18.7 ms, p99 366.8 ms**
+(warm-up); p95 by kind — lists 18.6 ms, details 17.9 ms, forecast 21.6 ms. Indicative only (one agent, seed volume,
+generator on the same machine); the k6 run on the UAT stack is the evidence for the go / no-go.
+
 No new index: every hot predicate is served by an existing index. **Watch item:** the forecast reads the in-progress
 orders **once per active link** (N + 1); fine for the pilot (10–20 agents, few links each), to be batched into one
 query when an agent passes ~200 active links or the UAT run shows its p95 above 300 ms.
