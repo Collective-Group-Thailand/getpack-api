@@ -55,6 +55,8 @@ const P3_AGENT_OPERATIONS = [
   'store.agentPlaybook.get',
   'store.agentLeads.scanCard',
   'store.agentCommissions.forecast',
+  // P7 pilot switch: the public waiting list.
+  'store.agentProgramme.joinWaitlist',
 ];
 
 /** Operations removed by D-435; they must not come back. */

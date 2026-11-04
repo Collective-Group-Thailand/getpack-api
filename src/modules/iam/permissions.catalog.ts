@@ -1559,6 +1559,14 @@ export const PERMISSIONS = [
     decisionRefs: ['D-466'],
   },
   {
+    key: 'agent_waitlist.read',
+    audience: 'staff',
+    description:
+      'Read and export the agent programme waiting list (names and contacts of people who asked to hear when sign-up opens)',
+    sensitive: true,
+    decisionRefs: ['D-466'],
+  },
+  {
     key: 'agent_tax_declarations.review',
     audience: 'staff',
     description:

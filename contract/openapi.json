@@ -661,6 +661,28 @@
           "type": "https://errors.getpack/agents.too_many_leads"
         }
       },
+      "problem.agents.waitlist_closed": {
+        "summary": "agents.waitlist_closed",
+        "value": {
+          "code": "agents.waitlist_closed",
+          "detail": "รายชื่อรอเปิดรับยังไม่เปิด กรุณาลองใหม่ภายหลัง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ยังลงทะเบียนรอไม่ได้",
+          "type": "https://errors.getpack/agents.waitlist_closed"
+        }
+      },
+      "problem.agents.waitlist_consent_outdated": {
+        "summary": "agents.waitlist_consent_outdated",
+        "value": {
+          "code": "agents.waitlist_consent_outdated",
+          "detail": "กรุณาอ่านและยอมรับข้อความฉบับที่ {versionNo} แล้วส่งอีกครั้ง",
+          "requestId": "6f1c2d8e-2c7b-4d0e-9d1c-3f1a2b3c4d5e",
+          "status": 409,
+          "title": "ข้อความความยินยอมมีฉบับใหม่",
+          "type": "https://errors.getpack/agents.waitlist_consent_outdated"
+        }
+      },
       "problem.approval.already_acted": {
         "summary": "approval.already_acted",
         "value": {
@@ -9284,6 +9306,71 @@
           "activeLinks",
           "openLeads",
           "factories"
+        ],
+        "type": "object"
+      },
+      "AdminAgentWaitlistEntryDto": {
+        "properties": {
+          "createdAt": {
+            "example": "2026-11-04T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "email": {
+            "example": "somchai@example.invalid",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "id": {
+            "example": "0192f3a0-7c1e-7d2a-9b1f-0000000000a1",
+            "format": "uuid",
+            "type": "string"
+          },
+          "joinCount": {
+            "description": "Sign-ups with this contact (a repeat refreshes the row)",
+            "example": 1,
+            "type": "integer"
+          },
+          "lastJoinedAt": {
+            "example": "2026-11-04T10:00:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "name": {
+            "example": "สมชาย ขายเก่ง",
+            "type": "string"
+          },
+          "phone": {
+            "example": "+66810005678",
+            "pattern": "^\\+[1-9]\\d{7,14}$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "salesChannel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentSalesChannel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "example": "line_groups"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "phone",
+          "email",
+          "salesChannel",
+          "joinCount",
+          "createdAt",
+          "lastJoinedAt"
         ],
         "type": "object"
       },
@@ -19004,6 +19091,11 @@
             ],
             "description": "The agreement in force (null: none yet)"
           },
+          "applyOpen": {
+            "description": "This customer may apply now: the flag `agents.programme` is on for them, or they are on the pilot list (setting `agents.pilot`, P7); else the web offers the waiting list",
+            "example": false,
+            "type": "boolean"
+          },
           "leadProtectionDays": {
             "description": "Days a registered lead is protected",
             "example": 60,
@@ -19046,7 +19138,8 @@
           "linkCookieDays",
           "leadProtectionDays",
           "paymentTermsDays",
-          "state"
+          "state",
+          "applyOpen"
         ],
         "type": "object"
       },
@@ -19717,6 +19810,93 @@
           "openLeads"
         ],
         "type": "object"
+      },
+      "AgentWaitlistConsentDto": {
+        "properties": {
+          "summaryEn": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "summaryTh": {
+            "example": null,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "textEn": {
+            "example": "I agree that getpack may contact me once to tell me when agent sign-up opens …",
+            "type": "string"
+          },
+          "textTh": {
+            "example": "ข้าพเจ้ายินยอมให้ getpack ติดต่อเพื่อแจ้งเมื่อเปิดรับสมัครตัวแทนขาย …",
+            "type": "string"
+          },
+          "versionNo": {
+            "description": "Send it back as `consentVersionNo`",
+            "example": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "versionNo",
+          "textTh",
+          "textEn",
+          "summaryTh",
+          "summaryEn"
+        ],
+        "type": "object"
+      },
+      "AgentWaitlistExportDto": {
+        "properties": {
+          "expiresAt": {
+            "example": "2026-11-04T10:05:00+07:00",
+            "format": "date-time",
+            "type": "string"
+          },
+          "rows": {
+            "example": 12,
+            "type": "integer"
+          },
+          "url": {
+            "description": "Signed link, 5 minutes",
+            "example": "https://getpack-files.s3.example.com/…",
+            "type": "string"
+          }
+        },
+        "required": [
+          "url",
+          "expiresAt",
+          "rows"
+        ],
+        "type": "object"
+      },
+      "AgentWaitlistReceiptDto": {
+        "properties": {
+          "status": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/AgentWaitlistReceiptStatus"
+              }
+            ],
+            "description": "Always `received` — the same answer whether the contact was already on the list (neutral)",
+            "example": "received"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "type": "object"
+      },
+      "AgentWaitlistReceiptStatus": {
+        "description": "Always `received` — the same answer whether the contact was already on the list (neutral)",
+        "enum": [
+          "received"
+        ],
+        "type": "string"
       },
       "AgentWhtMethod": {
         "description": "D-465: individual — progressive s.50(1) (ภ.ง.ด.1); juristic — 3 % service from ฿1,000 (ภ.ง.ด.53); employee — payroll. Null before approval",
@@ -77771,6 +77951,58 @@
         ],
         "type": "string"
       },
+      "JoinAgentWaitlistDto": {
+        "properties": {
+          "consentVersionNo": {
+            "description": "The waiting-list consent version read and accepted (`waitlistConsent.versionNo`)",
+            "example": 1,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "email": {
+            "example": "somchai@example.invalid",
+            "format": "email",
+            "maxLength": 200,
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "description": "Your name",
+            "example": "สมชาย ขายเก่ง",
+            "maxLength": 120,
+            "minLength": 1,
+            "type": "string"
+          },
+          "phone": {
+            "description": "Thai mobile (0XXXXXXXXX) or E.164; a phone or an e-mail is required",
+            "example": "0810005678",
+            "pattern": "^(0\\d{8,9}|\\+[1-9]\\d{7,14})$",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "salesChannel": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentSalesChannel"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "How you sell (optional)",
+            "example": "line_groups"
+          }
+        },
+        "required": [
+          "name",
+          "consentVersionNo"
+        ],
+        "type": "object"
+      },
       "JournalDto": {
         "properties": {
           "approvalRequestId": {
@@ -95060,6 +95292,22 @@
               }
             ],
             "description": "The standard freelance plan in force"
+          },
+          "waitlistConsent": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AgentWaitlistConsentDto"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The consent text to show beside the waiting-list form (null: none published — the list is closed)"
+          },
+          "waitlistOpen": {
+            "description": "The waiting list takes sign-ups (`store.agentProgramme.joinWaitlist`): applying is closed for visitors and a consent text for the purpose `agent_waitlist` is in force (P7)",
+            "example": true,
+            "type": "boolean"
           }
         },
         "required": [
@@ -95068,6 +95316,8 @@
           "leadProtectionDays",
           "paymentTermsDays",
           "applyOpen",
+          "waitlistOpen",
+          "waitlistConsent",
           "agreement",
           "examples",
           "faqs"
@@ -142464,6 +142714,385 @@
         ],
         "x-required-permissions": [
           "agent_tax_declarations.review"
+        ]
+      }
+    },
+    "/v1/admin/agent-waitlist": {
+      "get": {
+        "description": "Newest first; `q` searches the name, e-mail and phone. Each row: name, the contact given, how they sell, how many times they signed up and when. Contact them once, through the contact they gave, when sign-up opens (consent purpose `agent_waitlist`, D-144). P7 pilot switch (D-466).\n\nImplements: D-466, D-144.",
+        "operationId": "admin.agentWaitlist.list",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "perPage",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Sort field; each endpoint validates it against its own allow-list.",
+            "in": "query",
+            "name": "sort",
+            "required": false,
+            "schema": {
+              "example": "createdAt",
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder"
+            }
+          },
+          {
+            "description": "Free-text search",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "data": [
+                    {
+                      "createdAt": "2026-11-04T10:00:00+07:00",
+                      "email": "somchai@example.invalid",
+                      "id": "0192f3a0-7c1e-7d2a-9b1f-0000000000a1",
+                      "joinCount": 1,
+                      "lastJoinedAt": "2026-11-04T10:00:00+07:00",
+                      "name": "สมชาย ขายเก่ง",
+                      "phone": "+66810005678",
+                      "salesChannel": "line_groups"
+                    }
+                  ],
+                  "meta": {
+                    "page": 1,
+                    "perPage": 25,
+                    "total": 1
+                  }
+                },
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "$ref": "#/components/schemas/AdminAgentWaitlistEntryDto"
+                      },
+                      "type": "array"
+                    },
+                    "meta": {
+                      "$ref": "#/components/schemas/PageMeta"
+                    }
+                  },
+                  "required": [
+                    "data",
+                    "meta"
+                  ],
+                  "type": "object"
+                }
+              }
+            },
+            "description": "One page of results",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "List the agent programme waiting list",
+        "tags": [
+          "admin.agents"
+        ],
+        "x-required-permissions": [
+          "agent_waitlist.read"
+        ]
+      }
+    },
+    "/v1/admin/agent-waitlist/actions/export": {
+      "post": {
+        "description": "Every row as a formula-safe CSV (UTF-8 with BOM; phones written locally, 0XXXXXXXXX) behind a signed link valid 5 minutes; the export is audited (`export.generated`, kind `agent_waitlist`). P7 pilot switch (D-466).\n\nImplements: D-466, D-144.",
+        "operationId": "admin.agentWaitlist.export",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "expiresAt": "2026-11-04T10:05:00+07:00",
+                  "rows": 12,
+                  "url": "https://getpack-files.s3.example.com/…"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentWaitlistExportDto"
+                }
+              }
+            },
+            "description": "Export link",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "staff": []
+          }
+        ],
+        "summary": "Export the agent programme waiting list (CSV)",
+        "tags": [
+          "admin.agents"
+        ],
+        "x-required-permissions": [
+          "agent_waitlist.read"
         ]
       }
     },
@@ -535139,6 +535768,7 @@
                     "textTh": "ข้อตกลงตัวแทนขาย getpack (ฉบับที่ 1) …",
                     "versionNo": 1
                   },
+                  "applyOpen": false,
                   "leadProtectionDays": 60,
                   "linkCookieDays": 90,
                   "paymentTermsDays": 15,
@@ -535513,7 +536143,15 @@
                     "minBaseAmount": "0.00",
                     "repeatOrderPct": "3",
                     "uncapped": true
-                  }
+                  },
+                  "waitlistConsent": {
+                    "summaryEn": null,
+                    "summaryTh": null,
+                    "textEn": "I agree that getpack may contact me once to tell me when agent sign-up opens …",
+                    "textTh": "ข้าพเจ้ายินยอมให้ getpack ติดต่อเพื่อแจ้งเมื่อเปิดรับสมัครตัวแทนขาย …",
+                    "versionNo": 1
+                  },
+                  "waitlistOpen": true
                 },
                 "schema": {
                   "$ref": "#/components/schemas/PublicAgentProgrammeDto"
@@ -535628,6 +536266,223 @@
         },
         "security": [],
         "summary": "Read the agent programme (public landing)",
+        "tags": [
+          "store.agent"
+        ]
+      }
+    },
+    "/v1/store/agent/programme/waitlist": {
+      "post": {
+        "description": "Anonymous, for getpack.co/agent while applying is closed (P7 pilot switch, D-466): a name, a phone or an e-mail (at least one), optionally how you sell, and acceptance of the waiting-list consent in force (`waitlistConsent.versionNo` of `store.agentProgramme.public`; recorded with its evidence). Always answers 200 `received` — the same whether the contact was already listed (a repeat refreshes the row) — so it never tells who signed up. Throttled per IP (5 a minute). No consent text published → 409 `agents.waitlist_closed`; an older version → 409 `agents.waitlist_consent_outdated`. PDPA: kept until 12 months after the public opening or until the person asks.\n\nImplements: D-466, D-144, D-440.",
+        "operationId": "store.agentProgramme.joinWaitlist",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/AcceptLanguage"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "examples": {
+                "default": {
+                  "value": {
+                    "consentVersionNo": 1,
+                    "name": "สมชาย ขายเก่ง",
+                    "phone": "0810005678",
+                    "salesChannel": "line_groups"
+                  }
+                }
+              },
+              "schema": {
+                "$ref": "#/components/schemas/JoinAgentWaitlistDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "status": "received"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AgentWaitlistReceiptDto"
+                }
+              }
+            },
+            "description": "Received",
+            "headers": {
+              "X-RateLimit-Limit": {
+                "$ref": "#/components/headers/RateLimitLimit"
+              },
+              "X-RateLimit-Remaining": {
+                "$ref": "#/components/headers/RateLimitRemaining"
+              },
+              "X-RateLimit-Reset": {
+                "$ref": "#/components/headers/RateLimitReset"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.bad_request": {
+                    "$ref": "#/components/examples/problem.http.bad_request"
+                  },
+                  "http.malformed_json": {
+                    "$ref": "#/components/examples/problem.http.malformed_json"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.bad_request`, `http.malformed_json`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.unauthenticated": {
+                    "$ref": "#/components/examples/problem.auth.unauthenticated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.unauthenticated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "403": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "auth.forbidden": {
+                    "$ref": "#/components/examples/problem.auth.forbidden"
+                  },
+                  "auth.wrong_audience": {
+                    "$ref": "#/components/examples/problem.auth.wrong_audience"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `auth.forbidden`, `auth.wrong_audience`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "409": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "agents.waitlist_closed": {
+                    "$ref": "#/components/examples/problem.agents.waitlist_closed"
+                  },
+                  "agents.waitlist_consent_outdated": {
+                    "$ref": "#/components/examples/problem.agents.waitlist_consent_outdated"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `agents.waitlist_closed`, `agents.waitlist_consent_outdated`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "validation.failed": {
+                    "$ref": "#/components/examples/problem.validation.failed"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `validation.failed`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "429": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "http.too_many_requests": {
+                    "$ref": "#/components/examples/problem.http.too_many_requests"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `http.too_many_requests`",
+            "headers": {
+              "Retry-After": {
+                "$ref": "#/components/headers/RetryAfter"
+              },
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          },
+          "500": {
+            "content": {
+              "application/problem+json": {
+                "examples": {
+                  "internal.unexpected": {
+                    "$ref": "#/components/examples/problem.internal.unexpected"
+                  }
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            },
+            "description": "Problem: `internal.unexpected`",
+            "headers": {
+              "X-Request-Id": {
+                "$ref": "#/components/headers/XRequestId"
+              }
+            }
+          }
+        },
+        "security": [],
+        "summary": "Join the agent programme waiting list",
         "tags": [
           "store.agent"
         ]

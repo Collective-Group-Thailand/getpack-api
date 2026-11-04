@@ -1330,10 +1330,11 @@ model ConsentRecord {
   userAgent        String?       @map("user_agent")
   recordedAt       DateTime      @default(now()) @map("recorded_at") @db.Timestamptz(6)
 
-  user           User?                 @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__user_id")
-  purpose        ConsentPurpose        @relation(fields: [purposeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__purpose_id")
-  purposeVersion ConsentPurposeVersion @relation(fields: [purposeVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__purpose_version_id")
-  salesInbound   SalesInboundLead[]    @relation("SalesInboundLeadConsent")
+  user           User?                     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__user_id")
+  purpose        ConsentPurpose            @relation(fields: [purposeId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__purpose_id")
+  purposeVersion ConsentPurposeVersion     @relation(fields: [purposeVersionId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_consent_records__purpose_version_id")
+  salesInbound   SalesInboundLead[]        @relation("SalesInboundLeadConsent")
+  agentWaitlist  SalesAgentWaitlistEntry[]
 
   @@index([userId, purposeId, recordedAt(sort: Desc)], map: "ix_consent_records__user__purpose__recorded_at")
   @@index([anonymousId, purposeId, recordedAt(sort: Desc)], map: "ix_consent_records__anonymous__purpose__recorded_at")

@@ -28,7 +28,7 @@ the checks marked **UAT** against the hosted UAT stack.
 | SR-16 | Logger calls in agents / sales-desk / pnl / auth | — | Verified | 11 calls, all ids, counts or error reasons; card-scan failures log the reason only, never the image or its text (`agent-card-scan.service.ts`, Tesseract stderr discarded) |
 | SR-17 | Error messages of failed jobs may quote Prisma argument values in rare validation errors (`commission … not earned`, `statement … not generated`) | Low | Accepted | jobs handle ids and amounts, not contact data; revisit if a job starts handling contact fields |
 | SR-18 | Factory confidentiality and margin wording on agent responses | — | Verified | `test/unit/storefront-factory-confidentiality.spec.ts` covers every `/v1/store/agent/*` operation; P7 adds the waitlist operation |
-| SR-19 | Waitlist (P7 item 5) enumeration and spam | Medium if absent | **Fixed in item 5** | anonymous, per-IP throttle 5 / minute, neutral `202` whether new or already listed, nothing echoed |
+| SR-19 | Waitlist (P7 item 5) enumeration and spam | Medium if absent | **Fixed** | anonymous, per-IP throttle 5 / minute (`WAITLIST_THROTTLE`), neutral `200 received` whether new or already listed, nothing echoed; consent recorded (purpose `agent_waitlist`); `agent-waitlist.spec.ts` |
 | SR-20 | Forecast reads in-progress orders once per active link (N + 1) — a heavy agent could load the API | Low | Open (watch) | `agent-forecast.service.ts`; pilot volumes are small; `docs/launch/PERFORMANCE.md` watch item |
 | SR-21 | Offboarding: ending an agent left its registered deals active, so for up to `agent.deal_protection_days` (90) they kept blocking other agents' check / registration and staff assignment of the customer | Medium | **Fixed** | `AgentsService.setStatus(ended)` expires them with `agent_ended`; `agent-offboarding.spec.ts` |
 
@@ -39,14 +39,22 @@ the checks marked **UAT** against the hosted UAT stack.
 | `store.agentLeads.check` + `store.agent.registerLead` | 30 / minute | agent | 429 `agents.rate_limited`, `Retry-After` |
 | `store.agentLeads.importPreview` | 20 / hour | agent | same |
 | `store.agentLeads.scanCard` | 10 / minute | agent | same |
-| `store.agentProgramme.joinWaitlist` | 5 / minute | IP | 429 (`http.too_many_requests`) |
+| `store.agentProgramme.joinWaitlist` | 5 / minute (`WAITLIST_THROTTLE`) | IP | 429 (`http.too_many_requests`) |
 | everything | `THROTTLE_LIMIT` / `THROTTLE_TTL_SECONDS` | IP | 429 |
 | hand-off redeem, OTP verify, logins | `AUTH_LOGIN_THROTTLE_LIMIT` / minute | IP | 429 |
 
 They protect the system (enumeration, OCR floods), no decision gives them a business owner, so they are code constants
 like the login throttle; changing one is a code change reviewed by the tech lead.
 
-## 3. For the UAT team (**UAT**)
+## 3. Live check on the local stack (2026-11-04)
+
+The API was booted locally (PostgreSQL 16 + Redis, `INTEGRATIONS_MODE=fake`) on the UAT seed and checked by hand:
+`UATFRE22` signed in with the fake-OTP test number; another agent's lead, its timeline and its statement answered
+**404**, the agent's own statement 200 with the seeded progressive working (฿12,216.67); the 31st duplicate check
+within a minute answered **429** with `Retry-After`; the waiting list answered `200 received` twice for the same
+phone (one row, `join_count` 2) and **429** on the 6th sign-up of the minute from one IP.
+
+## 4. For the UAT team (**UAT**)
 
 1. Sign in as `UATFRE22`, take the id of a lead / quote / statement of `UATJUR22` from the database and call the
    agent endpoints with it: every answer is 404.

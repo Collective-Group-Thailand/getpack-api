@@ -111,6 +111,8 @@ export const CONSENT_PURPOSES = [
   { key: 'marketing_sms', required: false },
   { key: 'analytics_cookies', required: false },
   { key: 'personalisation', required: false },
+  // P7: the agent programme's waiting list on the public landing (anonymous; text entered by legal counsel).
+  { key: 'agent_waitlist', required: false },
 ] as const;
 
 /** The one national calendar every factory shares; admins key in the holidays each year (D-161). */

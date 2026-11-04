@@ -44,6 +44,7 @@ describe('store agent controllers declare their access (D-467)', () => {
     'withdraw',
     'claim',
     'publicProgramme',
+    'joinWaitlist',
     'commissionExample',
     'requestPhoneOtp',
     'confirmPhone',

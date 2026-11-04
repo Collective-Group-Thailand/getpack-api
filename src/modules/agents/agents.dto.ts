@@ -50,7 +50,7 @@ const MONEY = /^-?\d{1,12}(\.\d{1,2})?$/;
 const POSITIVE_MONEY = /^\d{1,12}(\.\d{1,2})?$/;
 const PCT = /^\d{1,3}(\.\d{1,4})?$/;
 const TAX_ID = /^\d{13}$/;
-const E164 = /^\+[1-9]\d{7,14}$/;
+export const E164 = /^\+[1-9]\d{7,14}$/;
 const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
 const DAY = /^\d{4}-\d{2}-\d{2}$/;
 const CODE = /^[a-z][a-z0-9_]{2,40}$/;
@@ -394,6 +394,14 @@ export class AgentProgrammeDto {
     description: 'Where the signed-in customer stands',
   })
   state!: string;
+
+  @ApiProperty({
+    example: false,
+    description:
+      'This customer may apply now: the flag `agents.programme` is on for them, or they are on the pilot list ' +
+      '(setting `agents.pilot`, P7); else the web offers the waiting list',
+  })
+  applyOpen!: boolean;
 }
 
 export const AGENT_PROGRAMME_EXAMPLE: AgentProgrammeDto = {
@@ -409,6 +417,7 @@ export const AGENT_PROGRAMME_EXAMPLE: AgentProgrammeDto = {
   leadProtectionDays: 60,
   paymentTermsDays: 15,
   state: 'none',
+  applyOpen: false,
 };
 
 export const SALES_CHANNELS = [
@@ -2289,6 +2298,24 @@ export class AgentCommissionExampleDto {
   repeatOrder!: string;
 }
 
+/** P7: the consent text of the waiting list (purpose `agent_waitlist`). */
+export class AgentWaitlistConsentDto {
+  @ApiProperty({ type: 'integer', example: 1, description: 'Send it back as `consentVersionNo`' })
+  versionNo!: number;
+
+  @ApiProperty({ example: 'ข้าพเจ้ายินยอมให้ getpack ติดต่อเพื่อแจ้งเมื่อเปิดรับสมัครตัวแทนขาย …' })
+  textTh!: string;
+
+  @ApiProperty({ example: 'I agree that getpack may contact me once to tell me when agent sign-up opens …' })
+  textEn!: string;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  summaryTh!: string | null;
+
+  @ApiProperty({ type: String, nullable: true, example: null })
+  summaryEn!: string | null;
+}
+
 export class PublicAgentProgrammeDto {
   @ApiProperty({
     type: StoreAgentTermsDto,
@@ -2321,6 +2348,22 @@ export class PublicAgentProgrammeDto {
   applyOpen!: boolean;
 
   @ApiProperty({
+    example: true,
+    description:
+      'The waiting list takes sign-ups (`store.agentProgramme.joinWaitlist`): applying is closed for visitors and a ' +
+      'consent text for the purpose `agent_waitlist` is in force (P7)',
+  })
+  waitlistOpen!: boolean;
+
+  @ApiProperty({
+    type: () => AgentWaitlistConsentDto,
+    nullable: true,
+    description:
+      'The consent text to show beside the waiting-list form (null: none published — the list is closed)',
+  })
+  waitlistConsent!: AgentWaitlistConsentDto | null;
+
+  @ApiProperty({
     type: AgentAgreementTextDto,
     nullable: true,
     description: 'The agreement in force (public text)',
@@ -2340,6 +2383,14 @@ export const PUBLIC_PROGRAMME_EXAMPLE: PublicAgentProgrammeDto = {
   leadProtectionDays: 60,
   paymentTermsDays: 15,
   applyOpen: false,
+  waitlistOpen: true,
+  waitlistConsent: {
+    versionNo: 1,
+    textTh: 'ข้าพเจ้ายินยอมให้ getpack ติดต่อเพื่อแจ้งเมื่อเปิดรับสมัครตัวแทนขาย …',
+    textEn: 'I agree that getpack may contact me once to tell me when agent sign-up opens …',
+    summaryTh: null,
+    summaryEn: null,
+  },
   agreement: {
     key: 'sales_agent_agreement',
     versionNo: 1,

@@ -588,6 +588,34 @@ export const SETTINGS: readonly SettingSeed[] = [
     ownerRole: 'sales_manager',
   },
   {
+    key: 'agents.pilot',
+    valueType: 'json',
+    value: { enabled: false, userIds: [] },
+    valueSchema: {
+      type: 'object',
+      additionalProperties: false,
+      required: ['enabled', 'userIds'],
+      properties: {
+        enabled: { type: 'boolean' },
+        userIds: {
+          type: 'array',
+          maxItems: 200,
+          uniqueItems: true,
+          items: {
+            type: 'string',
+            pattern: '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$',
+          },
+        },
+      },
+    },
+    description:
+      'P7 pilot switch (D-466 pilot list): while the feature flag agents.programme is off, the customer accounts listed ' +
+      'here (public ids) may apply to the agent programme; everyone else, and every anonymous visitor, sees the waiting ' +
+      'list. Off and empty until Sales starts the pilot (PLAN §4: 10–20 invited agents for 60 days)',
+    decisions: ['D-466'],
+    ownerRole: 'sales_manager',
+  },
+  {
     key: 'agents.card_scan_retention_days',
     valueType: 'integer',
     value: 7,

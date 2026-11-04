@@ -32,7 +32,7 @@ describe('ending an agent (offboarding, D-416 / D-468)', () => {
       {} as never,
       { record: jest.fn() } as never,
       { record: jest.fn().mockResolvedValue({ id: 1n }) } as never,
-      { record: jest.fn() } as never,
+      { record: jest.fn() },
       {} as never,
       {} as never,
       {} as never,

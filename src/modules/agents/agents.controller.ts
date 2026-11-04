@@ -33,6 +33,7 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ApiBody, ApiParam } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { DownloadUrlDto } from '@platform/files/files.dto';
 import { type Request, type Response } from 'express';
 
@@ -43,6 +44,7 @@ import { AgentRateLimiter } from './agent-rate-limit';
 import { invalid } from './agent-shared';
 import { AgentStatementsService } from './agent-statements.service';
 import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
+import { AgentWaitlistService } from './agent-waitlist.service';
 import { AgentAccess, AgentZoneGuard } from './agent-zone.guard';
 import {
   AGENT_EXAMPLE,
@@ -96,8 +98,11 @@ import {
   statementDto,
   taxDeclarationDto,
 } from './agents-views';
+import { AgentWaitlistReceiptDto, JoinAgentWaitlistDto } from './agents-waitlist.dto';
 
 const DECISIONS = ['D-416', 'D-417', 'D-418', 'D-420', 'D-422', 'D-464'];
+/** P7: technical limit of the anonymous waiting-list form, per IP (on top of the global throttle). */
+export const WAITLIST_THROTTLE = { default: { limit: 5, ttl: 60_000 } };
 const WRITE = ['http.bad_request', 'http.malformed_json', 'validation.failed'] as const;
 
 const AGENT_OTP_EXAMPLE: OtpChallengeDto = {
@@ -132,6 +137,7 @@ export class StoreAgentController {
     private readonly declarations: AgentTaxDeclarationsService,
     private readonly payoutProfiles: AgentPayoutProfilesService,
     private readonly limits: AgentRateLimiter,
+    private readonly waitlist: AgentWaitlistService,
   ) {}
 
   @Get('programme')
@@ -147,7 +153,7 @@ export class StoreAgentController {
   @ApiSuccess(200, { description: 'Programme', type: AgentProgrammeDto, example: AGENT_PROGRAMME_EXAMPLE })
   @ApiStandardErrors('validation.failed')
   programme(@CurrentActor() actor: Actor): Promise<AgentProgrammeDto> {
-    return this.agents.programme(customer(actor).userId);
+    return this.agents.programme(customer(actor));
   }
 
   @Get('application')
@@ -613,6 +619,56 @@ export class StoreAgentController {
   @ApiStandardErrors()
   publicProgramme(): Promise<PublicAgentProgrammeDto> {
     return this.agents.publicProgramme();
+  }
+
+  @Post('programme/waitlist')
+  @HttpCode(200)
+  @AgentAccess('anyone')
+  @Public()
+  @Throttle(WAITLIST_THROTTLE)
+  @ApiEndpoint({
+    id: 'store.agentProgramme.joinWaitlist',
+    summary: 'Join the agent programme waiting list',
+    description:
+      'Anonymous, for getpack.co/agent while applying is closed (P7 pilot switch, D-466): a name, a phone or an ' +
+      'e-mail (at least one), optionally how you sell, and acceptance of the waiting-list consent in force ' +
+      '(`waitlistConsent.versionNo` of `store.agentProgramme.public`; recorded with its evidence). Always answers ' +
+      '200 `received` — the same whether the contact was already listed (a repeat refreshes the row) — so it ' +
+      'never tells who signed up. Throttled per IP (5 a minute). No consent text published → 409 ' +
+      '`agents.waitlist_closed`; an older version → 409 `agents.waitlist_consent_outdated`. PDPA: kept until 12 ' +
+      'months after the public opening or until the person asks.',
+    implements: ['D-466', 'D-144', 'D-440'],
+  })
+  @ApiBody({
+    type: JoinAgentWaitlistDto,
+    examples: {
+      default: {
+        value: {
+          name: 'สมชาย ขายเก่ง',
+          phone: '0810005678',
+          salesChannel: 'line_groups',
+          consentVersionNo: 1,
+        },
+      },
+    },
+  })
+  @ApiSuccess(200, {
+    description: 'Received',
+    type: AgentWaitlistReceiptDto,
+    example: { status: 'received' },
+  })
+  @ApiStandardErrors(
+    ...WRITE,
+    'http.too_many_requests',
+    'agents.waitlist_closed',
+    'agents.waitlist_consent_outdated',
+  )
+  async joinWaitlist(
+    @Body() body: JoinAgentWaitlistDto,
+    @Req() req: Request,
+  ): Promise<AgentWaitlistReceiptDto> {
+    await this.waitlist.join(body, { ip: req.ip ?? null, userAgent: req.headers['user-agent'] ?? null });
+    return { status: 'received' };
   }
 
   @Get('programme/example')

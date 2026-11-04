@@ -190,6 +190,7 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
 | `agent_commissions.adjust` — Add a signed manual commission adjustment with a reason (D-418) | ● |  |  |  |  |  |  |  |  | ● |  |  |  |  |  |  |  |
 | `agent_statements.approve` — Generate, approve or void agent statements; export the payroll file and mark employee statements paid (D-420) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
 | `agent_payout_profiles.verify` — Read freelance agents’ payout profiles (legal identity, tax id, bank) and verify or reject them; verifying creates the agent’s vendor and proposes the bank account (D-466) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
+| `agent_waitlist.read` — Read and export the agent programme waiting list (names and contacts of people who asked to hear when sign-up opens) (D-466) | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |
 | `agent_tax_declarations.review` — Read agents’ ล.ย.01 allowance declarations with their evidence and accept or reject them (progressive withholding) (D-465) | ◆ |  |  |  |  |  |  |  |  | ◆ |  |  |  |  |  |  |  |
 | `agent_plans.manage` — Create commission plans and draft their versions (D-418) | ● | ● |  |  |  |  |  |  |  |  |  |  | ● |  |  |  |  |
 | `agent_plans.approve` — Approve or reject a commission plan version drafted by someone else (D-418) | ◆ | ◆ | ◆ |  |  |  |  |  |  |  |  |  |  |  |  |  |  |
@@ -385,6 +386,15 @@ Legend: ● granted · ◆ granted and sensitive (cost/margin data, D-141).
   the append-only `pnl_access_logs`; exports are watermarked with the viewer and the time and audited.
 - No personal data: the drill-down returns ids, codes and amounts only (leads by stage, run-rate customers as
   company ids, never contact data). Management figures only — nothing is posted to the ledger.
+
+## Agent programme waiting list — personal data (P7 pilot switch)
+
+- **`sales_agent_waitlist`**: name, the phone and / or e-mail given, how they sell (optional), sign-up count and
+  times, and the consent record relied on (purpose `agent_waitlist`, with its IP and user agent). Purpose: to tell
+  the person once, through that contact, when agent sign-up opens. Retention: until 12 months after the public
+  opening, or earlier when the person asks (DPO deletes the row). Access: `agent_waitlist.read` (Sales Manager,
+  C-Level, Superadmin) — list and CSV export (audited). Sign-ups are anonymous and throttled; the answer is the
+  same for a new and an already listed contact.
 
 ## Segregation of duties (`accounting-design.md` §8)
 

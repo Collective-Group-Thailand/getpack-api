@@ -10,9 +10,13 @@ const CONSENT_LABELS: Record<string, { th: string; en: string }> = {
   marketing_sms: { th: 'รับข่าวสารและโปรโมชันทาง SMS', en: 'News and offers by SMS' },
   analytics_cookies: { th: 'คุกกี้เพื่อการวิเคราะห์', en: 'Analytics cookies' },
   personalisation: { th: 'แนะนำสินค้าและเนื้อหาที่ตรงกับคุณ', en: 'Personalised recommendations' },
+  agent_waitlist: { th: 'แจ้งข่าวเมื่อเปิดรับสมัครตัวแทนขาย', en: 'Tell me when agent sign-up opens' },
 };
 
 export const LABELLED_CONSENT_PURPOSES = Object.keys(CONSENT_LABELS);
+
+/** Purposes collected from anonymous visitors only (P7 waiting list): not part of a signed-in person's consent list. */
+export const ANONYMOUS_ONLY_CONSENT_PURPOSES = ['agent_waitlist'] as const;
 
 /** `labelTh` / `labelEn` of a purpose; a purpose added later reads as its key in words until it gets a name. */
 export function consentLabels(purpose: string): { labelTh: string; labelEn: string } {

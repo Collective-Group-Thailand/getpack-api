@@ -11,6 +11,7 @@ import { StoreAgentForecastController } from './agents-forecast.controller';
 import { StoreAgentLeadsController } from './agents-leads.controller';
 import { StoreAgentPlaybookController } from './agents-playbook';
 import { StoreAgentQuotesController } from './agents-quotes.controller';
+import { AdminAgentWaitlistController } from './agents-waitlist.controller';
 import { StoreAgentZoneController } from './agents-zone.controller';
 
 export const AGENTS_STORE_CONTROLLERS: Type<unknown>[] = [
@@ -26,4 +27,5 @@ export const AGENTS_ADMIN_CONTROLLERS: Type<unknown>[] = [
   AdminAgentPlansController,
   AdminAgentTaxDeclarationsController,
   AdminAgentPayoutProfilesController,
+  AdminAgentWaitlistController,
 ];

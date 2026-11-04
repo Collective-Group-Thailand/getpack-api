@@ -220,6 +220,8 @@ export const ERROR_CODES = {
   // Sales agent programme (D-416 – D-423)
   'agents.already_agent': HttpStatus.CONFLICT,
   'agents.rate_limited': HttpStatus.TOO_MANY_REQUESTS,
+  'agents.waitlist_closed': HttpStatus.CONFLICT,
+  'agents.waitlist_consent_outdated': HttpStatus.CONFLICT,
   'agents.application_open': HttpStatus.CONFLICT,
   'agents.agreement_missing': HttpStatus.CONFLICT,
   'agents.agreement_outdated': HttpStatus.CONFLICT,
