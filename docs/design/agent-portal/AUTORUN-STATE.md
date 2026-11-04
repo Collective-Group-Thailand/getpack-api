@@ -5,9 +5,9 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 ## Status
 
 - Started: 2026-11-02 22:18 Asia/Bangkok
-- Current phase: P7
-- Step: plan
-- Overall: RUNNING
+- Current phase: — (all phases merged)
+- Step: finish
+- Overall: DONE (2026-11-04)
 
 ## Environment (pre-flight, 2026-11-02)
 
@@ -36,11 +36,12 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 | P4 | feat/agent-p4-sales-desk → main | merge 10ecc5f2 | merge a28f88f4 |
 | P5 | feat/agent-p5-capture → main | merge 45df1407 | merge c5dd9765 |
 | P6 | feat/agent-p6-pnl → main | merge 4830e6b4 | merge 518d028d |
+| P7 | chore/agent-p7-launch → main | merge abf9f820 | merge 35460e3c |
 
 ## Last commit per repo
 
-- getpack-api: 4830e6b4 (main, P6 merged)
-- getpack-web: 518d028d (main, P6 merged)
+- getpack-api: abf9f820 (main, P7 merged)
+- getpack-web: 35460e3c (main, P7 merged) + final report commit
 
 ## BLOCKED
 
@@ -72,3 +73,4 @@ Maintained by the autorun (block A of `AGENT-PORTAL-AUTORUN.md`). Identical copy
 - D-469, D-470 (P4)
 - D-471 (P5)
 - D-472 (P6)
+- P7: no new decision (assumptions in REPORT.md)
