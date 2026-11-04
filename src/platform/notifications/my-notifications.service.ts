@@ -1,5 +1,6 @@
 import { type UserActor } from '@common/context/actor';
 import { DomainException } from '@common/errors/domain.exception';
+import { ANONYMOUS_ONLY_CONSENT_PURPOSES } from '@common/labels/consent-labels';
 import { decodeCursor, encodeCursor } from '@common/pagination/pagination';
 import { PrismaService } from '@database/prisma.service';
 import {
@@ -78,6 +79,7 @@ export class MyNotificationsService {
   async consents(userId: bigint) {
     const now = new Date();
     const purposes = await this.prisma.consentPurpose.findMany({
+      where: { key: { notIn: [...ANONYMOUS_ONLY_CONSENT_PURPOSES] } },
       include: {
         versions: {
           where: { status: 'approved', effectiveFrom: { lte: now } },

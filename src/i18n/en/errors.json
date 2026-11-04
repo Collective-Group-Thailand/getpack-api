@@ -2183,6 +2183,18 @@
     "card_scan_failed": {
       "title": "Card not read",
       "detail": "The card photo could not be read; take a clearer photo or type the details"
+    },
+    "rate_limited": {
+      "title": "Too many requests",
+      "detail": "Please wait a moment and try again (see Retry-After)."
+    },
+    "waitlist_closed": {
+      "title": "The waiting list is not open yet",
+      "detail": "The waiting list is not open yet. Please try again later."
+    },
+    "waitlist_consent_outdated": {
+      "title": "The consent text has changed",
+      "detail": "Please read and accept version {versionNo} and send again."
     }
   },
   "documents": {

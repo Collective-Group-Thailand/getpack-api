@@ -1136,3 +1136,30 @@ model SalesPlaybookCard {
   @@index([contexts], type: Gin, map: "ix_sales_playbook_cards__contexts")
   @@map("sales_playbook_cards")
 }
+
+/// P7 pilot switch (docs/design/agent-portal): a visitor of the public landing who asked to be told when the agent
+/// programme opens sign-up (`store.agentProgramme.joinWaitlist`, anonymous). PDPA: purpose — to contact them once about
+/// the opening, through the contact they gave; retention — until 12 months after the public opening, or earlier on
+/// request (DPO deletes the row); access — Sales Manager and C-Level (`agent_waitlist.read`), list and CSV export
+/// (audited). The consent record relied on (purpose `agent_waitlist`) is kept. Phone (E.164) or e-mail, at least one;
+/// a repeat sign-up with the same phone or e-mail refreshes the row (`join_count`, `last_joined_at`) and never says so.
+model SalesAgentWaitlistEntry {
+  id              BigInt                  @id(map: "pk_sales_agent_waitlist") @default(autoincrement())
+  publicId        String                  @unique(map: "ux_sales_agent_waitlist__public_id") @default(dbgenerated("uuidv7()")) @map("public_id") @db.Uuid
+  name            String
+  phone           String?                 @unique(map: "ux_sales_agent_waitlist__phone")
+  email           String?                 @unique(map: "ux_sales_agent_waitlist__email") @db.Citext
+  salesChannel    SalesAgentSalesChannel? @map("sales_channel")
+  consentRecordId BigInt                  @map("consent_record_id")
+  joinCount       Int                     @default(1) @map("join_count")
+  lastJoinedAt    DateTime                @default(now()) @map("last_joined_at") @db.Timestamptz(6)
+  createdAt       DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  rowVersion      Int                     @default(1) @map("row_version")
+
+  consentRecord ConsentRecord @relation(fields: [consentRecordId], references: [id], onDelete: Restrict, onUpdate: Restrict, map: "fk_sales_agent_waitlist__consent_record_id")
+
+  @@index([createdAt(sort: Desc)], map: "ix_sales_agent_waitlist__created_at")
+  @@index([consentRecordId], map: "ix_sales_agent_waitlist__consent_record_id")
+  @@map("sales_agent_waitlist")
+}

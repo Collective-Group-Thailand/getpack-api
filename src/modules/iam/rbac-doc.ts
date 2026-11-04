@@ -46,6 +46,15 @@ export const SALES_DESK_NOTES: readonly string[] = [
   '  the append-only `pnl_access_logs`; exports are watermarked with the viewer and the time and audited.',
   '- No personal data: the drill-down returns ids, codes and amounts only (leads by stage, run-rate customers as',
   '  company ids, never contact data). Management figures only — nothing is posted to the ledger.',
+  '',
+  '## Agent programme waiting list — personal data (P7 pilot switch)',
+  '',
+  '- **`sales_agent_waitlist`**: name, the phone and / or e-mail given, how they sell (optional), sign-up count and',
+  '  times, and the consent record relied on (purpose `agent_waitlist`, with its IP and user agent). Purpose: to tell',
+  '  the person once, through that contact, when agent sign-up opens. Retention: until 12 months after the public',
+  '  opening, or earlier when the person asks (DPO deletes the row). Access: `agent_waitlist.read` (Sales Manager,',
+  '  C-Level, Superadmin) — list and CSV export (audited). Sign-ups are anonymous and throttled; the answer is the',
+  '  same for a new and an already listed contact.',
 ];
 
 const AUDIENCES = [

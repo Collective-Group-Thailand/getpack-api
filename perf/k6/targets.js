@@ -18,6 +18,12 @@ export const TARGETS = {
     checkoutP95Ms: 1500,
     paymentP95Ms: 1200,
   },
+  agent: {
+    /** P7 agent portal: constant arrival rate of an agent's list / detail reads (PROMPT Phase 7: 50 rps). */
+    rps: Number(__ENV.AGENT_RPS || 50),
+    listP95Ms: 300,
+    detailP95Ms: 300,
+  },
   partner: {
     /** Concurrent factory users posting milestone and shipment updates. */
     vus: Number(__ENV.PARTNER_VUS || 10),

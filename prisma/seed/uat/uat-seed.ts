@@ -4,6 +4,7 @@ import { PasswordService } from '../../../src/modules/auth/password.service';
 import { seedDevPriceLists } from '../dev-price-lists';
 import { seedDev } from '../dev-seed';
 import { type EntitySeedInput, type SeedReport } from '../reference-seed';
+import { seedUatAgents } from './uat-agents';
 import { seedUatCatalog, SIGNED_INSTANT_TYPES } from './uat-catalog';
 import { UAT_CONSENT_TEXT } from './uat-data';
 import { seedUatErp, seedUatErpE2, seedUatErpE3, seedUatErpE4, seedUatErpE5 } from './uat-erp';
@@ -68,6 +69,10 @@ export async function seedUat(
     opts.password ? await new PasswordService().hash(opts.password) : undefined,
   );
   const erpE5 = await seedUatErpE5(erpPrisma);
+  // Agent portal P7 layer (docs/design/agent-portal): agents, leads, quotes, commissions, statements, approvals.
+  const agents = await seedUatAgents(prisma, {
+    passwordHash: opts.password ? await new PasswordService().hash(opts.password) : undefined,
+  });
   return {
     ...report,
     ...uat,
@@ -77,6 +82,7 @@ export async function seedUat(
     ...(erpE3 && { uat_erp_maintenance_plans: erpE3 }),
     ...(erpE4 && { uat_erp_sales: erpE4 }),
     ...(erpE5 && { uat_erp_quality: erpE5 }),
+    ...agents,
   };
 }
 

@@ -419,7 +419,9 @@ export class AdminAgentsController {
     id: 'admin.agents.end',
     summary: 'End a sales agent',
     description:
-      'Links end, protected leads expire, pending factory links end; accrued commission is still paid (D-416).',
+      'Links end, protected leads expire, registered deals expire (`agent_ended`), pending factory links end; ' +
+      'accrued commission is still paid; statements and 50 ทวิ stay readable for `agents.ended_record_access_years` ' +
+      '(D-416, D-467, D-468).',
     implements: DECISIONS,
   })
   @ApiBody({ type: ReasonDto, examples: REASON_EXAMPLE })

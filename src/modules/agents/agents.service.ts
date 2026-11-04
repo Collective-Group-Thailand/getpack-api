@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { type UserActor } from '@common/context/actor';
+import { type Actor, type UserActor } from '@common/context/actor';
 import { FieldEncryption } from '@common/crypto/field-encryption';
 import { DomainException } from '@common/errors/domain.exception';
 import { assertIfMatch, etagOf } from '@common/etag/etag';
@@ -30,6 +30,7 @@ import {
   termsOf,
   ZERO,
 } from './agent-shared';
+import { waitlistConsentInForce } from './agent-waitlist.service';
 import { type SubmitAgentApplicationDto } from './agents.dto';
 
 export const AGREEMENT_KEY = 'sales_agent_agreement';
@@ -131,14 +132,28 @@ export class AgentsService {
     });
   }
 
-  async programme(userId: bigint) {
+  /**
+   * P7 pilot switch: applying is open for this person when the flag `agents.programme` is on for them (fully on, or its
+   * own `userIds` rule), or — while it is off — when the setting `agents.pilot` is enabled and lists their customer
+   * account. Anonymous visitors only ever see the flag (the pilot list is never read for them).
+   */
+  async applyOpenFor(actor?: Actor, at = new Date()): Promise<boolean> {
+    if (await this.flags.isEnabled(PROGRAMME_FLAG, actor)) return true;
+    if (!actor || actor.type !== 'user' || actor.audience !== 'customer') return false;
+    const pilot = await this.settings.value('agents.pilot', at);
+    return pilot.enabled && pilot.userIds.includes(actor.publicId);
+  }
+
+  async programme(actor: UserActor) {
     const now = new Date();
-    const [agreement, plan, rules, agent, application] = await Promise.all([
+    const userId = actor.userId;
+    const [agreement, plan, rules, agent, application, applyOpen] = await Promise.all([
       this.agreementInForce(),
       this.prisma.salesAgentPlan.findUnique({ where: { code: FREELANCE_PLAN } }),
       this.settings.at('agents.rules', { at: now }),
       this.prisma.salesAgent.findUnique({ where: { userId } }),
       this.prisma.salesAgentApplication.findFirst({ where: { userId }, orderBy: { submittedAt: 'desc' } }),
+      this.applyOpenFor(actor, now),
     ]);
     const state = agent
       ? 'agent'
@@ -164,6 +179,7 @@ export class AgentsService {
       leadProtectionDays: rules.value.leadProtectionDays,
       paymentTermsDays: rules.value.paymentTermsDays,
       state,
+      applyOpen,
     };
   }
 
@@ -174,11 +190,12 @@ export class AgentsService {
    */
   async publicProgramme() {
     const now = new Date();
-    const [agreement, plan, rules, open, faqs] = await Promise.all([
+    const [agreement, plan, rules, open, faqs, waitlistConsent] = await Promise.all([
       this.agreementInForce(),
       this.prisma.salesAgentPlan.findUnique({ where: { code: FREELANCE_PLAN } }),
       this.settings.at('agents.rules', { at: now }),
-      this.flags.isEnabled(PROGRAMME_FLAG),
+      // Anonymous: the flag only — never the pilot list (P7).
+      this.applyOpenFor(undefined, now),
       this.prisma.faq.findMany({
         where: {
           status: 'published',
@@ -188,6 +205,7 @@ export class AgentsService {
         orderBy: [{ sort: 'asc' }, { id: 'asc' }],
         take: 30,
       }),
+      waitlistConsentInForce(this.prisma, now),
     ]);
     const version = plan ? await planVersionAt(this.prisma, plan.id, now) : null;
     return {
@@ -196,6 +214,16 @@ export class AgentsService {
       leadProtectionDays: rules.value.leadProtectionDays,
       paymentTermsDays: rules.value.paymentTermsDays,
       applyOpen: open,
+      waitlistOpen: !open && waitlistConsent !== null,
+      waitlistConsent: waitlistConsent
+        ? {
+            versionNo: waitlistConsent.versionNo,
+            textTh: waitlistConsent.textTh,
+            textEn: waitlistConsent.textEn,
+            summaryTh: waitlistConsent.summaryTh,
+            summaryEn: waitlistConsent.summaryEn,
+          }
+        : null,
       agreement: agreement
         ? {
             key: AGREEMENT_KEY,
@@ -275,8 +303,7 @@ export class AgentsService {
     input: SubmitAgentApplicationDto,
     evidence: { ip: string | null; userAgent: string | null },
   ): Promise<ApplicationRow> {
-    if (!(await this.flags.isEnabled(PROGRAMME_FLAG, actor)))
-      throw new DomainException('agents.programme_closed');
+    if (!(await this.applyOpenFor(actor))) throw new DomainException('agents.programme_closed');
     const phone = normalisePhone(input.phone);
     const id = await this.prisma.withTx(async (tx) => {
       const user = await tx.user.findUniqueOrThrow({ where: { id: actor.userId } });
@@ -752,6 +779,12 @@ export class AgentsService {
         await tx.salesAgentFactoryLink.updateMany({
           where: { agentId: agent.id, status: 'pending' },
           data: { status: 'ended', closedAt: now, reason: 'agent_ended' },
+        });
+        // P7 review: an ended agent's deal registrations stop protecting its (now expired) leads at once, so other
+        // agents and staff assignment are not blocked for the rest of `agent.deal_protection_days` (D-468 (4)).
+        await tx.salesAgentDealRegistration.updateMany({
+          where: { agentId: agent.id, status: 'registered' },
+          data: { status: 'expired', endedAt: now, endedReason: 'agent_ended', rowVersion: { increment: 1 } },
         });
       }
       await this.audit.record(tx, {

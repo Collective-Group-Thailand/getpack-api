@@ -54,6 +54,7 @@ export const ROLES: readonly RoleDefinition[] = [
     nameEn: 'C-Level',
     permissions: [
       'sales_reports.read',
+      'agent_waitlist.read',
       'pnl.read',
       'pnl.manage',
       'pnl.export',
@@ -642,6 +643,8 @@ export const ROLES: readonly RoleDefinition[] = [
       'agents.read',
       'agents.manage',
       'agent_plans.manage',
+      // P7 pilot switch: the programme's waiting list.
+      'agent_waitlist.read',
       // D-469: runs the company sales desk.
       'sales.pipeline.manage',
     ],

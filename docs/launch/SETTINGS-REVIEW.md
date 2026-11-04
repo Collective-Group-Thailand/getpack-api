@@ -5,7 +5,7 @@
 > (a new effective-dated version, audited — D-063) and signs item 5 of `docs/LAUNCH-CHECKLIST.md`. A *proposed* or
 > *pending* value is not a decision: it goes live only once its owner confirms it.
 
-**161 settings** — 97 confirmed · 29 proposed · 5 pending the CPA (⚖) · 3 pending the business · 27 defined without a value (not set until their owner sets them).
+**162 settings** — 98 confirmed · 29 proposed · 5 pending the CPA (⚖) · 3 pending the business · 27 defined without a value (not set until their owner sets them).
 
 ## Settings
 
@@ -18,6 +18,7 @@
 | `agents.card_scan_retention_days` | `7` | proposed | sales_manager | D-468 | D-468 days a business-card photo uploaded for the agent card scan is kept before it is deleted (PDPA: the card holder’s contact data; nothing is saved from it until the agent registers the lead) |
 | `agents.ended_record_access_years` | `5` | confirmed | finance_manager | D-467 | D-467 years after an agent ended during which they still read their commission statements and download their 50 ทวิ (withholding certificates) in the agent zone; everything else is refused. 5 = the tax record retention (Revenue Code s.87/3), 5–10 |
 | `agents.follow_up_quiet_hours` | `{"from":"21:00","to":"08:00","timezone":"Asia/Bangkok"}` | confirmed | sales_manager | D-468 | D-468 the quiet hours of the agent follow-up reminders (push / LINE / e-mail): a reminder due inside them waits until they end (PLAN Phase 3, 21:00–08:00 Asia/Bangkok) |
+| `agents.pilot` | `{"enabled":false,"userIds":[]}` | confirmed | sales_manager | D-466 | P7 pilot switch (D-466 pilot list): while the feature flag agents.programme is off, the customer accounts listed here (public ids) may apply to the agent programme; everyone else, and every anonymous visitor, sees the waiting list. Off and empty until Sales starts the pilot (PLAN §4: 10–20 invited agents for 60 days) |
 | `agents.rules` | `{"linkCookieDays":90,"newCustomersOnly":true,"leadProtectionDays":60,"maxOpenLeads":50,"paymentTermsDays":15}` | proposed | sales_manager | D-417, D-420 | D-417 / D-420 sales agent programme: days the web keeps an agent link, attribution of new customers only, days a registered lead is protected, open leads per agent, payment terms of commission bills (proposed) |
 | `analytics.journey_alert_min_sessions` | `30` | confirmed | superadmin | D-303 | D-303 consented sessions at the first step a journey needs in both weeks before a week-over-week drop alerts (small samples swing) |
 | `analytics.journey_drop_alert_pct` | `15` | confirmed | superadmin | D-303, D-217 | D-303 a scorecard journey whose first-to-last conversion fell by more than this % against the week before raises ops signal journey_conversion_drops (docs/ux/competitive-scorecard.md §4) |

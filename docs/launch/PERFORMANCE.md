@@ -65,6 +65,34 @@ Done in B6.3 (migration `20261023000001_index_review`, test `test/integration/in
 |---|---|---|---|
 | | | | |
 
+### Agent portal reads (P7, 2026-11-04) — indicative
+
+k6 is not installed in the build workspace (no approval to install binaries), so the 50 rps run of
+`perf/k6/agent-portal.js` is **SKIPPED** there and runs on the UAT stack (perf/README.md). Evidence instead:
+`EXPLAIN (ANALYZE, BUFFERS)` of each endpoint's main query on the UAT seed plus synthetic volume (300 extra agents ×
+150 leads, 180,000 activities, 18,000 commissions; rolled back), local PostgreSQL 16 on an 8 GB VM:
+
+| Endpoint | Plan | Execution |
+|---|---|---|
+| `store.agentLeads.list` (1,657 leads of the agent) | bitmap index `ix_sales_agent_leads__agent_id__stage`, top-N heapsort | 2.8 ms |
+| `store.agentLeads.list` view `follow_up_today` | same index, filter, quicksort | 1.6 ms |
+| `store.agentLeads.get` | `ux_sales_agent_leads__public_id` | 0.04 ms |
+| `store.agentLeads.listActivities` | `ix_sales_agent_lead_activities__lead_id__occurred_at` | 0.04 ms |
+| `store.agentQuotes.list` | seq scan (5 rows; `ix_sales_agent_quotes__agent_id__created_at` exists for volume) | 0.04 ms |
+| `store.agent.commissions` | `ix_sales_agent_commissions__agent_id__status` + top-N sort | 0.13 ms |
+| `store.agent.statements` | seq scan (2 rows; `ix_sales_agent_statements__agent_id__period_start` exists) | 0.04 ms |
+| `store.agentCommissions.forecast` entries / links | index on commissions; links `ix_sales_agent_links__agent_id__status` | < 0.1 ms each |
+
+**Local smoke without k6** (same mix and rate as `agent-portal.js`, a plain Node `fetch` generator on the same VM):
+API booted locally against the UAT seed (PostgreSQL 16, Redis, `INTEGRATIONS_MODE=fake`, global throttle raised for
+the run), agent `UATFRE22`, **50 rps for 30 s: 1,500 requests, 0 errors, p50 10.3 ms, p95 18.7 ms, p99 366.8 ms**
+(warm-up); p95 by kind — lists 18.6 ms, details 17.9 ms, forecast 21.6 ms. Indicative only (one agent, seed volume,
+generator on the same machine); the k6 run on the UAT stack is the evidence for the go / no-go.
+
+No new index: every hot predicate is served by an existing index. **Watch item:** the forecast reads the in-progress
+orders **once per active link** (N + 1); fine for the pilot (10–20 agents, few links each), to be batched into one
+query when an agent passes ~200 active links or the UAT run shows its p95 above 300 ms.
+
 ## 4. Capacity notes
 
 - API and worker are one image, two services; scale the API on CPU and the worker on queue depth

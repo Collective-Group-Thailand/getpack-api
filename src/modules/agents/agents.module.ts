@@ -11,8 +11,10 @@ import { AgentLeadsService } from './agent-leads.service';
 import { AgentNotificationPreferencesService } from './agent-notification-preferences.service';
 import { AgentPayoutProfilesService } from './agent-payout-profiles.service';
 import { AgentQuotesService } from './agent-quotes.service';
+import { AgentRateLimiter } from './agent-rate-limit';
 import { AgentStatementsService } from './agent-statements.service';
 import { AgentTaxDeclarationsService } from './agent-tax-declarations.service';
+import { AgentWaitlistService } from './agent-waitlist.service';
 import { AgentsJobs } from './agents.jobs';
 import { AgentsService } from './agents.service';
 import { AgentPlaybookService } from './agents-playbook';
@@ -33,6 +35,8 @@ const SERVICES = [
   AgentPlaybookService,
   AgentCardScanService,
   AgentForecastService,
+  AgentRateLimiter,
+  AgentWaitlistService,
 ];
 
 /** The sales agent programme (D-416 – D-423): applications, agents, links, leads, commission, statements. */

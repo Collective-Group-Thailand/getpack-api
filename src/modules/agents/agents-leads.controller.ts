@@ -36,6 +36,7 @@ import { type Response } from 'express';
 import { AgentCardScanService } from './agent-card-scan.service';
 import { type ImportRow } from './agent-lead-rules';
 import { AgentLeadsService, leadEtag } from './agent-leads.service';
+import { AgentRateLimiter } from './agent-rate-limit';
 import { normalisePhone } from './agent-shared';
 import { AgentZoneGuard } from './agent-zone.guard';
 import { AgentLeadDto, LEAD_EXAMPLE } from './agents.dto';
@@ -130,6 +131,7 @@ export class StoreAgentLeadsController {
     private readonly agents: AgentsService,
     private readonly leads: AgentLeadsService,
     private readonly cards: AgentCardScanService,
+    private readonly limits: AgentRateLimiter,
   ) {}
 
   @Post('leads/actions/check')
@@ -150,12 +152,13 @@ export class StoreAgentLeadsController {
     type: AgentLeadAvailabilityDto,
     example: { available: false, reason: 'unavailable', leadId: null },
   })
-  @ApiStandardErrors(...WRITE, ...AGENT_ERRORS)
+  @ApiStandardErrors(...WRITE, ...AGENT_ERRORS, 'agents.rate_limited')
   async check(
     @CurrentActor() actor: Actor,
     @Body() body: CheckAgentLeadDto,
   ): Promise<AgentLeadAvailabilityDto> {
     const agent = await this.agents.mine(customer(actor).userId);
+    await this.limits.hit(agent.id, 'lead_check');
     return this.leads.check(agent, {
       phone: normalisePhone(body.phone),
       email: body.email?.trim().toLowerCase() || null,
@@ -228,18 +231,15 @@ export class StoreAgentLeadsController {
     },
   })
   @ApiSuccess(201, { description: 'Dry run', type: AgentLeadImportDto, example: IMPORT_EXAMPLE })
-  @ApiStandardErrors(...WRITE, ...AGENT_ERRORS, 'agents.agent_inactive')
+  @ApiStandardErrors(...WRITE, ...AGENT_ERRORS, 'agents.agent_inactive', 'agents.rate_limited')
   async previewImport(
     @CurrentActor() actor: Actor,
     @Body() body: PreviewAgentLeadImportDto,
   ): Promise<AgentLeadImportDto> {
     const me = customer(actor);
-    const { row, rows } = await this.leads.previewImport(
-      me,
-      await this.agents.mine(me.userId),
-      body.csv,
-      body.consentConfirmed,
-    );
+    const agent = await this.agents.mine(me.userId);
+    await this.limits.hit(agent.id, 'lead_import_preview');
+    const { row, rows } = await this.leads.previewImport(me, agent, body.csv, body.consentConfirmed);
     return importDto(row, rows);
   }
 
@@ -317,10 +317,13 @@ export class StoreAgentLeadsController {
     'file.infected',
     'file.too_large',
     'agents.card_scan_failed',
+    'agents.rate_limited',
   )
   async scanCard(@CurrentActor() actor: Actor, @Body() body: ScanAgentCardDto): Promise<ScannedCardDto> {
     const me = customer(actor);
-    const r = await this.cards.scan(me, await this.agents.mine(me.userId), body.fileId, body.languages);
+    const agent = await this.agents.mine(me.userId);
+    await this.limits.hit(agent.id, 'card_scan');
+    const r = await this.cards.scan(me, agent, body.fileId, body.languages);
     return {
       fileId: r.fileId,
       engine: r.engine,
